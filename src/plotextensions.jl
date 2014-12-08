@@ -10,7 +10,7 @@ Gadfly.set_default_plot_size(15cm,15cm)
 flipit(A) = flipud(A')
 
 function plot(d::AbstractDomain{2}; n = 100)
-	mask = ExpFun.in((n,n), d)
+	mask = in((n,n), d)
 	Gadfly.spy(flipit(mask), Gadfly.Guide.xlabel("x"), Gadfly.Guide.ylabel("y"))
 end
 
