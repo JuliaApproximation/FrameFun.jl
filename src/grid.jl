@@ -45,7 +45,7 @@ range(g::Grid) = g.ranges
 # Create a box that encapsulates the grid
 box{N,T}(g::Grid{N,T}) = FBox{N,T}(left(g), right(g))
 
-getindex(g::Grid, i...) = [g.ranges[k][i[k]] for i=1:N]
+getindex{N}(g::Grid{N}, i...) = [g.ranges[k][i[k]] for i=1:N]
 # getindex(g::Grid1, i::Int) = g.ranges[1][i]		# special case that does not create a vector
 
 

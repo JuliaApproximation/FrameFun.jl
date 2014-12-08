@@ -68,7 +68,7 @@ end
 
 
 function setindex!{T <: Number}(f::ExpFun, a::T, d::AbstractDomain)
-	dof, extension, oversampling, method = default_parameters()
+	dof, extension, oversampling, method = DOF, EXTENSION, OVERSAMPLING, METHOD
 	fp,fc = paramcontext(d, dof, extension, oversampling)
 	layer = EFun(d, fp, fc, zeros(Complex{T}, fp.n...))
 	layer.coef[1] = a
