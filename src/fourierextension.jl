@@ -2,7 +2,7 @@
 # This file groups functions related to the construction and evaluation of Fourier extensions.
 
 function frequencyvector(n) 
-	nh = (n-1)/2
+	nh = int((n-1)/2)
 	[0:nh, -nh:-1]
 end
 
@@ -71,7 +71,7 @@ end
 	@nloops N i x->1:length(c_ranges[x]) begin
 		(@nref N d x->d_ranges[x][i_x]) = (@nref N c x->c_ranges[x][i_x])
 	end
-	end
+end
 
 
 

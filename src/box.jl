@@ -1,13 +1,17 @@
 # box.jl
 
-
 # The definition of a box is a 2D-array with the bottom-left and top-right vertices as columns.
 immutable FBox{N, T <: FloatingPoint}
 	vertices::Array{T,2}
 end
 
-dim{N}(box::FBox{N}) = N
-numtype{N,T}(box::FBox{N,T}) = T
+dim{N,T}(::FBox{N,T}) = N
+dim{N,T}(::Type{FBox{N,T}}) = N
+dim{B <: FBox}(::Type{B}) = dim(super(B))
+
+numtype{N,T}(::FBox{N,T}) = T
+numtype{N,T}(::Type{FBox{N,T}}) = T
+numtype{B <: FBox}(::Type{B}) = numtype(super(B))
 
 typealias FBox1{T <: FloatingPoint} FBox{1,T}
 typealias FBox2{T <: FloatingPoint} FBox{2,T}

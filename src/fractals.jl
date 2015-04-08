@@ -33,7 +33,7 @@ function mandelbrotiteration(x, maxiter, threshold)
     abs(z) < threshold
 end
 
-function computemandelbrotgrid(g::Grid2, maxiter, threshold)
+function computemandelbrotgrid(g::AbstractGrid2d, maxiter, threshold)
     m = size(g)
     mask = zeros(Bool, m)
     for i_2 = 1:m[2]
@@ -47,7 +47,7 @@ end
 
 in(x::AbstractVector, m::Mandelbrot) = mandelbrotiteration(x, m.maxiter, m.threshold)
 
-function in(g::Grid2, m::Mandelbrot)
+function in(g::AbstractGrid2d, m::Mandelbrot)
     if isequal(left(g),left(m.box)) && isequal(right(g),right(m.box))
         if haskey(m.maskcache, size(g,1))
             mask = m.maskcache[size(g,1)]
@@ -95,7 +95,7 @@ function juliasetiteration(x, c, maxiter)
     abs(z) < 1000
 end
 
-function computejuliasetgrid(g::Grid2, c, maxiter)
+function computejuliasetgrid(g::AbstractGrid2d, c, maxiter)
     m = size(g)
     mask = zeros(Bool, m)
     for i_2 = 1:m[2]
@@ -109,7 +109,7 @@ end
 
 in(x::AbstractVector, js::JuliaSet) = juliasetiteration(x, js.c, js.maxiter)
 
-function in(g::Grid2, js::JuliaSet)
+function in(g::AbstractGrid2d, js::JuliaSet)
     if isequal(left(g),left(js.box)) && isequal(right(g),right(js.box))
         if haskey(js.maskcache, size(g,1))
             mask = js.maskcache[size(g,1)]

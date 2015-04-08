@@ -2,8 +2,13 @@
 
 abstract AbstractDomain{N,T <: FloatingPoint}
 
-dim{N}(d::AbstractDomain{N}) = N
-numtype{N,T}(d::AbstractDomain{N,T}) = T
+dim{N,T}(::AbstractDomain{N,T}) = N
+dim{N,T}(::Type{AbstractDomain{N,T}}) = N
+dim{D <: AbstractDomain}(::Type{D}) = dim(super(D))
+
+numtype{N,T}(::AbstractDomain{N,T}) = T
+numtype{N,T}(::Type{AbstractDomain{N,T}}) = T
+numtype{D <: AbstractDomain}(::Type{D}) = numtype(super(D))
 
 typealias AbstractDomain1{T <: FloatingPoint} AbstractDomain{1,T}
 typealias AbstractDomain2{T <: FloatingPoint} AbstractDomain{2,T}
@@ -17,22 +22,18 @@ in{T,S <: Number}(x::S, d::AbstractDomain1{T}) = in([x], d)
 # Check whether a value is in an interval, up to 10 times machine precision
 in{T <: FloatingPoint, S <: Number}(x::S, a::T, b::T) = (a-10eps() <= x <= b+10eps())
 
-# Fallback routine for returning the box of a domain.
-box(d::AbstractDomain) = d.box
-
 # Fallback routine when evaluated on a grid. This routine is general, in order to avoid ambiguity
 # with other routines later on. Dispatch on dimension is done by a different routine evalgrid below.
-in(g::Grid, d::AbstractDomain) = evalgrid(g, d)
+in(g::AbstractGrid, d::AbstractDomain) = evalgrid(g, d)
 
 in{N}(m::NTuple{N}, d::AbstractDomain) = in(Grid(box(d), m), d)
 
 # Default methods for evaluation on a grid: the default is to call eval on the domain with 
 # points as arguments. Domains that have faster grid evaluation routines may define their own version.
-@ngenerate N Array{Complex{T},N} function evalgrid{N,T}(g::Grid{N,T}, d::AbstractDomain{N,T})
-    z = zeros(Bool, size(g)...)
-    pts = range(g)
-    @nloops N i g begin
-        (@nref N z i) = in([(@ntuple N j->pts[j][i_j])...], d)
+function evalgrid{N,T}(g::AbstractGrid{N,T}, d::AbstractDomain{N,T})
+    z = zeros(Bool, length(g))
+    for i=1:length(g)
+      z[i] = in(g[i], d)
     end
     z
 end
@@ -42,8 +43,11 @@ end
 ### An empty domain
 ###############################################################################################
 
-immutable EmptyDomain{N,T} <: AbstractDomain{1,T}
+immutable EmptyDomain{N,T} <: AbstractDomain{N,T}
 end
+
+EmptyDomain{T}(n::Int, ::Type{T}) = EmptyDomain{n,T}()
+
 
 in(x::AbstractVector, d::EmptyDomain) = false
 
@@ -66,8 +70,10 @@ show(io::IO, d::EmptyDomain) = print(io, "An empty domain")
 ### The space R^n
 ###############################################################################################
 
-immutable RnDomain{N,T} <: AbstractDomain{1,T}
+immutable RnDomain{N,T} <: AbstractDomain{N,T}
 end
+
+RnDomain{T}(n::Int, ::Type{T}) = RnDomain{n,T}()
 
 in(x::AbstractVector, d::RnDomain) = true
 
@@ -93,10 +99,9 @@ show(io::IO, e::RnDomain) = print(io, "The ", N, "-dimensional Euclidean space")
 immutable Interval{T} <: AbstractDomain{1,T}
   a     ::  T
   b     ::  T
-  box   ::  FBox1{T}
 end
 
-Interval{T}(a::T = 0.0, b::T = 1.0) = Interval(a, b, FBox(a, b))
+Interval{T}(a::T = 0.0, b::T = 1.0) = Interval{T}(a, b)
 
 in(x::AbstractVector, d::Interval) = in(x[1], d.a, d.b)
 
@@ -128,14 +133,11 @@ const unitinterval = Interval()
 immutable Circle{T} <: AbstractDomain{2,T}
   radius    ::  T
   center    ::  Vector{T}
-  box       ::  FBox2{T}
+
+  Circle(radius::T = one(T), center::Vector{T} = zeros(T,2)) = new(radius, center) 
 end
 
-function Circle{T}(radius::T = 1.0, center::Vector{T} = zeros(T,2))
-  left = [center[1]-radius, center[2]-radius]
-  right = [center[1]+radius, center[2]+radius]
-  Circle(radius, center, FBox{2,T}([left right]))
-end
+Circle{T}(radius::T = 1.0, center::Vector{T} = zeros(T,2)) = Circle{T}(radius)
 
 in{T}(x::AbstractVector, c::Circle{T}) = (x[1]-c.center[1])^2 + (x[2]-c.center[2])^2 <= c.radius^2+10eps(T)
 
@@ -163,11 +165,10 @@ const unitcircle = Circle()
 
 immutable Rectangle{T} <: AbstractDomain{2,T}
   verts ::  Array{T,2}
-  box   ::  FBox2{T}
 end
 
 # The rectangle [a,b] x [c,d]
-Rectangle{T}(a::T = 0.0, b::T = 1.0, c::T = 0.0, d::T = 1.0) = Rectangle{T}([a b; c d], FBox(a, b, c, d))
+Rectangle{T}(a::T = 0.0, b::T = 1.0, c::T = 0.0, d::T = 1.0) = Rectangle{T}([a b; c d])
 
 in{T}(x::AbstractVector, r::Rectangle{T}) = reduce(&, [in(x[j], r.verts[j,1], r.verts[j,2]) for j=1:3])
 
@@ -196,14 +197,9 @@ const unitsquare = Rectangle()
 immutable Sphere{T} <: AbstractDomain{3,T}
   radius    ::  T
   center    ::  Vector{T}
-  box       ::  FBox3{T}
 end
 
-function Sphere{T}(radius::T = 1.0, center::Vector{T} = zeros(T,3))
-  left = [center[1]-radius, center[2]-radius, center[3]-radius]
-  right = [center[1]+radius, center[2]+radius, center[3]+radius]
-  Sphere(radius, center, FBox{3,T}([left right]))
-end
+Sphere{T}(radius::T = 1.0, center::Vector{T} = zeros(T,3)) = Sphere{T}(radius, center)
 
 in(x::AbstractVector, s::Sphere) = (x[1]-s.center[1])^2 + (x[2]-s.center[2])^2 + (x[3]-s.center[3])^2 <= s.radius^2
 
@@ -235,8 +231,6 @@ end
 # The cube [a,b] x [c,d] x [e,f]
 Cube{T}(a::T = 0.0, b::T = 1.0, c::T = 0.0, d::T = 1.0, e::T = zero(T), f::T = one(T)) = Cube{T}([a b; c d; e f])
 
-box{T}(c::Cube{T}) = FBox3{T}(c.verts)
-
 in{T}(x::AbstractVector, c::Cube{T}) = reduce(&, [in(x[j], c.verts[j,1], c.verts[j,2]) for j=1:3])
 
 ## Arithmetic operations
@@ -265,10 +259,9 @@ const unitcube = Cube()
 immutable Cylinder{T} <: AbstractDomain{3,T}
   radius    ::  T
   length    ::  T
-  box       ::  FBox{3,T}
 end
 
-Cylinder{T}(radius::T = one(T), length::T = one(T)) = Cylinder{T}(radius, length, FBox([zero(T),length], [-radius,radius], [-radius,radius]))
+Cylinder{T}(radius::T = one(T), length::T = one(T)) = Cylinder{T}(radius, length)
 
 in{T}(x::AbstractVector, c::Cylinder{T}) = in(x[1], zero(T), c.length) && (x[2]^2+x[3]^2 <= c.radius^2)
 
@@ -287,10 +280,9 @@ show(io::IO, c::Cylinder) = print(io, "A cylinder of radius ", c.radius, " and l
 immutable DomainUnion{N,T,D1,D2} <: AbstractDomain{N,T}
   d1    ::  D1
   d2    ::  D2
-  box   ::  FBox{N,T}
 end
 
-DomainUnion{N,T}(d1::AbstractDomain{N,T}, d2::AbstractDomain{N,T}) = DomainUnion{N,T,typeof(d1),typeof(d2)}(d1, d2, d1.box+d2.box)
+DomainUnion{N,T}(d1::AbstractDomain{N,T}, d2::AbstractDomain{N,T}) = DomainUnion{N,T,typeof(d1),typeof(d2)}(d1, d2)
 
 join(d1::AbstractDomain, d2::AbstractDomain) = (d1 == d2 ? d1 : DomainUnion(d1,d2))
 
@@ -311,7 +303,7 @@ end
 # The union of two domains corresponds to a logical OR of their characteristic functions
 in(x::AbstractVector, d::DomainUnion) = in(x, d.d1) || in(x, d.d2)
 
-function in(g::Grid, d::DomainUnion)
+function in(g::AbstractGrid, d::DomainUnion)
   z1 = in(g, d.d1)
   z2 = in(g, d.d2)
   z1 | z2
@@ -337,15 +329,14 @@ end
 immutable DomainIntersection{N,T,D1,D2} <: AbstractDomain{N,T}
   d1    ::  D1
   d2    ::  D2
-  box   ::  FBox{N,T}
 end
 
-DomainIntersection{N,T}(d1::AbstractDomain{N,T},d2::AbstractDomain{N,T}) = DomainIntersection{N,T,typeof(d1),typeof(d2)}(d1, d2, d1.box & d2.box)
+DomainIntersection{N,T}(d1::AbstractDomain{N,T},d2::AbstractDomain{N,T}) = DomainIntersection{N,T,typeof(d1),typeof(d2)}(d1, d2)
 
 # The intersection of two domains corresponds to a logical AND of their characteristic functions
 in(x::AbstractVector, d::DomainIntersection) = in(x, d.d1) && in(x, d.d2)
 
-function in(g::Grid, d::DomainIntersection)
+function in(g::AbstractGrid, d::DomainIntersection)
   z1 = in(g, d.d1)
   z2 = in(g, d.d2)
   z1 & z2
@@ -384,15 +375,14 @@ end
 immutable DomainDifference{N,T,D1,D2} <: AbstractDomain{N,T}
   d1    ::  D1
   d2    ::  D2
-  box   ::  FBox{N,T}
 end
 
-DomainDifference{N,T}(d1::AbstractDomain{N,T}, d2::AbstractDomain{N,T}) = DomainDifference{N,T,typeof(d1),typeof(d2)}(d1,d2,d1.box)
+DomainDifference{N,T}(d1::AbstractDomain{N,T}, d2::AbstractDomain{N,T}) = DomainDifference{N,T,typeof(d1),typeof(d2)}(d1,d2)
 
 # The difference between two domains corresponds to a logical AND NOT of their characteristic functions
 in(x::AbstractVector, d::DomainDifference) = in(x, d.d1) && (~in(x, d.d2))
 
-function in(g::Grid, d::DomainDifference)
+function in(g::AbstractGrid, d::DomainDifference)
     z1 = in(g, d.d1)
     z2 = in(g, d.d2)
     z1 & (~z2)
@@ -416,7 +406,6 @@ end
 
 immutable RevolvedDomain{T,D} <: AbstractDomain{3,T}
   d     ::  D
-  box   ::  FBox{3,T}
 end
 
 revolve{T}(d::AbstractDomain{2,T}) = RevolvedDomain{T,typeof(d)}(d)
@@ -444,7 +433,6 @@ immutable RotatedDomain{N,T,D} <: AbstractDomain{N,T}
     d                 ::  D
     angle             ::  Vector{T}
     rotationmatrix    ::  Array{T,2}
-    box               ::  FBox{N,T}   #FIXME: compute bounding box accurately
 
     # RotatedDomain(d,angle,rotationmatrix,box) = new(d, angle, rotationmatrix, box)
 end
@@ -454,9 +442,9 @@ rotationmatrix(theta) = Matrix2x2([cos(theta) -sin(theta); sin(theta) cos(theta)
 # Rotation about X-axis (phi), Y-axis (theta) and Z-axis (psi)
 rotationmatrix(phi,theta,psi) = [cos(theta)*cos(psi) cos(phi)*sin(psi)+sin(phi)*sin(theta)*cos(psi) sin(phi)*sin(psi)-cos(phi)*sin(theta)*cos(psi); -cos(theta)*sin(psi) cos(phi)*cos(psi)-sin(phi)*sin(theta)*sin(psi) sin(phi)*cos(psi)+cos(phi)*sin(theta)*sin(psi); sin(theta) -sin(phi)*cos(theta) cos(phi)*cos(theta)]
 
-RotatedDomain{T}(d::AbstractDomain{2,T}, theta) = RotatedDomain{2,T,typeof(d)}(d, [theta], rotationmatrix(theta), d.box)
+RotatedDomain{T}(d::AbstractDomain{2,T}, theta) = RotatedDomain{2,T,typeof(d)}(d, [theta], rotationmatrix(theta))
 # types annotated to remove ambiguity
-RotatedDomain{T,D}(d::D, phi::T, theta::T, psi::T) = RotatedDomain{3,T,D}(d, [phi,theta,psi], rotationmatrix(phi,theta,psi), d.box)
+RotatedDomain{T,D}(d::D, phi::T, theta::T, psi::T) = RotatedDomain{3,T,D}(d, [phi,theta,psi], rotationmatrix(phi,theta,psi))
 
 rotate{T}(d::AbstractDomain{2,T}, theta) = RotatedDomain{2,T,typeof(d)}(d, theta)
 rotate{T}(d::AbstractDomain{3,T}, phi::T, theta::T, psi::T) = RotatedDomain(d, phi, theta, psi)
@@ -476,10 +464,9 @@ in(x::AbstractVector, d::RotatedDomain) = in(d.rotationmatrix*x, d.d)
 immutable ScaledDomain{N,T,D} <: AbstractDomain{N,T}
     d           ::  D
     scalefactor ::  T
-    box         ::  FBox{N,T}
 end
 
-ScaledDomain{N,T}(d::AbstractDomain{N,T}, scalefactor) = ScaledDomain{N,T,typeof(d)}(d, scalefactor, d.box*scalefactor)
+ScaledDomain{N,T}(d::AbstractDomain{N,T}, scalefactor) = ScaledDomain{N,T,typeof(d)}(d, scalefactor)
 
 function in(x::AbstractVector, d::ScaledDomain)
   in(d.scalefactor*x, d.d)
@@ -496,10 +483,9 @@ end
 immutable TranslatedDomain{N,T,D} <: AbstractDomain{N,T}
     d       ::  D
     trans   ::  Vector{T}
-    box     ::  FBox{N,T}
 end
 
-TranslatedDomain{N,T}(d::AbstractDomain{N,T}, trans::Vector{T}) = TranslatedDomain{N,T,typeof(d)}(d, trans, d.box + trans)
+TranslatedDomain{N,T}(d::AbstractDomain{N,T}, trans::Vector{T}) = TranslatedDomain{N,T,typeof(d)}(d, trans)
 
 function in(x::AbstractVector, d::TranslatedDomain)
     in(x-d.trans, d.d)
@@ -515,16 +501,15 @@ end
 
 type DomainCollection{N,T} <: AbstractDomain{N,T}
     list    ::  Vector{AbstractDomain{N,T}}
-    box     ::  FBox{N,T}
 end
 
-DomainCollection{N,T}(d::AbstractDomain{N,T}) = DomainCollection{N,T}([d], d.box)
+DomainCollection{N,T}(d::AbstractDomain{N,T}) = DomainCollection{N,T}([d])
 
 function in(x::AbstractVector, d::DomainCollection)
     reduce( |, map( u -> in(x, u), d.list))
 end
 
-function in(g::Grid, d::DomainCollection)
+function in(g::AbstractGrid, d::DomainCollection)
     z1 = in(g, d.list[1])
     for i = 2:length(d.list)
         z2 = in(g, d.list[i])
