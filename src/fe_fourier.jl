@@ -86,7 +86,7 @@ function reshape_L_to_N_rec!(c, d, c_ranges, d_ranges, nh::NTuple{1}, n::NTuple{
 end
 
 # Perform the copy without additional allocation
-stagedfunction copy_ranges!{N}(c, d, c_ranges::NTuple{N}, d_ranges::NTuple{N})
+@generated function copy_ranges!{N}(c, d, c_ranges::NTuple{N}, d_ranges::NTuple{N})
     quote
         @nloops $N i x->1:length(c_ranges[x]) begin
          (@nref $N d x->d_ranges[x][i_x]) = (@nref $N c x->c_ranges[x][i_x])
@@ -101,16 +101,21 @@ apply!{G,N,T}(op::ZeroPadding, dest, src::TensorProductBasis{FourierBasisOdd{T},
 apply!{G,N,T}(op::Restriction, dest::TensorProductBasis{FourierBasisOdd{T},G,N,T}, src, coef_dest::Array{T}, coef_src::Array{T}) = 
     reshape_L_to_N!(coef_src, coef_dest, size(coef_src), size(coef_dest))
 
+fourier_extension_problem{T <: FloatingPoint, S <: Number}(n::Int, t::T, sampling::S) = fourier_extension_problem(n, promote(t,sampling)...)
 
+function fourier_extension_problem{T <: FloatingPoint}(n::Int, t::T, sampling::T)
+    m = Int(ceil(n * sampling))
+    l = Int(round(t*(m-1)))
+    fourier_extension_problem(n, m, l)
+end
 
-function fourier_extension_problem(n::Int, m::Int, l::Int)
-#     T = BigFloat
-    T = Float64
+function fourier_extension_problem{T}(n::Int, m::Int, l::Int, a::T = 0.0, b::T = 1.0)
+    assert(isodd(n))
 
     t = (l*one(T)) / ((m-1)*one(T))
 
-    fbasis1 = FourierBasis(n, -one(T), one(T) + 2*(t-1))
-    fbasis2 = FourierBasis(l, -one(T), one(T) + 2*(t-1))
+    fbasis1 = FourierBasis(n, a, b + (b-a)*(t-1))
+    fbasis2 = FourierBasis(l, a, b + (b-a)*(t-1))
 
     grid1 = natural_grid(fbasis1)
     grid2 = natural_grid(fbasis2)
@@ -139,7 +144,6 @@ function fourier_extension_problem(n::Int, m::Int, l::Int)
 
     FE_DiscreteProblem(fbasis1, fbasis2, tbasis1, tbasis2, restricted_tbasis, f_extension, f_restriction, t_extension, t_restriction, transform1, itransform1, transform2, itransform2, scratch1, scratch2)
 end
-
 
 function fourier_extension_problem{N}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTuple{N,Int})
 #     T = BigFloat
@@ -198,4 +202,12 @@ function fourier_extension_problem{N}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTu
     t_restriction = Restriction(tbasis2, restricted_tbasis)
 end
 
+
+default_fourier_problem_1d() = fourier_extension_problem(21, 2.0, 2.0)
+
+default_fourier_problem_2d() = fourier_extension_problem((11,11), (22,22), (44,44))
+
+default_fourier_domain_1d() = Interval()
+
+default_fourier_solver(problem) = FE_DirectSolver(problem)
 

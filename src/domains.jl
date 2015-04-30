@@ -10,14 +10,14 @@ numtype{N,T}(::AbstractDomain{N,T}) = T
 numtype{N,T}(::Type{AbstractDomain{N,T}}) = T
 numtype{D <: AbstractDomain}(::Type{D}) = numtype(super(D))
 
-typealias AbstractDomain1{T <: FloatingPoint} AbstractDomain{1,T}
-typealias AbstractDomain2{T <: FloatingPoint} AbstractDomain{2,T}
-typealias AbstractDomain3{T <: FloatingPoint} AbstractDomain{3,T}
-typealias AbstractDomain4{T <: FloatingPoint} AbstractDomain{4,T}
+typealias AbstractDomain1d{T <: FloatingPoint} AbstractDomain{1,T}
+typealias AbstractDomain2d{T <: FloatingPoint} AbstractDomain{2,T}
+typealias AbstractDomain3d{T <: FloatingPoint} AbstractDomain{3,T}
+typealias AbstractDomain4d{T <: FloatingPoint} AbstractDomain{4,T}
 
 # Domains are evaluated using vectors to specify the points, except in 1D
 # Provide fallback routine for users not using vectors in 1d
-in{T,S <: Number}(x::S, d::AbstractDomain1{T}) = in([x], d)
+in{T,S <: Number}(x::S, d::AbstractDomain1d{T}) = in([x], d)
 
 # Check whether a value is in an interval, up to 10 times machine precision
 in{T <: FloatingPoint, S <: Number}(x::S, a::T, b::T) = (a-10eps() <= x <= b+10eps())
@@ -26,7 +26,7 @@ in{T <: FloatingPoint, S <: Number}(x::S, a::T, b::T) = (a-10eps() <= x <= b+10e
 # with other routines later on. Dispatch on dimension is done by a different routine evalgrid below.
 in(g::AbstractGrid, d::AbstractDomain) = evalgrid(g, d)
 
-in{N}(m::NTuple{N}, d::AbstractDomain) = in(Grid(box(d), m), d)
+#in{N}(m::NTuple{N}, d::AbstractDomain) = in(Grid(box(d), m), d)
 
 # Default methods for evaluation on a grid: the default is to call eval on the domain with 
 # points as arguments. Domains that have faster grid evaluation routines may define their own version.
