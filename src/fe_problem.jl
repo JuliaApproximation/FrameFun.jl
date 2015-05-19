@@ -23,9 +23,6 @@ immutable FE_DiscreteProblem <: FE_Problem
 
     transform2
     itransform2
-
-    scratch1
-    scratch2
 end
 
 

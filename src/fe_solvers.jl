@@ -47,7 +47,7 @@ function solve!{T}(s::FE_DirectSolver, coef::Array{T}, rhs::Array{T})
 end
 
 function solve!{T}(s::FE_DirectSolver, coef::Array{T}, rhs::Array{T}, f::Function)
-    fe_rhs!(operator(s), rhs, f)
+    rhs!(operator(s), rhs, f)
     solve!(s, coef, rhs)
 end
 

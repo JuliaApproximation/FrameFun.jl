@@ -139,10 +139,7 @@ function fourier_extension_problem{T}(n::Int, m::Int, l::Int, a::T = 0.0, b::T =
     transform2 = FastFourierTransform(tbasis2, fbasis2)
     itransform2 = InverseFastFourierTransform(fbasis2, tbasis2)
 
-    scratch1 = Array(Complex{T}, l)
-    scratch2 = Array(Complex{T}, l)
-
-    FE_DiscreteProblem(fbasis1, fbasis2, tbasis1, tbasis2, restricted_tbasis, f_extension, f_restriction, t_extension, t_restriction, transform1, itransform1, transform2, itransform2, scratch1, scratch2)
+    FE_DiscreteProblem(fbasis1, fbasis2, tbasis1, tbasis2, restricted_tbasis, f_extension, f_restriction, t_extension, t_restriction, transform1, itransform1, transform2, itransform2)
 end
 
 function fourier_extension_problem{N}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTuple{N,Int})
@@ -184,12 +181,9 @@ function fourier_extension_problem{N}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTu
     transform2 = FastFourierTransform(tens_tbasis2, tens_fbasis2)
     itransform2 = InverseFastFourierTransform(tens_fbasis2, tens_tbasis2)
 
-    scratch1 = Array(Complex{T}, l)
-    scratch2 = Array(Complex{T}, l)
-
     FE_DiscreteProblem(tens_fbasis1, tens_fbasis2, tens_tbasis1, tens_tbasis2,
         tens_restricted_tbasis, f_extension, f_restriction, t_extension,
-        t_restriction, transform1, itransform1, transform2, itransform2, scratch1, scratch2)
+        t_restriction, transform1, itransform1, transform2, itransform2)
 end
 
 
@@ -241,8 +235,7 @@ function fourier_extension_problem{N}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTu
     FE_DiscreteProblem(problem.fbasis1, problem.fbasis2, problem.tbasis1, problem.tbasis2, 
         restricted_tbasis, problem.f_extension, problem.f_restriction,
         t_extension, t_restriction,
-        problem.transform1, problem.itransform1, problem.transform2, problem.itransform2,
-        problem.scratch1, problem.scratch2)
+        problem.transform1, problem.itransform1, problem.transform2, problem.itransform2)
 end
 
 
