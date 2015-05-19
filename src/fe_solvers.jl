@@ -24,8 +24,8 @@ end
 
 function FE_DirectSolver(problem::FE_Problem)
     op = FE_DiscreteOperator(problem)
-    matrix = fe_matrix(op)
-    FE_DirectSolver{eltype(problem)}(op, matrix)
+    mat = matrix(op)
+    FE_DirectSolver{eltype(problem)}(op, mat)
 end
 
 eltype{ELT}(s::FE_DirectSolver{ELT}) = ELT

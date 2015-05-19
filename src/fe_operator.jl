@@ -29,10 +29,6 @@ function apply!(op::FE_DiscreteOperator, coef_dest, coef_src)
 end
 
 
-fe_matrix(op::FE_DiscreteOperator) = operator_matrix(op)
-
-fe_matrix!(op::FE_DiscreteOperator, matrix) = operator_matrix!(op, matrix)
-
 function fe_rhs(op::FE_DiscreteOperator, f::Function, elt = eltype(op))
     grid = natural_grid(restricted_time_basis(fe_problem(op)))
     M = length(grid)
@@ -47,14 +43,25 @@ function fe_rhs!(op::FE_DiscreteOperator, b::Vector, f::Function)
 
     @assert length(b) == M
 
-    for i = 1:M
-        b[i] = f(grid[i])
+    fe_rhs!(grid, b, f)
+end
+
+function fe_rhs!(grid::AbstractGrid, b::Vector, f::Function)
+    l = 0
+    for i in eachindex(grid)
+        l = l+1
+        b[l] = f(grid[i])
     end
 end
 
-
-function apply!{G <: MaskedGrid,T}(op::ZeroPadding, dest::TimeDomain, src::TimeDomain{G}, coef_dest::Array{T}, coef_src::Array{T})
-    
+function fe_rhs!(grid::MaskedGrid, b::Vector, f::Function)
+    l = 0
+    for i in eachindex_mask(grid)
+        if in(i, grid)
+            l = l+1
+            b[l] = f(grid[i])
+        end
+    end
 end
 
 

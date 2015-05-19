@@ -187,19 +187,62 @@ function fourier_extension_problem{N}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTu
     scratch1 = Array(Complex{T}, l)
     scratch2 = Array(Complex{T}, l)
 
-    FE_DiscreteProblem(tens_fbasis1, tens_fbasis2, tens_tbasis1, tens_tbasis2, tens_restricted_tbasis, f_extension, f_restriction, t_extension, t_restriction, transform1, itransform1, transform2, itransform2, scratch1, scratch2)
+    FE_DiscreteProblem(tens_fbasis1, tens_fbasis2, tens_tbasis1, tens_tbasis2,
+        tens_restricted_tbasis, f_extension, f_restriction, t_extension,
+        t_restriction, transform1, itransform1, transform2, itransform2, scratch1, scratch2)
 end
 
 
-function fourier_extension_problem{N}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTuple{N,Int}, domain::AbstractDomain)
+function apply!{T,G <: MaskedGrid}(op::ZeroPadding, dest, src::TimeDomain{G}, coef_dest::Array{T}, coef_src::Array{T})
+    @assert length(coef_src) == length(src)
+    @assert length(coef_dest) == length(dest)
+
+    grid = natural_grid(src)
+
+    l = 0
+    for i in eachindex_mask(grid)
+        if in(i, grid)
+            l = l+1
+            coef_dest[i] = coef_src[l]
+        else
+            coef_dest[i] = 0
+        end
+    end
+end
+
+
+function apply!{T,G <: MaskedGrid}(op::Restriction, dest::TimeDomain{G}, src, coef_dest::Array{T}, coef_src::Array{T})
+    @assert length(coef_src) == length(src)
+    @assert length(coef_dest) == length(dest)
+
+    grid = natural_grid(dest)
+
+    l = 0
+    for i in eachindex_mask(grid)
+        if in(i, grid)
+            l = l+1
+            coef_dest[l] = coef_src[i]
+        end
+    end
+end
+
+function fourier_extension_problem{N}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTuple{N,Int},
+                                        domain::AbstractDomain)
+
     problem = fourier_extension_problem(n, m, l)
     
     domain = Circle(1.0)
     tbasis2 = problem.tbasis2
-    restricted_tbasis = TimeDomain(MaskedGrid(tbasis2, domain))
+    restricted_tbasis = TimeDomain(MaskedGrid(natural_grid(tbasis2), domain))
 
     t_extension = ZeroPadding(restricted_tbasis, tbasis2)
     t_restriction = Restriction(tbasis2, restricted_tbasis)
+
+    FE_DiscreteProblem(problem.fbasis1, problem.fbasis2, problem.tbasis1, problem.tbasis2, 
+        restricted_tbasis, problem.f_extension, problem.f_restriction,
+        t_extension, t_restriction,
+        problem.transform1, problem.itransform1, problem.transform2, problem.itransform2,
+        problem.scratch1, problem.scratch2)
 end
 
 

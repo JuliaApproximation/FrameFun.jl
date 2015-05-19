@@ -6,9 +6,11 @@ using BasisFunctions
 
 using Base.Cartesian
 
-import Base: length, eltype, size, in
+import Base: length, eltype, size, in, eachindex, getindex
 
-import BasisFunctions: src, dest, operator_matrix, apply!, numtype
+import BasisFunctions: src, dest, matrix, matrix!, apply!, numtype
+
+import BasisFunctions: index_dim
 
 export ExpFun
 

@@ -27,6 +27,16 @@ domain(fun::Fun) = fun.domain
 
 expansion(fun::Fun) = fun.expansion
 
+set(fun::Fun) = set(expansion(fun))
+
+coefficients(fun::Fun) = coefficients(expansion(fun))
+
+function show(io::IO, fun::Fun{1})
+    println(io, "A ", N, "-dimensional FrameFun with ", nbdofs(fun), " degrees of freedom.")
+    println(io, "Basis: ")
+    println(io, "Domain: ")
+end
+
 function ExpFun(f::Function, domain = default_fourier_domain_1d(), problem = default_fourier_problem_1d(), solver = default_fourier_solver(problem))
     expansion = solve(solver, f)
     Fun(domain, expansion)

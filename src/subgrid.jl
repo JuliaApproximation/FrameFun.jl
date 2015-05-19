@@ -27,22 +27,33 @@ immutable MaskedGrid{G <: AbstractGrid,ID,N,T} <: AbstractSubGrid{N,T}
 	MaskedGrid(grid::AbstractGrid{N,T}, mask) = new(grid, mask, sum(mask))
 end
 
-MaskedGrid{N,T}(grid::AbstractGrid{N,T}, mask) = MaskedGrid{typeof(grid),index_dim(grid),N,T}(grid, mask)
+function MaskedGrid{N,T}(grid::AbstractGrid{N,T}, mask)
+	@assert size(grid) == size(mask)
+
+	MaskedGrid{typeof(grid),index_dim(grid),N,T}(grid, mask)
+end
 
 MaskedGrid{N,T}(grid::AbstractGrid{N,T}, domain::AbstractDomain{N,T}) = MaskedGrid(grid, in(grid, domain))
 
-index_dim{G,ID,N,T}(::MaskedGrid{G,ID,N,T}) = ID
-index_dim{G,ID,N,T}(::Type{MaskedGrid{G,ID,N,T}}) = ID
-index_dim{G <: MaskedGrid}(::Type{G}) = index_dim(super(G))
+# index_dim{G,ID,N,T}(::MaskedGrid{G,ID,N,T}) = ID
+# index_dim{G,ID,N,T}(::Type{MaskedGrid{G,ID,N,T}}) = ID
+# index_dim{G <: MaskedGrid}(::Type{G}) = index_dim(super(G))
 
-
-eachindex(g::MaskedGrid) = eachindex(g.grid)
+# TODO: add eachindex that iterates over elements that are part of the masked grid.
+# eachindex_mask iterates over all elements and you have to check for element-ness manually (using `in`)
+eachindex_mask(g::MaskedGrid) = eachindex(g.grid)
 
 getindex(g::MaskedGrid, i...) = getindex(g.grid, i...)
 
 getindex!(g::MaskedGrid, x, i...) = getindex!(g.grid, x, i...)
 
-in(i, g::MaskedGrid) = g.mask(i)
+in(i, g::MaskedGrid) = g.mask[i]
+
+length(g::MaskedGrid) = g.M
+
+size(g::MaskedGrid) = (length(g),1)
+
+
 
 
 abstract AbstractSubIntervalGrid{G <: AbstractIntervalGrid, T} <: AbstractSubGrid{1,T}

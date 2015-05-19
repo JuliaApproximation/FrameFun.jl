@@ -30,9 +30,9 @@ in(g::AbstractGrid, d::AbstractDomain) = evalgrid(g, d)
 
 # Default methods for evaluation on a grid: the default is to call eval on the domain with 
 # points as arguments. Domains that have faster grid evaluation routines may define their own version.
-function evalgrid{N,T}(g::AbstractGrid{N,T}, d::AbstractDomain{N,T})
-    z = zeros(Bool, length(g))
-    for i=1:length(g)
+function evalgrid{N}(g::AbstractGrid{N}, d::AbstractDomain{N})
+    z = zeros(Bool, size(g))
+    for i in eachindex(g)
       z[i] = in(g[i], d)
     end
     z
@@ -137,7 +137,7 @@ immutable Circle{T} <: AbstractDomain{2,T}
   Circle(radius::T = one(T), center::Vector{T} = zeros(T,2)) = new(radius, center) 
 end
 
-Circle{T}(radius::T = 1.0, center::Vector{T} = zeros(T,2)) = Circle{T}(radius)
+Circle{T}(radius::T = 1.0, center::Vector{T} = zeros(T,2)) = Circle{T}(radius,center)
 
 in{T}(x::AbstractVector, c::Circle{T}) = (x[1]-c.center[1])^2 + (x[2]-c.center[2])^2 <= c.radius^2+10eps(T)
 
