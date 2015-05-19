@@ -12,6 +12,8 @@ import BasisFunctions: src, dest, matrix, matrix!, apply!, numtype
 
 import BasisFunctions: index_dim
 
+import BasisFunctions: operator
+
 export ExpFun
 
 include("domains.jl")

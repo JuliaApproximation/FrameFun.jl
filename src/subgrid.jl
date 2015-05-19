@@ -51,7 +51,7 @@ in(i, g::MaskedGrid) = g.mask[i]
 
 length(g::MaskedGrid) = g.M
 
-size(g::MaskedGrid) = (length(g),1)
+size(g::MaskedGrid) = (length(g),)
 
 
 

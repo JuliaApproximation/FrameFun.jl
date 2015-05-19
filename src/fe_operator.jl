@@ -2,10 +2,19 @@
 
 abstract FE_Operator{SRC,DEST} <: AbstractOperator{SRC,DEST}
 
-numtype(op::FE_Operator) = numtype(problem(op))
+# Delegation methods
+for op in (:numtype,:eltype,:frequency_basis,:frequency_basis_ext)
+    @eval $op(o::FE_Operator) = $op(problem(o))
+end
 
 
-frequency_basis(op::FE_Operator) = frequency_basis(problem(op))
+problem{OP <: FE_Operator}(op::OperatorTranspose{OP}) = problem(operator(op))
+
+# Delegation methods
+for op in (:numtype,:eltype,:frequency_basis,:frequency_basis_ext)
+    @eval $op{OP <: FE_Operator}(o::OperatorTranspose{OP}) = $op(problem(o))
+end
+
 
 
 immutable FE_DiscreteOperator{SRC,DEST} <: FE_Operator{SRC,DEST}
@@ -30,12 +39,27 @@ dest(op::FE_DiscreteOperator) = restricted_time_basis(op.problem)
 problem(op::FE_DiscreteOperator) = op.problem
 
 
+
+
 function apply!(op::FE_DiscreteOperator, coef_dest, coef_src)
     p = problem(op)
     apply!(p.f_extension, op.scratch1, coef_src)
     apply!(p.itransform2, op.scratch2, op.scratch1)
     apply!(p.t_restriction, coef_dest, op.scratch2)
 end
+
+
+function apply!(::OperatorTranspose, op::FE_DiscreteOperator, coef_dest, coef_src)
+    p = problem(op)
+    apply!(p.t_extension, op.scratch2, coef_src)
+    apply!(p.transform2, op.scratch1, op.scratch2)
+    apply!(p.f_restriction, coef_dest, op.scratch1)
+    L = length(src(p.f_restriction))
+    for i in eachindex(coef_dest)
+        coef_dest[i] = coef_dest[i]/L
+    end
+end
+
 
 
 function rhs(op::FE_DiscreteOperator, f::Function, elt = eltype(op))

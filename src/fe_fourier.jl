@@ -98,8 +98,8 @@ end
 apply!{G,N,T}(op::ZeroPadding, dest, src::TensorProductBasis{FourierBasisOdd{T},G,N,T}, coef_dest::Array, coef_src::Array) = 
     reshape_N_to_L!(coef_src, coef_dest, size(coef_src), size(coef_dest))
 
-apply!{G,N,T}(op::Restriction, dest::TensorProductBasis{FourierBasisOdd{T},G,N,T}, src, coef_dest::Array{T}, coef_src::Array{T}) = 
-    reshape_L_to_N!(coef_src, coef_dest, size(coef_src), size(coef_dest))
+apply!{G,N,T}(op::Restriction, dest::TensorProductBasis{FourierBasisOdd{T},G,N,T}, src, coef_dest::Array, coef_src::Array) =
+    reshape_L_to_N!(coef_dest, coef_src, size(coef_dest), size(coef_src))
 
 fourier_extension_problem{T <: FloatingPoint, S <: Number}(n::Int, t::T, sampling::S) = fourier_extension_problem(n, promote(t,sampling)...)
 
