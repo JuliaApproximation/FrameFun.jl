@@ -117,8 +117,8 @@ function fourier_extension_problem{T}(n::Int, m::Int, l::Int, a::T = 0.0, b::T =
     fbasis1 = FourierBasis(n, a, b + (b-a)*(t-1))
     fbasis2 = FourierBasis(l, a, b + (b-a)*(t-1))
 
-    grid1 = natural_grid(fbasis1)
-    grid2 = natural_grid(fbasis2)
+    grid1 = grid(fbasis1)
+    grid2 = grid(fbasis2)
 
     rgrid = EquispacedSubGrid(grid2, 1, m)
 
@@ -142,9 +142,9 @@ function fourier_extension_problem{T}(n::Int, m::Int, l::Int, a::T = 0.0, b::T =
     FE_DiscreteProblem(fbasis1, fbasis2, tbasis1, tbasis2, restricted_tbasis, f_extension, f_restriction, t_extension, t_restriction, transform1, itransform1, transform2, itransform2)
 end
 
-function fourier_extension_problem{N}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTuple{N,Int})
+function fourier_extension_problem{N}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTuple{N,Int}, T = Float64)
 #     T = BigFloat
-    T = Float64
+#    T = Float64
 
     t = (l[1]*one(T)) / ((m[1]-1)*one(T))
 
@@ -153,8 +153,8 @@ function fourier_extension_problem{N}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTu
     tens_fbasis1 = tensorproduct(fbasis1, N)
     tens_fbasis2 = tensorproduct(fbasis2, N)
 
-    grid1 = natural_grid(fbasis1)
-    grid2 = natural_grid(fbasis2)
+    grid1 = grid(fbasis1)
+    grid2 = grid(fbasis2)
     tens_grid1 = tensorproduct(grid1, N)
     tens_grid2 = tensorproduct(grid2, N)
 
@@ -191,11 +191,11 @@ function apply!{T,G <: MaskedGrid}(op::ZeroPadding, dest, src::TimeDomain{G}, co
     @assert length(coef_src) == length(src)
     @assert length(coef_dest) == length(dest)
 
-    grid = natural_grid(src)
+    grid1 = grid(src)
 
     l = 0
-    for i in eachindex_mask(grid)
-        if in(i, grid)
+    for i in eachindex_mask(grid1)
+        if in(i, grid1)
             l = l+1
             coef_dest[i] = coef_src[l]
         else
@@ -209,25 +209,24 @@ function apply!{T,G <: MaskedGrid}(op::Restriction, dest::TimeDomain{G}, src, co
     @assert length(coef_src) == length(src)
     @assert length(coef_dest) == length(dest)
 
-    grid = natural_grid(dest)
+    grid1 = grid(dest)
 
     l = 0
-    for i in eachindex_mask(grid)
-        if in(i, grid)
+    for i in eachindex_mask(grid1)
+        if in(i, grid1)
             l = l+1
             coef_dest[l] = coef_src[i]
         end
     end
 end
 
-function fourier_extension_problem{N}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTuple{N,Int},
-                                        domain::AbstractDomain)
+function fourier_extension_problem{N,T}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTuple{N,Int},
+                                        domain::AbstractDomain{N,T})
 
-    problem = fourier_extension_problem(n, m, l)
+    problem = fourier_extension_problem(n, m, l, T)
     
-    domain = Circle(1.0)
     tbasis2 = problem.tbasis2
-    restricted_tbasis = TimeDomain(MaskedGrid(natural_grid(tbasis2), domain))
+    restricted_tbasis = TimeDomain(MaskedGrid(grid(tbasis2), domain))
 
     t_extension = ZeroPadding(restricted_tbasis, tbasis2)
     t_restriction = Restriction(tbasis2, restricted_tbasis)
@@ -239,9 +238,9 @@ function fourier_extension_problem{N}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTu
 end
 
 
-default_fourier_problem_1d() = fourier_extension_problem(21, 2.0, 2.0)
+default_fourier_problem(domain::AbstractDomain1d) = fourier_extension_problem(21, 2.0, 2.0)
 
-default_fourier_problem_2d() = fourier_extension_problem((11,11), (22,22), (44,44))
+default_fourier_problem(domain::AbstractDomain2d) = fourier_extension_problem((11,11), (22,22), (44,44))
 
 default_fourier_domain_1d() = Interval()
 

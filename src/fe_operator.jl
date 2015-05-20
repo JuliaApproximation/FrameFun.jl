@@ -43,40 +43,42 @@ problem(op::FE_DiscreteOperator) = op.problem
 
 function apply!(op::FE_DiscreteOperator, coef_dest, coef_src)
     p = problem(op)
+#    apply!(p.f_extension, op.scratch1, coef_src)
+#    apply!(p.itransform2, op.scratch2, op.scratch1)
+#    apply!(p.t_restriction, coef_dest, op.scratch2)
     apply!(p.f_extension, op.scratch1, coef_src)
-    apply!(p.itransform2, op.scratch2, op.scratch1)
-    apply!(p.t_restriction, coef_dest, op.scratch2)
+    apply!(p.itransform2, op.scratch1)
+    apply!(p.t_restriction, coef_dest, op.scratch1)
 end
 
 
 function apply!(::OperatorTranspose, op::FE_DiscreteOperator, coef_dest, coef_src)
     p = problem(op)
-    apply!(p.t_extension, op.scratch2, coef_src)
-    apply!(p.transform2, op.scratch1, op.scratch2)
+#    apply!(p.t_extension, op.scratch2, coef_src)
+#    apply!(p.transform2, op.scratch1, op.scratch2)
+#    apply!(p.f_restriction, coef_dest, op.scratch1)
+    apply!(p.t_extension, op.scratch1, coef_src)
+    apply!(p.transform2, op.scratch1)
     apply!(p.f_restriction, coef_dest, op.scratch1)
-    L = length(src(p.f_restriction))
-    for i in eachindex(coef_dest)
-        coef_dest[i] = coef_dest[i]/L
-    end
 end
 
 
 
 function rhs(op::FE_DiscreteOperator, f::Function, elt = eltype(op))
-    grid = natural_grid(restricted_time_basis(problem(op)))
-    M = length(grid)
+    grid1 = grid(restricted_time_basis(problem(op)))
+    M = length(grid1)
     b = Array(elt, M)
     rhs!(op, b, f)
     b
 end
 
 function rhs!(op::FE_DiscreteOperator, b::Vector, f::Function)
-    grid = natural_grid(restricted_time_basis(problem(op)))
-    M = length(grid)
+    grid1 = grid(restricted_time_basis(problem(op)))
+    M = length(grid1)
 
     @assert length(b) == M
 
-    rhs!(grid, b, f)
+    rhs!(grid1, b, f)
 end
 
 function rhs!(grid::AbstractGrid, b::Vector, f::Function)

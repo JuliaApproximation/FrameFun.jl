@@ -10,7 +10,7 @@ import Base: length, eltype, size, in, eachindex, getindex
 
 import BasisFunctions: src, dest, matrix, matrix!, apply!, numtype
 
-import BasisFunctions: index_dim
+import BasisFunctions: index_dim, grid
 
 import BasisFunctions: operator
 
