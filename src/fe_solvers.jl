@@ -3,20 +3,18 @@
 
 abstract FE_Solver
 
-frequency_basis(s::FE_Solver) = frequency_basis(operator(s))
+problem(s::FE_Solver) = s.problem
 
-time_basis(s::FE_Solver) = time_basis(operator(s))
+# Delegation methods
+for op in (:numtype,:eltype,:frequency_basis,:frequency_basis_ext, :time_basis, :time_basis_ext,
+    :restricted_time_basis, :size, :operator, :operator_transpose)
 
-eltype(s::FE_Solver) = eltype(operator(s))
+    @eval $op(s::FE_Solver) = $op(problem(s))
+end
 
-numtype(s::FE_Solver) = numtype(operator(s))
+size(s::FE_Solver, j::Int) = size(problem(s), j)
 
-size(s::FE_Solver) = size(operator(s))
-
-size(s::FE_Solver, j::Int) = size(operator(s), j)
-
-
-function solve(s::FE_Solver, f::Function, elt = eltype(operator(s)))
+function solve(s::FE_Solver, f::Function, elt = eltype(s))
     coef = Array(elt, size(s, 2))
     rhs = Array(elt, size(s, 1))
     solve!(s, coef, rhs, f)
@@ -24,7 +22,7 @@ function solve(s::FE_Solver, f::Function, elt = eltype(operator(s)))
 end
 
 function solve!{T}(s::FE_Solver, coef::Array{T}, rhs::Array{T}, f::Function)
-    rhs!(operator(s), rhs, f)
+    rhs!(problem(s), rhs, f)
     solve!(s, coef, rhs)
 end
 
@@ -33,17 +31,15 @@ end
 
 
 immutable FE_DirectSolver{ELT} <: FE_Solver
-    op      ::  FE_DiscreteOperator
+    problem ::  FE_Problem
     matrix  ::  Array{ELT,2}
 
-    FE_DirectSolver(op::FE_DiscreteOperator) = new(op, matrix(op))
+    FE_DirectSolver(problem::FE_Problem) = new(problem, matrix(operator(problem)))
 end
 
-FE_DirectSolver(problem::FE_Problem) = FE_DirectSolver{eltype(problem)}(FE_DiscreteOperator(problem))
+FE_DirectSolver(problem::FE_Problem) = FE_DirectSolver{eltype(problem)}(problem)
 
 eltype{ELT}(s::FE_DirectSolver{ELT}) = ELT
-
-operator(s::FE_DirectSolver) = s.op
 
 
 function solve!{T}(s::FE_DirectSolver, coef::Array{T}, rhs::Array{T})
@@ -51,24 +47,18 @@ function solve!{T}(s::FE_DirectSolver, coef::Array{T}, rhs::Array{T})
 end
 
 
+
 abstract FE_IterativeSolver <: FE_Solver
 
 
 immutable FE_IterativeSolverLSQR <: FE_IterativeSolver
-    op      ::  FE_DiscreteOperator
-    opt     ::  OperatorTranspose
-
-    FE_IterativeSolverLSQR(op::FE_DiscreteOperator) = new(op, transpose(op))
+    problem ::  FE_Problem
 end
 
-FE_IterativeSolverLSQR(problem::FE_Problem) = FE_IterativeSolverLSQR(FE_DiscreteOperator(problem))
-
-
-operator(s::FE_IterativeSolver) = s.op
 
 function solve!{T}(s::FE_IterativeSolverLSQR, coef::Array{T}, rhs::Array{T})
-    op = s.op
-    opt = s.opt
+    op = operator(s)
+    opt = operator_transpose(s)
 
     my_A_mul_B!(output, x) =  ( apply!(op,  reshape(output, size(dest(op ))), reshape(x, size(src(op )))); output )
     my_Ac_mul_B!(output, y) = ( apply!(opt, reshape(output, size(dest(opt))), reshape(y, size(src(opt)))); output )

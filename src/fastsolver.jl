@@ -4,7 +4,7 @@ immutable PlungeOperator{T,SRC,DEST} <: AbstractOperator{SRC,DEST}
     AstarA  ::  AbstractOperator
     lambda  ::  T
 
-    PlungeOperator(op::FE_DiscreteOperator) = new(op, op*transpose(op), length(frequency_basis_ext(problem(op)))*one(numtype(op)))
+    PlungeOperator(op::FE_DiscreteOperator) = new(op, op*ctranspose(op), length(frequency_basis_ext(problem(op)))*one(numtype(op)))
 end
 
 PlungeOperator(op::FE_DiscreteOperator) = PlungeOperator{numtype(op),typeof(dest(op)),typeof(dest(op))}(op)

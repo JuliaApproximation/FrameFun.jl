@@ -27,8 +27,8 @@ function apply!(op::Restriction, dest::FourierBasis, src::FourierBasis, coef_des
     @assert size(coef_src)==size(src)
     @assert size(coef_dest)==size(dest)
 
-    n = length(src)
-    l = length(dest)
+    n = length(dest)
+    l = length(src)
 
     nh = (n-1) >> 1
 

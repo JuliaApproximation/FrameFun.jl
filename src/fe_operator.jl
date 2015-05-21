@@ -64,39 +64,4 @@ end
 
 
 
-function rhs(op::FE_DiscreteOperator, f::Function, elt = eltype(op))
-    grid1 = grid(restricted_time_basis(problem(op)))
-    M = length(grid1)
-    b = Array(elt, M)
-    rhs!(op, b, f)
-    b
-end
-
-function rhs!(op::FE_DiscreteOperator, b::Vector, f::Function)
-    grid1 = grid(restricted_time_basis(problem(op)))
-    M = length(grid1)
-
-    @assert length(b) == M
-
-    rhs!(grid1, b, f)
-end
-
-function rhs!(grid::AbstractGrid, b::Vector, f::Function)
-    l = 0
-    for i in eachindex(grid)
-        l = l+1
-        b[l] = f(grid[i])
-    end
-end
-
-function rhs!(grid::MaskedGrid, b::Vector, f::Function)
-    l = 0
-    for i in eachindex_mask(grid)
-        if in(i, grid)
-            l = l+1
-            b[l] = f(grid[i])
-        end
-    end
-end
-
 
