@@ -37,7 +37,7 @@ function show(io::IO, fun::Fun{1})
     println(io, "Domain: ")
 end
 
-function ExpFun(f::Function, domain = default_fourier_domain_1d(), problem = default_fourier_problem_1d(), solver = default_fourier_solver(problem))
+function ExpFun(f::Function, domain = default_fourier_domain_1d(), problem = default_fourier_problem(domain), solver = default_fourier_solver(problem))
     expansion = solve(solver, f)
     Fun(domain, expansion)
 end

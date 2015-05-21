@@ -21,7 +21,7 @@ immutable FE_DiscreteOperator{SRC,DEST} <: FE_Operator{SRC,DEST}
     problem ::  FE_DiscreteProblem
 
     scratch1
-    scratch2
+    scratch2        # For transforms that can be done in-place we don't need scratch2
 
     function FE_DiscreteOperator(problem)
         scratch1 = Array(eltype(problem), size(frequency_basis_ext(problem)))
@@ -41,7 +41,7 @@ problem(op::FE_DiscreteOperator) = op.problem
 
 
 
-function apply!(op::FE_DiscreteOperator, coef_dest, coef_src)
+function apply!(op::FE_DiscreteOperator, dest, src, coef_dest, coef_src)
     p = problem(op)
 #    apply!(p.f_extension, op.scratch1, coef_src)
 #    apply!(p.itransform2, op.scratch2, op.scratch1)

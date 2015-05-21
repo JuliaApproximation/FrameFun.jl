@@ -35,13 +35,11 @@ end
 immutable FE_DirectSolver{ELT} <: FE_Solver
     op      ::  FE_DiscreteOperator
     matrix  ::  Array{ELT,2}
+
+    FE_DirectSolver(op::FE_DiscreteOperator) = new(op, matrix(op))
 end
 
-function FE_DirectSolver(problem::FE_Problem)
-    op = FE_DiscreteOperator(problem)
-    mat = matrix(op)
-    FE_DirectSolver{eltype(problem)}(op, mat)
-end
+FE_DirectSolver(problem::FE_Problem) = FE_DirectSolver{eltype(problem)}(FE_DiscreteOperator(problem))
 
 eltype{ELT}(s::FE_DirectSolver{ELT}) = ELT
 
@@ -53,14 +51,35 @@ function solve!{T}(s::FE_DirectSolver, coef::Array{T}, rhs::Array{T})
 end
 
 
-immutable FE_IterativeSolver{ELT} <: FE_Solver
+abstract FE_IterativeSolver <: FE_Solver
+
+
+immutable FE_IterativeSolverLSQR <: FE_IterativeSolver
     op      ::  FE_DiscreteOperator
+    opt     ::  OperatorTranspose
+
+    FE_IterativeSolverLSQR(op::FE_DiscreteOperator) = new(op, transpose(op))
 end
+
+FE_IterativeSolverLSQR(problem::FE_Problem) = FE_IterativeSolverLSQR(FE_DiscreteOperator(problem))
+
 
 operator(s::FE_IterativeSolver) = s.op
 
+function solve!{T}(s::FE_IterativeSolverLSQR, coef::Array{T}, rhs::Array{T})
+    op = s.op
+    opt = s.opt
 
+    my_A_mul_B!(output, x) =  ( apply!(op,  reshape(output, size(dest(op ))), reshape(x, size(src(op )))); output )
+    my_Ac_mul_B!(output, y) = ( apply!(opt, reshape(output, size(dest(opt))), reshape(y, size(src(opt)))); output )
 
+    matcfcn = MatrixCFcn{T}(size(op, 1), size(op, 2), my_A_mul_B!, my_Ac_mul_B!)
+
+    coef[:] = 0
+    y,ch = my_lsqr!(coef, matcfcn, rhs, maxiter = 100)
+
+    println("Stopped after ", ch.mvps, " iterations with residual ", abs(ch.residuals[end]), ".")
+end
 
 
 

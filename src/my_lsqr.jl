@@ -8,8 +8,13 @@ import IterativeSolvers.zerox
 import IterativeSolvers.MatrixCFcn
 import IterativeSolvers.ConvergenceHistory
 
+import Base: push!
+
 Arealdivtype(A,b) = realtype(typeof(one(eltype(b))/one(eltype(A))))
 
+# A complexified version of the lsqr routine in IterativeSolvers
+# which is in turn adapted from the Matlab implementation at
+#    http://www.stanford.edu/group/SOL/software/lsqr.html
 function my_lsqr!(x, ch::ConvergenceHistory, A, b; damp=0, atol=sqrt(eps(Arealdivtype(A,b))), btol=sqrt(eps(Arealdivtype(A,b))), conlim=one(Arealdivtype(A,b))/sqrt(eps(Arealdivtype(A,b))), maxiter::Int=max(size(A,1), size(A,2)))
     # Sanity-checking
     m = size(A,1)
@@ -182,7 +187,7 @@ function my_lsqr!(x, ch::ConvergenceHistory, A, b; damp=0, atol=sqrt(eps(Arealdi
 end
 
 function my_lsqr!(x, A, b; kwargs...)
-    T = Adivtype(A, b)
+    T = Arealdivtype(A, b)
     z = zero(T)
     ch = ConvergenceHistory(false, (z,z,z), 0, T[])
     my_lsqr!(x, ch, A, b; kwargs...)

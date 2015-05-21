@@ -242,6 +242,8 @@ default_fourier_problem(domain::AbstractDomain1d) = fourier_extension_problem(21
 
 default_fourier_problem(domain::AbstractDomain2d) = fourier_extension_problem((11,11), (22,22), (44,44))
 
+default_fourier_problem(domain::AbstractDomain3d) = fourier_extension_problem((5,5,5), (10,10,10), (20,20,20))
+
 default_fourier_domain_1d() = Interval()
 
 default_fourier_solver(problem) = FE_DirectSolver(problem)
