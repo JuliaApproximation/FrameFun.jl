@@ -233,11 +233,13 @@ Cube{T <: Number}(a::T, b::T) = Interval(a,b)
 
 Cube{N,T}(left::NTuple{N,T}, right::NTuple{N,T}) = Cube{N,T}([left...; right...]')
 
+Cube{T <: FloatingPoint}(::Type{T}) = Cube( (-one(T),-one(T),-one(T)), (one(T), one(T), one(T)))
+
+Cube{T <: FloatingPoint}(n::Int, T) = Cube( tuple([-one(T) for i=1:n]...), tuple([one(T) for i=1:n]...))
+
 Cube() = Cube(Float64)
 
-Cube(T) = Cube( (-one(T),-one(T),-one(T)), (one(T), one(T), one(T)))
-
-Cube(n::Int, T) = Cube( tuple([-one(T) for i=1:N]...), tuple([one(T) for i=1:N]...))
+Cube(n::Int) = Cube(n, Float64)
 
 in{N}(x::AbstractVector, c::Cube{N}) = reduce(&, [in(x[j], c.verts[j,1], c.verts[j,2]) for j=1:N])
 

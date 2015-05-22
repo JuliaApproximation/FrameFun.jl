@@ -16,7 +16,14 @@ import BasisFunctions: operator
 
 import BasisFunctions: plot
 
+
+
+# from domains.jl
+export Interval, Circle, Square, Cube, Rectangle, Cylinder, atomium
+
+# from funs.jl
 export ExpFun
+
 
 include("domains.jl")
 
