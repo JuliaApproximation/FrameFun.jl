@@ -8,11 +8,13 @@ using Base.Cartesian
 
 import Base: length, eltype, size, in, eachindex, getindex, push!
 
+import Base: show, showcompact
+
 import BasisFunctions: src, dest, matrix, matrix!, apply!, numtype
 
 import BasisFunctions: index_dim, grid
 
-import BasisFunctions: operator
+import BasisFunctions: operator, coefficients, set
 
 import BasisFunctions: plot
 

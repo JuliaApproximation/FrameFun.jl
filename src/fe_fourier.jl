@@ -100,20 +100,21 @@ apply!{G,N,T}(op::ZeroPadding, dest, src::TensorProductBasis{FourierBasisOdd{T},
 apply!{G,N,T}(op::Restriction, dest::TensorProductBasis{FourierBasisOdd{T},G,N,T}, src, coef_dest::Array, coef_src::Array) =
     reshape_L_to_N!(coef_dest, coef_src, size(coef_dest), size(coef_src))
 
-fourier_extension_problem{T <: FloatingPoint, S <: Number}(n::Int, t::T, sampling::S) = fourier_extension_problem(n, promote(t,sampling)...)
 
-function fourier_extension_problem{T <: FloatingPoint}(n::Int, t::T, sampling::T)
-    m = Int(ceil(n * sampling))
-    l = Int(round(t*(m-1)))
-    fourier_extension_problem(n, m, l)
+
+function fourier_extension_problem{T}(n::Int, t::T, sampling, domain::AbstractDomain1d{T})
+    m = round(Int, n * sampling)
+    l = round(Int, t*(m-1))
+    fourier_extension_problem(n, m, l, domain)
 end
 
-function fourier_extension_problem{T}(n::Int, m::Int, l::Int, a::T = 0.0, b::T = 1.0)
-    assert(isodd(n))
+function fourier_extension_problem{T}(n::Int, m::Int, l::Int, domain::Interval{T})
+    @assert isodd(n)
 
     t = (l*one(T)) / ((m-1)*one(T))
 
-    domain = Interval(a, b)
+    a = left(domain)
+    b = right(domain)
 
     fbasis1 = FourierBasis(n, a, b + (b-a)*(t-1))
     fbasis2 = FourierBasis(l, a, b + (b-a)*(t-1))
@@ -140,16 +141,13 @@ function fourier_extension_problem{T}(n::Int, m::Int, l::Int, a::T = 0.0, b::T =
     transform2 = FastFourierTransform(tbasis2, fbasis2)
     itransform2 = InverseFastFourierTransform(fbasis2, tbasis2)
 
-    FE_DiscreteProblem(domain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted, f_extension, f_restriction, t_extension, t_restriction, transform1, itransform1, transform2, itransform2)
+    FE_DiscreteProblem(domain, fbasis1, fbasis2, tbasis1, tbasis2,
+        tbasis_restricted, f_extension, f_restriction, t_extension,
+        t_restriction, transform1, itransform1, transform2, itransform2)
 end
 
-function fourier_extension_problem{N}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTuple{N,Int}, T = Float64)
-#     T = BigFloat
-#    T = Float64
-
+function fourier_extension_problem{N,T}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTuple{N,Int}, domain::Cube{N,T})
     t = (l[1]*one(T)) / ((m[1]-1)*one(T))
-
-    domain = Cube(N)
 
     fbasis1 = FourierBasis(n[1], -one(T), one(T) + 2*(t-1))
     fbasis2 = FourierBasis(l[1], -one(T), one(T) + 2*(t-1))
@@ -223,10 +221,11 @@ function apply!{T,G <: MaskedGrid}(op::Restriction, dest::TimeDomain{G}, src, co
     end
 end
 
+
 function fourier_extension_problem{N,T}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTuple{N,Int},
                                         domain::AbstractDomain{N,T})
 
-    problem = fourier_extension_problem(n, m, l, T)
+    problem = fourier_extension_problem(n, m, l, Cube(N,T))
     
     tbasis2 = problem.tbasis2
     tbasis_restricted = TimeDomain(MaskedGrid(grid(tbasis2), domain))
@@ -241,11 +240,39 @@ function fourier_extension_problem{N,T}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::N
 end
 
 
-default_fourier_problem(domain::AbstractDomain1d) = fourier_extension_problem(21, 2.0, 2.0)
 
-default_fourier_problem(domain::AbstractDomain2d) = fourier_extension_problem((11,11), (22,22), (44,44))
+######################
+# Default parameters
+######################
 
-default_fourier_problem(domain::AbstractDomain3d) = fourier_extension_problem((5,5,5), (10,10,10), (20,20,20))
+default_fourier_n(domain::AbstractDomain1d) = 50
+
+default_fourier_n(domain::AbstractDomain2d) = 10
+
+default_fourier_n(domain::AbstractDomain3d) = 3
+
+default_fourier_T(domain) = 2.0
+
+default_fourier_sampling(domain) = 2.0
+
+
+default_fourier_problem(domain::AbstractDomain1d, n, T, s) =
+    fourier_extension_problem(2*n+1, T, s, domain)
+
+function default_fourier_problem(domain::AbstractDomain2d, n, T, s)
+    N = 2*n+1
+    M = round(Int, N*s)
+    L = round(Int, T*(M-1))
+    fourier_extension_problem((N,N), (M,M), (L,L), domain)
+end
+
+function default_fourier_problem(domain::AbstractDomain3d, n, T, s)
+    N = 2*n+1
+    M = round(Int, N*s)
+    L = round(Int, T*(M-1))
+    fourier_extension_problem((N,N,N), (M,M,M), (L,L,L), domain)
+end
+
 
 default_fourier_domain_1d() = Interval()
 
@@ -253,10 +280,8 @@ default_fourier_domain_2d() = Circle()
 
 default_fourier_domain_3d() = Sphere()
 
-default_fourier_solver(problem) = default_fourier_solver(problem, domain(problem))
+default_fourier_solver(domain) = FE_DirectSolver
 
-default_fourier_solver(problem, domain::AbstractDomain) = FE_DirectSolver(problem)
-
-default_fourier_solver(problem, domain::Interval) = FE_ProjectionSolver(problem)
+default_fourier_solver(domain::Interval) = FE_ProjectionSolver
 
 

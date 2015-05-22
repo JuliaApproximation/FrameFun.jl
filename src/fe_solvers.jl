@@ -8,7 +8,6 @@ problem(s::FE_Solver) = s.problem
 # Delegation methods
 for op in (:numtype,:eltype,:frequency_basis,:frequency_basis_ext, :time_basis, :time_basis_ext,
     :restricted_time_basis, :size, :operator, :operator_transpose)
-
     @eval $op(s::FE_Solver) = $op(problem(s))
 end
 

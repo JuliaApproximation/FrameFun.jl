@@ -63,7 +63,7 @@ in(x::AbstractVector, d::EmptyDomain) = false
 
 (==)(d1::EmptyDomain, d2::EmptyDomain) = true
 
-show(io::IO, d::EmptyDomain) = print(io, "An empty domain")
+show(io::IO, d::EmptyDomain) = print(io, "an empty domain")
 
 
 ###############################################################################################
@@ -89,7 +89,7 @@ in(x::AbstractVector, d::RnDomain) = true
 
 (==)(d1::RnDomain, d2::RnDomain) = true
 
-show(io::IO, e::RnDomain) = print(io, "The ", N, "-dimensional Euclidean space")
+show(io::IO, e::RnDomain) = print(io, "the ", N, "-dimensional Euclidean space")
 
 
 ###############################################################################################
@@ -121,7 +121,7 @@ right(d::Interval) = d.b
 (==)(d1::Interval,d2::Interval) = (d1.a == d2.a) && (d1.b == d2.b)
 
 
-show(io::IO, d::Interval) = print(io, "The interval [", d.a, ", ", d.b, "]")
+show(io::IO, d::Interval) = print(io, "the interval [", d.a, ", ", d.b, "]")
 
 const unitinterval = Interval()
 
@@ -153,40 +153,9 @@ in{T}(x::AbstractVector, c::Circle{T}) = (x[1]-c.center[1])^2 + (x[2]-c.center[2
 
 (==)(c1::Circle,c2::Circle) = (c1.radius == c2.radius) && (c1.center == c2.center)
 
-show(io::IO, c::Circle) = print(io, "A circle of radius ", c.radius, " centered at ", c.center)
+show(io::IO, c::Circle) = print(io, "a circle of radius ", c.radius, " centered at ", c.center)
 
 const unitcircle = Circle()
-
-
-
-###############################################################################################
-### A rectangle
-###############################################################################################
-
-immutable Rectangle{T} <: AbstractDomain{2,T}
-  verts ::  Array{T,2}
-end
-
-# The rectangle [a,b] x [c,d]
-Rectangle{T}(a::T = 0.0, b::T = 1.0, c::T = 0.0, d::T = 1.0) = Rectangle{T}([a b; c d])
-
-in{T}(x::AbstractVector, r::Rectangle{T}) = reduce(&, [in(x[j], r.verts[j,1], r.verts[j,2]) for j=1:3])
-
-## Arithmetic operations
-
-(+)(r::Rectangle, x::AbstractVector) = Rectangle(r.verts .+ x)
-(+)(x::AbstractVector, r::Rectangle) = r+x
-
-(*)(r::Rectangle, x::Number) = Rectangle(r.verts * x)
-(*)(x::Number, r::Rectangle) = r*x
-
-(/)(r::Rectangle, x::Number) = r * (1/x)
-
-(==)(r1::Rectangle, r2::Rectangle) = (r1.verts == r2.verts)
-
-show(io::IO, rect::Rectangle) = print(io, "The rectangle [", rect.verts[1,1], ",", rect.verts[1,2], "] x [", rect.verts[2,1], ",", rect.verts[2,2], "]")
-
-const unitsquare = Rectangle()
 
 
 
@@ -211,17 +180,17 @@ in(x::AbstractVector, s::Sphere) = (x[1]-s.center[1])^2 + (x[2]-s.center[2])^2 +
 (*)(s::Sphere, x::Number) = Sphere(s.radius * x, s.center * x)
 (*)(x::Number, s::Sphere) = s*x
 
-(/)(s::Rectangle, x::Number) = s * (1/x)
+(/)(s::Sphere, x::Number) = s * (1/x)
 
 (==)(s1::Sphere, s2::Sphere) = (s1.radius == s2.radius) && (s1.center == s2.center)
 
-show(io::IO, s::Sphere) = print(io, "A sphere of radius ", s.radius, " centered at ", s.center)
+show(io::IO, s::Sphere) = print(io, "a sphere of radius ", s.radius, " centered at ", s.center)
 
 const unitsphere = Sphere()
 
 
 ###############################################################################################
-### A cube
+### An n-dimensional cube
 ###############################################################################################
 
 immutable Cube{N,T} <: AbstractDomain{N,T}
@@ -235,7 +204,7 @@ Cube{N,T}(left::NTuple{N,T}, right::NTuple{N,T}) = Cube{N,T}([left...; right...]
 
 Cube{T <: FloatingPoint}(::Type{T}) = Cube( (-one(T),-one(T),-one(T)), (one(T), one(T), one(T)))
 
-Cube{T <: FloatingPoint}(n::Int, T) = Cube( tuple([-one(T) for i=1:n]...), tuple([one(T) for i=1:n]...))
+Cube{T <: FloatingPoint}(n::Int, ::Type{T}) = Cube( tuple([-one(T) for i=1:n]...), tuple([one(T) for i=1:n]...))
 
 Cube() = Cube(Float64)
 
@@ -255,13 +224,14 @@ in{N}(x::AbstractVector, c::Cube{N}) = reduce(&, [in(x[j], c.verts[j,1], c.verts
 
 (==)(c1::Cube, c2::Cube) = (c1.verts == c2.verts)
 
-show(io::IO, c::Cube{2}) = print(io, "The rectangle [", c.verts[1,1], ",", c.verts[1,2], "] x [", c.verts[2,1], ",", c.verts[2,2], "]")
+show(io::IO, c::Cube{2}) = print(io, "the rectangle [", c.verts[1,1], ",", c.verts[1,2], "] x [", c.verts[2,1], ",", c.verts[2,2], "]")
 
-show(io::IO, c::Cube{3}) = print(io, "The cube [", c.verts[1,1], ",", c.verts[1,2], "] x [", c.verts[2,1], ",", c.verts[2,2], "] x [", c.verts[3,1], ",", c.verts[3,2], "]")
+show(io::IO, c::Cube{3}) = print(io, "the cube [", c.verts[1,1], ",", c.verts[1,2], "] x [", c.verts[2,1], ",", c.verts[2,2], "] x [", c.verts[3,1], ",", c.verts[3,2], "]")
 
-show{N}(io::IO, c::Cube{N}) = print(io, "A ", N, "-dimensional cube")
+show{N}(io::IO, c::Cube{N}) = print(io, "a ", N, "-dimensional cube")
 
-const unitcube = Cube()
+const unitsquare = Cube(2)
+const unitcube = Cube(3)
 
 
 
@@ -281,7 +251,7 @@ in{T}(x::AbstractVector, c::Cylinder{T}) = in(x[1], zero(T), c.length) && (x[2]^
 
 (==)(c1::Cylinder, c2::Cylinder) = (c1.radius == c2.radius) && (c1.length == c2.length)
 
-show(io::IO, c::Cylinder) = print(io, "A cylinder of radius ", c.radius, " and length ", c.length)
+show(io::IO, c::Cylinder) = print(io, "a cylinder of radius ", c.radius, " and length ", c.length)
 
 
 ###############################################################################################
@@ -376,9 +346,9 @@ end
 (==)(d1::DomainIntersection, d2::DomainIntersection) = (d1.d1 == d2.d1) && (d1.d2 == d2.d2)
 
 function show(io::IO, d::DomainIntersection)
-    print(io, "The intersection of two domains: \n")
-    print(io, "First domain: ", d.d1, "\n")
-    print(io, "Second domain: ", d.d1, "\n")
+    print(io, "the intersection of two domains: \n")
+    print(io, "    First domain: ", d.d1, "\n")
+    print(io, "    Second domain: ", d.d1, "\n")
 end
 
 
@@ -408,9 +378,9 @@ end
 (==)(d1::DomainDifference, d2::DomainDifference) = (d1.d1 == d2.d1) && (d1.d2 == d2.d2)
 
 function show(io::IO, d::DomainDifference)
-    print(io, "The difference of two domains: \n")
-    print(io, "First domain: ", d.d1, "\n")
-    print(io, "Second domain: ", d.d1, "\n")
+    print(io, "the difference of two domains: \n")
+    print(io, "    First domain: ", d.d1, "\n")
+    print(io, "    Second domain: ", d.d1, "\n")
 end
 
 
@@ -435,7 +405,7 @@ end
 
 
 function show(io::IO, r::RevolvedDomain)
-    print(io, "The revolution of: ", r.d1)
+    print(io, "the revolution of: ", r.d1)
 end
 
 
@@ -536,7 +506,7 @@ push!(dc::DomainCollection, d::AbstractDomain) = push!(dc.list, d)
 
 (==)(d1::DomainCollection, d2::DomainCollection) = reduce(&, map( (x,y) -> x==y, d1.list, d2.list))
 
-show(io::IO, d::DomainCollection) = print(io, "A collection of ", length(d.list), " domains")
+show(io::IO, d::DomainCollection) = print(io, "a collection of ", length(d.list), " domains")
 
 
 function randomcircles(n)
