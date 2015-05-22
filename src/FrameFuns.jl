@@ -14,6 +14,8 @@ import BasisFunctions: index_dim, grid
 
 import BasisFunctions: operator
 
+import BasisFunctions: plot
+
 export ExpFun
 
 include("domains.jl")
@@ -24,8 +26,6 @@ include("subgrid.jl")
 
 include("fe_problem.jl")
 
-include("fe_operator.jl")
-
 include("my_lsqr.jl")
 
 include("fe_solvers.jl")
@@ -33,6 +33,8 @@ include("fe_solvers.jl")
 include("fe_fourier.jl")
 
 include("fastsolver.jl")
+
+include("plots.jl")
 
 end # module
 

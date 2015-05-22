@@ -1,7 +1,6 @@
 # fe_fourier.jl
 
 
-
 function apply!{T}(op::ZeroPadding, dest::FourierBasis, src::FourierBasis, coef_dest::Array{T}, coef_src::Array{T})
     @assert size(coef_src)==size(src)
     @assert size(coef_dest)==size(dest)
@@ -114,6 +113,8 @@ function fourier_extension_problem{T}(n::Int, m::Int, l::Int, a::T = 0.0, b::T =
 
     t = (l*one(T)) / ((m-1)*one(T))
 
+    domain = Interval(a, b)
+
     fbasis1 = FourierBasis(n, a, b + (b-a)*(t-1))
     fbasis2 = FourierBasis(l, a, b + (b-a)*(t-1))
 
@@ -125,13 +126,13 @@ function fourier_extension_problem{T}(n::Int, m::Int, l::Int, a::T = 0.0, b::T =
     tbasis1 = TimeDomain(grid1)
     tbasis2 = TimeDomain(grid2)
 
-    restricted_tbasis = TimeDomain(rgrid)
+    tbasis_restricted = TimeDomain(rgrid)
 
     f_extension = ZeroPadding(fbasis1, fbasis2)
     f_restriction = Restriction(fbasis2, fbasis1)
 
-    t_extension = ZeroPadding(restricted_tbasis, tbasis2)
-    t_restriction = Restriction(tbasis2, restricted_tbasis)
+    t_extension = ZeroPadding(tbasis_restricted, tbasis2)
+    t_restriction = Restriction(tbasis2, tbasis_restricted)
 
     transform1 = FastFourierTransform(tbasis1, fbasis1)
     itransform1 = InverseFastFourierTransform(fbasis1, tbasis1)
@@ -139,7 +140,7 @@ function fourier_extension_problem{T}(n::Int, m::Int, l::Int, a::T = 0.0, b::T =
     transform2 = FastFourierTransform(tbasis2, fbasis2)
     itransform2 = InverseFastFourierTransform(fbasis2, tbasis2)
 
-    FE_DiscreteProblem(fbasis1, fbasis2, tbasis1, tbasis2, restricted_tbasis, f_extension, f_restriction, t_extension, t_restriction, transform1, itransform1, transform2, itransform2)
+    FE_DiscreteProblem(domain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted, f_extension, f_restriction, t_extension, t_restriction, transform1, itransform1, transform2, itransform2)
 end
 
 function fourier_extension_problem{N}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTuple{N,Int}, T = Float64)
@@ -147,6 +148,8 @@ function fourier_extension_problem{N}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTu
 #    T = Float64
 
     t = (l[1]*one(T)) / ((m[1]-1)*one(T))
+
+    domain = Cube(N)
 
     fbasis1 = FourierBasis(n[1], -one(T), one(T) + 2*(t-1))
     fbasis2 = FourierBasis(l[1], -one(T), one(T) + 2*(t-1))
@@ -166,14 +169,14 @@ function fourier_extension_problem{N}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTu
     tens_tbasis1 = tensorproduct(tbasis1, N)
     tens_tbasis2 = tensorproduct(tbasis2, N)
 
-    restricted_tbasis = TimeDomain(rgrid)
-    tens_restricted_tbasis = tensorproduct(restricted_tbasis, N)
+    tbasis_restricted = TimeDomain(rgrid)
+    tens_tbasis_restricted = tensorproduct(tbasis_restricted, N)
 
     f_extension = ZeroPadding(tens_fbasis1, tens_fbasis2)
     f_restriction = Restriction(tens_fbasis2, tens_fbasis1)
 
-    t_extension = ZeroPadding(tens_restricted_tbasis, tens_tbasis2)
-    t_restriction = Restriction(tens_tbasis2, tens_restricted_tbasis)
+    t_extension = ZeroPadding(tens_tbasis_restricted, tens_tbasis2)
+    t_restriction = Restriction(tens_tbasis2, tens_tbasis_restricted)
 
     transform1 = FastFourierTransform(tens_tbasis1, tens_fbasis1)
     itransform1 = InverseFastFourierTransform(tens_fbasis1, tens_tbasis1)
@@ -181,8 +184,8 @@ function fourier_extension_problem{N}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTu
     transform2 = FastFourierTransform(tens_tbasis2, tens_fbasis2)
     itransform2 = InverseFastFourierTransform(tens_fbasis2, tens_tbasis2)
 
-    FE_DiscreteProblem(tens_fbasis1, tens_fbasis2, tens_tbasis1, tens_tbasis2,
-        tens_restricted_tbasis, f_extension, f_restriction, t_extension,
+    FE_DiscreteProblem(domain, tens_fbasis1, tens_fbasis2, tens_tbasis1, tens_tbasis2,
+        tens_tbasis_restricted, f_extension, f_restriction, t_extension,
         t_restriction, transform1, itransform1, transform2, itransform2)
 end
 
@@ -226,13 +229,13 @@ function fourier_extension_problem{N,T}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::N
     problem = fourier_extension_problem(n, m, l, T)
     
     tbasis2 = problem.tbasis2
-    restricted_tbasis = TimeDomain(MaskedGrid(grid(tbasis2), domain))
+    tbasis_restricted = TimeDomain(MaskedGrid(grid(tbasis2), domain))
 
-    t_extension = ZeroPadding(restricted_tbasis, tbasis2)
-    t_restriction = Restriction(tbasis2, restricted_tbasis)
+    t_extension = ZeroPadding(tbasis_restricted, tbasis2)
+    t_restriction = Restriction(tbasis2, tbasis_restricted)
 
-    FE_DiscreteProblem(problem.fbasis1, problem.fbasis2, problem.tbasis1, problem.tbasis2, 
-        restricted_tbasis, problem.f_extension, problem.f_restriction,
+    FE_DiscreteProblem(domain, problem.fbasis1, problem.fbasis2, problem.tbasis1, problem.tbasis2, 
+        tbasis_restricted, problem.f_extension, problem.f_restriction,
         t_extension, t_restriction,
         problem.transform1, problem.itransform1, problem.transform2, problem.itransform2)
 end
@@ -246,5 +249,14 @@ default_fourier_problem(domain::AbstractDomain3d) = fourier_extension_problem((5
 
 default_fourier_domain_1d() = Interval()
 
-default_fourier_solver(problem) = FE_DirectSolver(problem)
+default_fourier_domain_2d() = Circle()
+
+default_fourier_domain_3d() = Sphere()
+
+default_fourier_solver(problem) = default_fourier_solver(problem, domain(problem))
+
+default_fourier_solver(problem, domain::AbstractDomain) = FE_DirectSolver(problem)
+
+default_fourier_solver(problem, domain::Interval) = FE_ProjectionSolver(problem)
+
 

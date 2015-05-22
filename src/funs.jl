@@ -14,6 +14,8 @@ numtype{N,T}(::AbstractFun{N,T}) = T
 numtype{N,T}(::Type{AbstractFun{N,T}}) = T
 numtype{F <: AbstractFun}(::Type{F}) = numtype(super(F))
 
+
+# A Fun groups a domain and an expansion
 immutable Fun{N,T,D,S,ELT,ID} <: AbstractFun{N,T}
     domain      ::  D
     expansion   ::  SetExpansion{S,ELT,ID}     # the frame coefficients

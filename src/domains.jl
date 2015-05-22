@@ -224,14 +224,22 @@ const unitsphere = Sphere()
 ### A cube
 ###############################################################################################
 
-immutable Cube{T} <: AbstractDomain{3,T}
+immutable Cube{N,T} <: AbstractDomain{N,T}
   verts ::  Array{T,2}
 end
 
-# The cube [a,b] x [c,d] x [e,f]
-Cube{T}(a::T = 0.0, b::T = 1.0, c::T = 0.0, d::T = 1.0, e::T = zero(T), f::T = one(T)) = Cube{T}([a b; c d; e f])
 
-in{T}(x::AbstractVector, c::Cube{T}) = reduce(&, [in(x[j], c.verts[j,1], c.verts[j,2]) for j=1:3])
+Cube{T <: Number}(a::T, b::T) = Interval(a,b)
+
+Cube{N,T}(left::NTuple{N,T}, right::NTuple{N,T}) = Cube{N,T}([left...; right...]')
+
+Cube() = Cube(Float64)
+
+Cube(T) = Cube( (-one(T),-one(T),-one(T)), (one(T), one(T), one(T)))
+
+Cube(n::Int, T) = Cube( tuple([-one(T) for i=1:N]...), tuple([one(T) for i=1:N]...))
+
+in{N}(x::AbstractVector, c::Cube{N}) = reduce(&, [in(x[j], c.verts[j,1], c.verts[j,2]) for j=1:N])
 
 ## Arithmetic operations
 
@@ -245,7 +253,11 @@ in{T}(x::AbstractVector, c::Cube{T}) = reduce(&, [in(x[j], c.verts[j,1], c.verts
 
 (==)(c1::Cube, c2::Cube) = (c1.verts == c2.verts)
 
-show(io::IO, c::Cube) = print(io, "The cube [", c.verts[1,1], ",", c.verts[1,2], "] x [", c.verts[2,1], ",", c.verts[2,2], "] x [", c.verts[3,1], ",", c.verts[3,2], "]")
+show(io::IO, c::Cube{2}) = print(io, "The rectangle [", c.verts[1,1], ",", c.verts[1,2], "] x [", c.verts[2,1], ",", c.verts[2,2], "]")
+
+show(io::IO, c::Cube{3}) = print(io, "The cube [", c.verts[1,1], ",", c.verts[1,2], "] x [", c.verts[2,1], ",", c.verts[2,2], "] x [", c.verts[3,1], ",", c.verts[3,2], "]")
+
+show{N}(io::IO, c::Cube{N}) = print(io, "A ", N, "-dimensional cube")
 
 const unitcube = Cube()
 

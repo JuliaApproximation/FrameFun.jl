@@ -1,16 +1,17 @@
 # fe_problem.jl
 
-abstract FE_Problem
+abstract FE_Problem{N,T}
 
 # This type groups the data corresponding to a FE problem.
-immutable FE_DiscreteProblem <: FE_Problem
+immutable FE_DiscreteProblem{N,T} <: FE_Problem{N,T}
+    domain          ::  AbstractDomain{N,T}
     fbasis1         ::  AbstractBasis
     fbasis2         ::  AbstractBasis
 
     tbasis1         ::  AbstractBasis
     tbasis2         ::  AbstractBasis
 
-    restricted_tbasis   ::  AbstractBasis
+    tbasis_restricted   ::  AbstractBasis
 
     f_extension     ::  AbstractOperator
     f_restriction   ::  AbstractOperator
@@ -27,14 +28,14 @@ immutable FE_DiscreteProblem <: FE_Problem
     op              ::  AbstractOperator
     opt             ::  AbstractOperator
 
-    function FE_DiscreteProblem(fbasis1, fbasis2, tbasis1, tbasis2, restricted_tbasis, 
+    function FE_DiscreteProblem(domain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted, 
         f_extension, f_restriction, t_extension, t_restriction, 
         transform1, itransform1, transform2, itransform2)
 
         op  = t_restriction * itransform2 * f_extension
         opt = f_restriction * transform2 * t_extension
 
-        new(fbasis1, fbasis2, tbasis1, tbasis2, restricted_tbasis, 
+        new(domain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted, 
             f_extension, f_restriction, t_extension, t_restriction, 
             transform1, itransform1, transform2, itransform2, 
             op, opt)
@@ -42,16 +43,20 @@ immutable FE_DiscreteProblem <: FE_Problem
 
 end
 
+FE_DiscreteProblem{N,T}(domain::AbstractDomain{N,T}, otherargs...) =
+    FE_DiscreteProblem{N,T}(domain, otherargs...)
 
-numtype(p::FE_DiscreteProblem) = numtype(p.fbasis1)
+domain(p::FE_DiscreteProblem) = p.domain
+
+numtype{N,T}(p::FE_DiscreteProblem{N,T}) = T
 
 eltype(p::FE_DiscreteProblem) = eltype(operator(p))
 
-dim(p::FE_DiscreteProblem) = dim(p.fbasis1)
+dim{N}(p::FE_DiscreteProblem{N}) = N
 
-size(p::FE_DiscreteProblem) = size(operator(p))
+operator(p::FE_DiscreteProblem) = p.op
 
-size(p::FE_DiscreteProblem, j) = size(operator(p), j)
+operator_transpose(p::FE_DiscreteProblem) = p.opt
 
 frequency_basis(p::FE_DiscreteProblem) = p.fbasis1
 
@@ -61,15 +66,26 @@ time_basis(p::FE_DiscreteProblem) = p.tbasis1
 
 time_basis_ext(p::FE_DiscreteProblem) = p.tbasis2
 
-restricted_time_basis(p::FE_DiscreteProblem) = p.restricted_tbasis
+time_basis_restricted(p::FE_DiscreteProblem) = p.tbasis_restricted
 
-operator(p::FE_DiscreteProblem) = p.op
+size(p::FE_DiscreteProblem) = size(operator(p))
 
-operator_transpose(p::FE_DiscreteProblem) = p.opt
+size(p::FE_DiscreteProblem, j) = size(operator(p), j)
 
+size_ext(p::FE_DiscreteProblem) = size(frequency_basis_ext(p))
 
-function rhs(p::FE_DiscreteProblem, f::Function, elt = eltype(op))
-    grid1 = grid(restricted_time_basis(p))
+length_ext(p::FE_DiscreteProblem) = length(frequency_basis_ext(p))
+
+size_ext(p::FE_DiscreteProblem, j) = size(frequency_basis_ext(p), j)
+
+param_N(p::FE_DiscreteProblem) = length(time_basis(p))
+
+param_L(p::FE_DiscreteProblem) = length(time_basis_ext(p))
+
+param_M(p::FE_DiscreteProblem) = length(time_basis_restricted(p))
+
+function rhs(p::FE_DiscreteProblem, f::Function, elt = eltype(p))
+    grid1 = grid(time_basis_restricted(p))
     M = length(grid1)
     b = Array(elt, M)
     rhs!(p, b, f)
@@ -77,7 +93,7 @@ function rhs(p::FE_DiscreteProblem, f::Function, elt = eltype(op))
 end
 
 function rhs!(p::FE_DiscreteProblem, b::Vector, f::Function)
-    grid1 = grid(restricted_time_basis(p))
+    grid1 = grid(time_basis_restricted(p))
     M = length(grid1)
 
     @assert length(b) == M
