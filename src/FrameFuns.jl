@@ -19,9 +19,10 @@ import BasisFunctions: operator, coefficients, set
 import BasisFunctions: plot
 
 
-
 # from domains.jl
 export Interval, Circle, Square, Cube, Rectangle, Cylinder, atomium
+
+export numtype
 
 # from funs.jl
 export ExpFun

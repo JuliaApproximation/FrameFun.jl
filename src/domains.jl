@@ -20,7 +20,7 @@ typealias AbstractDomain4d{T <: FloatingPoint} AbstractDomain{4,T}
 in{T,S <: Number}(x::S, d::AbstractDomain1d{T}) = in([x], d)
 
 # Check whether a value is in an interval, up to 10 times machine precision
-in{T <: FloatingPoint, S <: Number}(x::S, a::T, b::T) = (a-10eps() <= x <= b+10eps())
+in{T <: FloatingPoint, S <: Number}(x::S, a::T, b::T) = (a-10eps(T) <= x <= b+10eps(T))
 
 # Fallback routine when evaluated on a grid. This routine is general, in order to avoid ambiguity
 # with other routines later on. Dispatch on dimension is done by a different routine evalgrid below.
@@ -101,7 +101,9 @@ immutable Interval{T} <: AbstractDomain{1,T}
   b     ::  T
 end
 
-Interval{T}(a::T = 0.0, b::T = 1.0) = Interval{T}(a, b)
+Interval{T}(a::T = -1.0, b::T = 1.0) = Interval{T}(a, b)
+
+Interval{T <: FloatingPoint}(::Type{T}) = Interval(zero(T), one(T))
 
 in(x::AbstractVector, d::Interval) = in(x[1], d.a, d.b)
 

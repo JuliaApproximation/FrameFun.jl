@@ -48,7 +48,7 @@ function ExpFun(f::Function, domain = default_fourier_domain_1d(),
     solver = solver_type(problem)
 
     expansion = solve(solver, f)
-    Fun(domain, expansion)
+    Fun(domain, expansion), problem, solver
 end
 
 

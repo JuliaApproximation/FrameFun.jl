@@ -135,11 +135,11 @@ function fourier_extension_problem{T}(n::Int, m::Int, l::Int, domain::Interval{T
     t_extension = ZeroPadding(tbasis_restricted, tbasis2)
     t_restriction = Restriction(tbasis2, tbasis_restricted)
 
-    transform1 = FastFourierTransform(tbasis1, fbasis1)
-    itransform1 = InverseFastFourierTransform(fbasis1, tbasis1)
+    transform1 = transform_operator(tbasis1, fbasis1)
+    itransform1 = transform_operator(fbasis1, tbasis1)
 
-    transform2 = FastFourierTransform(tbasis2, fbasis2)
-    itransform2 = InverseFastFourierTransform(fbasis2, tbasis2)
+    transform2 = transform_operator(tbasis2, fbasis2)
+    itransform2 = transform_operator(fbasis2, tbasis2)
 
     FE_DiscreteProblem(domain, fbasis1, fbasis2, tbasis1, tbasis2,
         tbasis_restricted, f_extension, f_restriction, t_extension,
@@ -251,22 +251,22 @@ default_fourier_n(domain::AbstractDomain2d) = 10
 
 default_fourier_n(domain::AbstractDomain3d) = 3
 
-default_fourier_T(domain) = 2.0
+default_fourier_T{N,T}(domain::AbstractDomain{N,T}) = 2*one(T)
 
-default_fourier_sampling(domain) = 2.0
+default_fourier_sampling{N,T}(domain::AbstractDomain{N,T}) = 2*one(T)
 
 
-default_fourier_problem(domain::AbstractDomain1d, n, T, s) =
-    fourier_extension_problem(2*n+1, T, s, domain)
+default_fourier_problem{T}(domain::AbstractDomain1d{T}, n, t, s) =
+    fourier_extension_problem(2*n+1, convert(T, t), convert(T,s), domain)
 
-function default_fourier_problem(domain::AbstractDomain2d, n, T, s)
+function default_fourier_problem{T}(domain::AbstractDomain2d{T}, n, t, s)
     N = 2*n+1
     M = round(Int, N*s)
-    L = round(Int, T*(M-1))
+    L = round(Int, t*(M-1))
     fourier_extension_problem((N,N), (M,M), (L,L), domain)
 end
 
-function default_fourier_problem(domain::AbstractDomain3d, n, T, s)
+function default_fourier_problem{T}(domain::AbstractDomain3d{T}, n, t, s)
     N = 2*n+1
     M = round(Int, N*s)
     L = round(Int, T*(M-1))
@@ -282,6 +282,6 @@ default_fourier_domain_3d() = Sphere()
 
 default_fourier_solver(domain) = FE_DirectSolver
 
-default_fourier_solver(domain::Interval) = FE_ProjectionSolver
+default_fourier_solver(domain::Interval{Float64}) = FE_ProjectionSolver
 
 
