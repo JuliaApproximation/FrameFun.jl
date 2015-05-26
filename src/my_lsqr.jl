@@ -1,19 +1,21 @@
 import IterativeSolvers
 
-Base.real{T<:Real}(::Type{T}) = T
-Base.real{T<:Real}(::Type{Complex{T}}) = T
-
 import IterativeSolvers.Adivtype
 import IterativeSolvers.zerox
 import IterativeSolvers.MatrixCFcn
 import IterativeSolvers.ConvergenceHistory
 
-import Base: push!
+import Base: push!, real
+
+import IterativeSolvers: lsqr!
+
+real{T<:Real}(::Type{T}) = T
+real{T<:Real}(::Type{Complex{T}}) = T
 
 # A complexified version of the lsqr routine in IterativeSolvers
 # which is in turn adapted from the Matlab implementation at
 #    http://www.stanford.edu/group/SOL/software/lsqr.html
-function my_lsqr!(x, ch::ConvergenceHistory, A, b, damp=0, atol=sqrt(eps(real(Adivtype(A,b)))), btol=sqrt(eps(real(Adivtype(A,b)))), conlim=one(real(Adivtype(A,b)))/sqrt(eps(real(Adivtype(A,b)))), maxiter::Int=max(size(A,1), size(A,2)))
+function lsqr!{T}(x::AbstractArray{Complex{T}}, ch::ConvergenceHistory, A, b; damp=0, atol=sqrt(eps(real(Adivtype(A,b)))), btol=sqrt(eps(real(Adivtype(A,b)))), conlim=one(real(Adivtype(A,b)))/sqrt(eps(real(Adivtype(A,b)))), maxiter::Int=max(size(A,1), size(A,2)))
     # Sanity-checking
     m = size(A,1)
     n = size(A,2)
@@ -23,11 +25,13 @@ function my_lsqr!(x, ch::ConvergenceHistory, A, b, damp=0, atol=sqrt(eps(real(Ad
         isfinite(x[i]) || error("Initial guess for x must be finite")
     end
 
+    # Adivtype may be complex: define real and complex numeric types Tr and Tc
+    Tc = Adivtype(A, b)
+    Tr = real(Tc)
+
     # Initialize
     empty!(ch)
     ch.threshold = (atol, btol, conlim)
-    Tc = Adivtype(A, b)
-    Tr = real(Tc)
     itn = istop = 0
     ctol = conlim > 0 ? convert(Tr,1/conlim) : zero(Tr)
     Anorm = Acond = ddnorm = res2 = xnorm = xxnorm = z = sn2 = zero(Tr)
@@ -185,13 +189,13 @@ function my_lsqr!(x, ch::ConvergenceHistory, A, b, damp=0, atol=sqrt(eps(real(Ad
     x
 end
 
-function my_lsqr!(x, A, b; kwargs...)
+function lsqr!{T}(x::AbstractArray{Complex{T}}, A, b; kwargs...)
     Tr = real(Adivtype(A, b))
     z = zero(Tr)
     ch = ConvergenceHistory(false, (z,z,z), 0, Tr[])
-    my_lsqr!(x, ch, A, b; kwargs...)
+    lsqr!(x, ch, A, b; kwargs...)
     x, ch
 end
 
-my_lsqr(A, b; kwargs...) = my_lsqr!(zerox(A, b), A, b; kwargs...)
+
 

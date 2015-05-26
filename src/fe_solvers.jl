@@ -65,7 +65,7 @@ function solve!{T}(s::FE_IterativeSolverLSQR, coef::Array{T}, rhs::Array{T})
     matcfcn = MatrixCFcn{T}(size(op, 1), size(op, 2), my_A_mul_B!, my_Ac_mul_B!)
 
     coef[:] = 0
-    y,ch = my_lsqr!(coef, matcfcn, rhs, maxiter = 100)
+    y,ch = lsqr!(coef, matcfcn, rhs, maxiter = 100)
 
     println("Stopped after ", ch.mvps, " iterations with residual ", abs(ch.residuals[end]), ".")
 end
