@@ -1,7 +1,7 @@
 import IterativeSolvers
 
-realtype{T}(::Type{Complex{T}}) = T
-realtype{T}(::Type{T}) = T
+Base.real{T<:Real}(::Type{T}) = T
+Base.real{T<:Real}(::Type{Complex{T}}) = T
 
 import IterativeSolvers.Adivtype
 import IterativeSolvers.zerox
@@ -10,12 +10,10 @@ import IterativeSolvers.ConvergenceHistory
 
 import Base: push!
 
-Arealdivtype(A,b) = realtype(typeof(one(eltype(b))/one(eltype(A))))
-
 # A complexified version of the lsqr routine in IterativeSolvers
 # which is in turn adapted from the Matlab implementation at
 #    http://www.stanford.edu/group/SOL/software/lsqr.html
-function my_lsqr!(x, ch::ConvergenceHistory, A, b; damp=0, atol=sqrt(eps(Arealdivtype(A,b))), btol=sqrt(eps(Arealdivtype(A,b))), conlim=one(Arealdivtype(A,b))/sqrt(eps(Arealdivtype(A,b))), maxiter::Int=max(size(A,1), size(A,2)))
+function my_lsqr!(x, ch::ConvergenceHistory, A, b, damp=0, atol=sqrt(eps(real(Adivtype(A,b)))), btol=sqrt(eps(real(Adivtype(A,b)))), conlim=one(real(Adivtype(A,b)))/sqrt(eps(real(Adivtype(A,b)))), maxiter::Int=max(size(A,1), size(A,2)))
     # Sanity-checking
     m = size(A,1)
     n = size(A,2)
@@ -28,29 +26,29 @@ function my_lsqr!(x, ch::ConvergenceHistory, A, b; damp=0, atol=sqrt(eps(Arealdi
     # Initialize
     empty!(ch)
     ch.threshold = (atol, btol, conlim)
-    T = Adivtype(A, b)
-    Tr = Arealdivtype(A, b)
+    Tc = Adivtype(A, b)
+    Tr = real(Tc)
     itn = istop = 0
     ctol = conlim > 0 ? convert(Tr,1/conlim) : zero(Tr)
-    Anorm = Acond = ddnorm = res2 = xnorm = xxnorm = z = sn2 = zero(T)
-    cs2 = -one(T)
+    Anorm = Acond = ddnorm = res2 = xnorm = xxnorm = z = sn2 = zero(Tr)
+    cs2 = -one(Tr)
     dampsq = damp*damp
-    tmpm = Array(T, m)
-    tmpn = Array(T, n)
+    tmpm = Array(Tc, m)
+    tmpn = Array(Tc, n)
 
     # Set up the first vectors u and v for the bidiagonalization.
     # These satisfy  beta*u = b-A*x,  alpha*v = A'u.
     u = b-A*x
-    v = zeros(T, n)
+    v = zeros(Tc, n)
     beta = norm(u)
-    alpha = zero(T)
+    alpha = zero(Tr)
     if beta > 0
-        scale!(u, one(T)/beta)
+        scale!(u, one(Tr)/beta)
         Ac_mul_B!(v,A,u)
         alpha = norm(v)
     end
-    if abs(alpha) > zero(Tr)
-        scale!(v, one(T)/alpha)
+    if alpha > zero(Tr)
+        scale!(v, one(Tr)/alpha)
     end
     w = copy(v)
     ch.mvps += 2
@@ -79,7 +77,7 @@ function my_lsqr!(x, ch::ConvergenceHistory, A, b; damp=0, atol=sqrt(eps(Arealdi
         end
         beta = norm(u)
         if beta > 0
-            scale!(u, one(T)/beta)
+            scale!(u, one(Tr)/beta)
             Anorm = sqrt(Anorm*Anorm + alpha*alpha + beta*beta + dampsq)
             Ac_mul_B!(tmpn, A, u)
             for i = 1:n
@@ -119,7 +117,7 @@ function my_lsqr!(x, ch::ConvergenceHistory, A, b; damp=0, atol=sqrt(eps(Arealdi
             x[i] += t1*wi
             w[i] = v[i] + t2*wi
             wirho = wi/rho
-            ddnorm += wirho*wirho
+            ddnorm += abs2(wirho)
         end
 
         # Use a plane rotation on the right to eliminate the
@@ -145,6 +143,7 @@ function my_lsqr!(x, ch::ConvergenceHistory, A, b; damp=0, atol=sqrt(eps(Arealdi
         rnorm   =   sqrt(res1 + res2)
         Arnorm  =   alpha*abs(tau)
 
+
         # 07 Aug 2002:
         # Distinguish between
         #    r1norm = ||b - Ax|| and
@@ -160,11 +159,11 @@ function my_lsqr!(x, ch::ConvergenceHistory, A, b; damp=0, atol=sqrt(eps(Arealdi
 
         # Now use these norms to estimate certain other quantities,
         # some of which will be small near a solution.
-        test1   =   abs(rnorm /bnorm)
-        test2   =   abs(Arnorm/(Anorm*rnorm))
-        test3   =   abs(one(T)/Acond)
-        t1      =   abs(test1/(one(T) + Anorm*xnorm/bnorm))
-        rtol    =   abs(btol + atol*Anorm*xnorm/bnorm)
+        test1   =   rnorm /bnorm
+        test2   =   Arnorm/(Anorm*rnorm)
+        test3   =   one(Tr)/Acond
+        t1      =   test1/(one(Tr) + Anorm*xnorm/bnorm)
+        rtol    =   btol + atol*Anorm*xnorm/bnorm
 
         # The following tests guard against extremely small values of
         # atol, btol  or  ctol.  (The user may have set any or all of
@@ -187,9 +186,9 @@ function my_lsqr!(x, ch::ConvergenceHistory, A, b; damp=0, atol=sqrt(eps(Arealdi
 end
 
 function my_lsqr!(x, A, b; kwargs...)
-    T = Arealdivtype(A, b)
-    z = zero(T)
-    ch = ConvergenceHistory(false, (z,z,z), 0, T[])
+    Tr = real(Adivtype(A, b))
+    z = zero(Tr)
+    ch = ConvergenceHistory(false, (z,z,z), 0, Tr[])
     my_lsqr!(x, ch, A, b; kwargs...)
     x, ch
 end

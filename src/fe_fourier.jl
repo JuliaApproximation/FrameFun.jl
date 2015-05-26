@@ -282,6 +282,7 @@ default_fourier_domain_3d() = Sphere()
 
 default_fourier_solver(domain) = FE_DirectSolver
 
-default_fourier_solver(domain::Interval{Float64}) = FE_ProjectionSolver
+#default_fourier_solver(domain::Interval{Float64}) = FE_ProjectionSolver
+default_fourier_solver(domain::Interval) = FE_ProjectionSolver
 
 

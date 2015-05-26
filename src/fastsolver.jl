@@ -10,7 +10,7 @@ immutable FE_ProjectionSolver{ELT} <: FE_Solver
     function FE_ProjectionSolver(problem::FE_DiscreteProblem)
         plunge_op = plunge_operator(problem)
         R = estimate_plunge_rank(problem)
-        W = AffineMap(rand(eltype(problem), param_N(problem), R))
+        W = AffineMap( map(ELT, rand(param_N(problem), R)) )
 
         m = matrix(plunge_op * operator(problem) * W)
 
@@ -30,6 +30,8 @@ function plunge_operator(problem::FE_DiscreteProblem)
 end
 
 estimate_plunge_rank(problem::FE_DiscreteProblem) = round(Int, 9*log(param_N(problem)) + 2)
+
+estimate_plunge_rank(problem::FE_DiscreteProblem{1,BigFloat}) = round(Int, 18*log(param_N(problem)) + 5)
 
 function solve!(s::FE_ProjectionSolver, coef::Array, rhs::Array)
     A = operator(s)
