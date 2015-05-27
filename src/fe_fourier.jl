@@ -176,11 +176,11 @@ function fourier_extension_problem{N,T}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::N
     t_extension = ZeroPadding(tens_tbasis_restricted, tens_tbasis2)
     t_restriction = Restriction(tens_tbasis2, tens_tbasis_restricted)
 
-    transform1 = FastFourierTransform(tens_tbasis1, tens_fbasis1)
-    itransform1 = InverseFastFourierTransform(tens_fbasis1, tens_tbasis1)
+    transform1 = FastFourierTransformFFTW(tens_tbasis1, tens_fbasis1)
+    itransform1 = InverseFastFourierTransformFFTW(tens_fbasis1, tens_tbasis1)
 
-    transform2 = FastFourierTransform(tens_tbasis2, tens_fbasis2)
-    itransform2 = InverseFastFourierTransform(tens_fbasis2, tens_tbasis2)
+    transform2 = FastFourierTransformFFTW(tens_tbasis2, tens_fbasis2)
+    itransform2 = InverseFastFourierTransformFFTW(tens_fbasis2, tens_tbasis2)
 
     FE_DiscreteProblem(domain, tens_fbasis1, tens_fbasis2, tens_tbasis1, tens_tbasis2,
         tens_tbasis_restricted, f_extension, f_restriction, t_extension,
@@ -195,13 +195,9 @@ function apply!{T,G <: MaskedGrid}(op::ZeroPadding, dest, src::TimeDomain{G}, co
     grid1 = grid(src)
 
     l = 0
-    for i in eachindex_mask(grid1)
-        if in(i, grid1)
-            l = l+1
-            coef_dest[i] = coef_src[l]
-        else
-            coef_dest[i] = 0
-        end
+    for i in eachindex(grid1)
+        l = l+1
+        coef_dest[i] = coef_src[l]
     end
 end
 
@@ -213,11 +209,9 @@ function apply!{T,G <: MaskedGrid}(op::Restriction, dest::TimeDomain{G}, src, co
     grid1 = grid(dest)
 
     l = 0
-    for i in eachindex_mask(grid1)
-        if in(i, grid1)
-            l = l+1
-            coef_dest[l] = coef_src[i]
-        end
+    for i in eachindex(grid1)
+        l = l+1
+        coef_dest[l] = coef_src[i]
     end
 end
 

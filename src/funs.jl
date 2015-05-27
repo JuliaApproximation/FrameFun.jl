@@ -16,14 +16,20 @@ numtype{F <: AbstractFun}(::Type{F}) = numtype(super(F))
 
 
 # A Fun groups a domain and an expansion
-immutable Fun{N,T,D,S,ELT,ID} <: AbstractFun{N,T}
-    domain      ::  D
-    expansion   ::  SetExpansion{S,ELT,ID}     # the frame coefficients
+immutable Fun{N,T} <: AbstractFun{N,T}
+    domain      ::  AbstractDomain{N,T}
+    expansion   ::  SetExpansion        # the frame coefficients
+    problem     ::  FE_Problem{N,T}     # properties of the Fourier extension problem, store for convenience
 
-    Fun(domain::AbstractDomain{N,T}, expansion::SetExpansion{S,ELT,ID}) = new(domain, expansion)
+    function Fun(domain, expansion, problem)
+        @assert numtype(expansion) == numtype(domain)
+        @assert dim(expansion) == dim(domain)
+        
+        new(domain, expansion, problem)
+    end
 end
 
-Fun{N,T,S,ELT,ID}(domain::AbstractDomain{N,T}, expansion::SetExpansion{S,ELT,ID}) = Fun{N,T,typeof(domain),S,ELT,ID}(domain, expansion)
+Fun{N,T}(domain::AbstractDomain{N,T}, expansion, problem) = Fun{N,T}(domain, expansion, problem)
 
 domain(fun::Fun) = fun.domain
 
@@ -32,6 +38,8 @@ expansion(fun::Fun) = fun.expansion
 set(fun::Fun) = set(expansion(fun))
 
 coefficients(fun::Fun) = coefficients(expansion(fun))
+
+problem(fun::Fun) = fun.problem
 
 function show{N}(io::IO, fun::Fun{N})
     println(io, "A ", N, "-dimensional FrameFun with ", length(coefficients(fun)), " degrees of freedom.")
@@ -48,7 +56,7 @@ function ExpFun(f::Function, domain = default_fourier_domain_1d(),
     solver = solver_type(problem)
 
     expansion = solve(solver, f)
-    Fun(domain, expansion), problem, solver
+    Fun(domain, expansion, problem)
 end
 
 
