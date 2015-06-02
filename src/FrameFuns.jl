@@ -14,7 +14,7 @@ import Base: show, showcompact
 
 import BasisFunctions: src, dest, matrix, matrix!, apply!, numtype
 
-import BasisFunctions: dim, index_dim, grid
+import BasisFunctions: dim, index_dim, grid, getindex!
 
 import BasisFunctions: operator, coefficients, set
 

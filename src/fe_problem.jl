@@ -103,9 +103,9 @@ end
 
 function rhs!(grid::AbstractGrid, b::Vector, f::Function)
     l = 0
-    for i in eachindex(grid)
+    for x in eachelement(grid)
         l = l+1
-        b[l] = f(grid[i])
+        b[l] = f(x)
     end
 end
 
