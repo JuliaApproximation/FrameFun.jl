@@ -44,11 +44,6 @@ length(g::MaskedGrid) = g.M
 size(g::MaskedGrid) = (length(g),)
 
 
-## TODO: add eachindex that iterates over elements that are part of the masked grid.
-## eachindex_mask iterates over all elements and you have to check for element-ness manually (using `in`)
-## DONE
-eachindex_mask(g::MaskedGrid) = eachindex(g.grid)
-
 eachindex(g::MaskedGrid) = MaskedGridRange(g, eachindex(g.grid))
 
 # Check whether element grid[i] (of the underlying grid) is in the masked grid.
@@ -61,9 +56,8 @@ end
 
 length(iter::MaskedGridRange) = length(iter.maskedgrid)
 
-# A MaskedGridIndex refers to an index of the underlying grid,
-# as well as its sequence number (1 <= k <= M).
-# The sequence number is only used to efficiently implement done (k == M).
+# A MaskedGridState refers to the state of the iterator of the underlying grid.
+# It also holds a sequence number k, used to efficiently implement done (k == M+1).
 immutable MaskedGridRangeState{T}
 	gridstate	::	T		# state of the underlying grid iterator
 	k			::	Int

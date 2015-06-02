@@ -109,15 +109,4 @@ function rhs!(grid::AbstractGrid, b::Vector, f::Function)
     end
 end
 
-function rhs!(grid::MaskedGrid, b::Vector, f::Function)
-    l = 0
-    for i in eachindex_mask(grid)
-        if in(i, grid)
-            l = l+1
-            b[l] = f(grid[i])
-        end
-    end
-end
-
-
 

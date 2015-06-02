@@ -43,7 +43,8 @@ end
 
 
 # Reshape functions: we want to efficiently copy the data from a vector of length N to a larger vector of length L.
-# Hard to do with Cartesian, but it can be done for any dimension recursively:
+# Hard to do with Cartesian, but it can be done for any dimension recursively.
+# TODO: find a better way!
 function reshape_N_to_L!{N}(c, d, n::NTuple{N}, l::NTuple{N})
     nh = map(x->div(x-1,2), n)
     # First zero out d
