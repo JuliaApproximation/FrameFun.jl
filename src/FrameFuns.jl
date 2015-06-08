@@ -20,7 +20,7 @@ import BasisFunctions: operator, coefficients, set
 
 
 # from domains.jl
-export Interval, Circle, Square, Cube, Rectangle, Cylinder, atomium
+export Interval, Circle, Square, Cube, Sphere, Cylinder, atomium
 
 export numtype
 

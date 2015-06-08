@@ -202,7 +202,7 @@ end
 
 Cube{T <: Number}(a::T, b::T) = Interval(a,b)
 
-Cube{N,T}(left::NTuple{N,T}, right::NTuple{N,T}) = Cube{N,T}([left...; right...]')
+Cube{N,T}(left::NTuple{N,T}, right::NTuple{N,T}) = Cube{N,T}([[left...] [right...]])
 
 Cube{T <: FloatingPoint}(::Type{T}) = Cube( (-one(T),-one(T),-one(T)), (one(T), one(T), one(T)))
 
