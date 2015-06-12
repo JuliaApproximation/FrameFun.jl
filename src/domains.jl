@@ -455,7 +455,7 @@ end
 ScaledDomain{N,T}(d::AbstractDomain{N,T}, scalefactor) = ScaledDomain{N,T,typeof(d)}(d, scalefactor)
 
 function in(x::AbstractVector, d::ScaledDomain)
-  in(d.scalefactor*x, d.d)
+  in(x/d.scalefactor, d.d)
 end
 
 (*){N,T <: Number}(a::T, d::AbstractDomain{N,T}) = ScaledDomain(d,a)

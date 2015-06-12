@@ -101,6 +101,9 @@ apply!{G,N,T}(op::ZeroPadding, dest, src::TensorProductBasis{FourierBasisOdd{T},
 apply!{G,N,T}(op::Restriction, dest::TensorProductBasis{FourierBasisOdd{T},G,N,T}, src, coef_dest::Array, coef_src::Array) =
     reshape_L_to_N!(coef_dest, coef_src, size(coef_dest), size(coef_src))
 
+apply!{T,N,G,H,ELT}(op::ZeroPadding, dest, src::TensorProductBasis{TimeDomain1d{G,ELT,T},H,N,T}, coef_dest::Array, coef_src::Array)=reshape_N_to_L!(coef_src, coef_dest, size(coef_src), size(coef_dest))
+
+apply!{T,N,G,H,ELT}(op::Restriction, dest::TensorProductBasis{TimeDomain1d{G,ELT,T},H,N,T}, src, coef_dest::Array, coef_src::Array)=reshape_L_to_N!(coef_dest, coef_src, size(coef_dest), size(coef_src))
 
 
 function fourier_extension_problem{T}(n::Int, t::T, sampling, domain::AbstractDomain1d{T})
@@ -194,7 +197,8 @@ function apply!{T,G <: MaskedGrid}(op::ZeroPadding, dest, src::TimeDomain{G}, co
     @assert length(coef_dest) == length(dest)
 
     grid1 = grid(src)
-
+    # Again too much work, but better than not filling at all
+    fill!(coef_dest, zero(T))
     l = 0
     for i in eachindex(grid1)
         l = l+1
@@ -256,15 +260,15 @@ default_fourier_problem{T}(domain::AbstractDomain1d{T}, n, t, s) =
 
 function default_fourier_problem{T}(domain::AbstractDomain2d{T}, n, t, s)
     N = 2*n+1
-    M = round(Int, N*s)
+    M = 2*round(Int, n*s)+1
     L = round(Int, t*(M-1))
     fourier_extension_problem((N,N), (M,M), (L,L), domain)
 end
 
 function default_fourier_problem{T}(domain::AbstractDomain3d{T}, n, t, s)
     N = 2*n+1
-    M = round(Int, N*s)
-    L = round(Int, T*(M-1))
+    M = 2*round(Int, n*s)+1
+    L = round(Int, t*(M-1))
     fourier_extension_problem((N,N,N), (M,M,M), (L,L,L), domain)
 end
 
