@@ -4,16 +4,20 @@ immutable FE_ProjectionSolver{ELT} <: FE_Solver
     problem     ::  FE_DiscreteProblem
     plunge_op   ::  AbstractOperator    # store the operator because it allocates memory
     W           ::  AffineMap{ELT}
-    m           ::  Array{ELT,2}
+    Ut          ::  Array{ELT,2}
+    V           ::  Array{ELT,2}
+    Sinv        ::  Array{ELT,2}
 
 
     function FE_ProjectionSolver(problem::FE_DiscreteProblem)
         plunge_op = plunge_operator(problem)
         R = estimate_plunge_rank(problem)
         W = AffineMap( map(ELT, rand(param_N(problem), R)) )
-        m = matrix(plunge_op * operator(problem) * W)
-
-        new(problem, plunge_op, W, m)
+        USV= svd(matrix(plunge_op * operator(problem) * W))
+        maxind=maximum(find(USV[2].>1e-6))
+        S=USV[2]
+        Sinv=[1./S[1:maxind];zeros(length(S)-maxind,1)]
+        new(problem, plunge_op, W, USV[1]',USV[3],diagm(Sinv[:]))
     end
 end
 
@@ -39,12 +43,7 @@ function solve!(s::FE_ProjectionSolver, coef::Array, rhs::Array)
     L = param_L(problem(s))
 
     b = P*rhs
-    F=svd(s.m)
-    smax=maximum(find(F[2].>1e-13))
-    iS=diagm(1./F[2][1:smax])
-    V=F[:3]
-    U=F[:1]
-    y=V[:,1:smax]*(iS*(U[:,1:smax]'*b))
+    y = (s.V*(s.Sinv*(s.Ut*b)))
     x2 = reshape(s.W * y,size(src(A)))
     x1 = At * (rhs - A*x2)/L
     coef[:] = x1+x2

@@ -92,7 +92,7 @@ function rhs(p::FE_DiscreteProblem, f::Function, elt = eltype(p))
     b
 end
 
-function rhs!(p::FE_DiscreteProblem, b::Vector, f::Function)
+function rhs!(p::FE_DiscreteProblem, b::Array, f::Function)
     grid1 = grid(time_basis_restricted(p))
     M = length(grid1)
 
@@ -109,4 +109,9 @@ function rhs!(grid::AbstractGrid, b::Vector, f::Function)
     end
 end
 
+function rhs!{G<:AbstractGrid,N,T,ELT}(grid::TensorProductGrid{G,N,T}, b::Array{ELT,N}, f::Function)
+    for i in eachindex(grid)
+        b[i] = f(grid[i])
+    end
+end
 

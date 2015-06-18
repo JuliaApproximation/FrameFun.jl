@@ -107,7 +107,7 @@ apply!{T,N,G,H,ELT}(op::Restriction, dest::TensorProductBasis{TimeDomain1d{G,ELT
 
 
 function fourier_extension_problem{T}(n::Int, t::T, sampling, domain::AbstractDomain1d{T})
-    m = round(Int, n * sampling)
+    m = 2*round(Int, (n-1)/2 * sampling)+1
     l = round(Int, t*(m-1))
     fourier_extension_problem(n, m, l, domain)
 end
@@ -283,5 +283,8 @@ default_fourier_solver(domain) = FE_DirectSolver
 
 #default_fourier_solver(domain::Interval{Float64}) = FE_ProjectionSolver
 default_fourier_solver(domain::Interval) = FE_ProjectionSolver
+
+default_fourier_solver(domain::Cube) =  FE_TensorProductSolver
+    
 
 

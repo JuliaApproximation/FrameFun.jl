@@ -148,14 +148,14 @@ Test.with_handler(custom_handler) do
     delimit("Basis and operator functionality")
 
     delimit("Fourier Basis")
-    fbasis1 = FourierBasis(n,a,b)
-    @test grid(fbasis1)==BasisFunctions.PeriodicEquispacedGrid(n,a,b)
+    fbasis1 = FourierBasis(n+1,a,b)
+    @test grid(fbasis1)==BasisFunctions.PeriodicEquispacedGrid(n+1,a,b)
     r=rand()
     @test abs(fbasis1(2,r)-exp(2*pi*1im*(2-1)*(r-a)/(b-a)))<1e-13
     r=sqrt(BigFloat(pi))
     @test abs(fbasis1(2,r)-exp(2*pi*1im*(2-1)*(r-a)/(b-a)))<1e-13
     a=BigFloat(-1.0); b=BigFloat(1.0)
-    fbasis1 = FourierBasis(n,a,b)
+    fbasis1 = FourierBasis(n+1,a,b)
     r=rand()
     @test abs(fbasis1(2,r)-exp(2*pi*1im*(2-1)*(r-a)/(b-a)))<1e-13
     r=sqrt(BigFloat(pi))
@@ -257,13 +257,12 @@ Test.with_handler(custom_handler) do
     delimit("Algorithm Implementation and Accuracy")
     delimit("1D")
 
-    f(x)=x
-    g(x)=x+1im*x
+    f(x)=x-1.0
 
-    # The fact that n is set to 2n+1 in default_fourier_problem is a bit worrisome to me.
+    # The fact that n is set to 2n+1 in default_fourier_problem is a bit worrisome to me.b
     for D in [FrameFuns.default_fourier_domain_1d() Interval(-1.5,0.7)]        
         show(D); print("\n")
-        for solver_type in (FrameFuns.FE_ProjectionSolver, FrameFuns.FE_DirectSolver, FrameFuns.FE_IterativeSolverLSQR)
+        for solver_type in (FrameFuns.FE_ProjectionSolver, FrameFuns.FE_DirectSolver)
             show(solver_type);print("\n")
             for n in [FrameFuns.default_fourier_n(D) 49]
                 println("\tN = $n")
@@ -279,9 +278,10 @@ Test.with_handler(custom_handler) do
             end
         end
     end
+    
     delimit("2D") 
 
-    f(x)=x[1]+2*x[2]
+    f(x)=x[1]+2*x[2]-1.0
     
     # Standard methods -- Default domain results in BoundsErrors because it's 1d - Talked about this with Daan
     try
@@ -290,7 +290,7 @@ Test.with_handler(custom_handler) do
     catch y
         message(y)
     end
-    for D in [Circle(1.0) Circle(3.0) 1.0*Cube(2)]        
+    for D in [Circle(1.0)]        
         show(D); print("\n")
         for solver_type in (FrameFuns.FE_DirectSolver, FrameFuns.FE_ProjectionSolver, FrameFuns.FE_IterativeSolverLSQR)
             show(solver_type);print("\n")
@@ -307,6 +307,21 @@ Test.with_handler(custom_handler) do
                 end
             end
         end
+    end
+    for D in [Cube(2)]        
+        show(D); print("\n")
+            for n in [2 30]
+                println("\tN = $n")
+                for T in [1.4 FrameFuns.default_fourier_T(D) 2.3]
+                    print("T = $T\t")
+                    try
+                        F=ExpFun(f,D,n=n,T=T)
+                        @test msqerror_tol(f,F,tol=1e-5)
+                    catch y
+                        message(y,catch_backtrace())
+                    end
+                end
+            end
     end
     return
     # Circle Test fails because some points that "should" be in the circle have no corresponding point in mask, since the domain is not adapted
