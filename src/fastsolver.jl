@@ -5,9 +5,12 @@ immutable FE_ProjectionSolver{ELT} <: FE_Solver
     plunge_op   ::  AbstractOperator    # store the operator because it allocates memory
     W           ::  AffineMap{ELT}
     Ut          ::  Array{ELT,2}
-    V           ::  Array{ELT,2}
-    Sinv        ::  Array{ELT,2}
-
+    VS           ::  Array{ELT,2}
+    b           :: Array{ELT,1}
+    y           :: Array{ELT,1}
+    sy          :: Array{ELT,1}
+    x2          :: Array{ELT}
+    x1          :: Array{ELT}
 
     function FE_ProjectionSolver(problem::FE_DiscreteProblem)
         plunge_op = plunge_operator(problem)
@@ -16,8 +19,14 @@ immutable FE_ProjectionSolver{ELT} <: FE_Solver
         USV= svd(matrix(plunge_op * operator(problem) * W))
         maxind=maximum(find(USV[2].>1e-6))
         S=USV[2]
-        Sinv=[1./S[1:maxind];zeros(length(S)-maxind,1)]
-        new(problem, plunge_op, W, USV[1]',USV[3],diagm(Sinv[:]))
+        ## Sinv=[1./S[1:maxind];zeros(length(S)-maxind,1)]
+        Sinv=1./S[1:maxind]
+        b=zeros(size(dest(plunge_op)))
+        y=zeros(size(USV[3],1))
+        x1=zeros(size(src(operator(problem))))
+        x2=zeros(size(src(operator(problem))))
+        sy=zeros(maxind,)
+        new(problem, plunge_op, W, USV[1][:,1:maxind]',USV[3][:,1:maxind]*diagm(Sinv[:]),b,y,sy,x1,x2)
     end
 end
 
@@ -36,17 +45,22 @@ estimate_plunge_rank{N}(problem::FE_DiscreteProblem{N}) = min(round(Int, 9*log(p
 
 estimate_plunge_rank(problem::FE_DiscreteProblem{1,BigFloat}) = round(Int, 18*log(param_N(problem)) + 5)
 
-function solve!(s::FE_ProjectionSolver, coef::Array, rhs::Array)
+function solve!{T}(s::FE_ProjectionSolver, coef::AbstractArray{T}, rhs::AbstractArray{T})
     A = operator(s)
     At = operator_transpose(s)
     P = s.plunge_op
     L = param_L(problem(s))
 
-    b = P*rhs
-    y = (s.V*(s.Sinv*(s.Ut*b)))
-    x2 = reshape(s.W * y,size(src(A)))
-    x1 = At * (rhs - A*x2)/L
-    coef[:] = x1+x2
+    apply!(P,s.b,rhs)
+    A_mul_B!(s.sy,s.Ut,s.b)
+    A_mul_B!(s.y,s.VS,s.sy)
+    apply!(s.W,s.x2,s.y)
+    #x2 = reshape(s.W * y,size(src(A)))
+    apply!(A,s.b,s.x2)
+    apply!(At,s.x1,(rhs-s.b)/L)
+    for i=1:length(coef)
+        coef[i]=s.x1[i]+s.x2[i]
+    end    
 end
 
 

@@ -39,7 +39,7 @@ function msqerror_tol{N,T}(f::Function,F::FrameFuns.Fun{N,T};vals::Int=200,tol=1
             error+=abs(f(point)-F(point...))
         end
     end
-    if !(error/elements < tol) @printf(" %3.2e/%3.2e",error/elements,tol) end
+    @printf(" %3.2e",error/elements)
     return error>0 ? error/elements<tol : false
 end
 # I don't like these functions, replace by boundingbox?
@@ -244,7 +244,6 @@ Test.with_handler(custom_handler) do
         opt=FrameFuns.operator_transpose(problem)
         coef_src = rand(size(FrameFuns.frequency_basis(problem)))+1im*rand(size(FrameFuns.frequency_basis(problem)))
         coef_dest = rand(size(FrameFuns.time_basis_restricted(problem)))+1im*rand(size(FrameFuns.time_basis_restricted(problem)))
-        println(size(coef_src),size(op),size(coef_dest))
         if n==10
             A=FrameFuns.matrix(op)
             @test size(A)==size(op)
@@ -292,7 +291,7 @@ Test.with_handler(custom_handler) do
     end
     for D in [Circle(1.0)]        
         show(D); print("\n")
-        for solver_type in (FrameFuns.FE_DirectSolver, FrameFuns.FE_ProjectionSolver, FrameFuns.FE_IterativeSolverLSQR)
+        for solver_type in (FrameFuns.FE_DirectSolver, FrameFuns.FE_ProjectionSolver)
             show(solver_type);print("\n")
             for n in [FrameFuns.default_fourier_n(D) 12]
                 println("\tN = $n")
@@ -310,7 +309,7 @@ Test.with_handler(custom_handler) do
     end
     for D in [Cube(2)]        
         show(D); print("\n")
-            for n in [2 30]
+            for n in [20 30]
                 println("\tN = $n")
                 for T in [1.4 FrameFuns.default_fourier_T(D) 2.3]
                     print("T = $T\t")
@@ -323,18 +322,16 @@ Test.with_handler(custom_handler) do
                 end
             end
     end
-    return
     # Circle Test fails because some points that "should" be in the circle have no corresponding point in mask, since the domain is not adapted
     F=ExpFun(f,Circle(2.0))
     @test abs(F(-1.4,0.0)-f([-1.4,0.0]))<1e-1
-    # Cube Test fails because of unknown reasons
 
     delimit("3D")
 
     f(x)=x[1]+x[2]-x[3]
-    for D in [FrameFuns.Sphere() Sphere(3.0) Cube(3)]        
+    for D in [FrameFuns.Sphere()]        
         show(D); print("\n")
-        for solver_type in (FrameFuns.FE_ProjectionSolver, FrameFuns.FE_DirectSolver, FrameFuns.FE_IterativeSolverLSQR)
+        for solver_type in (FrameFuns.FE_ProjectionSolver, FrameFuns.FE_DirectSolver)
             show(solver_type);print("\n")
             for n in [3 4]
                 println("\tN = $n")
@@ -349,6 +346,22 @@ Test.with_handler(custom_handler) do
                 end
             end
         end
+    end
+    for D in [Cube(3)]        
+        show(D); print("\n")
+        for n in [10 15]
+            println("\tN = $n")
+            for T in [1.5 FrameFuns.default_fourier_T(D) 2.3]
+                print("T = $T\t")
+                try
+                    F=ExpFun(f,D,n=n,T=T)
+                    @test msqerror_tol(f,F,tol=1e-5)
+                catch y
+                    message(y)
+                end
+            end
+        end
+        
     end
 
 end

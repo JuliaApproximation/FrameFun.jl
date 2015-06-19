@@ -449,7 +449,7 @@ in(x::AbstractVector, d::RotatedDomain) = in(d.rotationmatrix*x, d.d)
 # becomes a circle of radius 2 at a distance 2d of the origin.
 immutable ScaledDomain{N,T,D} <: AbstractDomain{N,T}
     d           ::  D
-    scalefactor ::  T
+    scalefactor ::  Number
 end
 
 ScaledDomain{N,T}(d::AbstractDomain{N,T}, scalefactor) = ScaledDomain{N,T,typeof(d)}(d, scalefactor)
@@ -458,8 +458,8 @@ function in(x::AbstractVector, d::ScaledDomain)
   in(x/d.scalefactor, d.d)
 end
 
-(*){N,T <: Number}(a::T, d::AbstractDomain{N,T}) = ScaledDomain(d,a)
-(*){N,T <: Number}(d::AbstractDomain{N,T}, a::T) = a*d
+(*){N,T <: Number}(a::Number, d::AbstractDomain{N,T}) = ScaledDomain(d,a)
+(*){N,T <: Number}(d::AbstractDomain{N,T}, a::Number) = a*d
 
 
 ###############################################################################################
@@ -510,6 +510,10 @@ push!(dc::DomainCollection, d::AbstractDomain) = push!(dc.list, d)
 
 show(io::IO, d::DomainCollection) = print(io, "a collection of ", length(d.list), " domains")
 
+###############################################################################################
+### A domain Bounding box
+ ###############################################################################################
+ 
 
 function randomcircles(n)
     list = [Circle(0.2, (2*rand(2)-1)*0.8) for i=1:n]

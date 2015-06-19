@@ -52,35 +52,43 @@ end
 
 FE_TensorProductSolver(problem::FE_Problem) = FE_TensorProductSolver{eltype(problem)}(problem)
 
-function solve!{T,N}(s::FE_TensorProductSolver, coef::Array{T}, rhs::Array{T,N}, solvers::Array{FE_Solver}=s.solvers1d)
-    println("entering recursion, coef = $(size(coef)), rhs = $(size(rhs))")
+# Ugly starting function, eventually replace by NxNx... coefficients
+function solve!{T,N}(s::FE_TensorProductSolver, coef::AbstractArray{T}, rhs::AbstractArray{T,N}, solvers::Array{FE_Solver}=s.solvers1d)
     sr=size(rhs)
     sc=size(frequency_basis(s.problem))
-    # Don't know is rhs is supposed to be preserved
-    interold = deepcopy(rhs)
+    coef=reshape(coef,sc...)
+     # The last N-1 dimensions of rhs are solved (recursively)
+    temp=zeros(T,sr[1],sc[end-N+2:end]...)
+    _solve!(s,coef,rhs,solvers,temp)
+    reshape(coef,length(coef),)
+end
+
+function _solve!{T,N}(s::FE_TensorProductSolver, coef::AbstractArray{T}, rhs::AbstractArray{T,N}, solvers::Array{FE_Solver},temp::Array{T})
+    sr=size(rhs)
+    sc=size(frequency_basis(s.problem))
     # Indexing
     indices = fill(Colon(),N)
-    for i = 1:2
-        println(" i = $i/$N")
-        internew = zeros(T,sc[1:i]...,sr[i+1:end]...)
-        # Allocate space for lower-dimensional rhs
-        tmpa=zeros(T,sr[1:i-1]...,sr[i+1:N]...)
-        # Do a recursive solve for each dimensional row (this won't work for three dimensions)
-        intertemp=zeros(T,sc[[1:i-1;i+1:N]]...)
-
-        for j=1:size(interold,N-i+1)
-            println(" j = $j/$(size(interold,N-i+1))")
-            tmp=slice(interold,indices[i+1:N]...,j,indices[1:i-1]...)
-            solve!(s,intertemp ,tmpa+tmp, solvers[[1:i-1;i+1:end]])
-            slice(internew,indices[i+1:N]...,j,indices[1:i-1]...)[:]=intertemp[:]
-        end
-        interold=internew
+    # Allocate space for lower-dimensional rhs
+    tmpa=zeros(T,sr[2:end]...)
+     # The last N-1 dimensions of rhs are solved (recursively)
+    newtemp=zeros(T,sr[2],sc[end-N+3:end]...)
+    
+    # Do a recursive solve along the first dimension.
+    for j=1:sr[1]
+        tmp=slice(rhs,j,indices[2:N]...)
+        _solve!(s,slice(temp,j,indices[2:N]...) ,tmp+tmpa, solvers[2:end],newtemp)
     end
-    # remove this in favor of N-dimensional coefficients?
-    coef[:] = interold[:]
+    
+    # do the remaining 1d solves
+    # Allocate space for lower-dimensional rhs
+    tmpa=zeros(T,sr[1])
+    for i=1:prod(sc[end-N+2:end])
+        tmp=slice(temp,:,i)
+        _solve!(s,slice(coef,Colon(),i) ,tmpa+tmp, solvers[1:end],tmpa)
+    end    
  end
 #End of the recursion
-function solve!{T}(s::FE_TensorProductSolver, coef::Array{T}, rhs::Array{T,1}, solver1d::Array{FE_Solver})
+function _solve!{T}(s::FE_TensorProductSolver, coef::AbstractArray{T}, rhs::AbstractArray{T,1}, solver1d::Array{FE_Solver}, temp::Array{T})
     solve!(solver1d[1], coef, rhs)
 end
 
@@ -99,7 +107,7 @@ FE_DirectSolver(problem::FE_Problem) = FE_DirectSolver{eltype(problem)}(problem)
 eltype{ELT}(s::FE_DirectSolver{ELT}) = ELT
 
 
-function solve!{T}(s::FE_DirectSolver, coef::Array{T}, rhs::Array{T})
+function solve!{T}(s::FE_DirectSolver, coef::AbstractArray{T}, rhs::AbstractArray{T})
     coef[:] = s.QR \ rhs
 end
 
@@ -113,7 +121,7 @@ immutable FE_IterativeSolverLSQR <: FE_IterativeSolver
 end
 
 
-function solve!{T}(s::FE_IterativeSolverLSQR, coef::Array{T}, rhs::Array{T})
+function solve!{T}(s::FE_IterativeSolverLSQR, coef::AbstractArray{T}, rhs::AbstractArray{T})
     op = operator(s)
     opt = operator_transpose(s)
 
