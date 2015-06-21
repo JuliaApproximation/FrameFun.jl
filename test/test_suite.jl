@@ -180,10 +180,10 @@ Test.with_handler(custom_handler) do
 
     tbasis_restricted = TimeDomain(rgrid)
 
-    f_extension = ZeroPadding(fbasis1, fbasis2)
+    f_extension = Extension(fbasis1, fbasis2)
     f_restriction = Restriction(fbasis2, fbasis1)
 
-    t_extension = ZeroPadding(tbasis_restricted, tbasis2)
+    t_extension = Extension(tbasis_restricted, tbasis2)
     t_restriction = Restriction(tbasis2, tbasis_restricted)
    
     transform1 = transform_operator(tbasis1, fbasis1)
@@ -204,7 +204,7 @@ Test.with_handler(custom_handler) do
     @test I'*coef_src==coef_src
     @test S'*coef_src==2*coef_src 
 
-    # ZeroPadding and Restriction nullify (this doesn't work for even n!)
+    # Extension and Restriction nullify (this doesn't work for even n!)
     coef_restricted = rand(length(rgrid))
     @test t_restriction*t_extension*coef_restricted==coef_restricted
     coef_restricted = rand(length(grid1))+1im*rand(length(grid1))

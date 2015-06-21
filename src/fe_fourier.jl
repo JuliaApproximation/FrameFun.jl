@@ -1,7 +1,7 @@
 # fe_fourier.jl
 
 
-function apply!{T}(op::ZeroPadding, dest::FourierBasis, src::FourierBasis, coef_dest::Array{T}, coef_src::Array{T})
+function apply!{T}(op::Extension, dest::FourierBasis, src::FourierBasis, coef_dest::Array{T}, coef_src::Array{T})
     @assert size(coef_src)==size(src)
     @assert size(coef_dest)==size(dest)
 
@@ -95,13 +95,13 @@ end
 end
 
 
-apply!{G,N,T}(op::ZeroPadding, dest, src::TensorProductBasis{FourierBasisOdd{T},G,N,T}, coef_dest::Array, coef_src::Array) = 
+apply!{G,N,T}(op::Extension, dest, src::TensorProductBasis{FourierBasisOdd{T},G,N,T}, coef_dest::Array, coef_src::Array) = 
     reshape_N_to_L!(coef_src, coef_dest, size(coef_src), size(coef_dest))
 
 apply!{G,N,T}(op::Restriction, dest::TensorProductBasis{FourierBasisOdd{T},G,N,T}, src, coef_dest::Array, coef_src::Array) =
     reshape_L_to_N!(coef_dest, coef_src, size(coef_dest), size(coef_src))
 
-apply!{T,N,G,H,ELT}(op::ZeroPadding, dest, src::TensorProductBasis{TimeDomain1d{G,ELT,T},H,N,T}, coef_dest::Array, coef_src::Array)=reshape_N_to_L!(coef_src, coef_dest, size(coef_src), size(coef_dest))
+apply!{T,N,G,H,ELT}(op::Extension, dest, src::TensorProductBasis{TimeDomain1d{G,ELT,T},H,N,T}, coef_dest::Array, coef_src::Array)=reshape_N_to_L!(coef_src, coef_dest, size(coef_src), size(coef_dest))
 
 apply!{T,N,G,H,ELT}(op::Restriction, dest::TensorProductBasis{TimeDomain1d{G,ELT,T},H,N,T}, src, coef_dest::Array, coef_src::Array)=reshape_L_to_N!(coef_dest, coef_src, size(coef_dest), size(coef_src))
 
@@ -133,10 +133,10 @@ function fourier_extension_problem{T}(n::Int, m::Int, l::Int, domain::Interval{T
 
     tbasis_restricted = TimeDomain(rgrid)
 
-    f_extension = ZeroPadding(fbasis1, fbasis2)
+    f_extension = Extension(fbasis1, fbasis2)
     f_restriction = Restriction(fbasis2, fbasis1)
 
-    t_extension = ZeroPadding(tbasis_restricted, tbasis2)
+    t_extension = Extension(tbasis_restricted, tbasis2)
     t_restriction = Restriction(tbasis2, tbasis_restricted)
 
     transform1 = transform_operator(tbasis1, fbasis1)
@@ -174,10 +174,10 @@ function fourier_extension_problem{N,T}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::N
     tbasis_restricted = TimeDomain(rgrid)
     tens_tbasis_restricted = tensorproduct(tbasis_restricted, N)
 
-    f_extension = ZeroPadding(tens_fbasis1, tens_fbasis2)
+    f_extension = Extension(tens_fbasis1, tens_fbasis2)
     f_restriction = Restriction(tens_fbasis2, tens_fbasis1)
 
-    t_extension = ZeroPadding(tens_tbasis_restricted, tens_tbasis2)
+    t_extension = Extension(tens_tbasis_restricted, tens_tbasis2)
     t_restriction = Restriction(tens_tbasis2, tens_tbasis_restricted)
 
     transform1 = FastFourierTransformFFTW(tens_tbasis1, tens_fbasis1)
@@ -192,7 +192,7 @@ function fourier_extension_problem{N,T}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::N
 end
 
 
-function apply!{T,G <: MaskedGrid}(op::ZeroPadding, dest, src::TimeDomain{G}, coef_dest::Array{T}, coef_src::Array{T})
+function apply!{T,G <: MaskedGrid}(op::Extension, dest, src::TimeDomain{G}, coef_dest::Array{T}, coef_src::Array{T})
     @assert length(coef_src) == length(src)
     @assert length(coef_dest) == length(dest)
 
@@ -229,7 +229,7 @@ function fourier_extension_problem{N,T}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::N
     tbasis2 = problem.tbasis2
     tbasis_restricted = TimeDomain(MaskedGrid(grid(tbasis2), domain))
 
-    t_extension = ZeroPadding(tbasis_restricted, tbasis2)
+    t_extension = Extension(tbasis_restricted, tbasis2)
     t_restriction = Restriction(tbasis2, tbasis_restricted)
 
     FE_DiscreteProblem(domain, problem.fbasis1, problem.fbasis2, problem.tbasis1, problem.tbasis2, 
