@@ -122,6 +122,7 @@ right(d::Interval) = d.b
 
 (==)(d1::Interval,d2::Interval) = (d1.a == d2.a) && (d1.b == d2.b)
 
+box(d::Interval) = d
 
 show(io::IO, d::Interval) = print(io, "the interval [", d.a, ", ", d.b, "]")
 
@@ -155,6 +156,8 @@ in{T}(x::AbstractVector, c::Circle{T}) = (x[1]-c.center[1])^2 + (x[2]-c.center[2
 
 (==)(c1::Circle,c2::Circle) = (c1.radius == c2.radius) && (c1.center == c2.center)
 
+box(c::Circle) = BBox((c.center[1]-c.radius,c.center[2]-c.radius),(c.center[1]+c.radius,c.center[2]+c.radius))
+
 show(io::IO, c::Circle) = print(io, "a circle of radius ", c.radius, " centered at ", c.center)
 
 const unitcircle = Circle()
@@ -185,6 +188,8 @@ in(x::AbstractVector, s::Sphere) = (x[1]-s.center[1])^2 + (x[2]-s.center[2])^2 +
 (/)(s::Sphere, x::Number) = s * (1/x)
 
 (==)(s1::Sphere, s2::Sphere) = (s1.radius == s2.radius) && (s1.center == s2.center)
+
+box(c::Sphere) = BBox((c.center[1]-c.radius,c.center[2]-c.radius,c.center[3]-c.radius),(c.center[1]+c.radius,c.center[2]+c.radius,c.center[3]+c.radius))
 
 show(io::IO, s::Sphere) = print(io, "a sphere of radius ", s.radius, " centered at ", s.center)
 
@@ -226,6 +231,8 @@ in{N}(x::AbstractVector, c::Cube{N}) = reduce(&, [in(x[j], c.verts[j,1], c.verts
 
 (==)(c1::Cube, c2::Cube) = (c1.verts == c2.verts)
 
+box(c::Cube) = BBox(tuple(c.verts[:,1]...),tuple(c.verts[:,2]...))
+
 show(io::IO, c::Cube{2}) = print(io, "the rectangle [", c.verts[1,1], ",", c.verts[1,2], "] x [", c.verts[2,1], ",", c.verts[2,2], "]")
 
 show(io::IO, c::Cube{3}) = print(io, "the cube [", c.verts[1,1], ",", c.verts[1,2], "] x [", c.verts[2,1], ",", c.verts[2,2], "] x [", c.verts[3,1], ",", c.verts[3,2], "]")
@@ -234,7 +241,6 @@ show{N}(io::IO, c::Cube{N}) = print(io, "a ", N, "-dimensional cube")
 
 const unitsquare = Cube(2)
 const unitcube = Cube(3)
-
 
 
 ###############################################################################################
@@ -252,6 +258,8 @@ Cylinder{T}(radius::T = one(T), length::T = one(T)) = Cylinder{T}(radius, length
 in{T}(x::AbstractVector, c::Cylinder{T}) = in(x[1], zero(T), c.length) && (x[2]^2+x[3]^2 <= c.radius^2)
 
 (==)(c1::Cylinder, c2::Cylinder) = (c1.radius == c2.radius) && (c1.length == c2.length)
+
+box{T}(c::Cylinder{T}) = BBox((zero(T),-c.radius,-c.radius),(c.length,c.radius,c.radius))
 
 show(io::IO, c::Cylinder) = print(io, "a cylinder of radius ", c.radius, " and length ", c.length)
 
@@ -300,6 +308,7 @@ end
 
 (==)(d1::DomainUnion, d2::DomainUnion) = (d1.d1 == d2.d1) && (d1.d2 == d2.d2)
 
+box(d::DomainUnion) = join(box(d.d1),box(d.d2))
 
 function show(io::IO, d::DomainUnion)
     print(io, "A union of two domains: \n")
@@ -347,6 +356,8 @@ end
 
 (==)(d1::DomainIntersection, d2::DomainIntersection) = (d1.d1 == d2.d1) && (d1.d2 == d2.d2)
 
+box(d::DomainIntersection) = intersect(box(d.d1),box(d.d2))
+
 function show(io::IO, d::DomainIntersection)
     print(io, "the intersection of two domains: \n")
     print(io, "    First domain: ", d.d1, "\n")
@@ -379,6 +390,8 @@ end
 
 (==)(d1::DomainDifference, d2::DomainDifference) = (d1.d1 == d2.d1) && (d1.d2 == d2.d2)
 
+box(d::DomainDifference) = box(d.d1)
+ 
 function show(io::IO, d::DomainDifference)
     print(io, "the difference of two domains: \n")
     print(io, "    First domain: ", d.d1, "\n")
@@ -405,6 +418,7 @@ end
 
 (==)(d1::RevolvedDomain, d2::RevolvedDomain) = (d1.d == d2.d)
 
+ box(d::RevolvedDomain) = BBox((left(d.d)[1],left(d.d)...),(right(d.d)[1],right(d.d)...))
 
 function show(io::IO, r::RevolvedDomain)
     print(io, "the revolution of: ", r.d1)
@@ -439,6 +453,8 @@ in(x::AbstractVector, d::RotatedDomain) = in(d.rotationmatrix*x, d.d)
 
 (==)(d1::RotatedDomain, d2::RotatedDomain) = (d1.d == d2.d) && (d1.angle == d2.angle) #&& (d1.rotationmatrix == d2.rotationmatrix)
 
+ # very crude bounding box (doesn't work!!!)
+ box(r::RotatedDomain)= box(r.d)
 
 ###############################################################################################
 ### A scaled domain
@@ -461,6 +477,7 @@ end
 (*){N,T <: Number}(a::Number, d::AbstractDomain{N,T}) = ScaledDomain(d,a)
 (*){N,T <: Number}(d::AbstractDomain{N,T}, a::Number) = a*d
 
+ box(s::ScaledDomain)=s.scalefactor*box(s.d)
 
 ###############################################################################################
 ### A translated domain
@@ -480,6 +497,7 @@ end
 (+){N,T}(d::AbstractDomain{N,T}, trans::AbstractVector{T}) = TranslatedDomain(d,trans)
 (+){N,T}(trans::AbstractVector{T}, d::AbstractDomain{N,T}) = d + a
 
+ box(t::TranslatedDomain) = box(t.d)+trans
 
 ###############################################################################################
 ### A collection of domains
@@ -508,13 +526,58 @@ push!(dc::DomainCollection, d::AbstractDomain) = push!(dc.list, d)
 
 (==)(d1::DomainCollection, d2::DomainCollection) = reduce(&, map( (x,y) -> x==y, d1.list, d2.list))
 
+ function box(d::DomainCollection)
+     ubox=box(d.list[1])
+     for i = 2:length(d.list)
+         ubox=join(ubox,box(d.list[1]))
+     end
+     ubox
+ end
+ 
+ 
 show(io::IO, d::DomainCollection) = print(io, "a collection of ", length(d.list), " domains")
 
 ###############################################################################################
 ### A domain Bounding box
  ###############################################################################################
- 
 
+immutable BBox{N,T} <: AbstractDomain{N,T}
+  verts ::  Array{T,2}
+end
+
+
+BBox{T <: Number}(a::T, b::T) = Interval(a,b)
+
+BBox{N,T}(left::NTuple{N,T}, right::NTuple{N,T}) = BBox{N,T}([[left...] [right...]])
+
+## Arithmetic operations
+
+(+)(c::BBox, x::AbstractVector) = BBox(c.verts .+ x)
+(+)(x::AbstractVector, c::BBox) = c+x
+
+(*)(c::BBox, x::Number) = BBox(c.verts * x)
+(*)(x::Number, c::BBox) = c*x
+
+(/)(c::BBox, x::Number) = c * (1/x)
+
+(==)(c1::BBox, c2::BBox) = (c1.verts == c2.verts)
+
+show(io::IO, c::BBox{2}) = print(io, "the rectangular box [", c.verts[1,1], ",", c.verts[1,2], "] x [", c.verts[2,1], ",", c.verts[2,2], "]")
+
+show(io::IO, c::BBox{3}) = print(io, "the box [", c.verts[1,1], ",", c.verts[1,2], "] x [", c.verts[2,1], ",", c.verts[2,2], "] x [", c.verts[3,1], ",", c.verts[3,2], "]")
+
+ # Duck typing : all bounding boxes 'must' implement just these methods
+ left(c::BBox) = c.verts[:,1]
+ right(c::BBox) = c.verts[:,2]
+
+join(c::BBox, d::BBox) = BBox(tuple(min(c.verts[:,1],d.verts[:,1])...),tuple(max(c.verts[:,2],d.verts[:,2])...)) 
+
+intersect(c::BBox, d::BBox) = BBox(tuple(max(c.verts[:,1],d.verts[:,1])...),tuple(min(c.verts[:,2],d.verts[:,2])...))
+ 
+ ##########################################################################
+ ### Assorted Domains
+##########################################################################
+ 
 function randomcircles(n)
     list = [Circle(0.2, (2*rand(2)-1)*0.8) for i=1:n]
     DC = DomainCollection(list[1])

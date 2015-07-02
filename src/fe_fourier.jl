@@ -153,6 +153,7 @@ end
 function fourier_extension_problem{N,T}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTuple{N,Int}, domain::Cube{N,T})
     t = (l[1]*one(T)) / ((m[1]-1)*one(T))
 
+    
     fbasis1 = FourierBasis(n[1], -one(T), one(T) + 2*(t-1))
     fbasis2 = FourierBasis(l[1], -one(T), one(T) + 2*(t-1))
     tens_fbasis1 = tensorproduct(fbasis1, N)

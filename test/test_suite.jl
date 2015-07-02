@@ -3,7 +3,8 @@ module test_suite
 using BasisFunctions
 using FrameFuns
 using Base.Test
-
+FE=FrameFuns
+BA=BasisFunctions
 ########
 # Auxiliary functions
 ########
@@ -20,9 +21,9 @@ custom_handler(r::Test.Error) = begin println("\"\t$(typeof(r.err)) in $(r.expr)
 
 
 # Algorithm accuracy below tol
-function msqerror_tol{N,T}(f::Function,F::FrameFuns.Fun{N,T};vals::Int=200,tol=1e-6)
+function msqerror_tol{N,T}(f::Function,F::FE.Fun{N,T};vals::Int=200,tol=1e-6)
     # Find the closest bounding grid around the domain
-    g=boundinggrid(grid(FrameFuns.time_basis_restricted(FrameFuns.problem(F))))
+    g=boundinggrid(grid(FE.time_basis_restricted(FE.problem(F))))
     s=size(g)
     x=Array{Int}(N)
     point=Array{T}(N)
@@ -33,8 +34,8 @@ function msqerror_tol{N,T}(f::Function,F::FrameFuns.Fun{N,T};vals::Int=200,tol=1
         for j in 1:N
             x[j]=rand(1:s[j])
         end
-        point = FrameFuns.getindex(g,x...)
-        if FrameFuns.in(point,FrameFuns.domain(F))
+        point = FE.getindex(g,x...)
+        if FE.in(point,FE.domain(F))
             elements+=1
             error+=abs(f(point)-F(point...))
         end
@@ -44,7 +45,7 @@ function msqerror_tol{N,T}(f::Function,F::FrameFuns.Fun{N,T};vals::Int=200,tol=1
 end
 # I don't like these functions, replace by boundingbox?
 boundinggrid(g::AbstractGrid) = g
-boundinggrid(g::FrameFuns.MaskedGrid) = g.grid
+boundinggrid(g::FE.MaskedGrid) = g.grid
 
 function message(y)
     println("\"\t",typeof(y),"\"")
@@ -80,8 +81,8 @@ Test.with_handler(custom_handler) do
     a=-1.2
     b=0.7
     n=100;
-    G1=BasisFunctions.EquispacedGrid(n,a,b)
-    G2=BasisFunctions.PeriodicEquispacedGrid(n,a,b)
+    G1=BA.EquispacedGrid(n,a,b)
+    G2=BA.PeriodicEquispacedGrid(n,a,b)
     for G in [G1 G2]
         @test G[1]==a
         iseven(n) && @test G[round(Int,n/2+1)]==(a+b)/2 
@@ -96,7 +97,7 @@ Test.with_handler(custom_handler) do
     a2=-1.0
     b2=3.0
     n2=50;
-    G3=BasisFunctions.EquispacedGrid(n2,a2,b2)
+    G3=BA.EquispacedGrid(n2,a2,b2)
     for G in [G2 G3]
         try
             TensorG=TensorProductGrid((G1,G))
@@ -109,18 +110,18 @@ Test.with_handler(custom_handler) do
     end
 
     delimit("MaskedGrid")
-    G1=BasisFunctions.EquispacedGrid(100,-1.0,1.0)
-    G2=BasisFunctions.EquispacedGrid(100,-1.0,1.0)
-    TensorG=BasisFunctions.TensorProductGrid((G1,G2))
+    G1=BA.EquispacedGrid(100,-1.0,1.0)
+    G2=BA.EquispacedGrid(100,-1.0,1.0)
+    TensorG=BA.TensorProductGrid((G1,G2))
     C=Circle(1.0)
-    G4=FrameFuns.MaskedGrid(TensorG,C)
+    G4=FE.MaskedGrid(TensorG,C)
     @test (length(G4)/length(TensorG)-pi*0.25)<0.01
     # I'm assuming here MaskedGrids aren't supposed to be indexed.
     @test_throws Exception G4[1,1]
 
     delimit("SubGrid")
-    G1s=FrameFuns.EquispacedSubGrid(G1,2,4)
-    G2s=FrameFuns.EquispacedSubGrid(G2,3,5)
+    G1s=FE.EquispacedSubGrid(G1,2,4)
+    G2s=FE.EquispacedSubGrid(G2,3,5)
     @test G1s[1]==G1[2]
     @test G2s[1]==G2[3]
     TensorGs=TensorProductGrid((G1s,G2s))
@@ -132,24 +133,57 @@ Test.with_handler(custom_handler) do
     # Interval
     Intervala=Interval(-1.0,1.0)
     Intervala=Intervala+2
-    @test FrameFuns.left(Intervala)==1
-    @test FrameFuns.left(2*Intervala)==2
-    @test FrameFuns.right(Intervala/4)==0.75
+    @test FE.left(Intervala)==1
+    @test FE.left(2*Intervala)==2
+    @test FE.right(Intervala/4)==0.75
     # Circle
     C=Circle(2.0)
-    @test FrameFuns.in([1.4, 1.4],C)
-    @test !FrameFuns.in([1.5, 1.5],C)
+    @test FE.in([1.4, 1.4],C)
+    @test !FE.in([1.5, 1.5],C)
+    @test FE.box(C)==FE.BBox((-2.0,-2.0),(2.0,2.0))
     # This is certainly unwanted behavior! Due to method inheritance
     @test typeof(1.2*C)==typeof(C*1.2)
     # This is due to a wrong implementation in Scaled Domain
-    @test FrameFuns.in([1.5,1.5],1.2*C)
-    @test FrameFuns.in([1.5,1.5],C*1.2)
-    
+    @test FE.in([1.5,1.5],1.2*C)
+    @test FE.in([1.5,1.5],C*1.2)
+    #Square
+    D=Cube(2)
+    @test FE.in([0.9, 0.9],D)
+    @test !FE.in([1.1, 1.1],D)
+    @test FE.box(D)==FE.BBox((-1.0,-1.0),(1.0,1.0))
+    DS=FE.join(D,C)
+    #Cube
+    D=Cube((-1.5,0.5,-3.0),(2.2,0.7,-1.0))
+    @test FE.in([0.9, 0.6, -2.5],D)
+    @test !FE.in([0.0, 0.6, 0.0],D)
+    @test FE.box(D)==FE.BBox((-1.5,0.5,-3.0),(2.2,0.7,-1.0))
+
+    #Sphere
+    S=Sphere(2.0)
+    @test FE.in([1.9,0.0,0.0],S)
+    @test FE.in([0,-1.9,0.0],S)
+    @test FE.in([0.0,0.0,-1.9],S)
+    @test !FE.in([1.9,1.9,0.0],S)
+    @test FE.box(S)==FE.BBox((-2.0,-2.0,-2.0),(2.0,2.0,2.0))
+    # joint domain
+    DS=FE.join(D,S)
+    @test FE.in([0.0,0.6,0.0],DS)
+    @test FE.in([0.9, 0.6, -2.5],DS)
+    @test FE.box(DS)==FE.BBox((-2.0,-2.0,-3.0),(2.2,2.0,2.0))
+    # domain intersection
+    DS=FE.intersect(D,S)
+    @test !FE.in([0.0,0.6,0.0],DS)
+    @test FE.in([0.2, 0.6, -1.1],DS)
+    @test FE.box(DS)==FE.BBox((-1.5,0.5,-2.0),(2.0,0.7,-1.0))
+    # domain difference
+    DS=D-S
+    @test FE.box(DS)==FE.box(D)
     delimit("Basis and operator functionality")
+    
 
     delimit("Fourier Basis")
     fbasis1 = FourierBasis(n+1,a,b)
-    @test grid(fbasis1)==BasisFunctions.PeriodicEquispacedGrid(n+1,a,b)
+    @test grid(fbasis1)==BA.PeriodicEquispacedGrid(n+1,a,b)
     r=rand()
     @test abs(fbasis1(2,r)-exp(2*pi*1im*(2-1)*(r-a)/(b-a)))<1e-13
     r=sqrt(BigFloat(pi))
@@ -174,7 +208,7 @@ Test.with_handler(custom_handler) do
     grid1 = grid(fbasis1)
     grid2 = grid(fbasis2)
 
-    rgrid = FrameFuns.EquispacedSubGrid(grid2, 1, 2*n)
+    rgrid = FE.EquispacedSubGrid(grid2, 1, 2*n)
     tbasis1 = TimeDomain(grid1)
     tbasis2 = TimeDomain(grid2)
 
@@ -212,7 +246,7 @@ Test.with_handler(custom_handler) do
     @test (f_restriction*f_extension)*coef_restricted==f_restriction*(f_extension*coef_restricted)
 
     # Trying to do a Fourier Transform on real numbers doesn't work because of Typing.
-    @test FrameFuns.apply!(transform2,coef2) 
+    @test FE.apply!(transform2,coef2) 
     coef2=rand(length(grid2))+1im*rand(length(grid2))
     # Provisional: Restriction transposed is Zeropadding and vice versa
     @test f_restriction'*coef_restricted==f_extension*coef_restricted
@@ -227,45 +261,50 @@ Test.with_handler(custom_handler) do
     coef_src = rand(length(grid1))+1im*rand(length(grid1))
     coef_dest = rand(length(rgrid))+1im*rand(length(rgrid))
     # Until precompilation
-    FrameFuns.apply!(S,coef_src)
-    FrameFuns.apply!(transform2,coef2)
-    FrameFuns.apply!(op,coef_dest,coef_src)
-    FrameFuns.apply!(opt,coef_src,coef_dest)
+    FE.apply!(S,coef_src)
+    FE.apply!(transform2,coef2)
+    FE.apply!(op,coef_dest,coef_src)
+    FE.apply!(opt,coef_src,coef_dest)
     # In place operators don't allocate (much) memory ()
-    @test @allocated(FrameFuns.apply!(S,coef_src))<100
-    @test @allocated(FrameFuns.apply!(transform2,coef2))<881
-    @test @allocated(FrameFuns.apply!(op,coef_dest,coef_src)) <881
-    @test @allocated(FrameFuns.apply!(opt,coef_src,coef_dest)) <881
+    @test @allocated(FE.apply!(S,coef_src))<100
+    @test @allocated(FE.apply!(transform2,coef2))<881
+    @test @allocated(FE.apply!(op,coef_dest,coef_src)) <881
+    @test @allocated(FE.apply!(opt,coef_src,coef_dest)) <881
     delimit("2D")
     C=Circle(1.0)
     for n=[10,100,200]
-        problem = FrameFuns.default_fourier_problem(C,n,2.0,2.0)
+        problem = FE.default_fourier_problem(C,n,2.0,2.0)
         op=operator(problem)
-        opt=FrameFuns.operator_transpose(problem)
-        coef_src = rand(size(FrameFuns.frequency_basis(problem)))+1im*rand(size(FrameFuns.frequency_basis(problem)))
-        coef_dest = rand(size(FrameFuns.time_basis_restricted(problem)))+1im*rand(size(FrameFuns.time_basis_restricted(problem)))
+        opt=FE.operator_transpose(problem)
+        coef_src = rand(size(FE.frequency_basis(problem)))+1im*rand(size(FE.frequency_basis(problem)))
+        coef_dest = rand(size(FE.time_basis_restricted(problem)))+1im*rand(size(FE.time_basis_restricted(problem)))
         if n==10
-            A=FrameFuns.matrix(op)
+            A=FE.matrix(op)
             @test size(A)==size(op)
         end
-        FrameFuns.apply!(op,coef_dest,coef_src)
-        FrameFuns.apply!(opt,coef_src,coef_dest)
-        @test @allocated(FrameFuns.apply!(op,coef_dest,coef_src)) <3745
-        @test @allocated(FrameFuns.apply!(opt,coef_src,coef_dest)) <3745
+        FE.apply!(op,coef_dest,coef_src)
+        FE.apply!(opt,coef_src,coef_dest)
+        @test @allocated(FE.apply!(op,coef_dest,coef_src)) <3745
+        @test @allocated(FE.apply!(opt,coef_src,coef_dest)) <3745
     end
+
+
+
+
+    
     delimit("Algorithm Implementation and Accuracy")
     delimit("1D")
 
     f(x)=x-1.0
 
     # The fact that n is set to 2n+1 in default_fourier_problem is a bit worrisome to me.b
-    for D in [FrameFuns.default_fourier_domain_1d() Interval(-1.5,0.7)]        
+    for D in [FE.default_fourier_domain_1d() Interval(-1.5,0.7)]        
         show(D); print("\n")
-        for solver_type in (FrameFuns.FE_ProjectionSolver, FrameFuns.FE_DirectSolver)
+        for solver_type in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
             show(solver_type);print("\n")
-            for n in [FrameFuns.default_fourier_n(D) 49]
+            for n in [FE.default_fourier_n(D) 49]
                 println("\tN = $n")
-                for T in [1.4 FrameFuns.default_fourier_T(D) 2.3]
+                for T in [1.4 FE.default_fourier_T(D) 2.3]
                     print("T = $T \t")
                     try
                         F=ExpFun(f,D,solver_type,n=n,T=T)
@@ -291,11 +330,11 @@ Test.with_handler(custom_handler) do
     end
     for D in [Circle(1.0)]        
         show(D); print("\n")
-        for solver_type in (FrameFuns.FE_DirectSolver, FrameFuns.FE_ProjectionSolver)
+        for solver_type in (FE.FE_DirectSolver, FE.FE_ProjectionSolver)
             show(solver_type);print("\n")
-            for n in [FrameFuns.default_fourier_n(D) 12]
+            for n in [FE.default_fourier_n(D) 12]
                 println("\tN = $n")
-                for T in [1.4 FrameFuns.default_fourier_T(D) 2.3]
+                for T in [1.4 FE.default_fourier_T(D) 2.3]
                     print("T = $T\t")
                     try
                         F=ExpFun(f,D,solver_type,n=n,T=T)
@@ -307,11 +346,11 @@ Test.with_handler(custom_handler) do
             end
         end
     end
-    for D in [Cube(2)]        
+    for D in [Cube((-2.0,-2.0),(2.0,2.0))]        
         show(D); print("\n")
             for n in [20 30]
                 println("\tN = $n")
-                for T in [1.4 FrameFuns.default_fourier_T(D) 2.3]
+                for T in [1.4 FE.default_fourier_T(D) 2.3]
                     print("T = $T\t")
                     try
                         F=ExpFun(f,D,n=n,T=T)
@@ -322,20 +361,23 @@ Test.with_handler(custom_handler) do
                 end
             end
     end
+    println(F(-1.0,-1.0))
     # Circle Test fails because some points that "should" be in the circle have no corresponding point in mask, since the domain is not adapted
     F=ExpFun(f,Circle(2.0))
     @test abs(F(-1.4,0.0)-f([-1.4,0.0]))<1e-1
 
+    return
+    
     delimit("3D")
 
     f(x)=x[1]+x[2]-x[3]
-    for D in [FrameFuns.Sphere()]        
+    for D in [FE.Sphere()]        
         show(D); print("\n")
-        for solver_type in (FrameFuns.FE_ProjectionSolver, FrameFuns.FE_DirectSolver)
+        for solver_type in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
             show(solver_type);print("\n")
             for n in [3 4]
                 println("\tN = $n")
-                for T in [1.4 FrameFuns.default_fourier_T(D) 2.3]
+                for T in [1.4 FE.default_fourier_T(D) 2.3]
                     print("T = $T\t")
                     try
                         F=ExpFun(f,D,solver_type,n=n,T=T)
@@ -351,7 +393,7 @@ Test.with_handler(custom_handler) do
         show(D); print("\n")
         for n in [10 15]
             println("\tN = $n")
-            for T in [1.5 FrameFuns.default_fourier_T(D) 2.3]
+            for T in [1.5 FE.default_fourier_T(D) 2.3]
                 print("T = $T\t")
                 try
                     F=ExpFun(f,D,n=n,T=T)
