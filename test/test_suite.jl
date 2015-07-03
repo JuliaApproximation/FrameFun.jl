@@ -76,7 +76,7 @@ Test.with_handler(custom_handler) do
     delimit("MaskedGrid")
     G1=BA.EquispacedGrid(100,-1.0,1.0)
     G2=BA.EquispacedGrid(100,-1.0,1.0)
-    TensorG=BA.TensorProductGrid((G1,G2))
+    TensorG=BA.TensorProductGrid(G1,G2)
     C=Circle(1.0)
     G4=FE.MaskedGrid(TensorG,C)
     @test (length(G4)/length(TensorG)-pi*0.25)<0.01
@@ -144,7 +144,9 @@ Test.with_handler(custom_handler) do
     @test FE.box(DS)==FE.box(D)
     delimit("Basis and operator functionality")
     
-
+    n=100
+    a=-1.2
+    b=0.7
     delimit("Fourier Basis")
     fbasis1 = FourierBasis(n+1,a,b)
     @test grid(fbasis1)==BA.PeriodicEquispacedGrid(n+1,a,b)

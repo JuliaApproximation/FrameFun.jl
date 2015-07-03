@@ -138,17 +138,17 @@ function fourier_extension_problem{N,T}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::N
         fbasis1[i] = FourierBasis(n[i], left(bbox)[i], right(bbox)[i] + (right(bbox)[i]-left(bbox)[i])*(t-1))
         fbasis2[i] = FourierBasis(l[i], left(bbox)[i], right(bbox)[i] + (right(bbox)[i]-left(bbox)[i])*(t-1))
     end
-    tens_fbasis1 = TensorProductBasis(ntuple(i->fbasis1[i], N))
-    tens_fbasis2 = TensorProductBasis(ntuple(i->fbasis2[i], N))
+    tens_fbasis1 = TensorProductSet(ntuple(i->fbasis1[i], N)...)
+    tens_fbasis2 = TensorProductSet(ntuple(i->fbasis2[i], N)...)
 
-    tens_grid1 = TensorProductGrid(ntuple(i->grid(fbasis1[i]),N))
-    tens_grid2 = TensorProductGrid(ntuple(i->grid(fbasis1[i]),N))
+    tens_grid1 = TensorProductGrid(ntuple(i->grid(fbasis1[i]),N)...)
+    tens_grid2 = TensorProductGrid(ntuple(i->grid(fbasis1[i]),N)...)
 
-    tens_rgrid = TensorProductGrid(ntuple(i->EquispacedSubGrid(grid(fbasis2[i]), 1, m[i]), N))
-    tens_tbasis1 = TensorProductBasis(ntuple(i->TimeDomain(grid(fbasis1[i])), N))
-    tens_tbasis2 = TensorProductBasis(ntuple(i->TimeDomain(grid(fbasis2[i])), N))
+    tens_rgrid = TensorProductGrid(ntuple(i->EquispacedSubGrid(grid(fbasis2[i]), 1, m[i]), N)...)
+    tens_tbasis1 = TensorProductSet(ntuple(i->TimeDomain(grid(fbasis1[i])), N)...)
+    tens_tbasis2 = TensorProductSet(ntuple(i->TimeDomain(grid(fbasis2[i])), N)...)
 
-    tens_tbasis_restricted = TensorProductBasis(ntuple(i->TimeDomain(EquispacedSubGrid(grid(fbasis2[i]), 1, m[i])), N))
+    tens_tbasis_restricted = TensorProductSet(ntuple(i->TimeDomain(EquispacedSubGrid(grid(fbasis2[i]), 1, m[i])), N)...)
 
     f_extension = Extension(tens_fbasis1, tens_fbasis2)
     f_restriction = Restriction(tens_fbasis2, tens_fbasis1)
