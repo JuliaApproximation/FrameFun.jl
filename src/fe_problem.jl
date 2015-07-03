@@ -5,13 +5,13 @@ abstract FE_Problem{N,T}
 # This type groups the data corresponding to a FE problem.
 immutable FE_DiscreteProblem{N,T} <: FE_Problem{N,T}
     domain          ::  AbstractDomain{N,T}
-    fbasis1         ::  AbstractBasis
-    fbasis2         ::  AbstractBasis
+    fbasis1         ::  AbstractFunctionSet
+    fbasis2         ::  AbstractFunctionSet
 
-    tbasis1         ::  AbstractBasis
-    tbasis2         ::  AbstractBasis
+    tbasis1         ::  AbstractFunctionSet
+    tbasis2         ::  AbstractFunctionSet
 
-    tbasis_restricted   ::  AbstractBasis
+    tbasis_restricted   ::  AbstractFunctionSet
 
     f_extension     ::  AbstractOperator
     f_restriction   ::  AbstractOperator
@@ -92,7 +92,7 @@ function rhs(p::FE_DiscreteProblem, f::Function, elt = eltype(p))
     b
 end
 
-function rhs!(p::FE_DiscreteProblem, b::Array, f::Function)
+function rhs!(p::FE_DiscreteProblem, b::AbstractArray, f::Function)
     grid1 = grid(time_basis_restricted(p))
     M = length(grid1)
 
@@ -101,7 +101,7 @@ function rhs!(p::FE_DiscreteProblem, b::Array, f::Function)
     rhs!(grid1, b, f)
 end
 
-function rhs!(grid::AbstractGrid, b::Vector, f::Function)
+function rhs!(grid::AbstractGrid, b::AbstractArray, f::Function)
     l = 0
     for x in eachelement(grid)
         l = l+1
@@ -109,7 +109,7 @@ function rhs!(grid::AbstractGrid, b::Vector, f::Function)
     end
 end
 
-function rhs!{G<:AbstractGrid,N,T,ELT}(grid::TensorProductGrid{G,N,T}, b::Array{ELT,N}, f::Function)
+function rhs!{TG,NG,ID,N,T,ELT}(grid::TensorProductGrid{TG,NG,ID,N,T}, b::AbstractArray{ELT,N}, f::Function)
     for i in eachindex(grid)
         b[i] = f(grid[i])
     end

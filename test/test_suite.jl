@@ -74,44 +74,10 @@ end
 Test.with_handler(custom_handler) do
     delimit("grid functionality")
 
-    delimit("1D")
-
-    # Careful with these values, grid evaluation is not optimal arithmetically (for performance reasons)
-    a=-1.2
-    b=0.7
-    n=100;
-    G1=BasisFunctions.EquispacedGrid(n,a,b)
-    G2=BasisFunctions.PeriodicEquispacedGrid(n,a,b)
-    for G in [G1 G2]
-        @test G[1]==a
-        iseven(n) && @test G[round(Int,n/2+1)]==(a+b)/2 
-    end
-    @test G1[n+1]==b
-    @test_throws BoundsError G2[n+1]==b
-    @test length(G1)==n+1
-    @test length(G2)==n
-
-    delimit("2D")
-    # Two different grid types cannot be combined, same type is possible (is this necessary?)
-    a2=-1.0
-    b2=3.0
-    n2=50;
-    G3=BasisFunctions.EquispacedGrid(n2,a2,b2)
-    for G in [G2 G3]
-        try
-            TensorG=TensorProductGrid((G1,G))
-            @test length(TensorG)==length(G1)*length(G)
-            @test TensorG[1,1]==[a, a2]
-            (iseven(n) && iseven(n2)) && @test TensorG[round(Int,n/2+1),round(Int,n2/2+1)]==[(a+b)/2,(a2+b2)/2]
-        catch y;
-            message(y)
-        end
-    end
-
     delimit("MaskedGrid")
     G1=BasisFunctions.EquispacedGrid(100,-1.0,1.0)
     G2=BasisFunctions.EquispacedGrid(100,-1.0,1.0)
-    TensorG=BasisFunctions.TensorProductGrid((G1,G2))
+    TensorG=BasisFunctions.TensorProductGrid(G1,G2)
     C=Circle(1.0)
     G4=FrameFuns.MaskedGrid(TensorG,C)
     @test (length(G4)/length(TensorG)-pi*0.25)<0.01
@@ -123,7 +89,7 @@ Test.with_handler(custom_handler) do
     G2s=FrameFuns.EquispacedSubGrid(G2,3,5)
     @test G1s[1]==G1[2]
     @test G2s[1]==G2[3]
-    TensorGs=TensorProductGrid((G1s,G2s))
+    TensorGs=TensorProductGrid(G1s,G2s)
     @test TensorGs[1,1]==[G1[2],G2[3]]
 
     delimit("Domains")
@@ -145,21 +111,6 @@ Test.with_handler(custom_handler) do
     @test FrameFuns.in([1.5,1.5],1.2*C)
     @test FrameFuns.in([1.5,1.5],C*1.2)
     
-    delimit("Basis and operator functionality")
-
-    delimit("Fourier Basis")
-    fbasis1 = FourierBasis(n+1,a,b)
-    @test grid(fbasis1)==BasisFunctions.PeriodicEquispacedGrid(n+1,a,b)
-    r=rand()
-    @test abs(fbasis1(2,r)-exp(2*pi*1im*(2-1)*(r-a)/(b-a)))<1e-13
-    r=sqrt(BigFloat(pi))
-    @test abs(fbasis1(2,r)-exp(2*pi*1im*(2-1)*(r-a)/(b-a)))<1e-13
-    a=BigFloat(-1.0); b=BigFloat(1.0)
-    fbasis1 = FourierBasis(n+1,a,b)
-    r=rand()
-    @test abs(fbasis1(2,r)-exp(2*pi*1im*(2-1)*(r-a)/(b-a)))<1e-13
-    r=sqrt(BigFloat(pi))
-    @test abs(fbasis1(2,r)-exp(2*BigFloat(pi)*1im*(2-1)*(r-a)/(b-a)))<1e-30
     delimit("Operator Functionality")
 
     
