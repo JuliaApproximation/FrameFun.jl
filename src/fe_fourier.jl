@@ -178,11 +178,20 @@ function apply!{T,G <: MaskedGrid}(op::Extension, dest, src::TimeDomain{G}, coef
     grid1 = grid(src)
     # Again too much work, but better than not filling at all
     fill!(coef_dest, zero(T))
+
     l = 0
-    for i in eachindex(grid1)
-        l = l+1
-        coef_dest[i] = coef_src[l]
+    for i in eachindex(grid1.grid)
+        if in(i, grid1)
+            l = l+1
+            coef_dest[i] = coef_src[l]
+        end
     end
+
+#    l = 0
+#    for i in eachindex(grid1)
+#        l = l+1
+#        coef_dest[i] = coef_src[l]
+#    end
 end
 
 
@@ -193,10 +202,18 @@ function apply!{T,G <: MaskedGrid}(op::Restriction, dest::TimeDomain{G}, src, co
     grid1 = grid(dest)
 
     l = 0
-    for i in eachindex(grid1)
-        l = l+1
-        coef_dest[l] = coef_src[i]
+    for i in eachindex(grid1.grid)
+        if in(i, grid1)
+            l = l+1
+            coef_dest[l] = coef_src[i]
+        end
     end
+
+#    l = 0
+#    for i in eachindex(grid1)
+#        l = l+1
+#        coef_dest[l] = coef_src[i]
+#    end
 end
 
 

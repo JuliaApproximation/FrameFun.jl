@@ -201,8 +201,8 @@ Test.with_handler(custom_handler) do
         end
         FrameFuns.apply!(op,coef_dest,coef_src)
         FrameFuns.apply!(opt,coef_src,coef_dest)
-        @test @allocated(FrameFuns.apply!(op,coef_dest,coef_src)) <3745
-        @test @allocated(FrameFuns.apply!(opt,coef_src,coef_dest)) <3745
+        @test @allocated(FrameFuns.apply!(op,coef_dest,coef_src)) < 4500
+        @test @allocated(FrameFuns.apply!(opt,coef_src,coef_dest)) < 4500
     end
     delimit("Algorithm Implementation and Accuracy")
     delimit("1D")
