@@ -1,46 +1,6 @@
 # fe_fourier.jl
 
 
-function apply!{T}(op::Extension, dest::FourierBasis, src::FourierBasis, coef_dest::Array{T}, coef_src::Array{T})
-    @assert size(coef_src)==size(src)
-    @assert size(coef_dest)==size(dest)
-
-    n = length(src)
-    l = length(dest)
-
-    nh = (n-1) >> 1
-
-    for i = 1:nh+1
-        coef_dest[i] = coef_src[i]
-    end
-    for i = nh+2:l-nh
-        coef_dest[i] = zero(T)
-    end
-    for i = 1:nh
-        coef_dest[end-nh+i] = coef_src[end-nh+i]
-    end
-end
-
-
-function apply!(op::Restriction, dest::FourierBasis, src::FourierBasis, coef_dest::Array, coef_src::Array)
-    @assert size(coef_src)==size(src)
-    @assert size(coef_dest)==size(dest)
-
-    n = length(dest)
-    l = length(src)
-
-    nh = (n-1) >> 1
-
-    for i = 1:nh+1
-        coef_dest[i] = coef_src[i]
-    end
-    for i = 1:nh
-        coef_dest[end-nh+i] = coef_src[end-nh+i]
-    end
-end
-
-
-
 
 # Reshape functions: we want to efficiently copy the data from a vector of length N to a larger vector of length L.
 # Hard to do with Cartesian, but it can be done for any dimension recursively.
@@ -95,16 +55,35 @@ end
 end
 
 
-apply!{G,N,T}(op::Extension, dest, src::TensorProductBasis{FourierBasisOdd{T},G,N,T}, coef_dest::Array, coef_src::Array) = 
+#apply!{G,N,T}(op::Extension, dest, src::TensorProductBasis{FourierBasisOdd{T},G,N,T}, coef_dest::Array, coef_src::Array) = 
+#    reshape_N_to_L!(coef_src, coef_dest, size(coef_src), size(coef_dest))
+#
+#apply!{G,N,T}(op::Restriction, dest::TensorProductBasis{FourierBasisOdd{T},G,N,T}, src, coef_dest::Array, coef_src::Array) =
+#    reshape_L_to_N!(coef_dest, coef_src, size(coef_dest), size(coef_src))
+#
+#apply!{T,N,G,H,ELT}(op::Extension, dest, src::TensorProductBasis{TimeDomain1d{G,ELT,T},H,N,T}, coef_dest::Array, coef_src::Array)=reshape_N_to_L!(coef_src, coef_dest, size(coef_src), size(coef_dest))
+#
+#apply!{T,N,G,H,ELT}(op::Restriction, dest::TensorProductBasis{TimeDomain1d{G,ELT,T},H,N,T}, src, coef_dest::Array, coef_src::Array)=reshape_L_to_N!(coef_dest, coef_src, size(coef_dest), size(coef_src))
+
+
+# TODO: fix proper dispatch here!
+apply!(op::Extension, dest::TensorProductSet, src::TensorProductSet, coef_dest, coef_src) = 
+    apply_tensor!(op, dest, src, set(dest,1), set(src,1), coef_dest, coef_src)
+
+apply!(op::Restriction, dest::TensorProductSet, src::TensorProductSet, coef_dest, coef_src) =
+    apply_tensor!(op, dest, src, set(dest,1), set(src,1), coef_dest, coef_src)
+
+apply_tensor!(op::Extension, dest::TensorProductSet, src::TensorProductSet, dest1::FourierBasis, src1::FourierBasisOdd, coef_dest, coef_src) = 
     reshape_N_to_L!(coef_src, coef_dest, size(coef_src), size(coef_dest))
 
-apply!{G,N,T}(op::Restriction, dest::TensorProductBasis{FourierBasisOdd{T},G,N,T}, src, coef_dest::Array, coef_src::Array) =
+apply_tensor!(op::Restriction, dest::TensorProductSet, src::TensorProductSet, dest1::FourierBasisOdd, src1::FourierBasis, coef_dest, coef_src) =
     reshape_L_to_N!(coef_dest, coef_src, size(coef_dest), size(coef_src))
 
-apply!{T,N,G,H,ELT}(op::Extension, dest, src::TensorProductBasis{TimeDomain1d{G,ELT,T},H,N,T}, coef_dest::Array, coef_src::Array)=reshape_N_to_L!(coef_src, coef_dest, size(coef_src), size(coef_dest))
+apply_tensor!(op::Extension, dest::TensorProductSet, src::TensorProductSet, dest1::TimeDomain, src1::TimeDomain, coef_dest, coef_src) = 
+    reshape_N_to_L!(coef_src, coef_dest, size(coef_src), size(coef_dest))
 
-apply!{T,N,G,H,ELT}(op::Restriction, dest::TensorProductBasis{TimeDomain1d{G,ELT,T},H,N,T}, src, coef_dest::Array, coef_src::Array)=reshape_L_to_N!(coef_dest, coef_src, size(coef_dest), size(coef_src))
-
+apply_tensor!(op::Restriction, dest::TensorProductSet, src::TensorProductSet, dest1::TimeDomain, src1::TimeDomain, coef_dest, coef_src) =
+    reshape_L_to_N!(coef_dest, coef_src, size(coef_dest), size(coef_src))
 
 function fourier_extension_problem{T}(n::Int, t::T, sampling, domain::AbstractDomain1d{T})
     m = 2*round(Int, (n-1)/2 * sampling)+1
@@ -196,11 +175,20 @@ function apply!{T,G <: MaskedGrid}(op::Extension, dest, src::TimeDomain{G}, coef
     grid1 = grid(src)
     # Again too much work, but better than not filling at all
     fill!(coef_dest, zero(T))
+
     l = 0
-    for i in eachindex(grid1)
-        l = l+1
-        coef_dest[i] = coef_src[l]
+    for i in eachindex(grid1.grid)
+        if in(i, grid1)
+            l = l+1
+            coef_dest[i] = coef_src[l]
+        end
     end
+
+#    l = 0
+#    for i in eachindex(grid1)
+#        l = l+1
+#        coef_dest[i] = coef_src[l]
+#    end
 end
 
 
@@ -211,10 +199,18 @@ function apply!{T,G <: MaskedGrid}(op::Restriction, dest::TimeDomain{G}, src, co
     grid1 = grid(dest)
 
     l = 0
-    for i in eachindex(grid1)
-        l = l+1
-        coef_dest[l] = coef_src[i]
+    for i in eachindex(grid1.grid)
+        if in(i, grid1)
+            l = l+1
+            coef_dest[l] = coef_src[i]
+        end
     end
+
+#    l = 0
+#    for i in eachindex(grid1)
+#        l = l+1
+#        coef_dest[l] = coef_src[i]
+#    end
 end
 
 
