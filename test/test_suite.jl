@@ -23,18 +23,16 @@ custom_handler(r::Test.Error) = begin println("\"\t$(typeof(r.err)) in $(r.expr)
 # Algorithm accuracy below tol
 function msqerror_tol{N,T}(f::Function,F::FE.Fun{N,T};vals::Int=200,tol=1e-6)
     # Find the closest bounding grid around the domain
-    g=boundinggrid(grid(FE.time_basis_restricted(FE.problem(F))))
-    s=size(g)
-    x=Array{Int}(N)
+    TB=FE.box(FE.domain(FE.problem(F)))
+    
     point=Array{T}(N)
     elements=0
     error=0
-    # Generate some points inside the domain, and compare with the target function
+    l=left(TB)
+    r=right(TB)
+    
     for i in 1:vals
-        for j in 1:N
-            x[j]=rand(1:s[j])
-        end
-        point = FE.getindex(g,x...)
+        point=l+(r-l).*rand(T,N)
         if FE.in(point,FE.domain(F))
             elements+=1
             error+=abs(f(point)-F(point...))
@@ -295,7 +293,7 @@ Test.with_handler(custom_handler) do
     delimit("Algorithm Implementation and Accuracy")
     delimit("1D")
 
-    f(x)=x-1.0
+    f(x)=x[1]-1.0
 
     # The fact that n is set to 2n+1 in default_fourier_problem is a bit worrisome to me.b
     for D in [FE.default_fourier_domain_1d() Interval(-1.5,0.7)]        
@@ -304,7 +302,7 @@ Test.with_handler(custom_handler) do
             show(solver_type);print("\n")
             for n in [FE.default_fourier_n(D) 49]
                 println("\tN = $n")
-                for T in [1.4 FE.default_fourier_T(D) 2.3]
+                for T in [1.7 FE.default_fourier_T(D) 2.3]
                     print("T = $T \t")
                     try
                         F=ExpFun(f,D,solver_type,n=n,T=T)
@@ -320,21 +318,14 @@ Test.with_handler(custom_handler) do
     delimit("2D") 
 
     f(x)=x[1]+2*x[2]-1.0
-    
-    # Standard methods -- Default domain results in BoundsErrors because it's 1d - Talked about this with Daan
-    try
-        F = ExpFun(f)
-        @test msqerror_tol(f,F)
-    catch y
-        message(y)
-    end
-    for D in [Circle(1.0)]        
+
+    for D in [Circle(1.0) Circle(2.0,[-2.0,-2.0])]        
         show(D); print("\n")
         for solver_type in (FE.FE_DirectSolver, FE.FE_ProjectionSolver)
             show(solver_type);print("\n")
             for n in [FE.default_fourier_n(D) 12]
                 println("\tN = $n")
-                for T in [1.4 FE.default_fourier_T(D) 2.3]
+                for T in [1.7 FE.default_fourier_T(D) 2.3]
                     print("T = $T\t")
                     try
                         F=ExpFun(f,D,solver_type,n=n,T=T)
@@ -346,11 +337,11 @@ Test.with_handler(custom_handler) do
             end
         end
     end
-    for D in [Cube((-2.0,-2.0),(2.0,2.0))]        
+    for D in [Cube((-2.0,-1.0),(1.0,2.5))]        
         show(D); print("\n")
             for n in [20 30]
                 println("\tN = $n")
-                for T in [1.4 FE.default_fourier_T(D) 2.3]
+                for T in [1.7 FE.default_fourier_T(D) 2.3]
                     print("T = $T\t")
                     try
                         F=ExpFun(f,D,n=n,T=T)
@@ -361,23 +352,17 @@ Test.with_handler(custom_handler) do
                 end
             end
     end
-    println(F(-1.0,-1.0))
-    # Circle Test fails because some points that "should" be in the circle have no corresponding point in mask, since the domain is not adapted
-    F=ExpFun(f,Circle(2.0))
-    @test abs(F(-1.4,0.0)-f([-1.4,0.0]))<1e-1
-
-    return
     
     delimit("3D")
 
     f(x)=x[1]+x[2]-x[3]
-    for D in [FE.Sphere()]        
+    for D in [FE.Sphere(), FE.Sphere(1.2,[-1.3,0.25,1.0])]        
         show(D); print("\n")
         for solver_type in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
             show(solver_type);print("\n")
             for n in [3 4]
                 println("\tN = $n")
-                for T in [1.4 FE.default_fourier_T(D) 2.3]
+                for T in [1.7 FE.default_fourier_T(D) 2.3]
                     print("T = $T\t")
                     try
                         F=ExpFun(f,D,solver_type,n=n,T=T)
@@ -389,7 +374,7 @@ Test.with_handler(custom_handler) do
             end
         end
     end
-    for D in [Cube(3)]        
+    for D in [Cube((-1.0,2.0,3.0),(1.0,4.0,6.5))]        
         show(D); print("\n")
         for n in [10 15]
             println("\tN = $n")
