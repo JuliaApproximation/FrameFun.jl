@@ -90,7 +90,7 @@ in(x::AbstractVector, d::RnDomain) = true
 (==)(d1::RnDomain, d2::RnDomain) = true
 
 show(io::IO, e::RnDomain) = print(io, "the ", N, "-dimensional Euclidean space")
-
+dim{N}(d::RnDomain{N}) = N
 
 ###############################################################################################
 ### An interval
@@ -128,6 +128,7 @@ show(io::IO, d::Interval) = print(io, "the interval [", d.a, ", ", d.b, "]")
 
 const unitinterval = Interval()
 
+dim(d::Interval) = 1
 
 ###############################################################################################
 ### A circle
@@ -162,7 +163,7 @@ show(io::IO, c::Circle) = print(io, "a circle of radius ", c.radius, " centered 
 
 const unitcircle = Circle()
 
-
+dim(c::Circle) = 2
 
 ###############################################################################################
 ### A sphere
@@ -195,6 +196,7 @@ show(io::IO, s::Sphere) = print(io, "a sphere of radius ", s.radius, " centered 
 
 const unitsphere = Sphere()
 
+dim(s::Sphere) = 3
 
 ###############################################################################################
 ### An n-dimensional cube
@@ -241,7 +243,7 @@ show{N}(io::IO, c::Cube{N}) = print(io, "a ", N, "-dimensional cube")
 
 const unitsquare = Cube(2)
 const unitcube = Cube(3)
-
+dim{N}(c::Cube{N}) = N
 
 ###############################################################################################
 ### A cylinder
@@ -309,7 +311,7 @@ end
 (==)(d1::DomainUnion, d2::DomainUnion) = (d1.d1 == d2.d1) && (d1.d2 == d2.d2)
 
 box(d::DomainUnion) = join(box(d.d1),box(d.d2))
-
+dim(d::DomainUnion) = dim(d.d1)
 function show(io::IO, d::DomainUnion)
     print(io, "A union of two domains: \n")
     print(io, "First domain: ", d.d1, "\n")
@@ -357,7 +359,7 @@ end
 (==)(d1::DomainIntersection, d2::DomainIntersection) = (d1.d1 == d2.d1) && (d1.d2 == d2.d2)
 
 box(d::DomainIntersection) = intersect(box(d.d1),box(d.d2))
-
+dim(d::DomainIntersection) = dim(d.d1)
 function show(io::IO, d::DomainIntersection)
     print(io, "the intersection of two domains: \n")
     print(io, "    First domain: ", d.d1, "\n")
@@ -391,7 +393,7 @@ end
 (==)(d1::DomainDifference, d2::DomainDifference) = (d1.d1 == d2.d1) && (d1.d2 == d2.d2)
 
 box(d::DomainDifference) = box(d.d1)
- 
+dim(d::DomainDifference) = dim(d.d1) 
 function show(io::IO, d::DomainDifference)
     print(io, "the difference of two domains: \n")
     print(io, "    First domain: ", d.d1, "\n")
@@ -419,7 +421,7 @@ end
 (==)(d1::RevolvedDomain, d2::RevolvedDomain) = (d1.d == d2.d)
 
  box(d::RevolvedDomain) = BBox((left(d.d)[1],left(d.d)...),(right(d.d)[1],right(d.d)...))
-
+dim(d::RevolvedDomain) = 3
 function show(io::IO, r::RevolvedDomain)
     print(io, "the revolution of: ", r.d1)
 end
@@ -455,7 +457,7 @@ in(x::AbstractVector, d::RotatedDomain) = in(d.rotationmatrix*x, d.d)
 
  # very crude bounding box (doesn't work!!!)
  box(r::RotatedDomain)= box(r.d)
-
+dim{N}(r::RotatedDomain{N}) = N
 ###############################################################################################
 ### A scaled domain
 ###############################################################################################
@@ -478,7 +480,7 @@ end
 (*){N,T <: Number}(d::AbstractDomain{N,T}, a::Number) = a*d
 
  box(s::ScaledDomain)=s.scalefactor*box(s.d)
-
+dim(s::ScaledDomain) = dim(s.d)
 ###############################################################################################
 ### A translated domain
 ###############################################################################################
@@ -498,7 +500,7 @@ end
 (+){N,T}(trans::AbstractVector{T}, d::AbstractDomain{N,T}) = d + a
 
  box(t::TranslatedDomain) = box(t.d)+trans
-
+dim(T::TranslatedDomain) = dim(t.d)
 ###############################################################################################
 ### A collection of domains
 ###############################################################################################
@@ -533,9 +535,56 @@ push!(dc::DomainCollection, d::AbstractDomain) = push!(dc.list, d)
      end
      ubox
  end
- 
+ dim(d::DomainCollection) = dim(d.list[1])
  
 show(io::IO, d::DomainCollection) = print(io, "a collection of ", length(d.list), " domains")
+
+###############################################################################################
+### A Tensor Product of Domains
+ ###############################################################################################
+# A TensorProductDomain represents the tensor product of other domains.
+# Parameter TD is a tuple of (domain) types.
+# Parameter DN is a tuple of the dimensions of each of the domains.
+# Parameter ID is the length of TG and GN (the index dimension).
+# Parametes N and T are the total dimension and numeric type of this grid.
+
+immutable TensorProductDomain{TD,DN,ID,N,T} <: AbstractDomain{N,T}
+	domains	::	TD
+
+	TensorProductDomain(domains::Tuple) = new(domains)
+end
+
+TensorProductDomain(domains...) = TensorProductDomain{typeof(domains),map(dim,domains),length(domains),sum(map(dim, domains)),numtype(domains[1])}(domains)
+
+ tensorproduct(d::AbstractDomain, n) = TensorProductDomain([d for i=1:n]...)
+
+ function in{TD,DN,ID,N,T}(x::AbstractVector, t::TensorProductDomain{TD,DN,ID,N,T})
+     dc=1
+     z1 = true
+     for i=1:ID
+         z2 = in(x[dc:dc+DN[i]-1],t.domains[i])
+         z1 = z1 & z2
+         dc+=DN[i]
+     end
+     z1
+ end
+ 
+
+(==)(t1::TensorProductDomain, t2::TensorProductDomain) = t1.domains==t2.domains
+
+ function box{TD,DN,ID,N,T}(t::TensorProductDomain{TD,DN,ID,N,T})
+     dc=1
+     verts=zeros(N,2)
+     for i=1:ID
+         verts[dc:dc+DN[i]-1,1]=left(box(t.domains[i]))
+         verts[dc:dc+DN[i]-1,2]=right(box(t.domains[i]))
+         dc+=DN[i]
+     end
+     return BBox{N,T}(verts)
+ end
+ 
+
+show(io::IO, t::TensorProductDomain) = print(io, "a tensorproduct of ", length(t.domains), " domains")
 
 ###############################################################################################
 ### A domain Bounding box

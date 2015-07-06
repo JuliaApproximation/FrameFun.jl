@@ -142,7 +142,19 @@ Test.with_handler(custom_handler) do
     # domain difference
     DS=D-S
     @test FE.box(DS)==FE.box(D)
+    # TensorProductDomain 1
+    T=FE.tensorproduct(Interval(-1.0,1.0),2)
+    FE.in([0.5,0.5],T)
+    @test FE.in([0.5,0.5],T)
+    @test !FE.in([-1.1,0.3],T)
+
+    # TensorProductDomain 2
+    T=FE.TensorProductDomain(Circle(1.05),Interval(-1.0,1.0))
+    @test FE.in([0.5,0.5,0.8],T)
+    @test !FE.in([-1.1,0.3,0.1],T)
+
     delimit("Basis and operator functionality")
+
     
     n=100
     a=-1.2
@@ -287,7 +299,7 @@ Test.with_handler(custom_handler) do
 
     f(x)=x[1]+2*x[2]-1.0
 
-    for D in [Circle(1.0) Circle(2.0,[-2.0,-2.0])]        
+    for D in [Circle(1.0) Circle(2.0,[-2.0,-2.0]) FE.tensorproduct(Interval(-1.0,1.0),2)]        
         show(D); print("\n")
         for solver_type in (FE.FE_DirectSolver, FE.FE_ProjectionSolver)
             show(solver_type);print("\n")
@@ -324,7 +336,7 @@ Test.with_handler(custom_handler) do
     delimit("3D")
 
     f(x)=x[1]+x[2]-x[3]
-    for D in [FE.Sphere(), FE.Sphere(1.2,[-1.3,0.25,1.0])]        
+    for D in [T=FE.TensorProductDomain(Circle(1.05),Interval(-1.0,1.0)), FE.Sphere(1.2,[-1.3,0.25,1.0])]        
         show(D); print("\n")
         for solver_type in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
             show(solver_type);print("\n")
