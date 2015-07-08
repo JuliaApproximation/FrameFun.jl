@@ -130,11 +130,12 @@ function fourier_extension_problem{T}(n::Int, m::Int, l::Int, domain::Interval{T
 end
 
 function fourier_extension_problem{N,T}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTuple{N,Int}, domain::Cube{N,T})   
-    t = (l[1]*one(T))/((m[1]-1)*one(T))
+
     bbox=box(domain)
     fbasis1=Array{FourierBasisOdd}(N)
     fbasis2=Array{FourierBasisEven}(N)
     for i=1:N
+        t = (l[1]*one(T))/((m[1]-1)*one(T))
         fbasis1[i] = FourierBasis(n[i], left(bbox)[i], right(bbox)[i] + (right(bbox)[i]-left(bbox)[i])*(t-1))
         fbasis2[i] = FourierBasis(l[i], left(bbox)[i], right(bbox)[i] + (right(bbox)[i]-left(bbox)[i])*(t-1))
     end
@@ -242,19 +243,21 @@ end
 
 default_fourier_n(domain::AbstractDomain1d) = 50
 
-default_fourier_n(domain::AbstractDomain2d) = 10
+default_fourier_n(domain::AbstractDomain2d) = (10, 10)
 
-default_fourier_n(domain::AbstractDomain3d) = 3
+default_fourier_n(domain::AbstractDomain3d) = (3, 3, 3)
 
-default_fourier_T{N,T}(domain::AbstractDomain{N,T}) = 2*one(T)
+default_fourier_T{T}(domain::AbstractDomain{1,T}) = 2*one(T)
+default_fourier_T{N,T}(domain::AbstractDomain{N,T}) = ntuple(i->2*one(T),N)
 
-default_fourier_sampling{N,T}(domain::AbstractDomain{N,T}) = 2*one(T)
+default_fourier_sampling{T}(domain::AbstractDomain{1,T}) = 2*one(T)
+default_fourier_sampling{N,T}(domain::AbstractDomain{N,T}) = ntuple(i->2*one(T),N)
 
 
 default_fourier_problem{T}(domain::AbstractDomain1d{T}, n, t, s) =
     fourier_extension_problem(2*n+1, convert(T, t), convert(T,s), domain)
 
-function default_fourier_problem{T}(domain::AbstractDomain2d{T}, n, t, s)
+function default_fourier_problem{T}(domain::AbstractDomain2d{T}, n::Int, t::Number, s::Number)
     N = 2*n+1
     M = 2*round(Int, n*s)+1
     t = round(Int,t*(M-1)/2)*2/(M-1)
@@ -262,12 +265,20 @@ function default_fourier_problem{T}(domain::AbstractDomain2d{T}, n, t, s)
     fourier_extension_problem((N,N), (M,M), (L,L), domain)
 end
 
-function default_fourier_problem{T}(domain::AbstractDomain3d{T}, n, t, s)
+function default_fourier_problem{T}(domain::AbstractDomain3d{T}, n::Int, t::Number, s::Number)
     N = 2*n+1
     M = 2*round(Int, n*s)+1
     t = round(Int,t*(M-1)/2)*2/(M-1)
     L = round(Int, t*(M-1))
     fourier_extension_problem((N,N,N), (M,M,M), (L,L,L), domain)
+end
+                
+function default_fourier_problem{T}(domain::AbstractDomain{T}, n::Tuple, t::Tuple, s::Tuple)
+    N = 2*[n...]+1
+    M = 2*round(Int, [n...].*[s...])+1
+    t = round(Int,[t...].*(M-1)/2).*(2./(M-1))
+    L = round(Int, t.*(M-1))
+    fourier_extension_problem(tuple(N...),tuple(M...),tuple(L...), domain)
 end
 
 

@@ -303,9 +303,9 @@ Test.with_handler(custom_handler) do
         show(D); print("\n")
         for solver_type in (FE.FE_DirectSolver, FE.FE_ProjectionSolver)
             show(solver_type);print("\n")
-            for n in [FE.default_fourier_n(D) 12]
+            for n in (FE.default_fourier_n(D),(12,12))
                 println("\tN = $n")
-                for T in [1.7 FE.default_fourier_T(D) 2.3]
+                for T in ((1.7,1.7),FE.default_fourier_T(D),(2.3,2.3))
                     print("T = $T\t")
                     try
                         F=ExpFun(f,D,solver_type,n=n,T=T)
@@ -319,9 +319,9 @@ Test.with_handler(custom_handler) do
     end
     for D in [Cube((-2.0,-1.0),(1.0,2.5))]        
         show(D); print("\n")
-            for n in [20 30]
+            for n in ((20,20),(30,30))
                 println("\tN = $n")
-                for T in [1.7 FE.default_fourier_T(D) 2.3]
+                for T in ((1.7,1.7),FE.default_fourier_T(D),(2.3,2.3))
                     print("T = $T\t")
                     try
                         F=ExpFun(f,D,n=n,T=T)
@@ -340,9 +340,9 @@ Test.with_handler(custom_handler) do
         show(D); print("\n")
         for solver_type in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
             show(solver_type);print("\n")
-            for n in [3 4]
+            for n in ((3,3,3), (4,4,4))
                 println("\tN = $n")
-                for T in [1.7 FE.default_fourier_T(D) 2.3]
+                for T in ((1.7,1.7,1.7), FE.default_fourier_T(D), (2.3,2.3,2.3))
                     print("T = $T\t")
                     try
                         F=ExpFun(f,D,solver_type,n=n,T=T)
@@ -356,9 +356,9 @@ Test.with_handler(custom_handler) do
     end
     for D in [Cube((-1.0,2.0,3.0),(1.0,4.0,6.5))]        
         show(D); print("\n")
-        for n in [10 15]
+        for n in ((10,10,10),(15,15,15))
             println("\tN = $n")
-            for T in [1.5 FE.default_fourier_T(D) 2.3]
+            for T in ((1.5,1.5,1.5), FE.default_fourier_T(D), (2.3,2.3,2.3))
                 print("T = $T\t")
                 try
                     F=ExpFun(f,D,n=n,T=T)

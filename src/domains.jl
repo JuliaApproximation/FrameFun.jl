@@ -558,6 +558,9 @@ TensorProductDomain(domains...) = TensorProductDomain{typeof(domains),map(dim,do
 
  tensorproduct(d::AbstractDomain, n) = TensorProductDomain([d for i=1:n]...)
 
+ subdomain(t::TensorProductDomain,i::Int) = t.domains[i]
+ domainlist(t::TensorProductDomain) = t.domains
+ 
  function in{TD,DN,ID,N,T}(x::AbstractVector, t::TensorProductDomain{TD,DN,ID,N,T})
      dc=1
      z1 = true
