@@ -23,7 +23,7 @@ custom_handler(r::Test.Error) = begin println("\"\t$(typeof(r.err)) in $(r.expr)
 # Algorithm accuracy below tol
 function msqerror_tol{N,T}(f::Function,F::FE.Fun{N,T};vals::Int=200,tol=1e-6)
     # Find the closest bounding grid around the domain
-    TB=FE.box(FE.domain(FE.problem(F)))
+    TB=FE.box(FE.domain(F))
     
     point=Array{T}(N)
     elements=0
@@ -305,7 +305,8 @@ Test.with_handler(custom_handler) do
             show(solver_type);print("\n")
             for n in (FE.default_fourier_n(D),(12,12))
                 println("\tN = $n")
-                for T in ((1.7,1.7),FE.default_fourier_T(D),(2.3,2.3))
+                #for T in ((1.7,1.7),FE.default_fourier_T(D),(2.3,2.3))
+                T=(1.7,1.7)
                     print("T = $T\t")
                     try
                         F=ExpFun(f,D,solver_type,n=n,T=T)
@@ -313,26 +314,26 @@ Test.with_handler(custom_handler) do
                     catch y
                         message(y,catch_backtrace())
                     end
-                end
+                #end
             end
         end
     end
-    for D in [Cube((-2.0,-1.0),(1.0,2.5))]        
-        show(D); print("\n")
-            for n in ((20,20),(30,30))
-                println("\tN = $n")
-                for T in ((1.7,1.7),FE.default_fourier_T(D),(2.3,2.3))
-                    print("T = $T\t")
-                    try
-                        F=ExpFun(f,D,n=n,T=T)
-                        @test msqerror_tol(f,F,tol=1e-5)
-                    catch y
-                        message(y,catch_backtrace())
-                    end
-                end
-            end
-    end
-    
+    ## for D in [Cube((-2.0,-1.0),(1.0,2.5))]        
+    ##     show(D); print("\n")
+    ##         for n in ((20,20),(30,30))
+    ##             println("\tN = $n")
+    ##             for T in ((1.7,1.7),FE.default_fourier_T(D),(2.3,2.3))
+    ##                 print("T = $T\t")
+    ##                 try
+    ##                     F=ExpFun(f,D,n=n,T=T)
+    ##                     @test msqerror_tol(f,F,tol=1e-5)
+    ##                 catch y
+    ##                     message(y,catch_backtrace())
+    ##                 end
+    ##             end
+    ##         end
+    ## end
+    return
     delimit("3D")
 
     f(x)=x[1]+x[2]-x[3]

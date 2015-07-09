@@ -254,7 +254,7 @@ default_fourier_sampling{T}(domain::AbstractDomain{1,T}) = 2*one(T)
 default_fourier_sampling{N,T}(domain::AbstractDomain{N,T}) = ntuple(i->2*one(T),N)
 
 
-default_fourier_problem{T}(domain::AbstractDomain1d{T}, n, t, s) =
+default_fourier_problem{T}(domain::AbstractDomain1d{T}, n::Int, t::Number, s::Number) =
     fourier_extension_problem(2*n+1, convert(T, t), convert(T,s), domain)
 
 function default_fourier_problem{T}(domain::AbstractDomain2d{T}, n::Int, t::Number, s::Number)
@@ -272,7 +272,15 @@ function default_fourier_problem{T}(domain::AbstractDomain3d{T}, n::Int, t::Numb
     L = round(Int, t*(M-1))
     fourier_extension_problem((N,N,N), (M,M,M), (L,L,L), domain)
 end
-                
+
+function default_fourier_problem{T}(domain::AbstractDomain{1,T}, n::Tuple, t::Tuple, s::Tuple)
+    N = 2*[n...]+1
+    M = 2*round(Int, [n...].*[s...])+1
+    t = round(Int,[t...].*(M-1)/2).*(2./(M-1))
+    L = round(Int, t.*(M-1))
+    fourier_extension_problem(N[1],M[1],L[1], domain)
+end
+
 function default_fourier_problem{T}(domain::AbstractDomain{T}, n::Tuple, t::Tuple, s::Tuple)
     N = 2*[n...]+1
     M = 2*round(Int, [n...].*[s...])+1
@@ -280,7 +288,7 @@ function default_fourier_problem{T}(domain::AbstractDomain{T}, n::Tuple, t::Tupl
     L = round(Int, t.*(M-1))
     fourier_extension_problem(tuple(N...),tuple(M...),tuple(L...), domain)
 end
-
+#dirty
 
 default_fourier_domain_1d() = Interval()
 

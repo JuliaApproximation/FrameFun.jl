@@ -21,51 +21,63 @@ function solve(s::FE_Solver, f::Function, elt = eltype(s))
 end
 
 
-function solve!{T}(s::FE_Solver, coef::Array{T}, rhs::Array{T}, f::Function)
+function solve!{T}(s::FE_Solver, coef::AbstractArray{T}, rhs::AbstractArray{T}, f::Function)
     rhs!(problem(s), rhs, f)
     solve!(s, coef, rhs)
 end
 
-immutable FE_TensorProductSolver{ELT} <: FE_Solver
-    problem :: FE_Problem
+immutable FE_TensorProductSolver{ELT,N,ID} <: FE_Solver
     solvers1d :: Array{FE_Solver,1}
-    function FE_TensorProductSolver(problem::FE_Problem)
-        fbasis=frequency_basis(problem)
-        tbasise=time_basis_ext(problem)
-        tbasisr=time_basis_restricted(problem)
-        solvers=FE_Solver[]
-        for i=1:dim(problem)
-            # subproblem parameters
-            a=left(tbasisr,i)
-            b=right(tbasisr,i)
-            n=round(Int,(size(fbasis,i)-1)/2)
-            T=(size(tbasise,i))/(size(tbasisr,i)-1)
-            gamma=(size(tbasisr,i)-1)/(size(fbasis,i)-1)
-            subproblem=default_fourier_problem(Interval(a,b),n,T,gamma)
-            # Collect all solvers
-            push!(solvers,FE_ProjectionSolver(subproblem))
+    ns :: Array{Int,1}
+    ms :: Array{Int,1}
+    grid :: TensorProductGrid
+    basis :: TensorProductSet
+    function FE_TensorProductSolver(problems::Array{FE_DiscreteProblem,1})
+        solvers = Array(FE_Solver,length(problems))
+        ns=Int[]
+        ms=Int[]
+        grids=AbstractGrid[]
+        bases=AbstractBasis[]
+        for i=1:length(problems)
+            solvers[i]=FE_ProjectionSolver(problems[i])
+            push!(ns,size(frequency_basis(problems[i]))...)
+            push!(ms,size(time_basis_restricted(problems[i]))...)
+            push!(grids,grid(time_basis_restricted(problems[i])))
+            push!(bases,frequency_basis(problems[i]))
         end
-        new(problem,solvers)
+        new(solvers,ns,ms,TensorProductGrid(grids...),TensorProductSet(bases...))
     end
-    
 end
 
-FE_TensorProductSolver(problem::FE_Problem) = FE_TensorProductSolver{eltype(problem)}(problem)
+function solve(s::FE_TensorProductSolver, f::Function, elt = eltype(s))
+    # Find out why eltype(s) is Type::Any
+    elt=Complex{Float64}
+    coef = Array(elt, size(s, 2)...)
+    rhs = Array(elt, size(s,1)...)
+    solve!(s, coef, rhs,f)
+    SetExpansion(s.basis, reshape(coef,size(s.basis)))
+end
 
+size(s::FE_TensorProductSolver,j)= j==1 ? s.ms : s.ns
+grid(s::FE_TensorProductSolver) = s.grid
+
+FE_TensorProductSolver(problems::Array{FE_DiscreteProblem,1}) = FE_TensorProductSolver{eltype(problem),sum(map(dim,problems)),length(problems)}(problems)
+# HackyWacky
+problem(s::FE_TensorProductSolver) = problem(s.solvers1d[1])
 # Ugly starting function, eventually replace by NxNx... coefficients
-function solve!{T,N}(s::FE_TensorProductSolver, coef::AbstractArray{T}, rhs::AbstractArray{T,N}, solvers::Array{FE_Solver}=s.solvers1d)
+function solve!{ELT,N,ID,T}(s::FE_TensorProductSolver{ELT,N,ID}, coef::AbstractArray{T}, rhs::AbstractArray{T}, f::Function)
+    solvers = s.solvers1d
     sr=size(rhs)
-    sc=size(frequency_basis(s.problem))
-    coef=reshape(coef,sc...)
+    sc=size(coef)
+    rhs!(grid(s), rhs, f)
      # The last N-1 dimensions of rhs are solved (recursively)
     temp=zeros(T,sr[1],sc[end-N+2:end]...)
     _solve!(s,coef,rhs,solvers,temp)
-    reshape(coef,length(coef),)
 end
 
-function _solve!{T,N}(s::FE_TensorProductSolver, coef::AbstractArray{T}, rhs::AbstractArray{T,N}, solvers::Array{FE_Solver},temp::Array{T})
+function _solve!{ELT,T,N,ID}(s::FE_TensorProductSolver{ELT,N,ID}, coef::AbstractArray{T}, rhs::AbstractArray{T,N}, solvers::Array{FE_Solver},temp::Array{T})
     sr=size(rhs)
-    sc=size(frequency_basis(s.problem))
+    sc=size(coef)
     # Indexing
     indices = fill(Colon(),N)
     # Allocate space for lower-dimensional rhs
