@@ -61,9 +61,9 @@ end
 #apply!{G,N,T}(op::Restriction, dest::TensorProductBasis{FourierBasisOdd{T},G,N,T}, src, coef_dest::Array, coef_src::Array) =
 #    reshape_L_to_N!(coef_dest, coef_src, size(coef_dest), size(coef_src))
 #
-#apply!{T,N,G,H,ELT}(op::Extension, dest, src::TensorProductBasis{TimeDomain1d{G,ELT,T},H,N,T}, coef_dest::Array, coef_src::Array)=reshape_N_to_L!(coef_src, coef_dest, size(coef_src), size(coef_dest))
+#apply!{T,N,G,H,ELT}(op::Extension, dest, src::TensorProductBasis{DiscreteGridSpace1d{G,ELT,T},H,N,T}, coef_dest::Array, coef_src::Array)=reshape_N_to_L!(coef_src, coef_dest, size(coef_src), size(coef_dest))
 #
-#apply!{T,N,G,H,ELT}(op::Restriction, dest::TensorProductBasis{TimeDomain1d{G,ELT,T},H,N,T}, src, coef_dest::Array, coef_src::Array)=reshape_L_to_N!(coef_dest, coef_src, size(coef_dest), size(coef_src))
+#apply!{T,N,G,H,ELT}(op::Restriction, dest::TensorProductBasis{DiscreteGridSpace1d{G,ELT,T},H,N,T}, src, coef_dest::Array, coef_src::Array)=reshape_L_to_N!(coef_dest, coef_src, size(coef_dest), size(coef_src))
 
 
 # TODO: fix proper dispatch here!
@@ -79,10 +79,10 @@ apply_tensor!(op::Extension, dest::TensorProductSet, src::TensorProductSet, dest
 apply_tensor!(op::Restriction, dest::TensorProductSet, src::TensorProductSet, dest1::FourierBasisOdd, src1::FourierBasis, coef_dest, coef_src) =
     reshape_L_to_N!(coef_dest, coef_src, size(coef_dest), size(coef_src))
 
-apply_tensor!(op::Extension, dest::TensorProductSet, src::TensorProductSet, dest1::TimeDomain, src1::TimeDomain, coef_dest, coef_src) = 
+apply_tensor!(op::Extension, dest::TensorProductSet, src::TensorProductSet, dest1::DiscreteGridSpace, src1::DiscreteGridSpace, coef_dest, coef_src) = 
     reshape_N_to_L!(coef_src, coef_dest, size(coef_src), size(coef_dest))
 
-apply_tensor!(op::Restriction, dest::TensorProductSet, src::TensorProductSet, dest1::TimeDomain, src1::TimeDomain, coef_dest, coef_src) =
+apply_tensor!(op::Restriction, dest::TensorProductSet, src::TensorProductSet, dest1::DiscreteGridSpace, src1::DiscreteGridSpace, coef_dest, coef_src) =
     reshape_L_to_N!(coef_dest, coef_src, size(coef_dest), size(coef_src))
 
 function fourier_extension_problem{T}(n::Int, t::T, sampling, domain::AbstractDomain1d{T})
@@ -107,10 +107,10 @@ function fourier_extension_problem{T}(n::Int, m::Int, l::Int, domain::Interval{T
 
     rgrid = EquispacedSubGrid(grid2, 1, m)
 
-    tbasis1 = TimeDomain(grid1)
-    tbasis2 = TimeDomain(grid2)
+    tbasis1 = DiscreteGridSpace(grid1)
+    tbasis2 = DiscreteGridSpace(grid2)
 
-    tbasis_restricted = TimeDomain(rgrid)
+    tbasis_restricted = DiscreteGridSpace(rgrid)
 
     f_extension = Extension(fbasis1, fbasis2)
     f_restriction = Restriction(fbasis2, fbasis1)
@@ -145,10 +145,10 @@ function fourier_extension_problem{N,T}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::N
     tens_grid2 = TensorProductGrid(ntuple(i->grid(fbasis1[i]),N)...)
 
     tens_rgrid = TensorProductGrid(ntuple(i->EquispacedSubGrid(grid(fbasis2[i]), 1, m[i]), N)...)
-    tens_tbasis1 = TensorProductSet(ntuple(i->TimeDomain(grid(fbasis1[i])), N)...)
-    tens_tbasis2 = TensorProductSet(ntuple(i->TimeDomain(grid(fbasis2[i])), N)...)
+    tens_tbasis1 = TensorProductSet(ntuple(i->DiscreteGridSpace(grid(fbasis1[i])), N)...)
+    tens_tbasis2 = TensorProductSet(ntuple(i->DiscreteGridSpace(grid(fbasis2[i])), N)...)
 
-    tens_tbasis_restricted = TensorProductSet(ntuple(i->TimeDomain(EquispacedSubGrid(grid(fbasis2[i]), 1, m[i])), N)...)
+    tens_tbasis_restricted = TensorProductSet(ntuple(i->DiscreteGridSpace(EquispacedSubGrid(grid(fbasis2[i]), 1, m[i])), N)...)
 
     f_extension = Extension(tens_fbasis1, tens_fbasis2)
     f_restriction = Restriction(tens_fbasis2, tens_fbasis1)
@@ -168,7 +168,7 @@ function fourier_extension_problem{N,T}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::N
 end
 
 
-function apply!{T,G <: MaskedGrid}(op::Extension, dest, src::TimeDomain{G}, coef_dest::Array{T}, coef_src::Array{T})
+function apply!{T,G <: MaskedGrid}(op::Extension, dest, src::DiscreteGridSpace{G}, coef_dest::Array{T}, coef_src::Array{T})
     @assert length(coef_src) == length(src)
     @assert length(coef_dest) == length(dest)
 
@@ -192,7 +192,7 @@ function apply!{T,G <: MaskedGrid}(op::Extension, dest, src::TimeDomain{G}, coef
 end
 
 
-function apply!{T,G <: MaskedGrid}(op::Restriction, dest::TimeDomain{G}, src, coef_dest::Array{T}, coef_src::Array{T})
+function apply!{T,G <: MaskedGrid}(op::Restriction, dest::DiscreteGridSpace{G}, src, coef_dest::Array{T}, coef_src::Array{T})
     @assert length(coef_src) == length(src)
     @assert length(coef_dest) == length(dest)
 
@@ -223,7 +223,7 @@ function fourier_extension_problem{N,T}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::N
     problem = fourier_extension_problem(n, m, l, CubeBox)
 
     tbasis2 = problem.tbasis2
-    tbasis_restricted = TimeDomain(MaskedGrid(grid(tbasis2), domain))
+    tbasis_restricted = DiscreteGridSpace(MaskedGrid(grid(tbasis2), domain))
 
     t_extension = Extension(tbasis_restricted, tbasis2)
     t_restriction = Restriction(tbasis2, tbasis_restricted)
