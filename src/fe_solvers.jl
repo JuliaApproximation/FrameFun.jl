@@ -26,7 +26,7 @@ function solve!{T}(s::FE_Solver, coef::AbstractArray{T}, rhs::AbstractArray{T}, 
     solve!(s, coef, rhs)
 end
 
-immutable FE_TensorProductSolver{ELT,N,ID} <: FE_Solver
+immutable FE_TensorProductSolver{ELT,N,ID,ND} <: FE_Solver
     solvers1d :: Array{FE_Solver,1}
     ns :: Array{Int,1}
     ms :: Array{Int,1}
@@ -43,8 +43,15 @@ immutable FE_TensorProductSolver{ELT,N,ID} <: FE_Solver
             push!(ns,size(frequency_basis(problems[i]))...)
             push!(ms,size(time_basis_restricted(problems[i]))...)
             push!(grids,grid(time_basis_restricted(problems[i])))
-            push!(bases,frequency_basis(problems[i]))
+            if dim(problems[i])==1
+                push!(bases,frequency_basis(problems[i]))
+            else
+                for j=1:dim(problems[i])
+                    push!(bases,set(frequency_basis(problems[i]),j))
+                end
+            end
         end
+        
         new(solvers,ns,ms,TensorProductGrid(grids...),TensorProductSet(bases...))
     end
 end
@@ -61,21 +68,25 @@ end
 size(s::FE_TensorProductSolver,j)= j==1 ? s.ms : s.ns
 grid(s::FE_TensorProductSolver) = s.grid
 
-FE_TensorProductSolver(problems::Array{FE_DiscreteProblem,1}) = FE_TensorProductSolver{eltype(problem),sum(map(dim,problems)),length(problems)}(problems)
+FE_TensorProductSolver(problems::Array{FE_DiscreteProblem,1}) = FE_TensorProductSolver{eltype(problem),sum(map(dim,problems)),length(problems),tuple(map(dim,problems)...)}(problems)
 # HackyWacky
 problem(s::FE_TensorProductSolver) = problem(s.solvers1d[1])
 # Ugly starting function, eventually replace by NxNx... coefficients
-function solve!{ELT,N,ID,T}(s::FE_TensorProductSolver{ELT,N,ID}, coef::AbstractArray{T}, rhs::AbstractArray{T}, f::Function)
+function solve!{ELT,N,ID,ND,T}(s::FE_TensorProductSolver{ELT,N,ID,ND}, coef::AbstractArray{T,N}, rhs::AbstractArray{T,ID}, f::Function)
     solvers = s.solvers1d
     sr=size(rhs)
     sc=size(coef)
     rhs!(grid(s), rhs, f)
      # The last N-1 dimensions of rhs are solved (recursively)
-    temp=zeros(T,sr[1],sc[end-N+2:end]...)
+    temp=zeros(T,sr[1],sc[1+ND[1]:end]...)
     _solve!(s,coef,rhs,solvers,temp)
 end
 
-function _solve!{ELT,T,N,ID}(s::FE_TensorProductSolver{ELT,N,ID}, coef::AbstractArray{T}, rhs::AbstractArray{T,N}, solvers::Array{FE_Solver},temp::Array{T})
+function _solve!{ELT,T,N,ID,ND}(s::FE_TensorProductSolver{ELT,N,ID,ND}, coef::AbstractArray{T}, rhs::AbstractArray{T}, solvers::Array{FE_Solver},temp::Array{T})
+    # The current recursion level
+    reclevel=ID-ndims(rhs)
+    # The Cumulative Dimension distribution
+    NDC=cumsum([ND...])
     sr=size(rhs)
     sc=size(coef)
     # Indexing
@@ -83,20 +94,18 @@ function _solve!{ELT,T,N,ID}(s::FE_TensorProductSolver{ELT,N,ID}, coef::Abstract
     # Allocate space for lower-dimensional rhs
     tmpa=zeros(T,sr[2:end]...)
      # The last N-1 dimensions of rhs are solved (recursively)
-    newtemp=zeros(T,sr[2],sc[end-N+3:end]...)
-    
+    newtemp=zeros(T,sr[2],sc[NDC[reclevel+1]+2:end]...)
     # Do a recursive solve along the first dimension.
     for j=1:sr[1]
-        tmp=slice(rhs,j,indices[2:N]...)
-        _solve!(s,slice(temp,j,indices[2:N]...) ,tmp+tmpa, solvers[2:end],newtemp)
+        tmp=slice(rhs,j,indices[reclevel+2:ID]...)
+        _solve!(s,slice(temp,j,indices[1:N-ND[reclevel+1]]...) ,tmp+tmpa, solvers[2:end],newtemp)
     end
-    
     # do the remaining 1d solves
     # Allocate space for lower-dimensional rhs
     tmpa=zeros(T,sr[1])
-    for i=1:prod(sc[end-N+2:end])
+    for i=1:prod(sc[ND[reclevel+1]+1:end])
         tmp=slice(temp,:,i)
-        _solve!(s,slice(coef,Colon(),i) ,tmpa+tmp, solvers[1:end],tmpa)
+        _solve!(s,slice(coef,indices[1:ND[1+reclevel]]...,i) ,tmpa+tmp, solvers[1:end],tmpa)
     end    
  end
 #End of the recursion

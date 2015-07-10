@@ -20,20 +20,34 @@ grid(g::AbstractSubGrid) = g.grid
 
 
 immutable MaskedGrid{G <: AbstractGrid,ID,N,T} <: AbstractSubGrid{N,T}
-	grid	::	G
-	mask	::	Array{Bool,ID}
-	M		::	Int
+    grid	::	G
+    mask	::	Array{Bool,ID}
+    indices     ::      Array{Int,2}
+    M		::	Int
 
-	MaskedGrid(grid::AbstractGrid{N,T}, mask) = new(grid, mask, sum(mask))
+    MaskedGrid(grid::AbstractGrid{N,T},  mask, indices) = new(grid, mask, indices, sum(mask))
+    
 end
 
-function MaskedGrid{N,T}(grid::AbstractGrid{N,T}, mask)
+function MaskedGrid{N,T}(grid::AbstractGrid{N,T}, mask, indices)
 	@assert size(grid) == size(mask)
 
-	MaskedGrid{typeof(grid),index_dim(grid),N,T}(grid, mask)
+	MaskedGrid{typeof(grid),index_dim(grid),N,T}(grid, mask, indices)
 end
 
-MaskedGrid{N,T}(grid::AbstractGrid{N,T}, domain::AbstractDomain{N,T}) = MaskedGrid(grid, in(grid, domain))
+function MaskedGrid{N,T}(grid::AbstractGrid{N,T}, domain::AbstractDomain{N,T})
+    mask = in(grid, domain)
+    indices = Array(Int,sum(mask),ndims(mask))
+    i=1
+    for m in eachindex(mask)
+        if mask[m]
+            indices[i,:]=[ind2sub(mask,m)...]
+            i+=1
+        end
+    end
+    MaskedGrid(grid, mask, indices)
+end
+
 
 # index_dim{G,ID,N,T}(::MaskedGrid{G,ID,N,T}) = ID
 # index_dim{G,ID,N,T}(::Type{MaskedGrid{G,ID,N,T}}) = ID
@@ -44,7 +58,7 @@ length(g::MaskedGrid) = g.M
 size(g::MaskedGrid) = (length(g),)
 
 
-eachindex(g::MaskedGrid) = MaskedGridRange(g, eachindex(g.grid))
+#eachindex(g::MaskedGrid) = MaskedGridRange(g, eachindex(g.grid))
 
 # Check whether element grid[i] (of the underlying grid) is in the masked grid.
 in(i, g::MaskedGrid) = g.mask[i]
@@ -75,12 +89,14 @@ end
 
 done(iter::MaskedGridRange, state) = (state.k == length(iter)+1)
 
-
 getindex(g::MaskedGrid, idx) = getindex(g.grid, idx)
 
-getindex!(g::MaskedGrid, x, idx) = getindex!(g.grid, x, idx)
+function getindex!(g::MaskedGrid, x, idx::Int)
+    getindex!(g.grid, x, g.indices[idx,:]...)
+end
 
 
+getindex(g::MaskedGrid, idx::Int) = getindex(g.grid, g.indices[idx,:]...)
 
 
 abstract AbstractSubIntervalGrid{G <: AbstractIntervalGrid, T} <: AbstractSubGrid{1,T}

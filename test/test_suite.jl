@@ -333,11 +333,11 @@ Test.with_handler(custom_handler) do
     ##             end
     ##         end
     ## end
-    return
     delimit("3D")
 
     f(x)=x[1]+x[2]-x[3]
-    for D in [T=FE.TensorProductDomain(Circle(1.05),Interval(-1.0,1.0)), FE.Sphere(1.2,[-1.3,0.25,1.0])]        
+    
+    for D in (FE.TensorProductDomain(Interval(-1.0,1.0),Circle(1.05)), FE.TensorProductDomain(Interval(-1.0,1.0),Interval(-1.0,1.0),Interval(-1.0,1.0)),FE.TensorProductDomain(Circle(1.05),Interval(-1.0,1.0)), FE.Sphere(1.2,[-1.3,0.25,1.0]))        
         show(D); print("\n")
         for solver_type in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
             show(solver_type);print("\n")
@@ -355,22 +355,22 @@ Test.with_handler(custom_handler) do
             end
         end
     end
-    for D in [Cube((-1.0,2.0,3.0),(1.0,4.0,6.5))]        
-        show(D); print("\n")
-        for n in ((10,10,10),(15,15,15))
-            println("\tN = $n")
-            for T in ((1.5,1.5,1.5), FE.default_fourier_T(D), (2.3,2.3,2.3))
-                print("T = $T\t")
-                try
-                    F=ExpFun(f,D,n=n,T=T)
-                    @test msqerror_tol(f,F,tol=1e-5)
-                catch y
-                    message(y)
-                end
-            end
-        end
+    ## for D in [Cube((-1.0,2.0,3.0),(1.0,4.0,6.5))]        
+    ##     show(D); print("\n")
+    ##     for n in ((10,10,10),(15,15,15))
+    ##         println("\tN = $n")
+    ##         for T in ((1.5,1.5,1.5), FE.default_fourier_T(D), (2.3,2.3,2.3))
+    ##             print("T = $T\t")
+    ##             try
+    ##                 F=ExpFun(f,D,n=n,T=T)
+    ##                 @test msqerror_tol(f,F,tol=1e-5)
+    ##             catch y
+    ##                 message(y)
+    ##             end
+    ##         end
+    ##     end
         
-    end
+    ## end
 
 end
 
