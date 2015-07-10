@@ -187,10 +187,10 @@ Test.with_handler(custom_handler) do
     grid2 = grid(fbasis2)
 
     rgrid = FE.EquispacedSubGrid(grid2, 1, 2*n)
-    tbasis1 = TimeDomain(grid1)
-    tbasis2 = TimeDomain(grid2)
+    tbasis1 = DiscreteGridSpace(grid1)
+    tbasis2 = DiscreteGridSpace(grid2)
 
-    tbasis_restricted = TimeDomain(rgrid)
+    tbasis_restricted = DiscreteGridSpace(rgrid)
 
     f_extension = Extension(fbasis1, fbasis2)
     f_restriction = Restriction(fbasis2, fbasis1)

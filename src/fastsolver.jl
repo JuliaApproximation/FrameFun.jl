@@ -3,7 +3,7 @@
 immutable FE_ProjectionSolver{ELT} <: FE_Solver
     problem     ::  FE_DiscreteProblem
     plunge_op   ::  AbstractOperator    # store the operator because it allocates memory
-    W           ::  AffineMap{ELT}
+    W           ::  MatrixOperator
     Ut          ::  Array{ELT,2}
     VS           ::  Array{ELT,2}
     b           :: Array{ELT,1}
@@ -15,7 +15,7 @@ immutable FE_ProjectionSolver{ELT} <: FE_Solver
     function FE_ProjectionSolver(problem::FE_DiscreteProblem)
         plunge_op = plunge_operator(problem)
         R = estimate_plunge_rank(problem)
-        W = AffineMap( map(ELT, rand(param_N(problem), R)) )
+        W = MatrixOperator( map(ELT, rand(param_N(problem), R)) )
         USV= svd(matrix(plunge_op * operator(problem) * W))
         maxind=maximum(find(USV[2].>1e-6))
         S=USV[2]
