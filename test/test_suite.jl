@@ -1,5 +1,6 @@
 module test_suite
 
+
 using BasisFunctions
 using FrameFuns
 using Base.Test
@@ -275,7 +276,6 @@ Test.with_handler(custom_handler) do
 
     f(x)=x[1]-1.0
 
-    # The fact that n is set to 2n+1 in default_fourier_problem is a bit worrisome to me.b
     for D in [FE.default_fourier_domain_1d() Interval(-1.5,0.7)]        
         show(D); print("\n")
         for solver_type in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
@@ -299,7 +299,7 @@ Test.with_handler(custom_handler) do
 
     f(x)=x[1]+2*x[2]-1.0
 
-    for D in [Circle(1.0) Circle(2.0,[-2.0,-2.0]) FE.tensorproduct(Interval(-1.0,1.0),2)]        
+    for D in [Circle(1.0) Circle(2.0,[-2.0,-2.0]) Cube((-1.0,-1.5),(0.5,0.7))]       
         show(D); print("\n")
         for solver_type in (FE.FE_DirectSolver, FE.FE_ProjectionSolver)
             show(solver_type);print("\n")
@@ -318,26 +318,12 @@ Test.with_handler(custom_handler) do
             end
         end
     end
-    ## for D in [Cube((-2.0,-1.0),(1.0,2.5))]        
-    ##     show(D); print("\n")
-    ##         for n in ((20,20),(30,30))
-    ##             println("\tN = $n")
-    ##             for T in ((1.7,1.7),FE.default_fourier_T(D),(2.3,2.3))
-    ##                 print("T = $T\t")
-    ##                 try
-    ##                     F=ExpFun(f,D,n=n,T=T)
-    ##                     @test msqerror_tol(f,F,tol=1e-5)
-    ##                 catch y
-    ##                     message(y,catch_backtrace())
-    ##                 end
-    ##             end
-    ##         end
-    ## end
+    
     delimit("3D")
 
     f(x)=x[1]+x[2]-x[3]
     
-    for D in (FE.TensorProductDomain(Interval(-1.0,1.0),Circle(1.05)), FE.TensorProductDomain(Interval(-1.0,1.0),Interval(-1.0,1.0),Interval(-1.0,1.0)),FE.TensorProductDomain(Circle(1.05),Interval(-1.0,1.0)), FE.Sphere(1.2,[-1.3,0.25,1.0]))        
+    for D in (FE.TensorProductDomain(Interval(-1.0,1.0),Circle(1.05)),Cube((-0.2,-0.3,0.0),(1.0,-0.1,1.2)),Cylinder(1.05,1.2), FE.Sphere(1.2,[-1.3,0.25,1.0]))        
         show(D); print("\n")
         for solver_type in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
             show(solver_type);print("\n")

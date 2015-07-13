@@ -129,9 +129,8 @@ function fourier_extension_problem{T}(n::Int, m::Int, l::Int, domain::Interval{T
         t_restriction, transform1, itransform1, transform2, itransform2)
 end
 
-function fourier_extension_problem{N,T}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTuple{N,Int}, domain::Cube{N,T})   
+function fourier_extension_problem{N,T}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::NTuple{N,Int}, bbox::BBox{N,T})   
 
-    bbox=box(domain)
     fbasis1=Array{FourierBasisOdd}(N)
     fbasis2=Array{FourierBasisEven}(N)
     for i=1:N
@@ -163,7 +162,7 @@ function fourier_extension_problem{N,T}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::N
     transform2 = FastFourierTransformFFTW(tens_tbasis2, tens_fbasis2)
     itransform2 = InverseFastFourierTransformFFTW(tens_fbasis2, tens_tbasis2)
 
-    FE_DiscreteProblem(domain, tens_fbasis1, tens_fbasis2, tens_tbasis1, tens_tbasis2,
+    FE_DiscreteProblem(bbox, tens_fbasis1, tens_fbasis2, tens_tbasis1, tens_tbasis2,
         tens_tbasis_restricted, f_extension, f_restriction, t_extension,
         t_restriction, transform1, itransform1, transform2, itransform2)
 end
@@ -220,7 +219,7 @@ function fourier_extension_problem{N,T}(n::NTuple{N,Int}, m::NTuple{N,Int}, l::N
 
     le=left(box(domain))
     ri=right(box(domain))
-    CubeBox = Cube(ntuple(i->le[i],N),ntuple(i->ri[i],N))
+    CubeBox = BBox(ntuple(i->le[i],N),ntuple(i->ri[i],N))
     problem = fourier_extension_problem(n, m, l, CubeBox)
 
     tbasis2 = problem.tbasis2
@@ -301,7 +300,6 @@ default_fourier_solver(domain) = FE_DirectSolver
 #default_fourier_solver(domain::Interval{Float64}) = FE_ProjectionSolver
 default_fourier_solver(domain::Interval) = FE_ProjectionSolver
 
-default_fourier_solver(domain::Cube) =  FE_TensorProductSolver
     
 
 

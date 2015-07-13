@@ -199,17 +199,69 @@ const unitsphere = Sphere()
 dim(s::Sphere) = 3
 
 ###############################################################################################
+### A Tensor Product of Domains
+ ###############################################################################################
+# A TensorProductDomain represents the tensor product of other domains.
+# Parameter TD is a tuple of (domain) types.
+# Parameter DN is a tuple of the dimensions of each of the domains.
+# Parameter ID is the length of TG and GN (the index dimension).
+# Parametes N and T are the total dimension and numeric type of this grid.
+
+immutable TensorProductDomain{TD,DN,ID,N,T} <: AbstractDomain{N,T}
+	domains	::	TD
+
+	TensorProductDomain(domains::Tuple) = new(domains)
+end
+
+TensorProductDomain(domains...) = TensorProductDomain{typeof(domains),map(dim,domains),length(domains),sum(map(dim, domains)),numtype(domains[1])}(domains)
+
+ tensorproduct(d::AbstractDomain, n) = TensorProductDomain([d for i=1:n]...)
+
+ subdomain(t::TensorProductDomain,i::Int) = t.domains[i]
+ domainlist(t::TensorProductDomain) = t.domains
+ 
+ function in{TD,DN,ID,N,T}(x::AbstractVector, t::TensorProductDomain{TD,DN,ID,N,T})
+     dc=1
+     z1 = true
+     for i=1:ID
+         z2 = in(x[dc:dc+DN[i]-1],t.domains[i])
+         z1 = z1 & z2
+         dc+=DN[i]
+     end
+     z1
+ end
+ 
+
+(==)(t1::TensorProductDomain, t2::TensorProductDomain) = t1.domains==t2.domains
+
+ function box{TD,DN,ID,N,T}(t::TensorProductDomain{TD,DN,ID,N,T})
+     dc=1
+     verts=zeros(N,2)
+     for i=1:ID
+         verts[dc:dc+DN[i]-1,1]=left(box(t.domains[i]))
+         verts[dc:dc+DN[i]-1,2]=right(box(t.domains[i]))
+         dc+=DN[i]
+     end
+     return BBox{N,T}(verts)
+ end
+ 
+
+function show{TD,DN,ID}(io::IO, t::TensorProductDomain{TD,DN,ID})
+    for i=1:ID-1
+        show(domainlist(t)[i])
+        print(" x ")
+    end
+    show(domainlist(t)[ID])
+end
+
+###############################################################################################
 ### An n-dimensional cube
 ###############################################################################################
-
-immutable Cube{N,T} <: AbstractDomain{N,T}
-  verts ::  Array{T,2}
-end
 
 
 Cube{T <: Number}(a::T, b::T) = Interval(a,b)
 
-Cube{N,T}(left::NTuple{N,T}, right::NTuple{N,T}) = Cube{N,T}([[left...] [right...]])
+Cube{N,T}(left::NTuple{N,T}, right::NTuple{N,T}) = TensorProductDomain(ntuple(i->Interval(left[i],right[i]),N)...)
 
 Cube{T <: FloatingPoint}(::Type{T}) = Cube( (-one(T),-one(T),-one(T)), (one(T), one(T), one(T)))
 
@@ -219,51 +271,37 @@ Cube() = Cube(Float64)
 
 Cube(n::Int) = Cube(n, Float64)
 
-in{N}(x::AbstractVector, c::Cube{N}) = reduce(&, [in(x[j], c.verts[j,1], c.verts[j,2]) for j=1:N])
+## in{N}(x::AbstractVector, c::Cube{N}) = reduce(&, [in(x[j], c.verts[j,1], c.verts[j,2]) for j=1:N])
 
 ## Arithmetic operations
 
-(+)(c::Cube, x::AbstractVector) = Cube(c.verts .+ x)
-(+)(x::AbstractVector, c::Cube) = c+x
+## (+)(c::Cube, x::AbstractVector) = Cube(c.verts .+ x)
+## (+)(x::AbstractVector, c::Cube) = c+x
 
-(*)(c::Cube, x::Number) = Cube(c.verts * x)
-(*)(x::Number, c::Cube) = c*x
+## (*)(c::Cube, x::Number) = Cube(c.verts * x)
+## (*)(x::Number, c::Cube) = c*x
 
-(/)(c::Cube, x::Number) = c * (1/x)
+## (/)(c::Cube, x::Number) = c * (1/x)
 
-(==)(c1::Cube, c2::Cube) = (c1.verts == c2.verts)
+## (==)(c1::Cube, c2::Cube) = (c1.verts == c2.verts)
 
-box(c::Cube) = BBox(tuple(c.verts[:,1]...),tuple(c.verts[:,2]...))
+## box(c::Cube) = BBox(tuple(c.verts[:,1]...),tuple(c.verts[:,2]...))
 
-show(io::IO, c::Cube{2}) = print(io, "the rectangle [", c.verts[1,1], ",", c.verts[1,2], "] x [", c.verts[2,1], ",", c.verts[2,2], "]")
+## show(io::IO, c::Cube{2}) = print(io, "the rectangle [", c.verts[1,1], ",", c.verts[1,2], "] x [", c.verts[2,1], ",", c.verts[2,2], "]")
 
-show(io::IO, c::Cube{3}) = print(io, "the cube [", c.verts[1,1], ",", c.verts[1,2], "] x [", c.verts[2,1], ",", c.verts[2,2], "] x [", c.verts[3,1], ",", c.verts[3,2], "]")
+## show(io::IO, c::Cube{3}) = print(io, "the cube [", c.verts[1,1], ",", c.verts[1,2], "] x [", c.verts[2,1], ",", c.verts[2,2], "] x [", c.verts[3,1], ",", c.verts[3,2], "]")
 
-show{N}(io::IO, c::Cube{N}) = print(io, "a ", N, "-dimensional cube")
+## show{N}(io::IO, c::Cube{N}) = print(io, "a ", N, "-dimensional cube")
 
 const unitsquare = Cube(2)
 const unitcube = Cube(3)
-dim{N}(c::Cube{N}) = N
 
 ###############################################################################################
 ### A cylinder
 ###############################################################################################
 
 
-immutable Cylinder{T} <: AbstractDomain{3,T}
-  radius    ::  T
-  length    ::  T
-end
-
-Cylinder{T}(radius::T = one(T), length::T = one(T)) = Cylinder{T}(radius, length)
-
-in{T}(x::AbstractVector, c::Cylinder{T}) = in(x[1], zero(T), c.length) && (x[2]^2+x[3]^2 <= c.radius^2)
-
-(==)(c1::Cylinder, c2::Cylinder) = (c1.radius == c2.radius) && (c1.length == c2.length)
-
-box{T}(c::Cylinder{T}) = BBox((zero(T),-c.radius,-c.radius),(c.length,c.radius,c.radius))
-
-show(io::IO, c::Cylinder) = print(io, "a cylinder of radius ", c.radius, " and length ", c.length)
+Cylinder{T}(radius::T = one(T), length::T = one(T)) = TensorProductDomain(Circle(radius),Interval(0.0,length))
 
 
 ###############################################################################################
@@ -538,56 +576,6 @@ push!(dc::DomainCollection, d::AbstractDomain) = push!(dc.list, d)
  dim(d::DomainCollection) = dim(d.list[1])
  
 show(io::IO, d::DomainCollection) = print(io, "a collection of ", length(d.list), " domains")
-
-###############################################################################################
-### A Tensor Product of Domains
- ###############################################################################################
-# A TensorProductDomain represents the tensor product of other domains.
-# Parameter TD is a tuple of (domain) types.
-# Parameter DN is a tuple of the dimensions of each of the domains.
-# Parameter ID is the length of TG and GN (the index dimension).
-# Parametes N and T are the total dimension and numeric type of this grid.
-
-immutable TensorProductDomain{TD,DN,ID,N,T} <: AbstractDomain{N,T}
-	domains	::	TD
-
-	TensorProductDomain(domains::Tuple) = new(domains)
-end
-
-TensorProductDomain(domains...) = TensorProductDomain{typeof(domains),map(dim,domains),length(domains),sum(map(dim, domains)),numtype(domains[1])}(domains)
-
- tensorproduct(d::AbstractDomain, n) = TensorProductDomain([d for i=1:n]...)
-
- subdomain(t::TensorProductDomain,i::Int) = t.domains[i]
- domainlist(t::TensorProductDomain) = t.domains
- 
- function in{TD,DN,ID,N,T}(x::AbstractVector, t::TensorProductDomain{TD,DN,ID,N,T})
-     dc=1
-     z1 = true
-     for i=1:ID
-         z2 = in(x[dc:dc+DN[i]-1],t.domains[i])
-         z1 = z1 & z2
-         dc+=DN[i]
-     end
-     z1
- end
- 
-
-(==)(t1::TensorProductDomain, t2::TensorProductDomain) = t1.domains==t2.domains
-
- function box{TD,DN,ID,N,T}(t::TensorProductDomain{TD,DN,ID,N,T})
-     dc=1
-     verts=zeros(N,2)
-     for i=1:ID
-         verts[dc:dc+DN[i]-1,1]=left(box(t.domains[i]))
-         verts[dc:dc+DN[i]-1,2]=right(box(t.domains[i]))
-         dc+=DN[i]
-     end
-     return BBox{N,T}(verts)
- end
- 
-
-show(io::IO, t::TensorProductDomain) = print(io, "a tensorproduct of ", length(t.domains), " domains")
 
 ###############################################################################################
 ### A domain Bounding box
