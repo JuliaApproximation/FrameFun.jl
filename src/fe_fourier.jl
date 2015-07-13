@@ -246,6 +246,15 @@ default_fourier_n(domain::AbstractDomain2d) = (10, 10)
 
 default_fourier_n(domain::AbstractDomain3d) = (3, 3, 3)
 
+function default_fourier_n{TD,DN,ID,N}(domain::TensorProductDomain{TD,DN,ID,N})
+    s=[default_fourier_n(domainlist(domain)[1])...]
+    for i=2:ID
+        s=[s; default_fourier_n(domainlist(domain)[i])...]
+    end
+    s=round(Int,s/N)
+    tuple(s...)
+end
+
 default_fourier_T{T}(domain::AbstractDomain{1,T}) = 2*one(T)
 default_fourier_T{N,T}(domain::AbstractDomain{N,T}) = ntuple(i->2*one(T),N)
 
@@ -300,6 +309,6 @@ default_fourier_solver(domain) = FE_DirectSolver
 #default_fourier_solver(domain::Interval{Float64}) = FE_ProjectionSolver
 default_fourier_solver(domain::Interval) = FE_ProjectionSolver
 
-    
+default_fourier_solver(domain::TensorProductDomain) = map(default_fourier_solver,domainlist(domain))    
 
 

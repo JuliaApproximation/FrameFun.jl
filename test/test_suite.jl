@@ -305,8 +305,7 @@ Test.with_handler(custom_handler) do
             show(solver_type);print("\n")
             for n in (FE.default_fourier_n(D),(12,12))
                 println("\tN = $n")
-                #for T in ((1.7,1.7),FE.default_fourier_T(D),(2.3,2.3))
-                T=(1.7,1.7)
+                for T in ((1.7,1.7),FE.default_fourier_T(D),(2.3,2.3))
                     print("T = $T\t")
                     try
                         F=ExpFun(f,D,solver_type,n=n,T=T)
@@ -314,7 +313,7 @@ Test.with_handler(custom_handler) do
                     catch y
                         message(y,catch_backtrace())
                     end
-                #end
+                end
             end
         end
     end
@@ -327,7 +326,7 @@ Test.with_handler(custom_handler) do
         show(D); print("\n")
         for solver_type in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
             show(solver_type);print("\n")
-            for n in ((3,3,3), (4,4,4))
+            for n in ((3,3,3), FE.default_fourier_n(D))
                 println("\tN = $n")
                 for T in ((1.7,1.7,1.7), FE.default_fourier_T(D), (2.3,2.3,2.3))
                     print("T = $T\t")
@@ -341,22 +340,7 @@ Test.with_handler(custom_handler) do
             end
         end
     end
-    ## for D in [Cube((-1.0,2.0,3.0),(1.0,4.0,6.5))]        
-    ##     show(D); print("\n")
-    ##     for n in ((10,10,10),(15,15,15))
-    ##         println("\tN = $n")
-    ##         for T in ((1.5,1.5,1.5), FE.default_fourier_T(D), (2.3,2.3,2.3))
-    ##             print("T = $T\t")
-    ##             try
-    ##                 F=ExpFun(f,D,n=n,T=T)
-    ##                 @test msqerror_tol(f,F,tol=1e-5)
-    ##             catch y
-    ##                 message(y)
-    ##             end
-    ##         end
-    ##     end
-        
-    ## end
+    
 
 end
 

@@ -61,6 +61,7 @@ function ExpFun(f::Function, domain = default_fourier_domain_1d(),
     Fun(domain, expansion)
 end
 
+# Funs with one solver_type take that as the default
 function ExpFun{TD,DN,ID,N}(f::Function, domain::TensorProductDomain{TD,DN,ID,N},
         solver_type = default_fourier_solver(domain);
         n = default_fourier_n(domain), T = default_fourier_T(domain),
@@ -71,7 +72,22 @@ function ExpFun{TD,DN,ID,N}(f::Function, domain::TensorProductDomain{TD,DN,ID,N}
         push!(problems,default_fourier_problem(subdomain(domain,i),n[dc:dc+DN[i]-1],T[dc:dc+DN[i]-1],s[dc:dc+DN[i]-1]))
         dc=dc+DN[i]
     end
-    solver = FE_TensorProductSolver(problems)
+    solver = FE_TensorProductSolver(problems,ntuple(i->solver_type,ID))
+    expansion = solve(solver, f)
+    Fun(domain, expansion)
+end
+
+function ExpFun{TD,DN,ID,N}(f::Function, domain::TensorProductDomain{TD,DN,ID,N},
+        solver_types::Tuple;
+        n = default_fourier_n(domain), T = default_fourier_T(domain),
+        s = default_fourier_sampling(domain))
+    problems=FE_DiscreteProblem[]
+    dc=1
+    for i=1:ID
+        push!(problems,default_fourier_problem(subdomain(domain,i),n[dc:dc+DN[i]-1],T[dc:dc+DN[i]-1],s[dc:dc+DN[i]-1]))
+        dc=dc+DN[i]
+    end
+    solver = FE_TensorProductSolver(problems,solver_types)
     expansion = solve(solver, f)
     Fun(domain, expansion)
 end

@@ -32,14 +32,14 @@ immutable FE_TensorProductSolver{ELT,N,ID,ND} <: FE_Solver
     ms :: Array{Int,1}
     grid :: TensorProductGrid
     basis :: TensorProductSet
-    function FE_TensorProductSolver(problems::Array{FE_DiscreteProblem,1})
+    function FE_TensorProductSolver(problems::Array{FE_DiscreteProblem,1},solver_type::Tuple)
         solvers = Array(FE_Solver,length(problems))
         ns=Int[]
         ms=Int[]
         grids=AbstractGrid[]
         bases=AbstractBasis[]
         for i=1:length(problems)
-            solvers[i]=FE_ProjectionSolver(problems[i])
+            solvers[i]=solver_type[i](problems[i])
             push!(ns,size(frequency_basis(problems[i]))...)
             push!(ms,size(time_basis_restricted(problems[i]))...)
             push!(grids,grid(time_basis_restricted(problems[i])))
@@ -68,7 +68,7 @@ end
 size(s::FE_TensorProductSolver,j)= j==1 ? s.ms : s.ns
 grid(s::FE_TensorProductSolver) = s.grid
 
-FE_TensorProductSolver(problems::Array{FE_DiscreteProblem,1}) = FE_TensorProductSolver{eltype(problem),sum(map(dim,problems)),length(problems),tuple(map(dim,problems)...)}(problems)
+FE_TensorProductSolver(problems::Array{FE_DiscreteProblem,1},solver_type) = FE_TensorProductSolver{eltype(problem),sum(map(dim,problems)),length(problems),tuple(map(dim,problems)...)}(problems,solver_type)
 # HackyWacky
 problem(s::FE_TensorProductSolver) = problem(s.solvers1d[1])
 # Ugly starting function, eventually replace by NxNx... coefficients
