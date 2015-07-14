@@ -206,14 +206,14 @@ Test.with_handler(custom_handler) do
     itransform2 = transform_operator(fbasis2, tbasis2)
 
     I=IdentityOperator(tbasis1)
-    S=ScalingOperator(2,tbasis1,tbasis1)
+    S=ScalingOperator(tbasis1,2)
 
     coef_src=rand(length(grid1))
     coef2=rand(length(grid2))
 
     @test I*coef_src==coef_src
     @test S*coef_src==2*coef_src
-    # Identity and Scaling operators don't have transposes
+    # Verify transposes of Identity and Scaling operators
     @test I'*coef_src==coef_src
     @test S'*coef_src==2*coef_src 
 
