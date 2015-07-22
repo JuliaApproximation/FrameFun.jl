@@ -54,7 +54,7 @@ end
 
 function message(y, backtrace)
     rethrow(y)
-    println("\tFailure due to ",typeof(y))
+    print("\tFailure due to ",typeof(y))
     Base.showerror(STDOUT,y)
     Base.show_backtrace(STDOUT,backtrace)
     global errors+=1
@@ -285,8 +285,9 @@ Test.with_handler(custom_handler) do
                 for T in [1.7 FE.default_fourier_T(D) 2.3]
                     print("T = $T \t")
                     try
-                        F=ExpFun(f,D,solver_type,n=n,T=T)
-                        @test msqerror_tol(f,F,tol=1e-7)
+                        F=@timed(ExpFun(f,D,solver_type,n=n,T=T))
+                        @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
+                        @test msqerror_tol(f,F[1],tol=1e-7)
                     catch y
                         message(y)
                     end
@@ -294,7 +295,6 @@ Test.with_handler(custom_handler) do
             end
         end
     end
-    
     delimit("2D") 
 
     f(x)=x[1]+2*x[2]-1.0
@@ -307,9 +307,11 @@ Test.with_handler(custom_handler) do
                 println("\tN = $n")
                 for T in ((1.7,1.7),FE.default_fourier_T(D),(2.3,2.3))
                     print("T = $T\t")
+
                     try
-                        F=ExpFun(f,D,solver_type,n=n,T=T)
-                        @test msqerror_tol(f,F,tol=1e-5)
+                        F=@timed(ExpFun(f,D,solver_type,n=n,T=T))
+                        @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
+                        @test msqerror_tol(f,F[1],tol=1e-5)
                     catch y
                         message(y,catch_backtrace())
                     end
@@ -331,8 +333,9 @@ Test.with_handler(custom_handler) do
                 for T in ((1.7,1.7,1.7), FE.default_fourier_T(D), (2.3,2.3,2.3))
                     print("T = $T\t")
                     try
-                        F=ExpFun(f,D,solver_type,n=n,T=T)
-                        @test msqerror_tol(f,F,tol=1e-2)
+                        F=@timed(ExpFun(f,D,solver_type,n=n,T=T))
+                        @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
+                        @test msqerror_tol(f,F[1],tol=1e-2)
                     catch y
                         message(y)
                     end
