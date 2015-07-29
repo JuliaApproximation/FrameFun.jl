@@ -26,6 +26,13 @@ in{T <: FloatingPoint, S <: Number}(x::S, a::T, b::T) = (a-10eps(T) <= x <= b+10
 # with other routines later on. Dispatch on dimension is done by a different routine evalgrid below.
 in(g::AbstractGrid, d::AbstractDomain) = evalgrid(g, d)
 
+# left and right of domains falls back to bounding box domains
+left(d::AbstractDomain) = left(box(d))
+right(d::AbstractDomain) = right(box(d))
+
+left(d::AbstractDomain,index::Int) = left(box(d),index)
+right(d::AbstractDomain,index::Int) = right(box(d),index)
+
 #in{N}(m::NTuple{N}, d::AbstractDomain) = in(Grid(box(d), m), d)
 
 # Default methods for evaluation on a grid: the default is to call eval on the domain with 
@@ -348,12 +355,12 @@ end
 
 (==)(d1::DomainUnion, d2::DomainUnion) = (d1.d1 == d2.d1) && (d1.d2 == d2.d2)
 
-box(d::DomainUnion) = join(box(d.d1),box(d.d2))
+box(d::DomainUnion) = BBox(min(left(d.d1),left(d.d2)),max(right(d.d2),right(d.d2)))
 dim(d::DomainUnion) = dim(d.d1)
 function show(io::IO, d::DomainUnion)
     print(io, "A union of two domains: \n")
     print(io, "First domain: ", d.d1, "\n")
-    print(io, "Second domain: ", d.d1, "\n")
+    print(io, "Second domain: ", d.d2, "\n")
 end
 
 
@@ -369,7 +376,7 @@ end
 DomainIntersection{N,T}(d1::AbstractDomain{N,T},d2::AbstractDomain{N,T}) = DomainIntersection{N,T,typeof(d1),typeof(d2)}(d1, d2)
 
 # The intersection of two domains corresponds to a logical AND of their characteristic functions
-in(x::AbstractVector, d::DomainIntersection) = in(x, d.d1) && in(x, d.d2)
+pin(x::AbstractVector, d::DomainIntersection) = in(x, d.d1) && in(x, d.d2)
 
 function in(g::AbstractGrid, d::DomainIntersection)
   z1 = in(g, d.d1)
@@ -396,7 +403,7 @@ end
 
 (==)(d1::DomainIntersection, d2::DomainIntersection) = (d1.d1 == d2.d1) && (d1.d2 == d2.d2)
 
-box(d::DomainIntersection) = intersect(box(d.d1),box(d.d2))
+box(d::DomainIntersection) = BBox(max(left(d.d1),left(d.d2)),min(right(d.d2),right(d.d2)))
 dim(d::DomainIntersection) = dim(d.d1)
 function show(io::IO, d::DomainIntersection)
     print(io, "the intersection of two domains: \n")
@@ -609,7 +616,9 @@ show(io::IO, c::BBox{3}) = print(io, "the box [", c.verts[1,1], ",", c.verts[1,2
  # Duck typing : all bounding boxes 'must' implement just these methods
  left(c::BBox) = c.verts[:,1]
  right(c::BBox) = c.verts[:,2]
-
+ 
+ left(c::BBox, index::Int) = c.verts[index,1]
+ right(c::BBox, index::Int) = c.verts[index,2]
 join(c::BBox, d::BBox) = BBox(tuple(min(c.verts[:,1],d.verts[:,1])...),tuple(max(c.verts[:,2],d.verts[:,2])...)) 
 
 intersect(c::BBox, d::BBox) = BBox(tuple(max(c.verts[:,1],d.verts[:,1])...),tuple(min(c.verts[:,2],d.verts[:,2])...))

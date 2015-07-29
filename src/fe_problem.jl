@@ -13,31 +13,32 @@ immutable FE_DiscreteProblem{N,T} <: FE_Problem{N,T}
 
     tbasis_restricted   ::  AbstractFunctionSet
 
-    f_extension     ::  AbstractOperator
-    f_restriction   ::  AbstractOperator
+    ## f_extension     ::  AbstractOperator
+    ## f_restriction   ::  AbstractOperator
 
-    t_extension     ::  AbstractOperator
-    t_restriction   ::  AbstractOperator
+    ## t_extension     ::  AbstractOperator
+    ## t_restriction   ::  AbstractOperator
 
-    transform1      ::  AbstractOperator
-    itransform1     ::  AbstractOperator
+    ## transform1      ::  AbstractOperator
+    ## itransform1     ::  AbstractOperator
 
-    transform2      ::  AbstractOperator
-    itransform2     ::  AbstractOperator
+    ## transform2      ::  AbstractOperator
+    ## itransform2     ::  AbstractOperator
 
     op              ::  AbstractOperator
     opt             ::  AbstractOperator
 
     function FE_DiscreteProblem(domain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted, 
         f_extension, f_restriction, t_extension, t_restriction, 
-        transform1, itransform1, transform2, itransform2)
-
+        transform2, itransform2)
         op  = t_restriction * itransform2 * f_extension
         opt = f_restriction * transform2 * t_extension
 
+        ## new(domain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted, 
+        ##     f_extension, f_restriction, t_extension, t_restriction, 
+        ##     transform1, itransform1, transform2, itransform2, 
+        ##     op, opt)
         new(domain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted, 
-            f_extension, f_restriction, t_extension, t_restriction, 
-            transform1, itransform1, transform2, itransform2, 
             op, opt)
     end
 
@@ -67,6 +68,18 @@ time_basis(p::FE_DiscreteProblem) = p.tbasis1
 time_basis_ext(p::FE_DiscreteProblem) = p.tbasis2
 
 time_basis_restricted(p::FE_DiscreteProblem) = p.tbasis_restricted
+
+t_restriction(p::FE_DiscreteProblem) = p.op.op3
+
+itransform2(p::FE_DiscreteProblem) = p.op.op2
+
+f_extension(p::FE_DiscreteProblem) = p.op.op1
+
+f_restriction(p::FE_DiscreteProblem) = p.opt.op3
+
+transform2(p::FE_DiscreteProblem) = p.opt.op2
+
+t_extension(p::FE_DiscreteProblem) = p.opt.op1
 
 size(p::FE_DiscreteProblem) = size(operator(p))
 

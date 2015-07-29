@@ -98,4 +98,3 @@ call(fun::Fun, x...) = in([x[i] for i=1:length(x)], domain(fun)) ? call(fun.expa
 
 
 
-

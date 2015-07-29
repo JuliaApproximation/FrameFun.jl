@@ -252,7 +252,7 @@ Test.with_handler(custom_handler) do
     delimit("2D")
     C=Circle(1.0)
     for n=[10,100,200]
-        problem = FE.default_fourier_problem(C,n,2.0,2.0)
+        problem = FE.default_fourier_problem(C,(n,n),(2.0,2.0),(2.0,2.0))
         op=operator(problem)
         opt=FE.operator_transpose(problem)
         coef_src = rand(size(FE.frequency_basis(problem)))+1im*rand(size(FE.frequency_basis(problem)))
@@ -267,16 +267,13 @@ Test.with_handler(custom_handler) do
         @test @allocated(FE.apply!(opt,coef_src,coef_dest)) < 4500
     end
 
-
-
-
     
     delimit("Algorithm Implementation and Accuracy")
     delimit("1D")
 
     f(x)=x[1]-1.0
 
-    for D in [FE.default_fourier_domain_1d() Interval(-1.5,0.7)]        
+    for D in [FE.default_fourier_domain_1d() Interval(-1.5,0.7) Interval(-1.5,-0.5)+Interval(0.5,1.5)]        
         show(D); print("\n")
         for solver_type in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
             show(solver_type);print("\n")
@@ -284,6 +281,7 @@ Test.with_handler(custom_handler) do
                 println("\tN = $n")
                 for T in [1.7 FE.default_fourier_T(D) 2.3]
                     print("T = $T \t")
+                    F=@timed(ExpFun(f,D,solver_type,n=n,T=T))
                     try
                         F=@timed(ExpFun(f,D,solver_type,n=n,T=T))
                         @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
@@ -307,7 +305,6 @@ Test.with_handler(custom_handler) do
                 println("\tN = $n")
                 for T in ((1.7,1.7),FE.default_fourier_T(D),(2.3,2.3))
                     print("T = $T\t")
-
                     try
                         F=@timed(ExpFun(f,D,solver_type,n=n,T=T))
                         @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
