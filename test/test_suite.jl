@@ -252,7 +252,7 @@ Test.with_handler(custom_handler) do
     delimit("2D")
     C=Circle(1.0)
     for n=[10,100,200]
-        problem = FE.default_fourier_problem(C,(n,n),(2.0,2.0),(2.0,2.0))
+        problem = FE.discretize_problem(C,(n,n),(2.0,2.0),(2.0,2.0))
         op=operator(problem)
         opt=FE.operator_transpose(problem)
         coef_src = rand(size(FE.frequency_basis(problem)))+1im*rand(size(FE.frequency_basis(problem)))

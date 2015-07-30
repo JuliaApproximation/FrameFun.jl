@@ -130,7 +130,7 @@ function apply!{T,G <: MaskedGrid}(op::Restriction, dest::DiscreteGridSpace{G}, 
 #    end
 end
 
-function default_fourier_problem{T}(domain::AbstractDomain1d{T}, nt::Int, tt::T, st)
+function discretize_problem{T}(domain::Interval{T}, nt::Int, tt::T, st, basis::DataType=FourierBasis)
     n = 2*nt+1
     m = 2*round(Int, nt.*st)+1
     t = (tt.*(m-1)/2).*(2./(m-1))
@@ -141,8 +141,8 @@ function default_fourier_problem{T}(domain::AbstractDomain1d{T}, nt::Int, tt::T,
     a = left(domain)
     b = right(domain)
 
-    fbasis1 = FourierBasis(n, a, b + (b-a)*(t-1))
-    fbasis2 = FourierBasis(l, a, b + (b-a)*(t-1))
+    fbasis1 = basis(n, a, b + (b-a)*(t-1))
+    fbasis2 = basis(l, a, b + (b-a)*(t-1))
 
     grid1 = grid(fbasis1)
     grid2 = grid(fbasis2)
@@ -154,30 +154,23 @@ function default_fourier_problem{T}(domain::AbstractDomain1d{T}, nt::Int, tt::T,
 
     tbasis_restricted = DiscreteGridSpace(rgrid)
 
-    f_extension = Extension(fbasis1, fbasis2)
-    f_restriction = Restriction(fbasis2, fbasis1)
-
-    t_extension = Extension(tbasis_restricted, tbasis2)
-    t_restriction = Restriction(tbasis2, tbasis_restricted)
-
-    transform2 = transform_operator(tbasis2, fbasis2)
-    itransform2 = transform_operator(fbasis2, tbasis2)
-
-    FE_DiscreteProblem(domain, fbasis1, fbasis2, tbasis1, tbasis2,
-        tbasis_restricted, f_extension, f_restriction, t_extension,
-        t_restriction, transform2, itransform2)
+    FE_DiscreteProblem(domain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted)
 end
 
-function fourier_extension_problem{T}(n::Int, m::Int, l::Int, domain::AbstractDomain{1,T})
-    @assert isodd(n)
+
+function discretize_problem{T}(domain::AbstractDomain1d{T}, nt::Int, tt::T, st, basis::DataType=FourierBasis)
+    n = 2*nt+1
+    m = 2*round(Int, nt.*st)+1
+    t = (tt.*(m-1)/2).*(2./(m-1))
+    l = round(Int, t.*(m-1))
 
     t = (l*one(T)) / ((m-1)*one(T))
 
     a = left(domain)
     b = right(domain)
 
-    fbasis1 = FourierBasis(n, a, b + (b-a)*(t-1))
-    fbasis2 = FourierBasis(l, a, b + (b-a)*(t-1))
+    fbasis1 = basis(n, a, b + (b-a)*(t-1))
+    fbasis2 = basis(l, a, b + (b-a)*(t-1))
 
     grid1 = grid(fbasis1)
     grid2 = grid(fbasis2)
@@ -186,35 +179,25 @@ function fourier_extension_problem{T}(n::Int, m::Int, l::Int, domain::AbstractDo
 
     tbasis1 = DiscreteGridSpace(grid1)
     tbasis2 = DiscreteGridSpace(grid2)
-
+    
     tbasis_restricted = DiscreteGridSpace(rgrid)
 
-    f_extension = Extension(fbasis1, fbasis2)
-    f_restriction = Restriction(fbasis2, fbasis1)
-
-    t_extension = Extension(tbasis_restricted, tbasis2)
-    t_restriction = Restriction(tbasis2, tbasis_restricted)
-
-    transform2 = transform_operator(tbasis2, fbasis2)
-    itransform2 = transform_operator(fbasis2, tbasis2)
-
-    FE_DiscreteProblem(domain, fbasis1, fbasis2, tbasis1, tbasis2,
-        tbasis_restricted, f_extension, f_restriction, t_extension,
-        t_restriction, transform2, itransform2)
+    FE_DiscreteProblem(domain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted)
+    
 end
 
-function default_fourier_problem{N,T}(domain::AbstractDomain{N,T}, nt::Tuple, tt::Tuple, st::Tuple)
+function discretize_problem{N,T}(domain::AbstractDomain{N,T}, nt::Tuple, tt::Tuple, st::Tuple, basis::DataType=FourierBasis)
     n = 2*[nt...]+1
     m = 2*round(Int, [nt...].*[st...])+1
     tt = round(Int,[tt...].*(m-1)/2).*(2./(m-1))
     l = round(Int, tt.*(m-1))
-    fbasis1=Array{FourierBasisOdd}(N)
-    fbasis2=Array{FourierBasisEven}(N)
+    fbasis1=Array{basis}(N)
+    fbasis2=Array{basis}(N)
     bbox = box(domain)
     for i=1:N
         t = (l[1]*one(T))/((m[1]-1)*one(T))
-        fbasis1[i] = FourierBasis(n[i], left(bbox)[i], right(bbox)[i] + (right(bbox)[i]-left(bbox)[i])*(t-1))
-        fbasis2[i] = FourierBasis(l[i], left(bbox)[i], right(bbox)[i] + (right(bbox)[i]-left(bbox)[i])*(t-1))
+        fbasis1[i] = basis(n[i], left(bbox)[i], right(bbox)[i] + (right(bbox)[i]-left(bbox)[i])*(t-1))
+        fbasis2[i] = basis(l[i], left(bbox)[i], right(bbox)[i] + (right(bbox)[i]-left(bbox)[i])*(t-1))
     end
     tens_fbasis1 = TensorProductSet(fbasis1...)
     tens_fbasis2 = TensorProductSet(fbasis2...)
@@ -226,21 +209,9 @@ function default_fourier_problem{N,T}(domain::AbstractDomain{N,T}, nt::Tuple, tt
     tens_tbasis1 = TensorProductSet(map(x->DiscreteGridSpace(grid(x)), fbasis1)...)
     tens_tbasis2 = TensorProductSet(map(x->DiscreteGridSpace(grid(x)), fbasis2)...)
 
-    f_extension = Extension(tens_fbasis1, tens_fbasis2)
-    f_restriction = Restriction(tens_fbasis2, tens_fbasis1)
+    tbasis_restricted = DiscreteGridSpace(MaskedGrid(tens_grid2, domain))
 
-    tbasis_restricted = DiscreteGridSpace(MaskedGrid(grid(tens_tbasis2), domain))
-
-    t_extension = Extension(tbasis_restricted, tens_tbasis2)
-    t_restriction = Restriction(tens_tbasis2, tbasis_restricted)
-
-    transform2 = FastFourierTransformFFTW(tens_tbasis2, tens_fbasis2)
-    itransform2 = InverseFastFourierTransformFFTW(tens_fbasis2, tens_tbasis2)
-
-    FE_DiscreteProblem(domain, tens_fbasis1, tens_fbasis2, tens_tbasis1, tens_tbasis2, 
-        tbasis_restricted, f_extension, f_restriction,
-        t_extension, t_restriction,
-        transform2, itransform2)
+    FE_DiscreteProblem(domain, tens_fbasis1, tens_fbasis2, tens_tbasis1, tens_tbasis2, tbasis_restricted)
 end
 
 
@@ -269,49 +240,9 @@ default_fourier_T{N,T}(domain::AbstractDomain{N,T}) = ntuple(i->2*one(T),N)
 default_fourier_sampling{T}(domain::AbstractDomain{1,T}) = 2*one(T)
 default_fourier_sampling{N,T}(domain::AbstractDomain{N,T}) = ntuple(i->2*one(T),N)
 
-## function default_fourier_problem{T}(domain::AbstractDomain2d{T}, n::Int, t::Number, s::Number)
-##     N = 2*n+1
-##     M = 2*round(Int, n*s)+1
-##     t = round(Int,t*(M-1)/2)*2/(M-1)
-##     L = round(Int, t*(M-1))
-##     fourier_extension_problem((N,N), (M,M), (L,L), domain)
-## end
-
-## function default_fourier_problem{T}(domain::AbstractDomain3d{T}, n::Int, t::Number, s::Number)
-##     N = 2*n+1
-##     M = 2*round(Int, n*s)+1
-##     t = round(Int,t*(M-1)/2)*2/(M-1)
-##     L = round(Int, t*(M-1))
-##     fourier_extension_problem((N,N,N), (M,M,M), (L,L,L), domain)
-## end
-
-
-## function default_fourier_problem{T}(domain::AbstractDomain1d{T}, n::Int, t::T, sampling)
-##     n = 2*n+1
-##     m = 2*round(Int, (n-1)/2 * sampling)+1
-##     l = round(Int, t*(m-1))
-##     fourier_extension_problem(n, m, l, domain)
-## end
-
-function default_fourier_problem{T}(domain::AbstractDomain1d{T}, n::Tuple, t::Tuple, s::Tuple)
-    default_fourier_problem(domain,n[1],t[1],s[1])
+function discretize_problem{T}(domain::AbstractDomain1d{T}, n::Tuple, t::Tuple, s::Tuple)
+    discretize_problem(domain,n[1],t[1],s[1])
 end
-
-## function default_fourier_problem{T}(domain::AbstractDomain1d{T}, n::Tuple, t::Tuple, s::Tuple)
-##     N = 2*[n...]+1
-##     M = 2*round(Int, [n...].*[s...])+1
-##     t = round(Int,[t...].*(M-1)/2).*(2./(M-1))
-##     L = round(Int, t.*(M-1))
-##     fourier_extension_problem(N[1],M[1],L[1], domain)
-## end
-    
-## function default_fourier_problem{T}(domain::AbstractDomain{T}, n::Tuple, t::Tuple, s::Tuple)
-##     N = 2*[n...]+1
-##     M = 2*round(Int, [n...].*[s...])+1
-##     t = round(Int,[t...].*(M-1)/2).*(2./(M-1))
-##     L = round(Int, t.*(M-1))
-##     fourier_extension_problem(tuple(N...),tuple(M...),tuple(L...), domain)
-## end
 
 default_fourier_domain_1d() = Interval()
 
