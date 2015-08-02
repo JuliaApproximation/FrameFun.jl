@@ -56,8 +56,8 @@ end
 ##     Main.PyPlot.plot_trisurf(x,y,data)
 ## end
 
-function plot{N,T}(f::Fun{N,T};n=100)
-    Tgrid=TensorProductGrid([EquispacedGrid(100, left(box(domain(f)),idx), right(box(domain(f)),idx)) for idx = 1:N]...)
+function plot{N,T}(f::Fun{N,T};n=1000)
+    Tgrid=TensorProductGrid([EquispacedGrid(n, left(box(domain(f)),idx), right(box(domain(f)),idx)) for idx = 1:N]...)
     data = real(f(Tgrid))
     Main.PyPlot.surf(BasisFunctions.range(grid(Tgrid,1)),BasisFunctions.range(grid(Tgrid,2)),data,rstride=1, cstride=1, cmap=Main.PyPlot.ColorMap("coolwarm"),linewidth=0, antialiased=false,vmin=minimum(data),vmax=maximum(data))
 end
@@ -66,7 +66,7 @@ end
     
 ## end
 function plot_expansion{N,T}(f::Fun{N,T};n=100)
-    Tgrid=TensorProductGrid([EquispacedGrid(100, left(set(expansion(f)),idx), right(set(expansion(f)),idx)) for idx = 1:N]...)
+    Tgrid=TensorProductGrid([EquispacedGrid(n, left(set(expansion(f)),idx), right(set(expansion(f)),idx)) for idx = 1:N]...)
     data = real(expansion(f)(Tgrid))
     Main.PyPlot.surf(BasisFunctions.range(grid(Tgrid,1)),BasisFunctions.range(grid(Tgrid,2)),data,rstride=1, cstride=1, cmap=Main.PyPlot.ColorMap("coolwarm"),linewidth=0, antialiased=false,vmin=minimum(data),vmax=maximum(data))
 end

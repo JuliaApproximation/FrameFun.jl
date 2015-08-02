@@ -36,18 +36,22 @@ function plunge_operator(problem::FE_DiscreteProblem)
     A = operator(problem)
     Ap = operator_transpose(problem)
     I = IdentityOperator(time_basis_restricted(problem))
-    lambda = param_L(problem)
 
-    A*Ap - lambda * I
+    A*Ap - param_lambda(problem,frequency_basis(problem)) * I
 end
+
+# This should probably be fixed by making the Fourier Transforms unitary
+param_lambda(problem::FE_DiscreteProblem,basis)= param_L(problem)
+param_lambda(problem::FE_DiscreteProblem,basis::ChebyshevBasis)= param_L(problem)/2
 
 estimate_plunge_rank{N}(problem::FE_DiscreteProblem{N}) = min(round(Int, 9*log(param_N(problem))*(param_M(problem)*param_N(problem)/param_L(problem))^(1-1/N) + 2),param_N(problem))
 
-estimate_plunge_rank(problem::FE_DiscreteProblem{1,BigFloat}) = round(Int, 18*log(param_N(problem)) + 5)
+estimate_plunge_rank(problem::FE_DiscreteProblem{1,BigFloat}) = round(Int, 28*log(param_N(problem)) + 5)
 
 function solve!{T}(s::FE_ProjectionSolver, coef::AbstractArray{T}, rhs::AbstractArray{T})
     A = operator(s)
     At = operator_transpose(s)
+    
     P = s.plunge_op
     L = param_L(problem(s))
 

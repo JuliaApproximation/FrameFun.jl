@@ -118,12 +118,12 @@ end
 SubIntervalGrid{T}(grid::AbstractIntervalGrid{T}, a, b) = SubIntervalGrid{typeof(grid), T}(grid, a, b)
 
 
-immutable EquispacedSubGrid{G <: AbstractEquispacedGrid, T} <: AbstractSubIntervalGrid{G,T}
+immutable EquispacedSubGrid{G <: AbstractGrid, T} <: AbstractGrid{1,T}
 	grid	::	G
 	i1		::	Int
 	i2		::	Int
 
-	function EquispacedSubGrid(grid::AbstractEquispacedGrid{T}, i1, i2)
+	function EquispacedSubGrid(grid::AbstractGrid{1,T}, i1, i2)
 		@assert 1 <= i1 <= length(grid)
 		@assert 1 <= i2 <= length(grid)
 		@assert i1 <= i2
@@ -132,7 +132,7 @@ immutable EquispacedSubGrid{G <: AbstractEquispacedGrid, T} <: AbstractSubInterv
 	end
 end
 
-EquispacedSubGrid{T}(grid::AbstractEquispacedGrid{T}, i1, i2) = EquispacedSubGrid{typeof(grid), T}(grid, i1, i2)
+EquispacedSubGrid{T}(grid::AbstractGrid{1,T}, i1, i2) = EquispacedSubGrid{typeof(grid), T}(grid, i1, i2)
 
 left(g::EquispacedSubGrid) = g.grid[g.i1]
 

@@ -25,7 +25,7 @@ export Interval, Circle, Square, Cube, Sphere, Cylinder, atomium, TensorProductG
 export numtype
 
 # from funs.jl
-export ExpFun
+export ExpFun, ChebyFun
 
 
 include("domains.jl")

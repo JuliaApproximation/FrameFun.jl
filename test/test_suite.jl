@@ -272,22 +272,23 @@ Test.with_handler(custom_handler) do
     delimit("1D")
 
     f(x)=x[1]-1.0
-
-    for D in [FE.default_fourier_domain_1d() Interval(-1.5,0.7) Interval(-1.5,-0.5)+Interval(0.5,1.5)]        
-        show(D); print("\n")
-        for solver_type in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
-            show(solver_type);print("\n")
-            for n in [FE.default_fourier_n(D) 49]
-                println("\tN = $n")
-                for T in [1.7 FE.default_fourier_T(D) 2.3]
-                    print("T = $T \t")
-                    F=@timed(ExpFun(f,D,solver_type,n=n,T=T))
-                    try
-                        F=@timed(ExpFun(f,D,solver_type,n=n,T=T))
-                        @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
-                        @test msqerror_tol(f,F[1],tol=1e-7)
-                    catch y
-                        message(y)
+    for funtype in (ExpFun,ChebyFun)
+        println("Fun Type: ",funtype)
+        for D in [FE.default_fourier_domain_1d() Interval(-1.5,0.7) Interval(-1.5,-0.5)+Interval(0.5,1.5)]        
+            show(D); print("\n")
+            for solver_type in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
+                show(solver_type);print("\n")
+                for n in [FE.default_fourier_n(D) 49]
+                    println("\tN = $n")
+                    for T in [1.7 FE.default_fourier_T(D) 2.3]
+                        print("T = $T \t")
+                        try
+                            F=@timed(funtype(f,D,solver_type,n=n,T=T))
+                            @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
+                            @test msqerror_tol(f,F[1],tol=1e-7)
+                        catch y
+                            message(y)
+                        end
                     end
                 end
             end

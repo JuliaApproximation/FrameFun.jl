@@ -61,6 +61,19 @@ function ExpFun(f::Function, domain = default_fourier_domain_1d(),
     Fun(domain, expansion)
 end
 
+function ChebyFun(f::Function, domain = default_fourier_domain_1d(),
+        solver_type = default_fourier_solver(domain);
+        n = default_fourier_n(domain), T = default_fourier_T(domain),
+        s = default_fourier_sampling(domain))
+
+    problem = discretize_problem(domain, n, T, s, ChebyshevBasis)
+    solver = solver_type(problem)
+
+    expansion = solve(solver, f)
+    Fun(domain, expansion)
+end
+
+
 # Funs with one solver_type take that as the default
 function ExpFun{TD,DN,ID,N}(f::Function, domain::TensorProductDomain{TD,DN,ID,N},
         solver_type = default_fourier_solver(domain);
