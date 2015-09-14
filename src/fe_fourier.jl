@@ -66,7 +66,7 @@ end
 #apply!{T,N,G,H,ELT}(op::Restriction, dest::TensorProductBasis{DiscreteGridSpace1d{G,ELT,T},H,N,T}, src, coef_dest::Array, coef_src::Array)=reshape_L_to_N!(coef_dest, coef_src, size(coef_dest), size(coef_src))
 
 
-# TODO: fix proper dispatch here!
+# TODO: fix proper dispatch here! For now only the first element is looked at to decide on type.
 apply!(op::Extension, dest::TensorProductSet, src::TensorProductSet, coef_dest, coef_src) = 
     apply_tensor!(op, dest, src, set(dest,1), set(src,1), coef_dest, coef_src)
 
@@ -79,11 +79,6 @@ apply_tensor!(op::Extension, dest::TensorProductSet, src::TensorProductSet, dest
 apply_tensor!(op::Restriction, dest::TensorProductSet, src::TensorProductSet, dest1::FourierBasisOdd, src1::FourierBasis, coef_dest, coef_src) =
     reshape_L_to_N!(coef_dest, coef_src, size(coef_dest), size(coef_src))
 
-apply_tensor!(op::Extension, dest::TensorProductSet, src::TensorProductSet, dest1::DiscreteGridSpace, src1::DiscreteGridSpace, coef_dest, coef_src) = 
-    reshape_N_to_L!(coef_src, coef_dest, size(coef_src), size(coef_dest))
-
-apply_tensor!(op::Restriction, dest::TensorProductSet, src::TensorProductSet, dest1::DiscreteGridSpace, src1::DiscreteGridSpace, coef_dest, coef_src) =
-    reshape_L_to_N!(coef_dest, coef_src, size(coef_dest), size(coef_src))
 
 
 

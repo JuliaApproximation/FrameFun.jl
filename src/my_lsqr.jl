@@ -9,8 +9,9 @@ import Base: push!, real
 
 import IterativeSolvers: lsqr!
 
-real{T<:Real}(::Type{T}) = T
-real{T<:Real}(::Type{Complex{T}}) = T
+# These methods appeared in Base
+#real{T<:Real}(::Type{T}) = T
+#real{T<:Real}(::Type{Complex{T}}) = T
 
 # A complexified version of the lsqr routine in IterativeSolvers
 # which is in turn adapted from the Matlab implementation at
