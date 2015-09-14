@@ -355,7 +355,7 @@ end
 
 (==)(d1::DomainUnion, d2::DomainUnion) = (d1.d1 == d2.d1) && (d1.d2 == d2.d2)
 
-box(d::DomainUnion) = BBox(min(left(d.d1),left(d.d2)),max(right(d.d2),right(d.d2)))
+box(d::DomainUnion) = BBox(min(left(d.d1),left(d.d2)),max(right(d.d1),right(d.d2)))
 dim(d::DomainUnion) = dim(d.d1)
 function show(io::IO, d::DomainUnion)
     print(io, "A union of two domains: \n")
@@ -376,7 +376,7 @@ end
 DomainIntersection{N,T}(d1::AbstractDomain{N,T},d2::AbstractDomain{N,T}) = DomainIntersection{N,T,typeof(d1),typeof(d2)}(d1, d2)
 
 # The intersection of two domains corresponds to a logical AND of their characteristic functions
-pin(x::AbstractVector, d::DomainIntersection) = in(x, d.d1) && in(x, d.d2)
+in(x::AbstractVector, d::DomainIntersection) = in(x, d.d1) && in(x, d.d2)
 
 function in(g::AbstractGrid, d::DomainIntersection)
   z1 = in(g, d.d1)
@@ -403,7 +403,7 @@ end
 
 (==)(d1::DomainIntersection, d2::DomainIntersection) = (d1.d1 == d2.d1) && (d1.d2 == d2.d2)
 
-box(d::DomainIntersection) = BBox(max(left(d.d1),left(d.d2)),min(right(d.d2),right(d.d2)))
+box(d::DomainIntersection) = BBox(max(left(d.d1),left(d.d2)),min(right(d.d1),right(d.d2)))
 dim(d::DomainIntersection) = dim(d.d1)
 function show(io::IO, d::DomainIntersection)
     print(io, "the intersection of two domains: \n")
@@ -597,7 +597,9 @@ BBox{T <: Number}(a::T, b::T) = Interval(a,b)
 
 BBox{N,T}(left::NTuple{N,T}, right::NTuple{N,T}) = BBox{N,T}([[left...] [right...]])
 
-## Arithmetic operations
+ BBox{T}(left::Array{T,1}, right::Array{T,1}) = BBox{length(left),T}([left right])
+
+ # operations
 
 (+)(c::BBox, x::AbstractVector) = BBox(c.verts .+ x)
 (+)(x::AbstractVector, c::BBox) = c+x

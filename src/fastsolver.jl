@@ -16,7 +16,14 @@ immutable FE_ProjectionSolver{ELT} <: FE_Solver
         plunge_op = plunge_operator(problem)
         R = estimate_plunge_rank(problem)
         W = MatrixOperator( map(ELT, rand(param_N(problem), R)) )
+        # Added
+        ## USVD0=svd(matrix(plunge_op))
+        ## println(USVD0[2])
+        ## USVD1=svd(matrix(plunge_op * operator(problem)))
+        ## println(USVD1[2])
+        ## println("parameter lambda: ", param_lambda(problem,frequency_basis(problem)))
         USV= svd(matrix(plunge_op * operator(problem) * W))
+        ## println(USV[2])
         maxind=maximum(find(USV[2].>1e-6))
         S=USV[2]
         ## Sinv=[1./S[1:maxind];zeros(length(S)-maxind,1)]
@@ -42,8 +49,9 @@ end
 
 # This should probably be fixed by making the Fourier Transforms unitary
 param_lambda(problem::FE_DiscreteProblem,basis)= param_L(problem)
-param_lambda(problem::FE_DiscreteProblem,basis::ChebyshevBasis)= param_L(problem)/2
-
+param_lambda{N}(problem::FE_DiscreteProblem{N},basis::ChebyshevBasis)= param_L(problem)/(2.0^N)
+param_lambda{N}(problem::FE_DiscreteProblem{N},basis::TensorProductSet)=
+    param_lambda(problem,set(basis,1))
 estimate_plunge_rank{N}(problem::FE_DiscreteProblem{N}) = min(round(Int, 9*log(param_N(problem))*(param_M(problem)*param_N(problem)/param_L(problem))^(1-1/N) + 2),param_N(problem))
 
 estimate_plunge_rank(problem::FE_DiscreteProblem{1,BigFloat}) = round(Int, 28*log(param_N(problem)) + 5)
@@ -53,8 +61,7 @@ function solve!{T}(s::FE_ProjectionSolver, coef::AbstractArray{T}, rhs::Abstract
     At = operator_transpose(s)
     
     P = s.plunge_op
-    L = param_L(problem(s))
-
+    L = param_lambda(problem(s),frequency_basis(problem(s)))
     apply!(P,s.b,rhs)
     A_mul_B!(s.sy,s.Ut,s.b)
     A_mul_B!(s.y,s.VS,s.sy)

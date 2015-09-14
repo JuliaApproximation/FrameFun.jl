@@ -297,27 +297,29 @@ Test.with_handler(custom_handler) do
     delimit("2D") 
 
     f(x)=x[1]+2*x[2]-1.0
-
-    for D in [Circle(1.0) Circle(2.0,[-2.0,-2.0]) Cube((-1.0,-1.5),(0.5,0.7))]       
-        show(D); print("\n")
-        for solver_type in (FE.FE_DirectSolver, FE.FE_ProjectionSolver)
-            show(solver_type);print("\n")
-            for n in (FE.default_fourier_n(D),(12,12))
-                println("\tN = $n")
-                for T in ((1.7,1.7),FE.default_fourier_T(D),(2.3,2.3))
-                    print("T = $T\t")
-                    try
-                        F=@timed(ExpFun(f,D,solver_type,n=n,T=T))
-                        @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
-                        @test msqerror_tol(f,F[1],tol=1e-5)
-                    catch y
-                        message(y,catch_backtrace())
+    for funtype in (ExpFun,ChebyFun)
+        println("Fun Type: ",funtype)
+        for D in [Circle(1.0) Circle(2.0,[-2.0,-2.0]) Cube((-1.0,-1.5),(0.5,0.7))]       
+            show(D); print("\n")
+            for solver_type in (FE.FE_DirectSolver, FE.FE_ProjectionSolver)
+                show(solver_type);print("\n")
+                for n in (FE.default_fourier_n(D),(12,12))
+                    println("\tN = $n")
+                    for T in ((1.7,1.7),FE.default_fourier_T(D),(2.3,2.3))
+                        print("T = $T\t")
+                        try
+                            F=@timed(funtype(f,D,solver_type,n=n,T=T))
+                            @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
+                            @test msqerror_tol(f,F[1],tol=1e-5)
+                        catch y
+                            message(y,catch_backtrace())
+                        end
                     end
                 end
             end
         end
     end
-    
+    return
     delimit("3D")
 
     f(x)=x[1]+x[2]-x[3]
