@@ -6,6 +6,8 @@ using BasisFunctions
 
 using Base.Cartesian
 
+import Base: +, *, /, ==, |, &, -, \
+
 import Base: length, eltype, size, push!
 
 import Base: eachindex, start, next, done, getindex
