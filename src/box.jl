@@ -1,7 +1,7 @@
 # box.jl
 
 # The definition of a box is a 2D-array with the bottom-left and top-right vertices as columns.
-immutable FBox{N, T <: FloatingPoint}
+immutable FBox{N, T <: AbstractFloat}
 	vertices::Array{T,2}
 end
 
@@ -13,10 +13,10 @@ numtype{N,T}(::FBox{N,T}) = T
 numtype{N,T}(::Type{FBox{N,T}}) = T
 numtype{B <: FBox}(::Type{B}) = numtype(super(B))
 
-typealias FBox1{T <: FloatingPoint} FBox{1,T}
-typealias FBox2{T <: FloatingPoint} FBox{2,T}
-typealias FBox3{T <: FloatingPoint} FBox{3,T}
-typealias FBox4{T <: FloatingPoint} FBox{4,T}
+typealias FBox1{T <: AbstractFloat} FBox{1,T}
+typealias FBox2{T <: AbstractFloat} FBox{2,T}
+typealias FBox3{T <: AbstractFloat} FBox{3,T}
+typealias FBox4{T <: AbstractFloat} FBox{4,T}
 
 # A type-safe general constructor is hard: how can N and T be inferred?
 FBox{T}(a::Vector{T}, b::Vector{T}) = FBox{length(a),T}([a b])

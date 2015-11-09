@@ -4,7 +4,7 @@
 ###############################################################################################
 # Some common properties of Function objects are grouped in AbstractFun
 ###############################################################################################
-abstract AbstractFun{N,T <: FloatingPoint}
+abstract AbstractFun{N,T <: AbstractFloat}
 
 dim{N,T}(::AbstractFun{N,T}) = N
 dim{N,T}(::Type{AbstractFun{N,T}}) = N

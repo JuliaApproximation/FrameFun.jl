@@ -1,6 +1,6 @@
 # domains.jl
 
-abstract AbstractDomain{N,T <: FloatingPoint}
+abstract AbstractDomain{N,T <: AbstractFloat}
 
 dim{N,T}(::AbstractDomain{N,T}) = N
 dim{N,T}(::Type{AbstractDomain{N,T}}) = N
@@ -10,17 +10,17 @@ numtype{N,T}(::AbstractDomain{N,T}) = T
 numtype{N,T}(::Type{AbstractDomain{N,T}}) = T
 numtype{D <: AbstractDomain}(::Type{D}) = numtype(super(D))
 
-typealias AbstractDomain1d{T <: FloatingPoint} AbstractDomain{1,T}
-typealias AbstractDomain2d{T <: FloatingPoint} AbstractDomain{2,T}
-typealias AbstractDomain3d{T <: FloatingPoint} AbstractDomain{3,T}
-typealias AbstractDomain4d{T <: FloatingPoint} AbstractDomain{4,T}
+typealias AbstractDomain1d{T <: AbstractFloat} AbstractDomain{1,T}
+typealias AbstractDomain2d{T <: AbstractFloat} AbstractDomain{2,T}
+typealias AbstractDomain3d{T <: AbstractFloat} AbstractDomain{3,T}
+typealias AbstractDomain4d{T <: AbstractFloat} AbstractDomain{4,T}
 
 # Domains are evaluated using vectors to specify the points, except in 1D
 # Provide fallback routine for users not using vectors in 1d
 in{T,S <: Number}(x::S, d::AbstractDomain1d{T}) = in([x], d)
 
 # Check whether a value is in an interval, up to 10 times machine precision
-in{T <: FloatingPoint, S <: Number}(x::S, a::T, b::T) = (a-10eps(T) <= x <= b+10eps(T))
+in{T <: AbstractFloat, S <: Number}(x::S, a::T, b::T) = (a-10eps(T) <= x <= b+10eps(T))
 
 # Fallback routine when evaluated on a grid. This routine is general, in order to avoid ambiguity
 # with other routines later on. Dispatch on dimension is done by a different routine evalgrid below.
@@ -110,7 +110,7 @@ end
 
 Interval{T}(a::T = -1.0, b::T = 1.0) = Interval{T}(a, b)
 
-Interval{T <: FloatingPoint}(::Type{T}) = Interval(zero(T), one(T))
+Interval{T <: AbstractFloat}(::Type{T}) = Interval(zero(T), one(T))
 
 in(x::AbstractVector, d::Interval) = in(x[1], d.a, d.b)
 
@@ -270,9 +270,9 @@ Cube{T <: Number}(a::T, b::T) = Interval(a,b)
 
 Cube{N,T}(left::NTuple{N,T}, right::NTuple{N,T}) = TensorProductDomain(ntuple(i->Interval(left[i],right[i]),N)...)
 
-Cube{T <: FloatingPoint}(::Type{T}) = Cube( (-one(T),-one(T),-one(T)), (one(T), one(T), one(T)))
+Cube{T <: AbstractFloat}(::Type{T}) = Cube( (-one(T),-one(T),-one(T)), (one(T), one(T), one(T)))
 
-Cube{T <: FloatingPoint}(n::Int, ::Type{T}) = Cube( tuple([-one(T) for i=1:n]...), tuple([one(T) for i=1:n]...))
+Cube{T <: AbstractFloat}(n::Int, ::Type{T}) = Cube( tuple([-one(T) for i=1:n]...), tuple([one(T) for i=1:n]...))
 
 Cube() = Cube(Float64)
 
