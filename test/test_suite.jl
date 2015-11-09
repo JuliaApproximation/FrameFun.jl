@@ -60,7 +60,7 @@ function message(y, backtrace)
     global errors+=1
 end
 
-function delimit(s::String)
+function delimit(s::AbstractString)
     println("############")
     println("# ",s)
     println("############")
