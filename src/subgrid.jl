@@ -19,14 +19,18 @@ index_dim{G <: AbstractSubGrid}(::Type{G}) = 1
 grid(g::AbstractSubGrid) = g.grid
 
 
+"""
+A MaskedGrid is a subgrid of another grid that is defined by a mask.
+The mask is true or false for each point in the supergrid. The set of points
+for which it is true make up the MaskedGrid.
+"""
 immutable MaskedGrid{G <: AbstractGrid,ID,N,T} <: AbstractSubGrid{N,T}
     grid	::	G
     mask	::	Array{Bool,ID}
-    indices     ::      Array{Int,2}
-    M		::	Int
+    indices ::  Array{Int,2}
+    M		::	Int				# Total number of points in the mask
 
     MaskedGrid(grid::AbstractGrid{N,T},  mask, indices) = new(grid, mask, indices, sum(mask))
-    
 end
 
 function MaskedGrid{N,T}(grid::AbstractGrid{N,T}, mask, indices)
@@ -38,20 +42,16 @@ end
 function MaskedGrid{N,T}(grid::AbstractGrid{N,T}, domain::AbstractDomain{N,T})
     mask = in(grid, domain)
     indices = Array(Int,sum(mask),ndims(mask))
-    i=1
+    i = 1
     for m in eachindex(mask)
         if mask[m]
-            indices[i,:]=[ind2sub(mask,m)...]
-            i+=1
+            indices[i,:] = [ind2sub(mask,m)...]
+            i += 1
         end
     end
     MaskedGrid(grid, mask, indices)
 end
 
-
-# index_dim{G,ID,N,T}(::MaskedGrid{G,ID,N,T}) = ID
-# index_dim{G,ID,N,T}(::Type{MaskedGrid{G,ID,N,T}}) = ID
-# index_dim{G <: MaskedGrid}(::Type{G}) = index_dim(super(G))
 
 length(g::MaskedGrid) = g.M
 
@@ -62,6 +62,9 @@ size(g::MaskedGrid) = (length(g),)
 
 # Check whether element grid[i] (of the underlying grid) is in the masked grid.
 in(i, g::MaskedGrid) = g.mask[i]
+
+
+# TODO: make MaskedGrid iteration more efficient using its indices field.
 
 immutable MaskedGridRange{G <: MaskedGrid,ITER}
 	maskedgrid	::	G
@@ -91,12 +94,13 @@ done(iter::MaskedGridRange, state) = (state.k == length(iter)+1)
 
 getindex(g::MaskedGrid, idx) = getindex(g.grid, idx)
 
-function getindex!(g::MaskedGrid, x, idx::Int)
-    getindex!(g.grid, x, g.indices[idx,:]...)
+function getindex!(x, g::MaskedGrid, idx::Int)
+    getindex!(x, g.grid, g.indices[idx,:]...)
 end
 
 
 getindex(g::MaskedGrid, idx::Int) = getindex(g.grid, g.indices[idx,:]...)
+
 
 
 abstract AbstractSubIntervalGrid{G <: AbstractIntervalGrid, T} <: AbstractSubGrid{1,T}

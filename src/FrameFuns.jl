@@ -34,6 +34,8 @@ include("domains.jl")
 
 include("subgrid.jl")
 
+include("domainframe.jl")
+
 include("fe_problem.jl")
 
 include("my_lsqr.jl")

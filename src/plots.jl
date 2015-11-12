@@ -27,7 +27,7 @@ end
 function call!{N}(f::Fun, result::AbstractArray, g::AbstractGrid{N})
     x = Array(eltype(f), N)
     for i in eachindex(g)
-        getindex!(g, x, i)
+        getindex!(x, g, i)
         result[i] = call(f, x...)
     end
 end
