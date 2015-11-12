@@ -263,6 +263,8 @@ Test.with_handler(custom_handler) do
         end
         FE.apply!(op,coef_dest,coef_src)
         FE.apply!(opt,coef_src,coef_dest)
+        mem = @allocated(FE.apply!(op,coef_dest,coef_src))
+        println(mem)
         @test @allocated(FE.apply!(op,coef_dest,coef_src)) < 4500
         @test @allocated(FE.apply!(opt,coef_src,coef_dest)) < 4500
     end
@@ -272,7 +274,8 @@ Test.with_handler(custom_handler) do
     delimit("1D")
 
     f(x)=x[1]-1.0
-    for funtype in (ExpFun,ChebyFun)
+#    for funtype in (ExpFun,ChebyFun)
+    for funtype in (ExpFun,)
         println("Fun Type: ",funtype)
         for D in [FE.default_fourier_domain_1d() Interval(-1.5,0.7) Interval(-1.5,-0.5)+Interval(0.5,1.5)]        
             show(D); print("\n")
@@ -297,7 +300,8 @@ Test.with_handler(custom_handler) do
     delimit("2D") 
 
     f(x)=x[1]+2*x[2]-1.0
-    for funtype in (ExpFun,ChebyFun)
+#    for funtype in (ExpFun,ChebyFun)
+    for funtype in (ExpFun,)
         println("Fun Type: ",funtype)
         for D in [Circle(1.0) Circle(2.0,[-2.0,-2.0]) Cube((-1.0,-1.5),(0.5,0.7))]       
             show(D); print("\n")
@@ -348,6 +352,7 @@ Test.with_handler(custom_handler) do
 end
 
 # Diagnostics
+println()
 println("Succes rate:\t$successes/$(successes+failures+errors)")
 println("Failure rate:\t$failures/$(successes+failures+errors)")
 println("Error rate:\t$errors/$(successes+failures+errors)")
