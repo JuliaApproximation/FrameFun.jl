@@ -112,7 +112,7 @@ function discretize_problem{T}(domain::Interval{T}, nt::Int, tt::T, st, basis::D
     grid1 = grid(fbasis1)
     grid2 = grid(fbasis2)
 
-    rgrid = EquispacedSubGrid(grid2, 1, m)
+    rgrid = IndexedSubGrid(grid2, 1, m)
 
     tbasis1 = DiscreteGridSpace(grid1)
     tbasis2 = DiscreteGridSpace(grid2)
@@ -170,7 +170,7 @@ function discretize_problem{N,T}(domain::AbstractDomain{N,T}, nt::Tuple, tt::Tup
     tens_grid1 = TensorProductGrid(map(x->grid(x),fbasis1)...)
     tens_grid2 = TensorProductGrid(map(x->grid(x),fbasis2)...)
 
-    tens_rgrid = TensorProductGrid(ntuple(i->EquispacedSubGrid(grid(fbasis2[i]), 1, m[i]), N)...)
+    tens_rgrid = TensorProductGrid(ntuple(i->IndexedSubGrid(grid(fbasis2[i]), 1, m[i]), N)...)
     tens_tbasis1 = TensorProductSet(map(x->DiscreteGridSpace(grid(x)), fbasis1)...)
     tens_tbasis2 = TensorProductSet(map(x->DiscreteGridSpace(grid(x)), fbasis2)...)
 

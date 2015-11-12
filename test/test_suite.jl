@@ -85,8 +85,8 @@ Test.with_handler(custom_handler) do
     @test_throws Exception G4[1,1]
 
     delimit("SubGrid")
-    G1s=FE.EquispacedSubGrid(G1,2,4)
-    G2s=FE.EquispacedSubGrid(G2,3,5)
+    G1s=FE.IndexedSubGrid(G1,2,4)
+    G2s=FE.IndexedSubGrid(G2,3,5)
     @test G1s[1]==G1[2]
     @test G2s[1]==G2[3]
     TensorGs=TensorProductGrid(G1s,G2s)
@@ -187,7 +187,7 @@ Test.with_handler(custom_handler) do
     grid1 = grid(fbasis1)
     grid2 = grid(fbasis2)
 
-    rgrid = FE.EquispacedSubGrid(grid2, 1, 2*n)
+    rgrid = FE.IndexedSubGrid(grid2, 1, 2*n)
     tbasis1 = DiscreteGridSpace(grid1)
     tbasis2 = DiscreteGridSpace(grid2)
 
@@ -277,7 +277,7 @@ Test.with_handler(custom_handler) do
 #    for funtype in (ExpFun,ChebyFun)
     for funtype in (ExpFun,)
         println("Fun Type: ",funtype)
-        for D in [FE.default_fourier_domain_1d() Interval(-1.5,0.7) Interval(-1.5,-0.5)+Interval(0.5,1.5)]        
+        for D in [FE.default_fourier_domain_1d() Interval(-1.5,0.7) Interval(-1.5,-0.5)+Interval(0.5,1.5)]
             show(D); print("\n")
             for solver_type in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
                 show(solver_type);print("\n")

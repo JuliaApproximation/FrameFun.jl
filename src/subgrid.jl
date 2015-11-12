@@ -68,31 +68,16 @@ getindex{G,ID}(g::MaskedGrid{G,ID,1}, idx) = getindex(g.grid, g.indices[idx,1])
 
 
 
-abstract AbstractSubIntervalGrid{G <: AbstractIntervalGrid, T} <: AbstractSubGrid{1,T}
-
-
-immutable SubIntervalGrid{G <: AbstractIntervalGrid, T} <: AbstractSubIntervalGrid{G,T}
-	grid	::	G
-	a		::	T
-	b		::	T
-
-	function SubIntervalGrid(grid::AbstractIntervalGrid{T}, a, b)
-		@assert a >= left(grid)
-		@assert b <= right(grid)
-
-		new(grid, a, b)
-	end
-end
-
-SubIntervalGrid{T}(grid::AbstractIntervalGrid{T}, a, b) = SubIntervalGrid{typeof(grid), T}(grid, a, b)
-
-
-immutable EquispacedSubGrid{G <: AbstractEquispacedGrid, T} <: AbstractSubGrid{1,T}
+"""
+An IndexedSubGrid is a subgrid corresponding to a certain range of indices of the
+underlying (one-dimensional) grid.
+"""
+immutable IndexedSubGrid{G <: AbstractGrid1d, T} <: AbstractSubGrid{1,T}
 	grid	::	G
 	i1		::	Int
 	i2		::	Int
 
-	function EquispacedSubGrid(grid::AbstractEquispacedGrid{T}, i1, i2)
+	function IndexedSubGrid(grid::AbstractGrid1d{T}, i1, i2)
 		@assert 1 <= i1 <= length(grid)
 		@assert 1 <= i2 <= length(grid)
 		@assert i1 <= i2
@@ -101,19 +86,19 @@ immutable EquispacedSubGrid{G <: AbstractEquispacedGrid, T} <: AbstractSubGrid{1
 	end
 end
 
-EquispacedSubGrid{T}(grid::AbstractGrid{1,T}, i1, i2) = EquispacedSubGrid{typeof(grid), T}(grid, i1, i2)
+IndexedSubGrid{T}(grid::AbstractGrid1d{T}, i1, i2) = IndexedSubGrid{typeof(grid), T}(grid, i1, i2)
 
-left(g::EquispacedSubGrid) = g.grid[g.i1]
+left(g::IndexedSubGrid) = g.grid[g.i1]
 
-right(g::EquispacedSubGrid) = g.grid[g.i2]
+right(g::IndexedSubGrid) = g.grid[g.i2]
 
-length(g::EquispacedSubGrid) = g.i2 - g.i1 + 1
+length(g::IndexedSubGrid) = g.i2 - g.i1 + 1
 
-stepsize(g::EquispacedSubGrid) = stepsize(g.grid)
+getindex(g::IndexedSubGrid, i) = g.grid[g.i1+i-1]
 
-getindex(g::EquispacedSubGrid, i) = g.grid[g.i1+i-1]
+stepsize{G <: AbstractEquispacedGrid}(g::IndexedSubGrid{G}) = stepsize(g.grid)
 
-range(g::EquispacedSubGrid) = left(g) : stepsize(g) : right(g)
+range{G <: AbstractEquispacedGrid}(g::IndexedSubGrid{G}) = left(g) : stepsize(g) : right(g)
 
 
 
