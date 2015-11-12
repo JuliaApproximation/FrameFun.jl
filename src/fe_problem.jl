@@ -49,11 +49,11 @@ FE_DiscreteProblem{N,T}(domain::AbstractDomain{N,T}, otherargs...) =
 
 
 function FE_DiscreteProblem{N,T}(domain::AbstractDomain{N,T}, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted)
-    f_extension = Extension(fbasis1, fbasis2)
-    f_restriction = Restriction(fbasis2, fbasis1)
+    f_extension = extension_operator(fbasis1, fbasis2)
+    f_restriction = restriction_operator(fbasis2, fbasis1)
 
-    t_extension = Extension(tbasis_restricted, tbasis2)
-    t_restriction = Restriction(tbasis2, tbasis_restricted)
+    t_extension = extension_operator(tbasis_restricted, tbasis2)
+    t_restriction = restriction_operator(tbasis2, tbasis_restricted)
 
     transform2 = transform_operator(tbasis2, fbasis2)
     itransform2 = transform_operator(fbasis2, tbasis2)
