@@ -58,48 +58,13 @@ length(g::MaskedGrid) = g.M
 size(g::MaskedGrid) = (length(g),)
 
 
-#eachindex(g::MaskedGrid) = MaskedGridRange(g, eachindex(g.grid))
-
 # Check whether element grid[i] (of the underlying grid) is in the masked grid.
 in(i, g::MaskedGrid) = g.mask[i]
 
+getindex!(x, g::MaskedGrid, idx::Int) = getindex!(x, g.grid, g.indices[idx,:]...)
 
-# TODO: make MaskedGrid iteration more efficient using its indices field.
-
-immutable MaskedGridRange{G <: MaskedGrid,ITER}
-	maskedgrid	::	G
-	griditer	::	ITER
-end
-
-length(iter::MaskedGridRange) = length(iter.maskedgrid)
-
-# A MaskedGridState refers to the state of the iterator of the underlying grid.
-# It also holds a sequence number k, used to efficiently implement done (k == M+1).
-immutable MaskedGridRangeState{T}
-	gridstate	::	T		# state of the underlying grid iterator
-	k			::	Int
-end
-
-start(iter::MaskedGridRange) = MaskedGridRangeState(start(iter.griditer),1)
-
-function next(iter::MaskedGridRange, state)
-	(i,gridstate) = next(iter.griditer, state.gridstate)
-	while ~in(i, iter.maskedgrid)
-		(i,gridstate) = next(iter.griditer, gridstate)
-	end
-	(i, MaskedGridRangeState(gridstate, state.k+1))
-end
-
-done(iter::MaskedGridRange, state) = (state.k == length(iter)+1)
-
-getindex(g::MaskedGrid, idx) = getindex(g.grid, idx)
-
-function getindex!(x, g::MaskedGrid, idx::Int)
-    getindex!(x, g.grid, g.indices[idx,:]...)
-end
-
-
-getindex(g::MaskedGrid, idx::Int) = getindex(g.grid, g.indices[idx,:]...)
+# Don't use getindex! on 1D grids
+getindex{G,ID}(g::MaskedGrid{G,ID,1}, idx) = getindex(g.grid, g.indices[idx,1])
 
 
 
@@ -122,12 +87,12 @@ end
 SubIntervalGrid{T}(grid::AbstractIntervalGrid{T}, a, b) = SubIntervalGrid{typeof(grid), T}(grid, a, b)
 
 
-immutable EquispacedSubGrid{G <: AbstractGrid, T} <: AbstractGrid{1,T}
+immutable EquispacedSubGrid{G <: AbstractEquispacedGrid, T} <: AbstractSubGrid{1,T}
 	grid	::	G
 	i1		::	Int
 	i2		::	Int
 
-	function EquispacedSubGrid(grid::AbstractGrid{1,T}, i1, i2)
+	function EquispacedSubGrid(grid::AbstractEquispacedGrid{T}, i1, i2)
 		@assert 1 <= i1 <= length(grid)
 		@assert 1 <= i2 <= length(grid)
 		@assert i1 <= i2

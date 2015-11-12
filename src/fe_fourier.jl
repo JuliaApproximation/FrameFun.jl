@@ -68,7 +68,6 @@ function apply!{T,G <: MaskedGrid}(op::Extension, dest, src::DiscreteGridSpace{G
     @assert length(coef_dest) == length(dest)
 
     grid1 = grid(src)
-    # Again too much work, but better than not filling at all
     fill!(coef_dest, zero(T))
 
     l = 0
@@ -78,12 +77,6 @@ function apply!{T,G <: MaskedGrid}(op::Extension, dest, src::DiscreteGridSpace{G
             coef_dest[i] = coef_src[l]
         end
     end
-
-#    l = 0
-#    for i in eachindex(grid1)
-#        l = l+1
-#        coef_dest[i] = coef_src[l]
-#    end
 end
 
 
@@ -100,12 +93,6 @@ function apply!{T,G <: MaskedGrid}(op::Restriction, dest::DiscreteGridSpace{G}, 
             coef_dest[l] = coef_src[i]
         end
     end
-
-#    l = 0
-#    for i in eachindex(grid1)
-#        l = l+1
-#        coef_dest[l] = coef_src[i]
-#    end
 end
 
 function discretize_problem{T}(domain::Interval{T}, nt::Int, tt::T, st, basis::DataType=FourierBasis)
