@@ -17,16 +17,9 @@ immutable FE_ProjectionSolver{ELT} <: FE_Solver
         R = estimate_plunge_rank(problem)
         W = MatrixOperator( map(ELT, rand(param_N(problem), R)) )
         # Added
-        ## USVD0=svd(matrix(plunge_op))
-        ## println(USVD0[2])
-        ## USVD1=svd(matrix(plunge_op * operator(problem)))
-        ## println(USVD1[2])
-        ## println("parameter lambda: ", param_lambda(problem,frequency_basis(problem)))
         USV= svd(matrix(plunge_op * operator(problem) * W))
-        ## println(USV[2])
         maxind=maximum(find(USV[2].>1e-6))
         S=USV[2]
-        ## Sinv=[1./S[1:maxind];zeros(length(S)-maxind,1)]
         Sinv=1./S[1:maxind]
         b=zeros(size(dest(plunge_op)))
         y=zeros(size(USV[3],1))
@@ -44,14 +37,10 @@ function plunge_operator(problem::FE_DiscreteProblem)
     Ap = operator_transpose(problem)
     I = IdentityOperator(time_basis_restricted(problem))
 
-    A*Ap - param_lambda(problem,frequency_basis(problem)) * I
+    A*Ap - I
 end
 
-# This should probably be fixed by making the Fourier Transforms unitary
-param_lambda(problem::FE_DiscreteProblem,basis)= param_L(problem)
-param_lambda{N}(problem::FE_DiscreteProblem{N},basis::ChebyshevBasis)= param_L(problem)/(2.0^N)
-param_lambda{N}(problem::FE_DiscreteProblem{N},basis::TensorProductSet)=
-    param_lambda(problem,set(basis,1))
+
 estimate_plunge_rank{N}(problem::FE_DiscreteProblem{N}) = min(round(Int, 9*log(param_N(problem))*(param_M(problem)*param_N(problem)/param_L(problem))^(1-1/N) + 2),param_N(problem))
 
 estimate_plunge_rank(problem::FE_DiscreteProblem{1,BigFloat}) = round(Int, 28*log(param_N(problem)) + 5)
@@ -61,17 +50,16 @@ function solve!{T}(s::FE_ProjectionSolver, coef::AbstractArray{T}, rhs::Abstract
     At = operator_transpose(s)
     
     P = s.plunge_op
-    L = param_lambda(problem(s),frequency_basis(problem(s)))
     apply!(P,s.b,rhs)
     A_mul_B!(s.sy,s.Ut,s.b)
     A_mul_B!(s.y,s.VS,s.sy)
     apply!(s.W,s.x2,s.y)
     #x2 = reshape(s.W * y,size(src(A)))
     apply!(A,s.b,s.x2)
-    apply!(At,s.x1,(rhs-s.b)/L)
+    apply!(At,s.x1,rhs-s.b)
     for i=1:length(coef)
         coef[i]=s.x1[i]+s.x2[i]
-    end    
+    end
 end
 
 
