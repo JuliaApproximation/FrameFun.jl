@@ -1,5 +1,7 @@
 # funs.jl
 
+# TODO: remove these Fun's and merge with SetExpansion (which can then be renamed to Fun).
+# Use domainframe for a frame that derives from a basis.
 
 ###############################################################################################
 # Some common properties of Function objects are grouped in AbstractFun
@@ -54,7 +56,8 @@ function ExpFun(f::Function, domain = default_fourier_domain_1d(),
         n = default_fourier_n(domain), T = default_fourier_T(domain),
         s = default_fourier_sampling(domain))
 
-    problem = discretize_problem(domain, n, T, s)
+    ELT=Base.return_types(f,fill(numtype(domain),dim(domain)))[1]
+    problem = discretize_problem(domain, n, T, s, FourierBasis, complexify(ELT))
     solver = solver_type(problem)
 
     expansion = solve(solver, f)
@@ -65,8 +68,8 @@ function ChebyFun(f::Function, domain = default_fourier_domain_1d(),
         solver_type = default_fourier_solver(domain);
         n = default_fourier_n(domain), T = default_fourier_T(domain),
         s = default_fourier_sampling(domain))
-
-    problem = discretize_problem(domain, n, T, s, ChebyshevBasis)
+    ELT=Base.return_types(f,fill(numtype(domain),dim(domain)))[1]
+    problem = discretize_problem(domain, n, T, s, ChebyshevBasis, ELT)
     solver = solver_type(problem)
 
     expansion = solve(solver, f)
@@ -81,8 +84,9 @@ function ExpFun{TD,DN,ID,N}(f::Function, domain::TensorProductDomain{TD,DN,ID,N}
         s = default_fourier_sampling(domain))
     problems=FE_DiscreteProblem[]
     dc=1
+    ELT=Base.return_types(f,Any[numtype(domain)])[1]
     for i=1:ID
-        push!(problems,discretize_problem(subdomain(domain,i),n[dc:dc+DN[i]-1],T[dc:dc+DN[i]-1],s[dc:dc+DN[i]-1]))
+        push!(problems,discretize_problem(subdomain(domain,i),n[dc:dc+DN[i]-1]...,T[dc:dc+DN[i]-1]...,s[dc:dc+DN[i]-1]...,FourierBasis,complexify(ELT)))
         dc=dc+DN[i]
     end
     solver = FE_TensorProductSolver(problems,ntuple(i->solver_type,ID))
@@ -104,6 +108,18 @@ function ExpFun{TD,DN,ID,N}(f::Function, domain::TensorProductDomain{TD,DN,ID,N}
     expansion = solve(solver, f)
     Fun(domain, expansion)
 end
+
+function Fun(f::Function, Basis::DataType, domain = default_fourier_domain_1d())
+    T=Base.return_types(f,Any[numtype(domain)])[1]
+    println(T)
+    println(isreal(Basis))
+    println(numtype(domain))
+    if !isreal(Basis) && (T<:Real)
+        T=Complex{T}
+    end
+    println(T)
+end
+
 
 
 call(fun::Fun, x...) = in([x[i] for i=1:length(x)], domain(fun)) ? call(fun.expansion, x...) : NaN

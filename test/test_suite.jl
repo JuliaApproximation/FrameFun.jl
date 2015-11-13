@@ -252,7 +252,7 @@ Test.with_handler(custom_handler) do
     delimit("2D")
     C=Circle(1.0)
     for n=[10,100,200]
-        problem = FE.discretize_problem(C,(n,n),(2.0,2.0),(2.0,2.0))
+        problem = FE.discretize_problem(C,(n,n),(2.0,2.0),(2.0,2.0),FourierBasis,Complex{Float64})
         op=operator(problem)
         opt=FE.operator_transpose(problem)
         coef_src = rand(size(FE.frequency_basis(problem)))+1im*rand(size(FE.frequency_basis(problem)))
@@ -272,10 +272,9 @@ Test.with_handler(custom_handler) do
     
     delimit("Algorithm Implementation and Accuracy")
     delimit("1D")
-
+    
     f(x)=x[1]-1.0
-#    for funtype in (ExpFun,ChebyFun)
-    for funtype in (ExpFun,)
+   for funtype in (ExpFun, ChebyFun)
         println("Fun Type: ",funtype)
         for D in [FE.default_fourier_domain_1d() Interval(-1.5,0.7) Interval(-1.5,-0.5)+Interval(0.5,1.5)]
             show(D); print("\n")
@@ -288,7 +287,7 @@ Test.with_handler(custom_handler) do
                         try
                             F=@timed(funtype(f,D,solver_type,n=n,T=T))
                             @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
-                            @test msqerror_tol(f,F[1],tol=1e-7)
+                            @test  msqerror_tol(f,F[1],tol=1e-7)
                         catch y
                             message(y)
                         end
@@ -300,10 +299,11 @@ Test.with_handler(custom_handler) do
     delimit("2D") 
 
     f(x)=x[1]+2*x[2]-1.0
+    f(x,y)=x+2*y-1.0
 #    for funtype in (ExpFun,ChebyFun)
     for funtype in (ExpFun,)
         println("Fun Type: ",funtype)
-        for D in [Circle(1.0) Circle(2.0,[-2.0,-2.0]) Cube((-1.0,-1.5),(0.5,0.7))]       
+        for D in [Cube((-1.0,-1.5),(0.5,0.7)) Circle(1.0) Circle(2.0,[-2.0,-2.0])]       
             show(D); print("\n")
             for solver_type in (FE.FE_DirectSolver, FE.FE_ProjectionSolver)
                 show(solver_type);print("\n")

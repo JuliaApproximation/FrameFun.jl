@@ -220,7 +220,7 @@ immutable TensorProductDomain{TD,DN,ID,N,T} <: AbstractDomain{N,T}
 	TensorProductDomain(domains::Tuple) = new(domains)
 end
 
-TensorProductDomain(domains...) = TensorProductDomain{typeof(domains),map(dim,domains),length(domains),sum(map(dim, domains)),numtype(domains[1])}(domains)
+TensorProductDomain(domains...) = TensorProductDomain{typeof(domains),map(dim,domains),length(domains),sum(map(dim, domains)),promote_type(map(numtype,domains)...)}(domains)
 
  tensorproduct(d::AbstractDomain, n) = TensorProductDomain([d for i=1:n]...)
 

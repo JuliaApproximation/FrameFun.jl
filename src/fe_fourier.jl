@@ -95,7 +95,7 @@ function apply!{T,G <: MaskedGrid}(op::Restriction, dest::DiscreteGridSpace{G}, 
     end
 end
 
-function discretize_problem{T}(domain::Interval{T}, nt::Int, tt::T, st, basis::DataType=FourierBasis)
+function discretize_problem{T}(domain::Interval{T}, nt::Int, tt::T, st, basis::DataType, ELT)
     n = 2*nt+1
     m = 2*round(Int, nt.*st)+1
     t = (tt.*(m-1)/2).*(2./(m-1))
@@ -114,16 +114,16 @@ function discretize_problem{T}(domain::Interval{T}, nt::Int, tt::T, st, basis::D
 
     rgrid = IndexedSubGrid(grid2, 1, m)
 
-    tbasis1 = DiscreteGridSpace(grid1)
-    tbasis2 = DiscreteGridSpace(grid2)
+    tbasis1 = DiscreteGridSpace(grid1, ELT)
+    tbasis2 = DiscreteGridSpace(grid2, ELT)
 
-    tbasis_restricted = DiscreteGridSpace(rgrid)
+    tbasis_restricted = DiscreteGridSpace(rgrid, ELT)
 
     FE_DiscreteProblem(domain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted)
 end
 
 
-function discretize_problem{T}(domain::AbstractDomain1d{T}, nt::Int, tt::T, st, basis::DataType=FourierBasis)
+function discretize_problem{T}(domain::AbstractDomain1d{T}, nt::Int, tt::T, st, basis::DataType, ELT)
     n = 2*nt+1
     m = 2*round(Int, nt.*st)+1
     t = (tt.*(m-1)/2).*(2./(m-1))
@@ -142,16 +142,16 @@ function discretize_problem{T}(domain::AbstractDomain1d{T}, nt::Int, tt::T, st, 
 
     rgrid = MaskedGrid(grid2, domain)
 
-    tbasis1 = DiscreteGridSpace(grid1)
-    tbasis2 = DiscreteGridSpace(grid2)
+    tbasis1 = DiscreteGridSpace(grid1, ELT)
+    tbasis2 = DiscreteGridSpace(grid2, ELT)
     
-    tbasis_restricted = DiscreteGridSpace(rgrid)
+    tbasis_restricted = DiscreteGridSpace(rgrid, ELT)
 
     FE_DiscreteProblem(domain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted)
     
 end
 
-function discretize_problem{N,T}(domain::AbstractDomain{N,T}, nt::Tuple, tt::Tuple, st::Tuple, basis::DataType=FourierBasis)
+function discretize_problem{N,T}(domain::AbstractDomain{N,T}, nt::Tuple, tt::Tuple, st::Tuple, basis::DataType, ELT)
     n = 2*[nt...]+1
     m = 2*round(Int, [nt...].*[st...])+1
     tt = round(Int,[tt...].*(m-1)/2).*(2./(m-1))
@@ -171,10 +171,10 @@ function discretize_problem{N,T}(domain::AbstractDomain{N,T}, nt::Tuple, tt::Tup
     tens_grid2 = TensorProductGrid(map(x->grid(x),fbasis2)...)
 
     tens_rgrid = TensorProductGrid(ntuple(i->IndexedSubGrid(grid(fbasis2[i]), 1, m[i]), N)...)
-    tens_tbasis1 = TensorProductSet(map(x->DiscreteGridSpace(grid(x)), fbasis1)...)
-    tens_tbasis2 = TensorProductSet(map(x->DiscreteGridSpace(grid(x)), fbasis2)...)
+    tens_tbasis1 = TensorProductSet(map(x->DiscreteGridSpace(grid(x),ELT), fbasis1)...)
+    tens_tbasis2 = TensorProductSet(map(x->DiscreteGridSpace(grid(x),ELT), fbasis2)...)
 
-    tbasis_restricted = DiscreteGridSpace(MaskedGrid(tens_grid2, domain))
+    tbasis_restricted = DiscreteGridSpace(MaskedGrid(tens_grid2, domain),ELT)
 
     FE_DiscreteProblem(domain, tens_fbasis1, tens_fbasis2, tens_tbasis1, tens_tbasis2, tbasis_restricted)
 end

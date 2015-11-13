@@ -38,7 +38,7 @@ include("domainframe.jl")
 
 include("fe_problem.jl")
 
-include("my_lsqr.jl")
+# include("my_lsqr.jl")
 
 include("fe_solvers.jl")
 
