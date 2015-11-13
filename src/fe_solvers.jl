@@ -142,20 +142,20 @@ immutable FE_IterativeSolverLSQR <: FE_IterativeSolver
 end
 
 
-function solve!{T}(s::FE_IterativeSolverLSQR, coef::AbstractArray{T}, rhs::AbstractArray{T})
-    op = operator(s)
-    opt = operator_transpose(s)
+## function solve!{T}(s::FE_IterativeSolverLSQR, coef::AbstractArray{T}, rhs::AbstractArray{T})
+##     op = operator(s)
+##     opt = operator_transpose(s)
 
-    my_A_mul_B!(output, x) =  ( apply!(op,  reshape(output, size(dest(op ))), reshape(x, size(src(op )))); output )
-    my_Ac_mul_B!(output, y) = ( apply!(opt, reshape(output, size(dest(opt))), reshape(y, size(src(opt)))); output )
+##     my_A_mul_B!(output, x) =  ( apply!(op,  reshape(output, size(dest(op ))), reshape(x, size(src(op )))); output )
+##     my_Ac_mul_B!(output, y) = ( apply!(opt, reshape(output, size(dest(opt))), reshape(y, size(src(opt)))); output )
 
-    matcfcn = MatrixCFcn{T}(size(op, 1), size(op, 2), my_A_mul_B!, my_Ac_mul_B!)
+##     matcfcn = MatrixCFcn{T}(size(op, 1), size(op, 2), my_A_mul_B!, my_Ac_mul_B!)
 
-    coef[:] = 0
-    y,ch = lsqr!(coef, matcfcn, rhs, maxiter = 100)
+##     coef[:] = 0
+##     y,ch = lsqr!(coef, matcfcn, rhs, maxiter = 100)
 
-    println("Stopped after ", ch.mvps, " iterations with residual ", abs(ch.residuals[end]), ".")
-end
+##     println("Stopped after ", ch.mvps, " iterations with residual ", abs(ch.residuals[end]), ".")
+## end
 
 
 
