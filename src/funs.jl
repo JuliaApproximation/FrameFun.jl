@@ -1,5 +1,7 @@
 # funs.jl
 
+# TODO: remove these Fun's and merge with SetExpansion (which can then be renamed to Fun).
+# Use domainframe for a frame that derives from a basis.
 
 ###############################################################################################
 # Some common properties of Function objects are grouped in AbstractFun

@@ -1,11 +1,13 @@
 # fourierdomains.jl
 
-###############################################################################################
-## A FourierDomain is a domain that is implicitly defined by a Fourier series.
-# Example: if relop is x -> x-2 > 0, then the Fourier domain is the domain where the given
-# Fourier series is greater than 2.
-###############################################################################################
+# Warning: currently not functional. TODO: update
 
+
+"""
+A FourierDomain is a domain that is implicitly defined by a Fourier series.
+Example: if relop is x -> x-2 > 0, then the Fourier domain is the domain where the given
+Fourier series is greater than 2.
+"""
 immutable FourierDomain{N,T} <: AbstractDomain{N,T}
     f       ::  ExpFun{N,T}
     relop	::	Function
@@ -31,12 +33,11 @@ end
 
 
 
-###############################################################################################
-## A ComparisonDomain is a domain that is implicitly defined by two Fourier series.
-# Example: if binop is (x,y) -> x > y, then the Fourier domain is the domain where the first given
-# Fourier series is greater than the second.
-###############################################################################################
-
+"""
+A ComparisonDomain is a domain that is implicitly defined by two Fourier series.
+Example: if binop is (x,y) -> x > y, then the Fourier domain is the domain where the first given
+Fourier series is greater than the second.
+"""
 immutable ComparisonDomain{N,T} <: AbstractDomain{N,T}
     f       ::  ExpFun{N,T}
     g		::	ExpFun{N,T}

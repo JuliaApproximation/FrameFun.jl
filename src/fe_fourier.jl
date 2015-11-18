@@ -68,7 +68,6 @@ function apply!{T,G <: MaskedGrid}(op::Extension, dest, src::DiscreteGridSpace{G
     @assert length(coef_dest) == length(dest)
 
     grid1 = grid(src)
-    # Again too much work, but better than not filling at all
     fill!(coef_dest, zero(T))
 
     l = 0
@@ -78,12 +77,6 @@ function apply!{T,G <: MaskedGrid}(op::Extension, dest, src::DiscreteGridSpace{G
             coef_dest[i] = coef_src[l]
         end
     end
-
-#    l = 0
-#    for i in eachindex(grid1)
-#        l = l+1
-#        coef_dest[i] = coef_src[l]
-#    end
 end
 
 
@@ -100,12 +93,6 @@ function apply!{T,G <: MaskedGrid}(op::Restriction, dest::DiscreteGridSpace{G}, 
             coef_dest[l] = coef_src[i]
         end
     end
-
-#    l = 0
-#    for i in eachindex(grid1)
-#        l = l+1
-#        coef_dest[l] = coef_src[i]
-#    end
 end
 
 function discretize_problem{T}(domain::Interval{T}, nt::Int, tt::T, st, basis::DataType, ELT)
@@ -125,7 +112,7 @@ function discretize_problem{T}(domain::Interval{T}, nt::Int, tt::T, st, basis::D
     grid1 = grid(fbasis1)
     grid2 = grid(fbasis2)
 
-    rgrid = EquispacedSubGrid(grid2, 1, m)
+    rgrid = IndexedSubGrid(grid2, 1, m)
 
     tbasis1 = DiscreteGridSpace(grid1, ELT)
     tbasis2 = DiscreteGridSpace(grid2, ELT)
@@ -183,7 +170,7 @@ function discretize_problem{N,T}(domain::AbstractDomain{N,T}, nt::Tuple, tt::Tup
     tens_grid1 = TensorProductGrid(map(x->grid(x),fbasis1)...)
     tens_grid2 = TensorProductGrid(map(x->grid(x),fbasis2)...)
 
-    tens_rgrid = TensorProductGrid(ntuple(i->EquispacedSubGrid(grid(fbasis2[i]), 1, m[i]), N)...)
+    tens_rgrid = TensorProductGrid(ntuple(i->IndexedSubGrid(grid(fbasis2[i]), 1, m[i]), N)...)
     tens_tbasis1 = TensorProductSet(map(x->DiscreteGridSpace(grid(x),ELT), fbasis1)...)
     tens_tbasis2 = TensorProductSet(map(x->DiscreteGridSpace(grid(x),ELT), fbasis2)...)
 
