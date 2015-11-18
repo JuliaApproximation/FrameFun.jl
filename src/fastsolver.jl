@@ -60,6 +60,10 @@ function solve!{T}(s::FE_ProjectionSolver, coef::AbstractArray{T}, rhs::Abstract
     for i=1:length(coef)
         coef[i]=s.x1[i]+s.x2[i]
     end
+    println("solution norm", norm(A*coef-rhs))
+    println("original",rhs)
+    println("coef",coef)
+    
 end
 
 
