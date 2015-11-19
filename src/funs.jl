@@ -72,7 +72,7 @@ function ChebyFun(f::Function, domain = default_fourier_domain_1d(),
     problem = discretize_problem(domain, n, T, s, ChebyshevBasis, ELT)
     solver = solver_type(problem)
 
-    g(x)=f(-1*x)
+    g(x)=f(x)
     expansion = solve(solver, g)
     Fun(domain, expansion)
 end

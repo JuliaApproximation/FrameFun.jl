@@ -17,6 +17,7 @@ function solve(s::FE_Solver, f::Function, elt = eltype(s))
     coef = Array(elt, size(s, 2))
     rhs = Array(elt, size(time_basis_restricted(problem(s))))
     solve!(s, coef, rhs,f)
+    coef=normalization_operator(frequency_basis(s),param_L(problem(s)))*coef
     SetExpansion(frequency_basis(s), reshape(coef,size(frequency_basis(s))))
 end
 

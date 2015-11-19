@@ -22,7 +22,7 @@ custom_handler(r::Test.Error) = begin println("\"\t$(typeof(r.err)) in $(r.expr)
 
 
 # Algorithm accuracy below tol
-function msqerror_tol{N,T}(f::Function,F::FE.Fun{N,T};vals::Int=5,tol=1e-6)
+function msqerror_tol{N,T}(f::Function,F::FE.Fun{N,T};vals::Int=200,tol=1e-6)
     # Find the closest bounding grid around the domain
     TB=FE.box(FE.domain(F))
     
@@ -37,7 +37,7 @@ function msqerror_tol{N,T}(f::Function,F::FE.Fun{N,T};vals::Int=5,tol=1e-6)
         if FE.in(point,FE.domain(F))
             elements+=1
             error+=abs(f(point)-F(point...))
-            println("ratio ",f(point)/F(point...))
+            ## println("ratio ",f(point)/F(point...))
         end
     end
     @printf(" %3.2e",error/elements)

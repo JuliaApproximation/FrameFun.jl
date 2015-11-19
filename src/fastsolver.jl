@@ -16,9 +16,12 @@ immutable FE_ProjectionSolver{ELT} <: FE_Solver
         plunge_op = plunge_operator(problem)
         R = estimate_plunge_rank(problem)
         W = MatrixOperator( map(ELT, rand(param_N(problem), R)) )
-        # Added
+        ## println("max operator forward",maximum(svd(matrix(operator(problem).op2))[2]))
+        ## println("min operator forward",minimum(svd(matrix(operator(problem).op2))[2]))
+        ## println("max operator backward",maximum(svd(matrix(operator_transpose(problem).op2))[2]))
+        ## println("min operator backward",minimum(svd(matrix(operator_transpose(problem).op2))[2]))
         USV= svd(matrix(plunge_op * operator(problem) * W))
-        maxind=maximum(find(USV[2].>1e-6))
+        maxind=maximum(find(USV[2].>1e-12))
         S=USV[2]
         Sinv=1./S[1:maxind]
         b=zeros(size(dest(plunge_op)))
@@ -60,10 +63,6 @@ function solve!{T}(s::FE_ProjectionSolver, coef::AbstractArray{T}, rhs::Abstract
     for i=1:length(coef)
         coef[i]=s.x1[i]+s.x2[i]
     end
-    println("solution norm", norm(A*coef-rhs))
-    println("original",rhs)
-    println("coef",coef)
-    
 end
 
 
