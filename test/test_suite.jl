@@ -302,7 +302,7 @@ Test.with_handler(custom_handler) do
     f(x)=x[1]+2*x[2]-1.0
     f(x,y)=x+2*y-1.0
 #    for funtype in (ExpFun,ChebyFun)
-    for funtype in (ExpFun,)
+    for funtype in (ExpFun, ChebyFun)
         println("Fun Type: ",funtype)
         for D in [Cube((-1.0,-1.5),(0.5,0.7)) Circle(1.0) Circle(2.0,[-2.0,-2.0])]       
             show(D); print("\n")
@@ -324,7 +324,6 @@ Test.with_handler(custom_handler) do
             end
         end
     end
-    return
     delimit("3D")
 
     f(x)=x[1]+x[2]-x[3]
