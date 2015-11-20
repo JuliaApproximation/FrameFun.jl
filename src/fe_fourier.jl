@@ -94,6 +94,11 @@ function apply!{T,G <: MaskedGrid}(op::Restriction, dest::DiscreteGridSpace{G}, 
         end
     end
 end
+# This might not be the best way to solve this problem
+function discretize_problem{T}(domain::AbstractDomain1d{T}, nt::Tuple{Integer}, tt::Tuple{T}, st::Tuple, basis::DataType, ELT)
+    discretize_problem(domain,nt[1],tt[1],st[1],basis,ELT)
+end
+
 
 function discretize_problem{T}(domain::Interval{T}, nt::Int, tt::T, st, basis::DataType, ELT)
     n = 2*nt+1

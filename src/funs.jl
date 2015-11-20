@@ -52,50 +52,38 @@ function show{N}(io::IO, fun::Fun{N})
 end
 
 function ExpFun(f::Function, domain = default_fourier_domain_1d(),
-        solver_type = default_fourier_solver(domain);
-        n = default_fourier_n(domain), T = default_fourier_T(domain),
-        s = default_fourier_sampling(domain))
-
-    ELT=Base.return_types(f,fill(numtype(domain),dim(domain)))[1]
-    problem = discretize_problem(domain, n, T, s, FourierBasis, complexify(ELT))
-    solver = solver_type(problem)
-
-    expansion = solve(solver, f)
-    Fun(domain, expansion)
+             solver_type = default_fourier_solver(domain);
+             n = default_fourier_n(domain),
+             T = default_fourier_T(domain),
+             s = default_fourier_sampling(domain))
+    Fun(FourierBasis,f,domain,solver_type,n=n,T=T,s=s)
 end
 
 function ChebyFun(f::Function, domain = default_fourier_domain_1d(),
-        solver_type = default_fourier_solver(domain);
-        n = default_fourier_n(domain), T = default_fourier_T(domain),
-        s = default_fourier_sampling(domain))
-    ELT=Base.return_types(f,fill(numtype(domain),dim(domain)))[1]
-    problem = discretize_problem(domain, n, T, s, ChebyshevBasis, ELT)
-    solver = solver_type(problem)
-
-    g(x)=f(x)
-    expansion = solve(solver, g)
-    Fun(domain, expansion)
+             solver_type = default_fourier_solver(domain);
+             n = default_fourier_n(domain),
+             T = default_fourier_T(domain),
+             s = default_fourier_sampling(domain))
+    Fun(ChebyshevBasis,f,domain,solver_type,n=n,T=T,s=s)
 end
 
+function Fun(Basis::DataType, f::Function, domain = default_fourier_domain_1d(),
+             solver_type = default_fourier_solver(domain);
+             n = default_fourier_n(domain),
+             T = default_fourier_T(domain),
+             s = default_fourier_sampling(domain))
+    ELT=Base.return_types(f,fill(numtype(domain),dim(domain)))[1]
+    if isreal(Basis)==Val{false}() && (T<:Real)
+        T=Complex{T}
+    end        
+    problem = discretize_problem(domain, n, T, s, FourierBasis, ELT)
+    solver = solver_type(problem)
 
-# Funs with one solver_type take that as the default
-function ExpFun{TD,DN,ID,N}(f::Function, domain::TensorProductDomain{TD,DN,ID,N},
-        solver_type = default_fourier_solver(domain);
-        n = default_fourier_n(domain), T = default_fourier_T(domain),
-        s = default_fourier_sampling(domain))
-    problems=FE_DiscreteProblem[]
-    dc=1
-    ELT=Base.return_types(f,Any[numtype(domain)])[1]
-    for i=1:ID
-        push!(problems,discretize_problem(subdomain(domain,i),n[dc:dc+DN[i]-1]...,T[dc:dc+DN[i]-1]...,s[dc:dc+DN[i]-1]...,FourierBasis,complexify(ELT)))
-        dc=dc+DN[i]
-    end
-    solver = FE_TensorProductSolver(problems,ntuple(i->solver_type,ID))
     expansion = solve(solver, f)
     Fun(domain, expansion)
 end
 
-function ExpFun{TD,DN,ID,N}(f::Function, domain::TensorProductDomain{TD,DN,ID,N},
+function Fun{TD,DN,ID,N}(Basis::DataType, f::Function, domain::TensorProductDomain{TD,DN,ID,N},
         solver_types::Tuple;
         n = default_fourier_n(domain), T = default_fourier_T(domain),
         s = default_fourier_sampling(domain))
@@ -110,17 +98,22 @@ function ExpFun{TD,DN,ID,N}(f::Function, domain::TensorProductDomain{TD,DN,ID,N}
     Fun(domain, expansion)
 end
 
-function Fun(f::Function, Basis::DataType, domain = default_fourier_domain_1d())
-    T=Base.return_types(f,Any[numtype(domain)])[1]
-    println(T)
-    println(isreal(Basis))
-    println(numtype(domain))
-    if !isreal(Basis) && (T<:Real)
-        T=Complex{T}
+# Funs with one solver_type take that as the default
+function Fun{TD,DN,ID,N}(Basis::DataType, f::Function, domain::TensorProductDomain{TD,DN,ID,N},
+        solver_type = default_fourier_solver(domain);
+        n = default_fourier_n(domain), T = default_fourier_T(domain),
+        s = default_fourier_sampling(domain))
+    problems=FE_DiscreteProblem[]
+    dc=1
+    ELT=Base.return_types(f,Any[numtype(domain)])[1]
+    for i=1:ID
+        push!(problems,discretize_problem(subdomain(domain,i),n[dc:dc+DN[i]-1],T[dc:dc+DN[i]-1],s[dc:dc+DN[i]-1],ChebyshevBasis,ELT))
+        dc=dc+DN[i]
     end
-    println(T)
+    solver = FE_TensorProductSolver(problems,ntuple(i->solver_type,ID))
+    expansion = solve(solver, f)
+    Fun(domain, expansion)
 end
-
 
 
 call(fun::Fun, x...) = in([x[i] for i=1:length(x)], domain(fun)) ? call(fun.expansion, x...) : NaN

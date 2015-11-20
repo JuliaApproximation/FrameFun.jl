@@ -18,7 +18,8 @@ function solve(s::FE_Solver, f::Function, elt = eltype(s))
     rhs = Array(elt, size(time_basis_restricted(problem(s))))
     solve!(s, coef, rhs,f)
     coef=reshape(coef,size(frequency_basis(s)))
-    coef=normalization_operator(frequency_basis(s),size(time_basis_ext(problem(s))))*coef
+    norm=normalization_operator(frequency_basis_ext(s),frequency_basis(s))
+    coef=normalization_operator(frequency_basis_ext(s),frequency_basis(s))*coef
     SetExpansion(frequency_basis(s), coef)
 end
 
@@ -34,12 +35,14 @@ immutable FE_TensorProductSolver{ELT,N,ID,ND} <: FE_Solver
     ms :: Array{Int,1}
     grid :: TensorProductGrid
     basis :: TensorProductSet
+    basis_ext :: TensorProductSet
     function FE_TensorProductSolver(problems::Array{FE_DiscreteProblem,1},solver_type::Tuple)
         solvers = Array(FE_Solver,length(problems))
         ns=Int[]
         ms=Int[]
         grids=AbstractGrid[]
-        bases=AbstractBasis[]
+        bases=FunctionSet[]
+        bases_ext=FunctionSet[]
         for i=1:length(problems)
             solvers[i]=solver_type[i](problems[i])
             push!(ns,size(frequency_basis(problems[i]))...)
@@ -47,32 +50,37 @@ immutable FE_TensorProductSolver{ELT,N,ID,ND} <: FE_Solver
             push!(grids,grid(time_basis_restricted(problems[i])))
             if dim(problems[i])==1
                 push!(bases,frequency_basis(problems[i]))
+                push!(bases_ext,frequency_basis_ext(problems[i]))
             else
                 for j=1:dim(problems[i])
                     push!(bases,set(frequency_basis(problems[i]),j))
+                    push!(bases_ext,set(frequency_basis_ext(problems[i]),j))
                 end
             end
         end
-        
-        new(solvers,ns,ms,TensorProductGrid(grids...),TensorProductSet(bases...))
+        new(solvers,ns,ms,TensorProductGrid(grids...),TensorProductSet(bases...),TensorProductSet(bases_ext...))
     end
 end
 
 function solve(s::FE_TensorProductSolver, f::Function, elt = eltype(s))
     # Find out why eltype(s) is Type::Any
-    elt=Complex{Float64}
     coef = Array(elt, size(s, 2)...)
     rhs = Array(elt, size(s,1)...)
     solve!(s, coef, rhs,f)
-    SetExpansion(s.basis, reshape(coef,size(s.basis)))
+    coef=reshape(coef,size(s.basis))
+    norm=normalization_operator(frequency_basis_ext(s),frequency_basis(s))
+    coef=normalization_operator(frequency_basis_ext(s),frequency_basis(s))*coef
+    SetExpansion(s.basis, coef)
 end
 
 size(s::FE_TensorProductSolver,j)= j==1 ? s.ms : s.ns
 grid(s::FE_TensorProductSolver) = s.grid
-
+frequency_basis(s::FE_TensorProductSolver) = s.basis
+frequency_basis_ext(s::FE_TensorProductSolver) = s.basis_ext
 FE_TensorProductSolver(problems::Array{FE_DiscreteProblem,1},solver_type) = FE_TensorProductSolver{eltype(problem),sum(map(dim,problems)),length(problems),tuple(map(dim,problems)...)}(problems,solver_type)
 # HackyWacky
 problem(s::FE_TensorProductSolver) = problem(s.solvers1d[1])
+
 # Ugly starting function, eventually replace by NxNx... coefficients
 function solve!{ELT,N,ID,ND,T}(s::FE_TensorProductSolver{ELT,N,ID,ND}, coef::AbstractArray{T,N}, rhs::AbstractArray{T,ID}, f::Function)
     solvers = s.solvers1d
