@@ -1,53 +1,18 @@
 # funs.jl
 
-# TODO: remove these Fun's and merge with SetExpansion (which can then be renamed to Fun).
-# Use domainframe for a frame that derives from a basis.
 
-###############################################################################################
-# Some common properties of Function objects are grouped in AbstractFun
-###############################################################################################
-abstract AbstractFun{N,T <: AbstractFloat}
+" A FrameFun is an expansion in a basis on a subset of its domain (i.e. in a DomainFrame)."
+typealias FrameFun{N,T,D,B,ELT,ID} SetExpansion{DomainFrame{D,B,N,T},ELT,ID}
 
-dim{N,T}(::AbstractFun{N,T}) = N
-dim{N,T}(::Type{AbstractFun{N,T}}) = N
-dim{F <: AbstractFun}(::Type{F}) = dim(super(F))
+domain(fun::SetExpansion) = domain(fun, set(fun))
+domain(fun::SetExpansion, set::DomainFrame) = domain(set)
 
-numtype{N,T}(::AbstractFun{N,T}) = T
-numtype{N,T}(::Type{AbstractFun{N,T}}) = T
-numtype{F <: AbstractFun}(::Type{F}) = numtype(super(F))
+basis(fun::FrameFun) = basis(fun, set(fun))
+basis(fun::FrameFun, s::DomainFrame) = set(s)
 
-
-# A Fun groups a domain and an expansion
-immutable Fun{N,T} <: AbstractFun{N,T}
-    domain      ::  AbstractDomain{N,T}
-    expansion   ::  SetExpansion        # the frame coefficients
-#    problem     ::  FE_Problem{N,T}     # properties of the Fourier extension problem, store for convenience
-
-    function Fun(domain, expansion)
-        @assert numtype(expansion) == numtype(domain)
-        @assert dim(expansion) == dim(domain)
-        
-        new(domain, expansion)
-    end
-end
-# Obsolete constructor
-## Fun{N,T}(domain::AbstractDomain{N,T}, expansion, problem) = Fun{N,T}(domain, expansion, problem)
-
-Fun{N,T}(domain::AbstractDomain{N,T}, expansion) = Fun{N,T}(domain, expansion)
-
-domain(fun::Fun) = fun.domain
-
-expansion(fun::Fun) = fun.expansion
-
-set(fun::Fun) = set(expansion(fun))
-
-coefficients(fun::Fun) = coefficients(expansion(fun))
-
-#problem(fun::Fun) = fun.problem
-
-function show{N}(io::IO, fun::Fun{N})
+function show{D,B,N}(io::IO, fun::FrameFun{D,B,N})
     println(io, "A ", N, "-dimensional FrameFun with ", length(coefficients(fun)), " degrees of freedom.")
-    println(io, "Basis: ", name(set(expansion(fun))))
+    println(io, "Basis: ", name(basis(fun)))
     println(io, "Domain: ", domain(fun))
 end
 
@@ -79,8 +44,7 @@ function Fun(Basis::DataType, f::Function, domain = default_fourier_domain_1d(),
     problem = discretize_problem(domain, n, T, s, FourierBasis, ELT)
     solver = solver_type(problem)
 
-    expansion = solve(solver, f)
-    Fun(domain, expansion)
+    solve(solver, f)
 end
 
 function Fun{TD,DN,ID,N}(Basis::DataType, f::Function, domain::TensorProductDomain{TD,DN,ID,N},
@@ -94,8 +58,7 @@ function Fun{TD,DN,ID,N}(Basis::DataType, f::Function, domain::TensorProductDoma
         dc=dc+DN[i]
     end
     solver = FE_TensorProductSolver(problems,solver_types)
-    expansion = solve(solver, f)
-    Fun(domain, expansion)
+    solve(solver, f)
 end
 
 # Funs with one solver_type take that as the default
@@ -111,13 +74,13 @@ function Fun{TD,DN,ID,N}(Basis::DataType, f::Function, domain::TensorProductDoma
         dc=dc+DN[i]
     end
     solver = FE_TensorProductSolver(problems,ntuple(i->solver_type,ID))
-    expansion = solve(solver, f)
-    Fun(domain, expansion)
+    solve(solver, f)
 end
 
 
-call(fun::Fun, x...) = in([x[i] for i=1:length(x)], domain(fun)) ? call(fun.expansion, x...) : NaN
+#call(fun::FrameFun, x...) = in([x[i] for i=1:length(x)], domain(fun)) ? call(fun.expansion, x...) : NaN
+call_set(fun::SetExpansion, s::DomainFrame, coef, x...) = call_expansion(basis(s), coef, x...)
 
-
+call_set!(result, fun::SetExpansion, s::DomainFrame, coef, x...) = call_expansion!(result, basis(s), coef, x...)
 
 

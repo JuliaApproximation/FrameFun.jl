@@ -18,16 +18,23 @@ import BasisFunctions: src, dest, matrix, matrix!, apply!, numtype
 
 import BasisFunctions: dim, index_dim, grid, getindex!, left, right
 
-import BasisFunctions: operator, coefficients, set
+import BasisFunctions: operator, coefficients, set, is_basis, is_frame
+
+import BasisFunctions: call_set, call_set!, call_expansion, call_expansion!
+
+import BasisFunctions: True, False
 
 
 # from domains.jl
-export Interval, Circle, Square, Cube, Sphere, Cylinder, atomium, TensorProductGrid
+export Interval, Circle, Square, Cube, Sphere, Cylinder, atomium
 
 export numtype
 
 # from funs.jl
-export ExpFun, ChebyFun
+export ExpFun, ChebyFun, FrameFun
+
+# from domainframe.jl
+export DomainFrame, basis, call_set, call_set!
 
 
 include("domains.jl")
@@ -38,8 +45,6 @@ include("domainframe.jl")
 
 include("fe_problem.jl")
 
-# include("my_lsqr.jl")
-
 include("fe_solvers.jl")
 
 include("fastsolver.jl")
@@ -48,7 +53,8 @@ include("funs.jl")
 
 include("fe_fourier.jl")
 
-include("plots.jl")
+# TODO: try out Plots.jl
+#include("plots.jl")
 
 end # module
 

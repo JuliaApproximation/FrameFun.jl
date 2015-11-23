@@ -27,7 +27,10 @@ custom_handler(r::Test.Error) = begin println("\"\t$(typeof(r.err)) in $(r.expr)
 
 
 # Algorithm accuracy below tol
-function msqerror_tol{N,T}(f::Function,F::FE.Fun{N,T};vals::Int=200,tol=1e-6)
+function msqerror_tol(f::Function,F::FE.SetExpansion;vals::Int=200,tol=1e-6)
+    T = numtype(F)
+    N = dim(F)
+
     # Find the closest bounding grid around the domain
     TB=FE.box(FE.domain(F))
     

@@ -1,9 +1,12 @@
 # fe_solvers.jl
 
+# TODO: the FE_Solver types should become operator types, so that we can reuse TensorProductOperator
 
 abstract FE_Solver
 
 problem(s::FE_Solver) = s.problem
+
+domain(s::FE_Solver) = domain(problem(s))
 
 # Delegation methods
 for op in (:numtype,:eltype,:frequency_basis,:frequency_basis_ext, :time_basis, :time_basis_ext,
@@ -16,11 +19,12 @@ size(s::FE_Solver, j::Int) = size(problem(s), j)
 function solve(s::FE_Solver, f::Function, elt = eltype(s))
     coef = Array(elt, size(s, 2))
     rhs = Array(elt, size(time_basis_restricted(problem(s))))
-    solve!(s, coef, rhs,f)
-    coef=reshape(coef,size(frequency_basis(s)))
-    norm=normalization_operator(frequency_basis_ext(s),frequency_basis(s))
-    coef=normalization_operator(frequency_basis_ext(s),frequency_basis(s))*coef
-    SetExpansion(frequency_basis(s), coef)
+    solve!(s, coef, rhs, f)
+    coef = reshape(coef, size(frequency_basis(s)))
+    norm = normalization_operator(frequency_basis_ext(s), frequency_basis(s))
+    coef = norm * coef
+    frame = DomainFrame(domain(s), frequency_basis(s))
+    SetExpansion(frame, coef)
 end
 
 
@@ -67,10 +71,11 @@ function solve(s::FE_TensorProductSolver, f::Function, elt = eltype(s))
     coef = Array(elt, size(s, 2)...)
     rhs = Array(elt, size(s,1)...)
     solve!(s, coef, rhs,f)
-    coef=reshape(coef,size(s.basis))
-    norm=normalization_operator(frequency_basis_ext(s),frequency_basis(s))
-    coef=normalization_operator(frequency_basis_ext(s),frequency_basis(s))*coef
-    SetExpansion(s.basis, coef)
+    coef = reshape(coef, size(s.basis))
+    norm = normalization_operator(frequency_basis_ext(s), frequency_basis(s))
+    coef = norm * coef
+    frame = DomainFrame(domain(s), frequency_basis(s))
+    SetExpansion(frame, coef)
 end
 
 size(s::FE_TensorProductSolver,j)= j==1 ? s.ms : s.ns
@@ -80,6 +85,9 @@ frequency_basis_ext(s::FE_TensorProductSolver) = s.basis_ext
 FE_TensorProductSolver(problems::Array{FE_DiscreteProblem,1},solver_type) = FE_TensorProductSolver{eltype(problem),sum(map(dim,problems)),length(problems),tuple(map(dim,problems)...)}(problems,solver_type)
 # HackyWacky
 problem(s::FE_TensorProductSolver) = problem(s.solvers1d[1])
+
+# More HackyWacky
+domain(s::FE_TensorProductSolver) = TensorProductDomain([domain(problem(i)) for i in s.solvers1d]...)
 
 # Ugly starting function, eventually replace by NxNx... coefficients
 function solve!{ELT,N,ID,ND,T}(s::FE_TensorProductSolver{ELT,N,ID,ND}, coef::AbstractArray{T,N}, rhs::AbstractArray{T,ID}, f::Function)
