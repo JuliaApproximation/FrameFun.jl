@@ -138,13 +138,13 @@ function rhs!(grid::AbstractGrid, b::AbstractArray, f::Function)
     l = 0
     for x in eachelement(grid)
         l = l+1
-        b[l] = f(x)
+        b[l] = f(x...)
     end
 end
 
 function rhs!{TG,NG,ID,N,T,ELT}(grid::TensorProductGrid{TG,NG,ID,N,T}, b::AbstractArray{ELT,N}, f::Function)
     for i in eachindex(grid)
-        b[i] = f(grid[i])
+        b[i] = f(grid[i]...)
     end
 end
 

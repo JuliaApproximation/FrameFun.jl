@@ -6,6 +6,11 @@ using FrameFuns
 using Base.Test
 FE=FrameFuns
 BA=BasisFunctions
+
+## Settings
+
+# Test fourier extensions for all parameters
+Extensive = true
 ########
 # Auxiliary functions
 ########
@@ -36,7 +41,7 @@ function msqerror_tol{N,T}(f::Function,F::FE.Fun{N,T};vals::Int=200,tol=1e-6)
         point=l+(r-l).*rand(T,N)
         if FE.in(point,FE.domain(F))
             elements+=1
-            error+=abs(f(point)-F(point...))
+            error+=abs(f(point...)-F(point...))
             ## println("ratio ",f(point)/F(point...))
         end
     end
@@ -274,16 +279,17 @@ Test.with_handler(custom_handler) do
     delimit("Algorithm Implementation and Accuracy")
     delimit("1D")
     
-    f(x)=x[1]-1.0
+    f(x)=x-1.0
+    g(x)=1im*x-1.0
    for funtype in (ExpFun, ChebyFun)
         println("Fun Type: ",funtype)
-        for D in [FE.default_fourier_domain_1d() Interval(-1.5,0.7) Interval(-1.5,-0.5)+Interval(0.5,1.5)]
+        for D in (Extensive ? (FE.default_fourier_domain_1d(),) : [FE.default_fourier_domain_1d() Interval(-1.5,0.7) Interval(-1.5,-0.5)+Interval(0.5,1.5)])
             show(D); print("\n")
             for solver_type in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
                 show(solver_type);print("\n")
-                for n in [FE.default_fourier_n(D) 49]
+                for n in (Extensive ? FE.default_fourier_n(D) : [FE.default_fourier_n(D) 49])
                     println("\tN = $n")
-                    for T in [1.7 FE.default_fourier_T(D) 2.3]
+                    for T in (Extensive ? FE.default_fourier_T(D) : [1.7 FE.default_fourier_T(D) 2.3])
                         print("T = $T \t")
                         try
                             F=@timed(funtype(f,D,solver_type,n=n,T=T))
@@ -292,6 +298,8 @@ Test.with_handler(custom_handler) do
                         catch y
                             message(y)
                         end
+                          F=@timed(funtype(f,D,solver_type,n=n,T=T))
+                          msqerror_tol(f,F[1],tol=1e-7)
                     end
                 end
             end
@@ -299,18 +307,18 @@ Test.with_handler(custom_handler) do
     end
     delimit("2D") 
 
-    f(x)=x[1]+2*x[2]-1.0
     f(x,y)=x+2*y-1.0
+    g(x,y)=1im*x+2*y-1.0
 #    for funtype in (ExpFun,ChebyFun)
-    for funtype in (ExpFun, ChebyFun)
+    for funtype in (ChebyFun, ExpFun)
         println("Fun Type: ",funtype)
-        for D in [Cube((-1.0,-1.5),(0.5,0.7)) Circle(1.0) Circle(2.0,[-2.0,-2.0])]       
+        for D in [Circle(2.0,[-2.0,-2.0]) Cube((-1.0,-1.5),(0.5,0.7))]       
             show(D); print("\n")
             for solver_type in (FE.FE_DirectSolver, FE.FE_ProjectionSolver)
                 show(solver_type);print("\n")
-                for n in (FE.default_fourier_n(D),(12,12))
+                for n in (Extensive ? (FE.default_fourier_n(D),) : (FE.default_fourier_n(D),(12,12)))
                     println("\tN = $n")
-                    for T in ((1.7,1.7),FE.default_fourier_T(D),(2.3,2.3))
+                    for T in (Extensive ? (FE.default_fourier_T(D),) : ((1.7,1.7),FE.default_fourier_T(D),(2.3,2.3)))
                         print("T = $T\t")
                         try
                             F=@timed(funtype(f,D,solver_type,n=n,T=T))
@@ -326,29 +334,31 @@ Test.with_handler(custom_handler) do
     end
     delimit("3D")
 
-    f(x)=x[1]+x[2]-x[3]
-    
-    for D in (FE.TensorProductDomain(Interval(-1.0,1.0),Circle(1.05)),Cube((-0.2,-0.3,0.0),(1.0,-0.1,1.2)),Cylinder(1.05,1.2), FE.Sphere(1.2,[-1.3,0.25,1.0]))        
-        show(D); print("\n")
-        for solver_type in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
-            show(solver_type);print("\n")
-            for n in ((3,3,3), FE.default_fourier_n(D))
-                println("\tN = $n")
-                for T in ((1.7,1.7,1.7), FE.default_fourier_T(D), (2.3,2.3,2.3))
-                    print("T = $T\t")
-                    try
-                        F=@timed(ExpFun(f,D,solver_type,n=n,T=T))
-                        @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
-                        @test msqerror_tol(f,F[1],tol=1e-2)
-                    catch y
-                        message(y)
+    f(x,y,z)=x+y-z
+    g(x,y,z)=1im*x-y+z
+    for funtype in (ChebyFun, ExpFun)
+        println("Fun Type: ",funtype)
+        for D in (FE.TensorProductDomain(Interval(-1.0,1.0),Circle(1.05)),Cube((-0.2,-0.3,0.0),(1.0,-0.1,1.2)), FE.Sphere(1.2,[-1.3,0.25,1.0]))        
+            show(D); print("\n")
+            for solver_type in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
+                show(solver_type);print("\n")
+                for n in (Extensive ?  ((3,3,3),) : ((3,3,3), FE.default_fourier_n(D)))
+                    println("\tN = $n")
+                    for T in (Extensive ? (FE.default_fourier_T(D),):((1.7,1.7,1.7), FE.default_fourier_T(D), (2.3,2.3,2.3)))
+                        print("T = $T\t")
+                        try
+                            F=@timed(funtype(f,D,solver_type,n=n,T=T))
+                            @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
+                            @test msqerror_tol(f,F[1],tol=1e-2)
+                        catch y
+                            message(y)
+                        end
                     end
                 end
             end
         end
     end
-    
-
+        
 end
 
 # Diagnostics
