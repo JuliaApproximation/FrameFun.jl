@@ -54,7 +54,7 @@ include("funs.jl")
 include("fe_fourier.jl")
 
 # TODO: try out Plots.jl
-#include("plots.jl")
+FrameFuns.include("plots.jl")
 
 end # module
 

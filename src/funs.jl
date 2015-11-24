@@ -1,6 +1,5 @@
 # funs.jl
 
-
 " A FrameFun is an expansion in a basis on a subset of its domain (i.e. in a DomainFrame)."
 typealias FrameFun{N,T,D,B,ELT,ID} SetExpansion{DomainFrame{D,B,N,T},ELT,ID}
 
@@ -39,9 +38,9 @@ function Fun(Basis::DataType, f::Function, domain = default_fourier_domain_1d(),
              s = default_fourier_sampling(domain))
     ELT=Base.return_types(f,fill(numtype(domain),dim(domain)))[1]
     if isreal(Basis)==Val{false}() && (T<:Real)
-        T=Complex{T}
+        ELT=Complex{T}
     end        
-    problem = discretize_problem(domain, n, T, s, FourierBasis, ELT)
+    problem = discretize_problem(domain, n, T, s, Basis, ELT)
     solver = solver_type(problem)
 
     solve(solver, f)
@@ -53,8 +52,12 @@ function Fun{TD,DN,ID,N}(Basis::DataType, f::Function, domain::TensorProductDoma
         s = default_fourier_sampling(domain))
     problems=FE_DiscreteProblem[]
     dc=1
+    ELT=Base.return_types(f,fill(numtype(domain),dim(domain)))[1]
+    if isreal(Basis)==Val{false}() && (T<:Real)
+        T=Complex{T}
+    end        
     for i=1:ID
-        push!(problems,discretize_problem(subdomain(domain,i),n[dc:dc+DN[i]-1],T[dc:dc+DN[i]-1],s[dc:dc+DN[i]-1]))
+        push!(problems,discretize_problem(subdomain(domain,i),n[dc:dc+DN[i]-1],T[dc:dc+DN[i]-1],s[dc:dc+DN[i]-1],Basis,ELT))
         dc=dc+DN[i]
     end
     solver = FE_TensorProductSolver(problems,solver_types)
@@ -68,9 +71,12 @@ function Fun{TD,DN,ID,N}(Basis::DataType, f::Function, domain::TensorProductDoma
         s = default_fourier_sampling(domain))
     problems=FE_DiscreteProblem[]
     dc=1
-    ELT=Base.return_types(f,Any[numtype(domain)])[1]
+    ELT=Base.return_types(f,fill(numtype(domain),dim(domain)))[1]
+    if isreal(Basis)==Val{false}() && (T<:Real)
+        ELT=Complex{ELT}
+    end        
     for i=1:ID
-        push!(problems,discretize_problem(subdomain(domain,i),n[dc:dc+DN[i]-1],T[dc:dc+DN[i]-1],s[dc:dc+DN[i]-1],ChebyshevBasis,ELT))
+        push!(problems,discretize_problem(subdomain(domain,i),n[dc:dc+DN[i]-1],T[dc:dc+DN[i]-1],s[dc:dc+DN[i]-1],Basis,ELT))
         dc=dc+DN[i]
     end
     solver = FE_TensorProductSolver(problems,ntuple(i->solver_type,ID))

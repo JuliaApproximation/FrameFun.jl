@@ -311,7 +311,7 @@ Test.with_handler(custom_handler) do
     delimit("2D") 
 
     f(x,y)=x+2*y-1.0
-    g(x,y)=1im*x+2*y-1.0
+    g(x,y)=1im*cos(x).^2+2*sin(y)-1.0
 #    for funtype in (ExpFun,ChebyFun)
     for funtype in (ChebyFun, ExpFun)
         println("Fun Type: ",funtype)
