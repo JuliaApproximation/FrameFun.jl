@@ -1,8 +1,8 @@
 # box.jl
 
-# The definition of a box is a 2D-array with the bottom-left and top-right vertices as columns.
-immutable FBox{N, T <: AbstractFloat}
-	vertices::Array{T,2}
+"An FBox is an N-dimensional box specified by its bottom-left and top-right vertices."
+immutable FBox{N,T}
+	vertices   ::  Mat{N,2,T}
 end
 
 dim{N,T}(::FBox{N,T}) = N
@@ -13,50 +13,38 @@ numtype{N,T}(::FBox{N,T}) = T
 numtype{N,T}(::Type{FBox{N,T}}) = T
 numtype{B <: FBox}(::Type{B}) = numtype(super(B))
 
-typealias FBox1{T <: AbstractFloat} FBox{1,T}
-typealias FBox2{T <: AbstractFloat} FBox{2,T}
-typealias FBox3{T <: AbstractFloat} FBox{3,T}
-typealias FBox4{T <: AbstractFloat} FBox{4,T}
+typealias FBox1{T} FBox{1,T}
+typealias FBox2{T} FBox{2,T}
+typealias FBox3{T} FBox{3,T}
+typealias FBox4{T} FBox{4,T}
 
-# A type-safe general constructor is hard: how can N and T be inferred?
-FBox{T}(a::Vector{T}, b::Vector{T}) = FBox{length(a),T}([a b])
+FBox{N,T}(a::Vec{N,T}, b::Vec{N,T}) = FBox(Mat{N,2,T}((a,b)))
 
 # Dimension-specific constructors
-FBox{T}(a::T, b::T) = FBox{1,T}([a b])
-FBox{T}(a::T, b::T, c::T, d::T) = FBox{2,T}([a b; c d])
-FBox{T}(intervalx::Vector{T}) = FBox{1,T}([intervalx[1] intervalx[2]])
-FBox{T}(intervalx::Vector{T}, intervaly::Vector{T}) = FBox{2,T}([intervalx[1] intervalx[2]; intervaly[1] intervaly[2]])
-FBox{T}(intervalx::Vector{T}, intervaly::Vector{T}, intervalz::Vector{T}) = FBox{3,T}([intervalx[1] intervalx[2]; intervaly[1] intervaly[2]; intervalz[1] intervalz[2]])
+FBox{T}(a::T, b::T) = FBox(Vec{1,T}(a), Vec{1,T}(b))
+FBox{T}(a::T, b::T, c::T, d::T) = FBox(Vec{2,T}(a,c), Vec{2,T}(b,d))
+FBox{T}(a::T, b::T, c::T, d::T, e::T, f::T) = FBox(Vec{3,T}(a,c,e), Vec{3,T}(b,d,f))
 
-emptybox(N,T) = FBox{N,T}(zeros(T,N,2))
-
-# Other constructors are specific for each dimension
-#FBox{N,T}(a::Vector{T},b::Vector{T}) = FBox{N,T}([a b])
-#FBox{T,1}(a::T, b::T) = FBox{T,1}([a b])
-
-
-left(b::FBox) = b.vertices[:,1]
+left{N,T}(b::FBox{N,T}) = Vec{N,T}([b.vertices[i,1] for i in 1:N])
 left(b::FBox, dim) = b.vertices[dim,1]
-right(b::FBox) = b.vertices[:,2]
+
+right{N,T}(b::FBox{N,T}) = Vec{N,T}([b.vertices[i,2] for i in 1:N])
 right(b::FBox, dim) = b.vertices[dim,2]
 
-size(b::FBox, dim) = b.vertices[dim,2]-b.vertices[dim,1]
+size(b::FBox, dim) = right(b, dim) - left(b, dim)
 
 vertices(b::FBox) = b.vertices
 
 # Extend a box by a factor of t[i] in each dimension
-function extend{N,T}(b::FBox{N,T}, t::NTuple{N,T})
-	vertices = copy(b.vertices)
-	for i=1:size(vertices,1)
-		vertices[i,2] = vertices[i,1] + t[i]*(vertices[i,2]-vertices[i,1])
-	end
-	FBox{N,T}(vertices)
+function extend{N,T}(b::FBox{N,T}, t::Vec{N,T})
+    r = Vec{N,T}( [ t[i]*size(b,i) for i in 1:N ] )
+    FBox(left(b), left(b) + r)
 end
 
 in(x, b::FBox) = reduce(&, [in(x,b,i) for i=1:dim(b)])
 in{N,T}(x, b::FBox{N,T}, dim) = (x >= left(b,dim)-10eps(T)) && (x <= right(b,dim)+10eps(T))
 
-## Arithemetic operations
+## Arithmetic operations
 
 (*)(a::Number,b::FBox) = FBox(a*b.vertices)
 (*)(b::FBox, a::Number) = a*b

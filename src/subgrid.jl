@@ -11,6 +11,8 @@ numtype{N,T}(::AbstractSubGrid{N,T}) = T
 numtype{N,T}(::Type{AbstractSubGrid{N,T}}) = T
 numtype{G <: AbstractSubGrid}(::Type{G}) = numtype(super(G))
 
+eltype(g::AbstractSubGrid) = eltype(grid(g))
+
 # Default index dimension is 1
 index_dim{N,T}(::AbstractSubGrid{N,T}) = 1
 index_dim{N,T}(::Type{AbstractSubGrid{N,T}}) = 1
@@ -27,7 +29,7 @@ for which it is true make up the MaskedGrid.
 immutable MaskedGrid{G <: AbstractGrid,ID,N,T} <: AbstractSubGrid{N,T}
     grid	::	G
     mask	::	Array{Bool,ID}
-    indices ::  Array{Int,2}
+    indices ::  Vector{Vec{N,Int}}
     M		::	Int				# Total number of points in the mask
 
     MaskedGrid(grid::AbstractGrid{N,T},  mask, indices) = new(grid, mask, indices, sum(mask))
@@ -39,13 +41,20 @@ function MaskedGrid{N,T}(grid::AbstractGrid{N,T}, mask, indices)
 	MaskedGrid{typeof(grid),index_dim(grid),N,T}(grid, mask, indices)
 end
 
+# TODO: make this more elegant and general
+# These are for the assignment to indices in the function below.
+convert(::Type{Tuple{Int}}, i::CartesianIndex{1}) = (i[1],)
+convert(::Type{Tuple{Int,Int}}, i::CartesianIndex{2}) = (i[1],i[2])
+convert(::Type{Tuple{Int,Int,Int}}, i::CartesianIndex{3}) = (i[1],i[2],i[3])
+convert(::Type{Tuple{Int,Int,Int,Int}}, i::CartesianIndex{4}) = (i[1],i[2],i[3],i[4])
+
 function MaskedGrid{N,T}(grid::AbstractGrid{N,T}, domain::AbstractDomain{N,T})
     mask = in(grid, domain)
-    indices = Array(Int,sum(mask),ndims(mask))
+    indices = Array(Vec{N,Int}, sum(mask))
     i = 1
-    for m in eachindex(mask)
+    for m in eachindex(grid)
         if mask[m]
-            indices[i,:] = [ind2sub(mask,m)...]
+            indices[i] = m
             i += 1
         end
     end
@@ -61,10 +70,7 @@ size(g::MaskedGrid) = (length(g),)
 # Check whether element grid[i] (of the underlying grid) is in the masked grid.
 in(i, g::MaskedGrid) = g.mask[i]
 
-getindex!(x, g::MaskedGrid, idx::Int) = getindex!(x, g.grid, g.indices[idx,:]...)
-
-# Don't use getindex! on 1D grids
-getindex{G,ID}(g::MaskedGrid{G,ID,1}, idx) = getindex(g.grid, g.indices[idx,1])
+getindex(g::MaskedGrid, idx::Int) = getindex(g.grid, g.indices[idx]...)
 
 
 

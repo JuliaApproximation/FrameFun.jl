@@ -242,7 +242,7 @@ Test.with_handler(custom_handler) do
     # Provisional:    
     op  = t_restriction * itransform2 * f_extension
     opt = f_restriction * transform2 * t_extension
-    @test op*coef_restricted==opt'*coef_restricted
+    @test op*coef_restricted==(opt')*coef_restricted
 
     delimit("Memory Allocation")
     delimit("1D")
