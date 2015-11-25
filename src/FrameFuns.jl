@@ -2,6 +2,7 @@
 
 module FrameFuns
 
+using FixedSizeArrays
 using BasisFunctions
 
 using Base.Cartesian
@@ -12,11 +13,11 @@ import Base: length, eltype, size, push!
 
 import Base: eachindex, start, next, done, getindex
 
-import Base: show, showcompact
+import Base: show, showcompact, call, convert
 
 import BasisFunctions: src, dest, matrix, matrix!, apply!, numtype
 
-import BasisFunctions: dim, index_dim, grid, getindex!, left, right
+import BasisFunctions: dim, index_dim, grid, left, right
 
 import BasisFunctions: operator, coefficients, set, is_basis, is_frame, normalization_operator
 

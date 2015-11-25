@@ -15,9 +15,12 @@ typealias AbstractDomain2d{T <: AbstractFloat} AbstractDomain{2,T}
 typealias AbstractDomain3d{T <: AbstractFloat} AbstractDomain{3,T}
 typealias AbstractDomain4d{T <: AbstractFloat} AbstractDomain{4,T}
 
+# We support both vectors (AbstractVector) and FixedSizeArray's (Vec)
+typealias AnyVector Union{AbstractVector,Vec}
+
 # Domains are evaluated using vectors to specify the points, except in 1D
 # Provide fallback routine for users not using vectors in 1d
-in{T,S <: Number}(x::S, d::AbstractDomain1d{T}) = in([x], d)
+in{T,S <: Number}(x::S, d::AbstractDomain1d{T}) = in(Vec{1,S}(x), d)
 
 # Check whether a value is in an interval, up to 10 times machine precision
 in{T <: AbstractFloat, S <: Number}(x::S, a::T, b::T) = (a-10eps(T) <= x <= b+10eps(T))
@@ -40,7 +43,7 @@ right(d::AbstractDomain,index::Int) = right(box(d),index)
 function evalgrid{N}(g::AbstractGrid{N}, d::AbstractDomain{N})
     z = zeros(Bool, size(g))
     for i in eachindex(g)
-      z[i] = in(g[i], d)
+        z[i] = in(g[i], d)
     end
     z
 end
@@ -56,9 +59,9 @@ end
 EmptyDomain{T}(n::Int, ::Type{T}) = EmptyDomain{n,T}()
 
 
-in(x::AbstractVector, d::EmptyDomain) = false
+in(x::AnyVector, d::EmptyDomain) = false
 
-# Arithemetic operations
+# Arithmetic operations
 
 (+)(d::EmptyDomain, x::Number) = d
 (+)(x::Number, d::EmptyDomain) = d
@@ -82,9 +85,9 @@ end
 
 RnDomain{T}(n::Int, ::Type{T}) = RnDomain{n,T}()
 
-in(x::AbstractVector, d::RnDomain) = true
+in(x::AnyVector, d::RnDomain) = true
 
-# Arithemetic operations
+# Arithmetic operations
 
 (+)(d::RnDomain, x::Number) = d
 (+)(x::Number, d::RnDomain) = d
@@ -106,18 +109,24 @@ dim{N}(d::RnDomain{N}) = N
 immutable Interval{T} <: AbstractDomain{1,T}
   a     ::  T
   b     ::  T
+
+  Interval(a = -one(T), b = one(T)) = new(a,b)
 end
 
-Interval{T}(a::T = -1.0, b::T = 1.0) = Interval{T}(a, b)
+Interval() = Interval{Float64}()
+
+Interval{T}(::Type{T}) = Interval{T}()
+
+Interval{T}(a::T, b::T) = Interval{T}(a, b)
 
 Interval{T <: AbstractFloat}(::Type{T}) = Interval(zero(T), one(T))
 
-in(x::AbstractVector, d::Interval) = in(x[1], d.a, d.b)
+in(x::AnyVector, d::Interval) = in(x[1], d.a, d.b)
 
 left(d::Interval) = d.a
 right(d::Interval) = d.b
 
-# Arithemetic operations
+# Arithmetic operations
 
 (+)(d::Interval, x::Number) = Interval(d.a+x, d.b+x)
 (+)(x::Number, d::Interval) = d+x
@@ -135,7 +144,6 @@ show(io::IO, d::Interval) = print(io, "the interval [", d.a, ", ", d.b, "]")
 
 const unitinterval = Interval()
 
-dim(d::Interval) = 1
 
 ###############################################################################################
 ### A circle
@@ -143,19 +151,23 @@ dim(d::Interval) = 1
 
 immutable Circle{T} <: AbstractDomain{2,T}
   radius    ::  T
-  center    ::  Vector{T}
+  center    ::  Vec{2,T}
 
-  Circle(radius::T = one(T), center::Vector{T} = zeros(T,2)) = new(radius, center) 
+  Circle(radius = one(T), center = Vec{2,T}(zero(T),zero(T))) = new(radius, center)
 end
 
-Circle{T}(radius::T = 1.0, center::Vector{T} = zeros(T,2)) = Circle{T}(radius,center)
+Circle() = Circle{Float64}()
+Circle{T}(::Type{T}) = Circle{T}()
+Circle{T}(radius::T) = Circle{T}(radius)
+Circle{T}(radius::T, center::Vec{2,T}) = Circle{T}(radius, center)
+Circle{T}(radius::T, center::Vector{T}) = Circle{T}(radius, center)
 
-in{T}(x::AbstractVector, c::Circle{T}) = (x[1]-c.center[1])^2 + (x[2]-c.center[2])^2 <= c.radius^2+10eps(T)
+in{T}(x::AnyVector, c::Circle{T}) = (x[1]-c.center[1])^2 + (x[2]-c.center[2])^2 <= c.radius^2+10eps(T)
 
 ## Arithmetic operations
 
-(+)(c::Circle, x::AbstractVector) = Circle(c.radius, c.center+x)
-(+)(x::AbstractVector, c::Circle) = c+x
+(+)(c::Circle, x::AnyVector) = Circle(c.radius, c.center+x)
+(+)(x::AnyVector, c::Circle) = c+x
 
 (*)(c::Circle, x::Number) = Circle(c.radius*x, c.center*x)
 (*)(x::Number, c::Circle) = c*x
@@ -170,7 +182,7 @@ show(io::IO, c::Circle) = print(io, "a circle of radius ", c.radius, " centered 
 
 const unitcircle = Circle()
 
-dim(c::Circle) = 2
+
 
 ###############################################################################################
 ### A sphere
@@ -183,12 +195,12 @@ end
 
 Sphere{T}(radius::T = 1.0, center::Vector{T} = zeros(T,3)) = Sphere{T}(radius, center)
 
-in(x::AbstractVector, s::Sphere) = (x[1]-s.center[1])^2 + (x[2]-s.center[2])^2 + (x[3]-s.center[3])^2 <= s.radius^2
+in(x::AnyVector, s::Sphere) = (x[1]-s.center[1])^2 + (x[2]-s.center[2])^2 + (x[3]-s.center[3])^2 <= s.radius^2
 
 ## Arithmetic operations
 
-(+)(s::Sphere, x::AbstractVector) = Sphere(s.radius, s.center+x)
-(+)(x::AbstractVector, s::Sphere) = Sphere(s.radius, s.center+x)
+(+)(s::Sphere, x::AnyVector) = Sphere(s.radius, s.center+x)
+(+)(x::AnyVector, s::Sphere) = Sphere(s.radius, s.center+x)
 
 (*)(s::Sphere, x::Number) = Sphere(s.radius * x, s.center * x)
 (*)(x::Number, s::Sphere) = s*x
@@ -203,17 +215,23 @@ show(io::IO, s::Sphere) = print(io, "a sphere of radius ", s.radius, " centered 
 
 const unitsphere = Sphere()
 
-dim(s::Sphere) = 3
+
 
 ###############################################################################################
 ### A Tensor Product of Domains
- ###############################################################################################
-# A TensorProductDomain represents the tensor product of other domains.
-# Parameter TD is a tuple of (domain) types.
-# Parameter DN is a tuple of the dimensions of each of the domains.
-# Parameter ID is the length of TG and GN (the index dimension).
-# Parametes N and T are the total dimension and numeric type of this grid.
+###############################################################################################
 
+"""
+A TensorProductDomain represents the tensor product of other domains.
+
+immutable TensorProductDomain{TD,DN,ID,N,T} <: AbstractDomain{N,T}
+
+Parameters:
+- TD is a tuple of (domain) types.
+- DN is a tuple of the dimensions of each of the domains.
+- ID is the length of TG and GN (the index dimension).
+- N and T are the total dimension and numeric type of this grid.
+"""
 immutable TensorProductDomain{TD,DN,ID,N,T} <: AbstractDomain{N,T}
 	domains	::	TD
 
@@ -222,20 +240,28 @@ end
 
 TensorProductDomain(domains...) = TensorProductDomain{typeof(domains),map(dim,domains),length(domains),sum(map(dim, domains)),promote_type(map(numtype,domains)...)}(domains)
 
- tensorproduct(d::AbstractDomain, n) = TensorProductDomain([d for i=1:n]...)
+⊗(d1::AbstractDomain, d2::AbstractDomain) = TensorProductDomain(d1, d2)
+⊗(d1::TensorProductDomain, d2::TensorProductDomain) = TensorProductDomain(domainlist(d1)..., domainlist(d2)...)
+⊗(d1::TensorProductDomain, d2::AbstractDomain) = TensorProductDomain(domainlist(d1)..., d2)
 
- subdomain(t::TensorProductDomain,i::Int) = t.domains[i]
- domainlist(t::TensorProductDomain) = t.domains
+# This one gives an ambiguity warning that is difficult to get rid of...
+# However, not having it makes ⊗ not associative, so: TODO: fix
+#⊗(d1::AbstractDomain, d2::TensorProductDomain) = TensorProductDomain(d1, domainlist(d2)...)
+
+tensorproduct(d::AbstractDomain, n) = TensorProductDomain([d for i=1:n]...)
+
+subdomain(t::TensorProductDomain,i::Int) = t.domains[i]
+domainlist(t::TensorProductDomain) = t.domains
  
- function in{TD,DN,ID,N,T}(x::AbstractVector, t::TensorProductDomain{TD,DN,ID,N,T})
-     dc=1
-     z1 = true
-     for i=1:ID
-         z2 = in(x[dc:dc+DN[i]-1],t.domains[i])
-         z1 = z1 & z2
-         dc+=DN[i]
-     end
-     z1
+function in{TD,DN,ID,N,T}(x::AnyVector, t::TensorProductDomain{TD,DN,ID,N,T})
+    dc = 1
+    z1 = true
+    for i= 1:ID
+        z2 = in(x[dc:dc+DN[i]-1],t.domains[i])
+        z1 = z1 & z2
+        dc+=DN[i]
+    end
+    z1
  end
  
 
@@ -278,12 +304,16 @@ Cube() = Cube(Float64)
 
 Cube(n::Int) = Cube(n, Float64)
 
-## in{N}(x::AbstractVector, c::Cube{N}) = reduce(&, [in(x[j], c.verts[j,1], c.verts[j,2]) for j=1:N])
+rectangle(a, b, c, d) = Interval(a,b) ⊗ Interval(c,d)
+
+cube(a, b, c, d, e, f) = Interval(a,b) ⊗ Interval(c,d) ⊗ Interval(d,e)
+
+## in{N}(x::AnyVector, c::Cube{N}) = reduce(&, [in(x[j], c.verts[j,1], c.verts[j,2]) for j=1:N])
 
 ## Arithmetic operations
 
-## (+)(c::Cube, x::AbstractVector) = Cube(c.verts .+ x)
-## (+)(x::AbstractVector, c::Cube) = c+x
+## (+)(c::Cube, x::AnyVector) = Cube(c.verts .+ x)
+## (+)(x::AnyVector, c::Cube) = c+x
 
 ## (*)(c::Cube, x::Number) = Cube(c.verts * x)
 ## (*)(x::Number, c::Cube) = c*x
@@ -308,7 +338,7 @@ const unitcube = Cube(3)
 ###############################################################################################
 
 
-Cylinder{T}(radius::T = one(T), length::T = one(T)) = TensorProductDomain(Circle(radius),Interval(0.0,length))
+Cylinder{T}(radius::T = one(T), length::T = one(T)) = Circle(radius) ⊗ Interval(zero(T),length)
 
 
 ###############################################################################################
@@ -318,6 +348,7 @@ Cylinder{T}(radius::T = one(T), length::T = one(T)) = TensorProductDomain(Circle
 # Type parameters N T D1 D2: dimension, numeric type, type of domain 1, type of domain 2.
 # A stricter definition would use triangular dispatch:
 # immutable DomainUnion{N, T, D1 <: AbstractDomain{N,T}, D2 <: AbstractDomain{N,T}} <: AbstractDomain{N,T}
+# TODO: Make this a union of a list of domains
 immutable DomainUnion{N,T,D1,D2} <: AbstractDomain{N,T}
   d1    ::  D1
   d2    ::  D2
@@ -342,7 +373,7 @@ end
 
 
 # The union of two domains corresponds to a logical OR of their characteristic functions
-in(x::AbstractVector, d::DomainUnion) = in(x, d.d1) || in(x, d.d2)
+in(x::AnyVector, d::DomainUnion) = in(x, d.d1) || in(x, d.d2)
 
 function in(g::AbstractGrid, d::DomainUnion)
   z1 = in(g, d.d1)
@@ -356,7 +387,7 @@ end
 (==)(d1::DomainUnion, d2::DomainUnion) = (d1.d1 == d2.d1) && (d1.d2 == d2.d2)
 
 box(d::DomainUnion) = BBox(min(left(d.d1),left(d.d2)),max(right(d.d1),right(d.d2)))
-dim(d::DomainUnion) = dim(d.d1)
+
 function show(io::IO, d::DomainUnion)
     print(io, "A union of two domains: \n")
     print(io, "First domain: ", d.d1, "\n")
@@ -376,7 +407,7 @@ end
 DomainIntersection{N,T}(d1::AbstractDomain{N,T},d2::AbstractDomain{N,T}) = DomainIntersection{N,T,typeof(d1),typeof(d2)}(d1, d2)
 
 # The intersection of two domains corresponds to a logical AND of their characteristic functions
-in(x::AbstractVector, d::DomainIntersection) = in(x, d.d1) && in(x, d.d2)
+in(x::AnyVector, d::DomainIntersection) = in(x, d.d1) && in(x, d.d2)
 
 function in(g::AbstractGrid, d::DomainIntersection)
   z1 = in(g, d.d1)
@@ -404,7 +435,7 @@ end
 (==)(d1::DomainIntersection, d2::DomainIntersection) = (d1.d1 == d2.d1) && (d1.d2 == d2.d2)
 
 box(d::DomainIntersection) = BBox(max(left(d.d1),left(d.d2)),min(right(d.d1),right(d.d2)))
-dim(d::DomainIntersection) = dim(d.d1)
+
 function show(io::IO, d::DomainIntersection)
     print(io, "the intersection of two domains: \n")
     print(io, "    First domain: ", d.d1, "\n")
@@ -424,7 +455,7 @@ end
 DomainDifference{N,T}(d1::AbstractDomain{N,T}, d2::AbstractDomain{N,T}) = DomainDifference{N,T,typeof(d1),typeof(d2)}(d1,d2)
 
 # The difference between two domains corresponds to a logical AND NOT of their characteristic functions
-in(x::AbstractVector, d::DomainDifference) = in(x, d.d1) && (~in(x, d.d2))
+in(x::AnyVector, d::DomainDifference) = in(x, d.d1) && (~in(x, d.d2))
 
 function in(g::AbstractGrid, d::DomainDifference)
     z1 = in(g, d.d1)
@@ -438,7 +469,7 @@ end
 (==)(d1::DomainDifference, d2::DomainDifference) = (d1.d1 == d2.d1) && (d1.d2 == d2.d2)
 
 box(d::DomainDifference) = box(d.d1)
-dim(d::DomainDifference) = dim(d.d1) 
+
 function show(io::IO, d::DomainDifference)
     print(io, "the difference of two domains: \n")
     print(io, "    First domain: ", d.d1, "\n")
@@ -456,7 +487,7 @@ end
 
 revolve{T}(d::AbstractDomain{2,T}) = RevolvedDomain{T,typeof(d)}(d)
 
-function in(x::AbstractVector, d::RevolvedDomain)
+function in(x::AnyVector, d::RevolvedDomain)
     r = sqrt(x[2]^2+x[3])
     phi = atan2(x[2]/x[1])
     theta = acos(x[3]/r)
@@ -465,8 +496,8 @@ end
 
 (==)(d1::RevolvedDomain, d2::RevolvedDomain) = (d1.d == d2.d)
 
- box(d::RevolvedDomain) = BBox((left(d.d)[1],left(d.d)...),(right(d.d)[1],right(d.d)...))
-dim(d::RevolvedDomain) = 3
+box(d::RevolvedDomain) = BBox((left(d.d)[1],left(d.d)...),(right(d.d)[1],right(d.d)...))
+
 function show(io::IO, r::RevolvedDomain)
     print(io, "the revolution of: ", r.d1)
 end
@@ -496,7 +527,7 @@ RotatedDomain{T,D}(d::D, phi::T, theta::T, psi::T) = RotatedDomain{3,T,D}(d, [ph
 rotate{T}(d::AbstractDomain{2,T}, theta) = RotatedDomain{2,T,typeof(d)}(d, theta)
 rotate{T}(d::AbstractDomain{3,T}, phi::T, theta::T, psi::T) = RotatedDomain(d, phi, theta, psi)
 
-in(x::AbstractVector, d::RotatedDomain) = in(d.rotationmatrix*x, d.d)
+in(x::AnyVector, d::RotatedDomain) = in(d.rotationmatrix*x, d.d)
 
 (==)(d1::RotatedDomain, d2::RotatedDomain) = (d1.d == d2.d) && (d1.angle == d2.angle) #&& (d1.rotationmatrix == d2.rotationmatrix)
 
@@ -517,15 +548,15 @@ end
 
 ScaledDomain{N,T}(d::AbstractDomain{N,T}, scalefactor) = ScaledDomain{N,T,typeof(d)}(d, scalefactor)
 
-function in(x::AbstractVector, d::ScaledDomain)
+function in(x::AnyVector, d::ScaledDomain)
   in(x/d.scalefactor, d.d)
 end
 
 (*){N,T <: Number}(a::Number, d::AbstractDomain{N,T}) = ScaledDomain(d,a)
 (*){N,T <: Number}(d::AbstractDomain{N,T}, a::Number) = a*d
 
- box(s::ScaledDomain)=s.scalefactor*box(s.d)
-dim(s::ScaledDomain) = dim(s.d)
+box(s::ScaledDomain)=s.scalefactor*box(s.d)
+
 ###############################################################################################
 ### A translated domain
 ###############################################################################################
@@ -537,15 +568,15 @@ end
 
 TranslatedDomain{N,T}(d::AbstractDomain{N,T}, trans::Vector{T}) = TranslatedDomain{N,T,typeof(d)}(d, trans)
 
-function in(x::AbstractVector, d::TranslatedDomain)
+function in(x::AnyVector, d::TranslatedDomain)
     in(x-d.trans, d.d)
 end
 
-(+){N,T}(d::AbstractDomain{N,T}, trans::AbstractVector{T}) = TranslatedDomain(d,trans)
-(+){N,T}(trans::AbstractVector{T}, d::AbstractDomain{N,T}) = d + a
+(+)(d::AbstractDomain, trans::AnyVector) = TranslatedDomain(d,trans)
+(+)(trans::AnyVector, d::AbstractDomain) = d + a
 
- box(t::TranslatedDomain) = box(t.d)+trans
-dim(T::TranslatedDomain) = dim(t.d)
+box(t::TranslatedDomain) = box(t.d)+trans
+
 ###############################################################################################
 ### A collection of domains
 ###############################################################################################
@@ -556,7 +587,7 @@ end
 
 DomainCollection{N,T}(d::AbstractDomain{N,T}) = DomainCollection{N,T}([d])
 
-function in(x::AbstractVector, d::DomainCollection)
+function in(x::AnyVector, d::DomainCollection)
     reduce( |, map( u -> in(x, u), d.list))
 end
 
@@ -580,7 +611,7 @@ push!(dc::DomainCollection, d::AbstractDomain) = push!(dc.list, d)
      end
      ubox
  end
- dim(d::DomainCollection) = dim(d.list[1])
+
  
 show(io::IO, d::DomainCollection) = print(io, "a collection of ", length(d.list), " domains")
 
@@ -601,8 +632,8 @@ BBox{N,T}(left::NTuple{N,T}, right::NTuple{N,T}) = BBox{N,T}([[left...] [right..
 
  # operations
 
-(+)(c::BBox, x::AbstractVector) = BBox(c.verts .+ x)
-(+)(x::AbstractVector, c::BBox) = c+x
+(+)(c::BBox, x::AnyVector) = BBox(c.verts .+ x)
+(+)(x::AnyVector, c::BBox) = c+x
 
 (*)(c::BBox, x::Number) = BBox(c.verts * x)
 (*)(x::Number, c::BBox) = c*x
