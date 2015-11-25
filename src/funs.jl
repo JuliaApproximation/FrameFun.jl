@@ -36,52 +36,17 @@ function Fun(Basis::DataType, f::Function, domain = default_fourier_domain_1d(),
              n = default_fourier_n(domain),
              T = default_fourier_T(domain),
              s = default_fourier_sampling(domain))
-    ELT=Base.return_types(f,fill(numtype(domain),dim(domain)))[1]
-    if isreal(Basis)==Val{false}() && (T<:Real)
-        ELT=Complex{T}
-    end        
-    problem = discretize_problem(domain, n, T, s, Basis, ELT)
+    problem = discretize_problem(domain, n, T, s, Basis, eltype(f,domain,Basis))
     solver = solver_type(problem)
     solve(solver, f, problem)
 end
 
-function Fun{TD,DN,ID,N}(Basis::DataType, f::Function, domain::TensorProductDomain{TD,DN,ID,N},
-        solver_types::Tuple;
-        n = default_fourier_n(domain), T = default_fourier_T(domain),
-        s = default_fourier_sampling(domain))
-    problems=FE_Problem[]
-    dc=1
+function eltype(f::Function, domain, Basis::DataType)
     ELT=Base.return_types(f,fill(numtype(domain),dim(domain)))[1]
-    if isreal(Basis)==Val{false}() && (T<:Real)
-        T=Complex{T}
+    if isreal(Basis)==Val{false}() && (ELT<:Real)
+        ELT=Complex{ELT}
     end
-    for i=1:ID
-        push!(problems,discretize_problem(subdomain(domain,i),n[dc:dc+DN[i]-1],T[dc:dc+DN[i]-1],s[dc:dc+DN[i]-1],Basis,ELT))
-        dc=dc+DN[i]
-    end
-    problem = FE_TensorProductProblem(problems...)
-    solver = solver_type(problem)
-    solve(solver, f, problem)
-end
-
-# Funs with one solver_type take that as the default
-function Fun{TD,DN,ID,N}(Basis::DataType, f::Function, domain::TensorProductDomain{TD,DN,ID,N},
-        solver_type = default_fourier_solver(domain);
-        n = default_fourier_n(domain), T = default_fourier_T(domain),
-        s = default_fourier_sampling(domain))
-    problems=FE_Problem[]
-    dc=1
-    ELT=Base.return_types(f,fill(numtype(domain),dim(domain)))[1]
-    if isreal(Basis)==Val{false}() && (T<:Real)
-        T=Complex{T}
-    end        
-    for i=1:ID
-        push!(problems,discretize_problem(subdomain(domain,i),n[dc:dc+DN[i]-1],T[dc:dc+DN[i]-1],s[dc:dc+DN[i]-1],Basis,ELT))
-        dc=dc+DN[i]
-    end
-    problem = FE_TensorProductProblem(problems...)
-    solver = solver_type(problem)
-    solve(solver, f, problem)
+    ELT
 end
 
 

@@ -122,6 +122,16 @@ function discretize_problem{N,T}(domain::AbstractDomain{N,T}, nt::Tuple, tt::Tup
     FE_DiscreteProblem(domain, tens_fbasis1, tens_fbasis2, tens_tbasis1, tens_tbasis2, tbasis_restricted)
 end
 
+function discretize_problem{TD,DN,ID,N,T}(domain::TensorProductDomain{TD,DN,ID,N,T}, nt::Tuple, tt::Tuple, st::Tuple, basis::DataType, ELT)
+    problems=FE_Problem[]
+    dc = 1
+    for i=1:ID
+        push!(problems,discretize_problem(subdomain(domain,i),nt[dc:dc+DN[i]-1],tt[dc:dc+DN[i]-1],st[dc:dc+DN[i]-1],basis,ELT))
+        dc=dc+DN[i]
+    end
+    problem = FE_TensorProductProblem(problems...)
+end
+
 
 ######################
 # Default parameters

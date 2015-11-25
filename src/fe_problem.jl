@@ -37,42 +37,10 @@ domain(p::FE_TensorProductProblem) = TensorProductDomain(map(domain,p.problems).
 # This type groups the data corresponding to a FE problem.
 immutable FE_DiscreteProblem{N,T} <: FE_Problem{N,T}
     domain          ::  AbstractDomain{N,T}
-    ## fbasis1         ::  AbstractFunctionSet
-    ## fbasis2         ::  AbstractFunctionSet
-
-    ## tbasis1         ::  AbstractFunctionSet
-    ## tbasis2         ::  AbstractFunctionSet
-
-    ## tbasis_restricted   ::  AbstractFunctionSet
-
-    ## f_extension     ::  AbstractOperator
-    ## f_restriction   ::  AbstractOperator
-
-    ## t_extension     ::  AbstractOperator
-    ## t_restriction   ::  AbstractOperator
-
-    ## transform1      ::  AbstractOperator
-    ## itransform1     ::  AbstractOperator
-
-    ## transform2      ::  AbstractOperator
-    ## itransform2     ::  AbstractOperator
 
     op              ::  AbstractOperator
     opt             ::  AbstractOperator
 
-    ## function FE_DiscreteProblem(domain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted, 
-    ##     f_extension, f_restriction, t_extension, t_restriction, 
-    ##     transform2, itransform2)
-    ##     op  = t_restriction * itransform2 * f_extension
-    ##     opt = f_restriction * transform2 * t_extension
-
-    ##     ## new(domain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted, 
-    ##     ##     f_extension, f_restriction, t_extension, t_restriction, 
-    ##     ##     transform1, itransform1, transform2, itransform2, 
-    ##     ##     op, opt)
-    ##     new(domain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted, 
-    ##         op, opt)
-    ## end
 
 end
 
@@ -94,9 +62,7 @@ function FE_DiscreteProblem{N,T}(domain::AbstractDomain{N,T}, fbasis1, fbasis2, 
     opt = f_restriction * transform2 * t_extension
 
     FE_DiscreteProblem(domain,op,opt)
-    ## FE_DiscreteProblem(domain, fbasis1, fbasis2, tbasis1, tbasis2,
-    ##     tbasis_restricted, f_extension, f_restriction, t_extension,
-    ##     t_restriction, transform2, itransform2)
+    
 end
 
 domain(p::FE_DiscreteProblem) = p.domain
