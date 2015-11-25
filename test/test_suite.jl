@@ -317,7 +317,7 @@ Test.with_handler(custom_handler) do
         println("Fun Type: ",funtype)
         for D in [Circle(2.0,[-2.0,-2.0]) Cube((-1.0,-1.5),(0.5,0.7))]       
             show(D); print("\n")
-            for solver_type in (FE.FE_DirectSolver, FE.FE_ProjectionSolver)
+            for solver_type in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
                 show(solver_type);print("\n")
                 for n in (Extensive ? (FE.default_fourier_n(D),) : (FE.default_fourier_n(D),(12,12)))
                     println("\tN = $n")

@@ -2,6 +2,38 @@
 
 abstract FE_Problem{N,T}
 
+immutable FE_TensorProductProblem{TP,PN} <: FE_Problem
+    problems       ::  TP
+end
+
+function FE_TensorProductProblem(problems...)
+        TP = typeof(problems)
+        PN = length(problems)
+        FE_TensorProductProblem{TP,PN}(problems)
+end
+for op in (:frequency_basis, :frequency_basis_ext, :time_basis_restricted, :time_basis_ext)
+    @eval $op{TP,PN}(p::FE_TensorProductProblem{TP,PN}) = 
+        TensorProductSet(map($op,p.problems)...)
+end
+
+for op in (:operator, :operator_transpose, :t_restriction, :t_extension,
+           :itransform2, :transform2, :f_restriction, :f_extension,
+           :normalization_operator)
+    @eval $op{TP,PN}(p::FE_TensorProductProblem{TP,PN}) =
+        TensorProductOperator(map($op,p.problems)...)
+end
+
+for op in (:dim, :length_ext, :param_N, :param_L, :param_M)
+    @eval $op{TP,PN}(p::FE_TensorProductProblem{TP,PN}) = 
+        prod(map($op,p.problems)...)
+end
+
+for op in (:size, :size_ext)
+    @eval $op{TP,PN}(p::FE_TensorProductProblem{TP,PN}) = 
+        tuple(map($op,p.problems)...)
+end
+
+domain(p::FE_TensorProductProblem) = TensorProductDomain(map(domain,p.problems)...)
 # This type groups the data corresponding to a FE problem.
 immutable FE_DiscreteProblem{N,T} <: FE_Problem{N,T}
     domain          ::  AbstractDomain{N,T}
@@ -117,7 +149,9 @@ param_L(p::FE_DiscreteProblem) = length(time_basis_ext(p))
 
 param_M(p::FE_DiscreteProblem) = length(time_basis_restricted(p))
 
-function rhs(p::FE_DiscreteProblem, f::Function, elt = eltype(p))
+normalization_operator(p::FE_DiscreteProblem) = normalization_operator(frequency_basis_ext(p),frequency_basis(p))
+
+function rhs(p::FE_Problem, f::Function, elt = eltype(p))
     grid1 = grid(time_basis_restricted(p))
     M = length(grid1)
     b = Array(elt, M)
@@ -125,7 +159,7 @@ function rhs(p::FE_DiscreteProblem, f::Function, elt = eltype(p))
     b
 end
 
-function rhs!(p::FE_DiscreteProblem, b::AbstractArray, f::Function)
+function rhs!(p::FE_Problem, b::AbstractArray, f::Function)
     grid1 = grid(time_basis_restricted(p))
     M = length(grid1)
 
@@ -147,4 +181,6 @@ function rhs!{TG,NG,ID,N,T,ELT}(grid::TensorProductGrid{TG,NG,ID,N,T}, b::Abstra
         b[i] = f(grid[i]...)
     end
 end
+
+
 

@@ -18,7 +18,7 @@ import BasisFunctions: src, dest, matrix, matrix!, apply!, numtype
 
 import BasisFunctions: dim, index_dim, grid, getindex!, left, right
 
-import BasisFunctions: operator, coefficients, set, is_basis, is_frame
+import BasisFunctions: operator, coefficients, set, is_basis, is_frame, normalization_operator
 
 import BasisFunctions: call_set, call_set!, call_expansion, call_expansion!
 

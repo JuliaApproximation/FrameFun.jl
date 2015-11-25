@@ -35,6 +35,8 @@ end
 
 FE_ProjectionSolver(problem::FE_DiscreteProblem) = FE_ProjectionSolver{eltype(problem)}(problem)
 
+FE_ProjectionSolver(p::FE_TensorProductProblem) = TensorProductOperator(map(FE_ProjectionSolver,p.problems)...)
+
 function plunge_operator(problem::FE_DiscreteProblem)
     A = operator(problem)
     Ap = operator_transpose(problem)
@@ -62,6 +64,24 @@ function solve!{T}(s::FE_ProjectionSolver, coef::AbstractArray{T}, rhs::Abstract
     apply!(At,s.x1,rhs-s.b)
     for i=1:length(coef)
         coef[i]=s.x1[i]+s.x2[i]
+    end
+end
+
+
+function apply!(s::FE_ProjectionSolver, dest, src, coef_dest, coef_src)
+    A = operator(s)
+    At = operator_transpose(s)
+    
+    P = s.plunge_op
+    apply!(P,s.b,coef_src)
+    A_mul_B!(s.sy,s.Ut,s.b)
+    A_mul_B!(s.y,s.VS,s.sy)
+    apply!(s.W,s.x2,s.y)
+    #x2 = reshape(s.W * y,size(src(A)))
+    apply!(A,s.b,s.x2)
+    apply!(At,s.x1,coef_src-s.b)
+    for i=1:length(coef_dest)
+        coef_dest[i]=s.x1[i]+s.x2[i]
     end
 end
 
