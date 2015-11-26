@@ -42,8 +42,9 @@ function Fun(Basis::DataType, f::Function, domain = default_fourier_domain_1d(),
 end
 
 function eltype(f::Function, domain, Basis::DataType)
-    ELT=Base.return_types(f,fill(numtype(domain),dim(domain)))[1]
-    if isreal(Basis)==Val{false}() && (ELT<:Real)
+    ELT=numtype(domain)
+    RT=Base.return_types(f,fill(numtype(domain),dim(domain)))[1]
+    if isreal(Basis)==Val{false} || (RT <: Complex)
         ELT=Complex{ELT}
     end
     ELT

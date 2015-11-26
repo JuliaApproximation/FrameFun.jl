@@ -66,10 +66,10 @@ function discretize_problem{T}(domain::Interval{T}, nt::Int, tt::T, st, basis::D
 end
 
 
-function discretize_problem{T}(domain::AbstractDomain1d{T}, nt::Int, tt::T, st, basis::DataType, ELT)
+function discretize_problem{T}(domain::AbstractDomain1d{T}, nt::Int, tt, st, basis::DataType, ELT)
     n = 2*nt+1
     m = 2*round(Int, nt.*st)+1
-    t = (tt.*(m-1)/2).*(2./(m-1))
+    t = convert(numtype(domain),(tt.*(m-1)/2).*(2./(m-1)))
     l = round(Int, t.*(m-1))
 
     t = (l*one(T)) / ((m-1)*one(T))

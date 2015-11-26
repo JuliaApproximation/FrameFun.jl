@@ -48,7 +48,7 @@ FE_DiscreteProblem{N,T}(domain::AbstractDomain{N,T}, otherargs...) =
     FE_DiscreteProblem{N,T}(domain, otherargs...)
 
 
-function FE_DiscreteProblem{N,T}(domain::AbstractDomain{N,T}, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted)
+function FE_DiscreteProblem{T}(domain::AbstractDomain{1,T}, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted)
     f_extension = extension_operator(fbasis1, fbasis2)
     f_restriction = restriction_operator(fbasis2, fbasis1)
 
@@ -64,6 +64,25 @@ function FE_DiscreteProblem{N,T}(domain::AbstractDomain{N,T}, fbasis1, fbasis2, 
     FE_DiscreteProblem(domain,op,opt)
     
 end
+
+
+function FE_DiscreteProblem{N,T}(domain::AbstractDomain{N,T}, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted)
+    f_extension = extension_operator(fbasis1, fbasis2, eltype(tbasis_restricted))
+    f_restriction = restriction_operator(fbasis2, fbasis1, eltype(tbasis_restricted))
+
+    t_extension = extension_operator(tbasis_restricted, tbasis2)
+    t_restriction = restriction_operator(tbasis2, tbasis_restricted)
+
+    transform2 = transform_operator(tbasis2, fbasis2)
+    itransform2 = transform_operator(fbasis2, tbasis2)
+
+    op  = t_restriction * itransform2 * f_extension
+    opt = f_restriction * transform2 * t_extension
+
+    FE_DiscreteProblem(domain,op,opt)
+    
+end
+
 
 domain(p::FE_DiscreteProblem) = p.domain
 

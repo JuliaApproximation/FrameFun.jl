@@ -10,7 +10,7 @@ BA=BasisFunctions
 ## Settings
 
 # Test fourier extensions for all parameters
-Extensive = true
+Extensive = false
 ########
 # Auxiliary functions
 ########
@@ -286,7 +286,7 @@ Test.with_handler(custom_handler) do
     g(x)=1im*x-1.0
    for funtype in (ExpFun, ChebyFun)
         println("Fun Type: ",funtype)
-        for D in (Extensive ? (FE.default_fourier_domain_1d(),) : [FE.default_fourier_domain_1d() Interval(-1.5,0.7) Interval(-1.5,-0.5)+Interval(0.5,1.5)])
+        for D in (Extensive ? (FE.default_fourier_domain_1d(),) : [FE.default_fourier_domain_1d() Interval(-1.5,0.7) Interval(-1.5,-0.5)+Interval(0.5,1.5) Interval(-1.0f0,1.0f0)])
             show(D); print("\n")
             for solver_type in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
                 show(solver_type);print("\n")
@@ -294,15 +294,17 @@ Test.with_handler(custom_handler) do
                     println("\tN = $n")
                     for T in (Extensive ? FE.default_fourier_T(D) : [1.7 FE.default_fourier_T(D) 2.3])
                         print("T = $T \t")
-                        try
-                            F=@timed(funtype(f,D,solver_type,n=n,T=T))
-                            @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
-                            @test  msqerror_tol(f,F[1],tol=1e-7)
-                        catch y
-                            message(y)
+                        for func in (f,g)
+                            F=@timed(funtype(func,D,solver_type,n=n,T=T))
+                            try
+                                F=@timed(funtype(func,D,solver_type,n=n,T=T))
+                                @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
+                                @test  msqerror_tol(func,F[1],tol=1e-5)
+                                print("\t\t")
+                            catch y
+                                message(y)
+                            end
                         end
-                          F=@timed(funtype(f,D,solver_type,n=n,T=T))
-                          msqerror_tol(f,F[1],tol=1e-7)
                     end
                 end
             end
@@ -313,7 +315,7 @@ Test.with_handler(custom_handler) do
     f(x,y)=x+2*y-1.0
     g(x,y)=1im*cos(x).^2+2*sin(y)-1.0
 #    for funtype in (ExpFun,ChebyFun)
-    for funtype in (ChebyFun, ExpFun)
+    for funtype in (ExpFun, ChebyFun)
         println("Fun Type: ",funtype)
         for D in [Circle(2.0,[-2.0,-2.0]) Cube((-1.0,-1.5),(0.5,0.7))]       
             show(D); print("\n")
@@ -323,12 +325,16 @@ Test.with_handler(custom_handler) do
                     println("\tN = $n")
                     for T in (Extensive ? (FE.default_fourier_T(D),) : ((1.7,1.7),FE.default_fourier_T(D),(2.3,2.3)))
                         print("T = $T\t")
-                        try
-                            F=@timed(funtype(f,D,solver_type,n=n,T=T))
-                            @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
-                            @test msqerror_tol(f,F[1],tol=1e-5)
-                        catch y
-                            message(y,catch_backtrace())
+                        for func in (f,g)
+                            F=@timed(funtype(func,D,solver_type,n=n,T=T))
+                            try
+                                F=@timed(funtype(func,D,solver_type,n=n,T=T))
+                                @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
+                                @test msqerror_tol(func,F[1],tol=1e-5)
+                                print("\t\t")
+                            catch y
+                                message(y,catch_backtrace())
+                            end
                         end
                     end
                 end

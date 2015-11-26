@@ -33,7 +33,12 @@ immutable FE_ProjectionSolver{ELT} <: FE_Solver
     end
 end
 
-FE_ProjectionSolver(problem::FE_DiscreteProblem) = FE_ProjectionSolver{eltype(problem)}(problem)
+
+function FE_ProjectionSolver(problem::FE_DiscreteProblem)
+    
+    FE_ProjectionSolver{eltype(problem)}(problem)
+end
+
 
 FE_ProjectionSolver(p::FE_TensorProductProblem) = TensorProductOperator(map(FE_ProjectionSolver,p.problems)...)
 
@@ -68,10 +73,9 @@ function solve!{T}(s::FE_ProjectionSolver, coef::AbstractArray{T}, rhs::Abstract
 end
 
 
-function apply!(s::FE_ProjectionSolver, dest, src, coef_dest, coef_src)
+@debug function apply!(s::FE_ProjectionSolver, dest, src, coef_dest, coef_src)
     A = operator(s)
     At = operator_transpose(s)
-    
     P = s.plunge_op
     apply!(P,s.b,coef_src)
     A_mul_B!(s.sy,s.Ut,s.b)
