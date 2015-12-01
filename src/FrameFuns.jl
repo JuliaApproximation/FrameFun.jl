@@ -5,6 +5,7 @@ module FrameFuns
 using FixedSizeArrays
 using BasisFunctions
 using Debug
+using ApproxFun
 
 using Base.Cartesian
 

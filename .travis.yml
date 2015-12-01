@@ -6,12 +6,20 @@ notifications:
 env:
   matrix:
     - JULIAVERSION="juliareleases"
-    - JULIAVERSION="julianightlies"
 before_install:
   - sudo add-apt-repository ppa:staticfloat/julia-deps -y
   - sudo add-apt-repository ppa:staticfloat/${JULIAVERSION} -y
   - sudo apt-get update -qq -y
   - sudo apt-get install libpcre3-dev julia -y
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+  
 script:
-  - julia -e 'Pkg.init(); Pkg.clone(pwd()); Pkg.test("FrameFun")'
+  - julia -e 'Pkg.init()'
+  - julia -e 'Pkg.clone("https://github.com/daanhb/BasisFunctions.jl")'
+  - julia -e 'Pkg.clone("https://github.com/SimonDanisch/FixedSizeArrays.jl")'
+  - julia -e 'Pkg.clone("https://github.com/ApproxFun/ApproxFun.jl")'
+  - julia -e 'Pkg.clone("https://github.com/toivoh/Debug.jl")'
+  - julia -e 'Pkg.clone(pwd())'
+  - julia --code-coverage=user --inline=no test/runtests.jl
+after_success:
+  - julia -e 'cd(Pkg.dir("FrameFuns")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder()); Codecov.submit(process_folder())'

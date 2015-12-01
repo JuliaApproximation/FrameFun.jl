@@ -39,9 +39,12 @@ function msqerror_tol(f::Function,F::FE.SetExpansion;vals::Int=200,tol=1e-6)
     error=0
     l=left(TB)
     r=right(TB)
-    
+    pvals = zeros(T,N)    
     for i in 1:vals
-        point=l+(r-l).*rand(T,N)
+        for i=1:N,
+            pvals[i]=convert(T,rand())
+        end
+        point=l+(r-l).*pvals
         if FE.in(point,FE.domain(F))
             elements+=1
             error+=abs(f(point...)-F(point...))
@@ -309,7 +312,27 @@ Test.with_handler(custom_handler) do
                 end
             end
         end
+   end
+    func(x)=x
+    funtype = ExpFun
+    println("Fun Type: ",funtype)
+    D=Interval(BigFloat(-1.0),BigFloat(1.0))
+    solver_type = FE.FE_DirectSolver
+    show(solver_type);print("\n")
+    n = 49
+    println("\tN = $n")
+    T = convert(BigFloat,2.0)
+    print("T = $T \t")
+    F=@timed(funtype(func,D,solver_type,n=n,T=T))
+    try
+        F=@timed(funtype(func,D,solver_type,n=n,T=T))
+        @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
+        @test  msqerror_tol(func,F[1],tol=1e-30)
+        print("\t\t")
+    catch y
+        message(y)
     end
+
     delimit("2D") 
 
     f(x,y)=x+2*y-1.0
