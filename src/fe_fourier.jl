@@ -158,9 +158,6 @@ default_fourier_T{N,T}(domain::AbstractDomain{N,T}) = ntuple(i->2*one(T),N)
 default_fourier_sampling{T}(domain::AbstractDomain{1,T}) = 2*one(T)
 default_fourier_sampling{N,T}(domain::AbstractDomain{N,T}) = ntuple(i->2*one(T),N)
 
-function discretize_problem{T}(domain::AbstractDomain1d{T}, n::Tuple, t::Tuple, s::Tuple)
-    discretize_problem(domain,n[1],t[1],s[1])
-end
 
 default_fourier_domain_1d() = Interval()
 

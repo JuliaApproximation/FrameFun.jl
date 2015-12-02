@@ -33,6 +33,7 @@ immutable FE_ProjectionSolver{ELT} <: FE_Solver
     end
 end
 
+eltype{ELT}(::Type{FE_ProjectionSolver{ELT}}) = ELT
 
 function FE_ProjectionSolver(problem::FE_DiscreteProblem)
     
