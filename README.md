@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/daanhb/FrameFuns.jl.svg?branch=master)](https://travis-ci.org/daanhb/FrameFuns.jl)
+
 FrameFuns
 =========
 

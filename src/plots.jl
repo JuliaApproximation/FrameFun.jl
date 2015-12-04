@@ -11,9 +11,9 @@ end
 ## function plot_full{1}(f::Fun{1})
     
 ## end
-function plot_expansion{T}(f::FrameFun{1,T};n=200)
-    grid=EquispacedGrid(n,left(expansion(f)),right(expansion(f)))
-    data = expansion(f)(grid)
+function plot_expansion(f::SetExpansion;n=200)
+    grid=EquispacedGrid(n,left(basis(set(f))),right(basis(set(f))))
+    data = f(grid)
     Main.PyPlot.plot(BasisFunctions.range(grid),data)
 end
 

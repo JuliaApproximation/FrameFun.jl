@@ -35,7 +35,7 @@ function Fun(Basis::DataType, f::Function, domain = default_fourier_domain_1d(),
              solver_type = default_fourier_solver(domain);
              n = default_fourier_n(domain),
              T = default_fourier_T(domain),
-             s = default_fourier_sampling(domain))
+                    s = default_fourier_sampling(domain))
     problem = discretize_problem(domain, n, T, s, Basis, eltype(f,domain,Basis))
     solver = solver_type(problem)
     solve(solver, f, problem)

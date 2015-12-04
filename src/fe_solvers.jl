@@ -40,34 +40,12 @@ function solve!{T}(s::FE_Solver, coef::AbstractArray{T}, rhs::AbstractArray{T}, 
 end
 
 
-## immutable FE_DirectSolver{ELT} <: FE_Solver
-##     problem ::  FE_Problem
-##     QR :: Base.LinAlg.QRCompactWY{ELT,Array{ELT,2}}
-
-##     function FE_DirectSolver(problem::FE_Problem)
-##         new(problem, qrfact(matrix(operator(problem))))
-##     end
-## end
-
-## FE_DirectSolver(problem::FE_Problem) = FE_DirectSolver{eltype(problem)}(problem)
-
-## FE_DirectSolver(p::FE_TensorProductProblem) = TensorProductOperator(map(FE_DirectSolver,p.problems)...)
-
-
-## function solve!{T}(s::FE_DirectSolver, coef::AbstractArray{T}, rhs::AbstractArray{T})
-##     coef[:] = s.QR \ rhs
-## end
-
-
-## function apply!(s::FE_DirectSolver, dest, src, coef_dest, coef_src)
-##     coef_dest[:] = s.QR \ coef_src
-## end
-
 immutable FE_DirectSolver{ELT} <: FE_Solver
     problem ::  FE_Problem
+    QR :: Factorization{ELT}
 
     function FE_DirectSolver(problem::FE_Problem)
-        new(problem)
+        new(problem, qrfact(matrix(operator(problem))))
     end
 end
 
@@ -76,9 +54,33 @@ FE_DirectSolver(problem::FE_Problem) = FE_DirectSolver{eltype(problem)}(problem)
 FE_DirectSolver(p::FE_TensorProductProblem) = TensorProductOperator(map(FE_DirectSolver,p.problems)...)
 
 
+function solve!{T}(s::FE_DirectSolver, coef::AbstractArray{T}, rhs::AbstractArray{T})
+    coef[:] = s.QR \ rhs
+end
+
+
 function apply!(s::FE_DirectSolver, dest, src, coef_dest, coef_src)
     coef_dest[:] = matrix(operator(problem(s))) \ coef_src
+    println("solnorm",norm(matrix(operator(problem(s)))*coef_dest-coef_src))
 end
+
+## immutable FE_DirectSolver{ELT} <: FE_Solver
+##     problem ::  FE_Problem
+
+##     function FE_DirectSolver(problem::FE_Problem)
+##         new(problem)
+##     end
+## end
+
+## FE_DirectSolver(problem::FE_Problem) = FE_DirectSolver{eltype(problem)}(problem)
+
+## FE_DirectSolver(p::FE_TensorProductProblem) = TensorProductOperator(map(FE_DirectSolver,p.problems)...)
+
+
+## @debug function apply!(s::FE_DirectSolver, dest, src, coef_dest, coef_src)
+##     @bp
+##     coef_dest[:] = matrix(operator(problem(s))) \ coef_src
+## end
 
 ## abstract FE_IterativeSolver <: FE_Solver
 

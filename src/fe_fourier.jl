@@ -38,14 +38,13 @@ function discretize_problem{T}(domain::AbstractDomain1d{T}, nt::Tuple{Integer}, 
 end
 
 
-function discretize_problem{T}(domain::Interval{T}, nt::Int, tt::T, st, basis::DataType, ELT)
+function discretize_problem{T}(domain::Interval{T}, nt::Int, tt, st, basis::Type{FourierBasis}, ELT)
     n = 2*nt+1
     m = 2*round(Int, nt.*st)+1
     t = (tt.*(m-1)/2).*(2./(m-1))
     l = round(Int, t.*(m-1))
 
     t = (l*one(T)) / ((m-1)*one(T))
-
     a = left(domain)
     b = right(domain)
 
@@ -56,7 +55,7 @@ function discretize_problem{T}(domain::Interval{T}, nt::Int, tt::T, st, basis::D
     grid2 = grid(fbasis2)
 
     rgrid = IndexedSubGrid(grid2, 1, m)
-
+    
     tbasis1 = DiscreteGridSpace(grid1, ELT)
     tbasis2 = DiscreteGridSpace(grid2, ELT)
 
@@ -84,7 +83,7 @@ function discretize_problem{T}(domain::AbstractDomain1d{T}, nt::Int, tt, st, bas
     grid2 = grid(fbasis2)
 
     rgrid = MaskedGrid(grid2, domain)
-
+    
     tbasis1 = DiscreteGridSpace(grid1, ELT)
     tbasis2 = DiscreteGridSpace(grid2, ELT)
     
