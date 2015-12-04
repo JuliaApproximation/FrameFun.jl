@@ -1,5 +1,6 @@
 # fe_solvers.jl
 
+# TODO: the FE_Solver types should become operator types, so that we can reuse TensorProductOperator
 
 abstract FE_Solver{SRC,DEST} <: AbstractOperator{SRC,DEST}
 
@@ -53,17 +54,13 @@ FE_DirectSolver(problem::FE_Problem) = FE_DirectSolver{eltype(problem)}(problem)
 FE_DirectSolver(p::FE_TensorProductProblem) = TensorProductOperator(map(FE_DirectSolver,p.problems)...)
 
 
-eltype{ELT}(::Type{FE_DirectSolver{ELT}}) = ELT
-# What about numtype?
-
 function solve!{T}(s::FE_DirectSolver, coef::AbstractArray{T}, rhs::AbstractArray{T})
     coef[:] = s.QR \ rhs
 end
 
 
 function apply!(s::FE_DirectSolver, dest, src, coef_dest, coef_src)
-    coef_dest[:] = matrix(operator(problem(s))) \ coef_src
-    println("solnorm",norm(matrix(operator(problem(s)))*coef_dest-coef_src))
+    coef_dest[:] = s.QR \ coef_src
 end
 
 ## immutable FE_DirectSolver{ELT} <: FE_Solver
