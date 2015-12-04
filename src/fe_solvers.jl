@@ -60,7 +60,7 @@ end
 
 
 function apply!(s::FE_DirectSolver, dest, src, coef_dest, coef_src)
-    coef_dest[:] = s.QR \ coef_src
+    coef_dest[:] = matrix(operator(problem(s))) \ coef_src
 end
 
 ## immutable FE_DirectSolver{ELT} <: FE_Solver

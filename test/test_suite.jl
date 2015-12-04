@@ -172,7 +172,7 @@ Test.with_handler(custom_handler) do
                         for func in (f,g)
                             F=@timed(funtype(func,D,solver_type,n=n,T=T))
                             @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
-                            @test msqerror_tol(func,F[1],tol=1e-4)
+                            @test msqerror_tol(func,F[1],tol=1e-3)
                             if func==f
                                 print("\t\t")
                             end
