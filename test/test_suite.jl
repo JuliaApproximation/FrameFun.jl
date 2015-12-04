@@ -125,7 +125,7 @@ Test.with_handler(custom_handler) do
                             F=@timed(funtype(func,D,solver_type,n=n,T=T))
                             F=@timed(funtype(func,D,solver_type,n=n,T=T))
                             @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
-                            @test  msqerror_tol(func,F[1],tol=1e-5)
+                            @test  msqerror_tol(func,F[1],tol=1e-4)
                             if func==f
                                 print("\t\t")
                             end
@@ -184,10 +184,10 @@ Test.with_handler(custom_handler) do
     end
     delimit("3D")
 
-    f(x,y,z)=x+y-z
+    f(x,y,z)=cos(x)+sin(y)-x*z
     for funtype in (ChebyFun, ExpFun)
         println("Fun Type: ",funtype)
-        for D in (Cube((-0.2,-0.3,0.0),(1.0,-0.1,1.2)),FE.TensorProductDomain(Interval(-1.0,1.0),Circle(1.05)), FE.Sphere(1.2,[-1.3,0.25,1.0]))        
+        for D in (Cube((-0.2,-2.0,0.0),(1.0,-0.1,1.2)),FE.TensorProductDomain(Interval(-1.0,1.0),Circle(1.05)), FE.Sphere(1.2,[-1.3,0.25,1.0]))        
             show(D); print("\n")
             for solver_type in (FE.FE_ProjectionSolver, )
                 show(solver_type);print("\n")
