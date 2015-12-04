@@ -1,14 +1,15 @@
 # domains.jl
 
-abstract AbstractDomain{N,T <: AbstractFloat}
+abstract AbstractDomain{N,T}
 
-dim{N,T}(::AbstractDomain{N,T}) = N
 dim{N,T}(::Type{AbstractDomain{N,T}}) = N
 dim{D <: AbstractDomain}(::Type{D}) = dim(super(D))
+dim(d::AbstractDomain) = dim(typeof(d))
 
-numtype{N,T}(::AbstractDomain{N,T}) = T
+
 numtype{N,T}(::Type{AbstractDomain{N,T}}) = T
 numtype{D <: AbstractDomain}(::Type{D}) = numtype(super(D))
+numtype(d::AbstractDomain) = numtype(typeof(d))
 
 typealias AbstractDomain1d{T <: AbstractFloat} AbstractDomain{1,T}
 typealias AbstractDomain2d{T <: AbstractFloat} AbstractDomain{2,T}
@@ -48,6 +49,7 @@ function evalgrid{N}(g::AbstractGrid{N}, d::AbstractDomain{N})
     z
 end
 
+show{N}(io::IO, v::Vec{N}) = print(io, Vector(v))
 
 ###############################################################################################
 ### An empty domain
@@ -100,7 +102,7 @@ in(x::AnyVector, d::RnDomain) = true
 (==)(d1::RnDomain, d2::RnDomain) = true
 
 show(io::IO, e::RnDomain) = print(io, "the ", N, "-dimensional Euclidean space")
-dim{N}(d::RnDomain{N}) = N
+
 
 ###############################################################################################
 ### An interval
@@ -238,15 +240,19 @@ immutable TensorProductDomain{TD,DN,ID,N,T} <: AbstractDomain{N,T}
 	TensorProductDomain(domains::Tuple) = new(domains)
 end
 
-TensorProductDomain(domains...) = TensorProductDomain{typeof(domains),map(dim,domains),length(domains),sum(map(dim, domains)),promote_type(map(numtype,domains)...)}(domains)
+function TensorProductDomain(domains...)
+    TD = typeof(domains)
+    DN = map(dim, domains)
+    ID = length(domains)
+    N = sum(DN)
+    T = numtype(domains[1])
+    TensorProductDomain{TD,DN,ID,N,T}(domains)
+end
 
 ⊗(d1::AbstractDomain, d2::AbstractDomain) = TensorProductDomain(d1, d2)
 ⊗(d1::TensorProductDomain, d2::TensorProductDomain) = TensorProductDomain(domainlist(d1)..., domainlist(d2)...)
 ⊗(d1::TensorProductDomain, d2::AbstractDomain) = TensorProductDomain(domainlist(d1)..., d2)
-
-# This one gives an ambiguity warning that is difficult to get rid of...
-# However, not having it makes ⊗ not associative, so: TODO: fix
-#⊗(d1::AbstractDomain, d2::TensorProductDomain) = TensorProductDomain(d1, domainlist(d2)...)
+⊗(d1::AbstractDomain, d2::TensorProductDomain) = TensorProductDomain(d1, domainlist(d2)...)
 
 tensorproduct(d::AbstractDomain, n) = TensorProductDomain([d for i=1:n]...)
 
@@ -292,46 +298,29 @@ end
 ###############################################################################################
 
 
-Cube{T <: Number}(a::T, b::T) = Interval(a,b)
+Cube() = Cube(Val{3})
+Cube{N}(::Type{Val{N}}) = Cube(Val{N}, Float64)
 
-Cube{N,T}(left::NTuple{N,T}, right::NTuple{N,T}) = TensorProductDomain(ntuple(i->Interval(left[i],right[i]),N)...)
+Cube{T}(::Type{Val{1}}, ::Type{T}) = Interval{T}()
+Cube{N,T}(::Type{Val{N}}, ::Type{T}) = Interval{T}() ⊗ Cube(Val{N-1}, T)
 
-Cube{T <: AbstractFloat}(::Type{T}) = Cube( (-one(T),-one(T),-one(T)), (one(T), one(T), one(T)))
+Cube{T}(left::Vec{1,T}, right::Vec{1,T}) = Interval(left[1], right[1])
+Cube{T}(left::Vec{2,T}, right::Vec{2,T}) = Interval(left[1], right[1]) ⊗ Interval(left[2], right[2])
+Cube{T}(left::Vec{3,T}, right::Vec{3,T}) =
+  Interval(left[1], right[1]) ⊗ Interval(left[2], right[2]) ⊗ Interval(left[3], right[3])
+Cube{T}(left::Vec{4,T}, right::Vec{4,T}) =
+  Interval(left[1], right[1]) ⊗ Interval(left[2], right[2]) ⊗ Interval(left[3], right[3]) ⊗ Interval(left[4], right[4])
 
-Cube{T <: AbstractFloat}(n::Int, ::Type{T}) = Cube( tuple([-one(T) for i=1:n]...), tuple([one(T) for i=1:n]...))
-
-Cube() = Cube(Float64)
-
-Cube(n::Int) = Cube(n, Float64)
+Cube(n::Int) = Cube(Val{n})
+Cube{N,T}(left::NTuple{N,T}, right::NTuple{N,T}) = Cube(Vec{N,T}(left), Vec{N,T}(right))
 
 rectangle(a, b, c, d) = Interval(a,b) ⊗ Interval(c,d)
 
 cube(a, b, c, d, e, f) = Interval(a,b) ⊗ Interval(c,d) ⊗ Interval(d,e)
 
-## in{N}(x::AnyVector, c::Cube{N}) = reduce(&, [in(x[j], c.verts[j,1], c.verts[j,2]) for j=1:N])
 
-## Arithmetic operations
-
-## (+)(c::Cube, x::AnyVector) = Cube(c.verts .+ x)
-## (+)(x::AnyVector, c::Cube) = c+x
-
-## (*)(c::Cube, x::Number) = Cube(c.verts * x)
-## (*)(x::Number, c::Cube) = c*x
-
-## (/)(c::Cube, x::Number) = c * (1/x)
-
-## (==)(c1::Cube, c2::Cube) = (c1.verts == c2.verts)
-
-## box(c::Cube) = BBox(tuple(c.verts[:,1]...),tuple(c.verts[:,2]...))
-
-## show(io::IO, c::Cube{2}) = print(io, "the rectangle [", c.verts[1,1], ",", c.verts[1,2], "] x [", c.verts[2,1], ",", c.verts[2,2], "]")
-
-## show(io::IO, c::Cube{3}) = print(io, "the cube [", c.verts[1,1], ",", c.verts[1,2], "] x [", c.verts[2,1], ",", c.verts[2,2], "] x [", c.verts[3,1], ",", c.verts[3,2], "]")
-
-## show{N}(io::IO, c::Cube{N}) = print(io, "a ", N, "-dimensional cube")
-
-const unitsquare = Cube(2)
-const unitcube = Cube(3)
+const unitsquare = Cube(Val{2})
+const unitcube = Cube(Val{3})
 
 ###############################################################################################
 ### A cylinder
@@ -533,7 +522,7 @@ in(x::AnyVector, d::RotatedDomain) = in(d.rotationmatrix*x, d.d)
 
  # very crude bounding box (doesn't work!!!)
  box(r::RotatedDomain)= box(r.d)
-dim{N}(r::RotatedDomain{N}) = N
+
 ###############################################################################################
 ### A scaled domain
 ###############################################################################################

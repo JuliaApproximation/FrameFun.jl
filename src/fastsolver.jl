@@ -12,10 +12,7 @@ immutable FE_ProjectionSolver{ELT} <: FE_Solver
     x2          :: Array{ELT}
     x1          :: Array{ELT}
 
-end
-
-function FE_ProjectionSolver(problem::FE_DiscreteProblem)
-    ELT=eltype(problem)
+    function FE_ProjectionSolver(problem::FE_DiscreteProblem)
         plunge_op = plunge_operator(problem)
         R = estimate_plunge_rank(problem)
         W = MatrixOperator( map(ELT, rand(param_N(problem), R)) )
@@ -32,13 +29,16 @@ function FE_ProjectionSolver(problem::FE_DiscreteProblem)
         x1=zeros(size(src(operator(problem))))
         x2=zeros(size(src(operator(problem))))
         sy=zeros(maxind,)
-        FE_ProjectionSolver{eltype(problem)}(problem, plunge_op, W, USV[1][:,1:maxind]',USV[3][:,1:maxind]*diagm(Sinv[:]),b,y,sy,x1,x2)
+        new(problem, plunge_op, W, USV[1][:,1:maxind]',USV[3][:,1:maxind]*diagm(Sinv[:]),b,y,sy,x1,x2)
+    end
 end
 
-## function FE_ProjectionSolver(problem::FE_DiscreteProblem)
+eltype{ELT}(::Type{FE_ProjectionSolver{ELT}}) = ELT
+
+function FE_ProjectionSolver(problem::FE_DiscreteProblem)
     
-##     FE_ProjectionSolver{eltype(problem)}(problem)
-## end
+    FE_ProjectionSolver{eltype(problem)}(problem)
+end
 
 
 FE_ProjectionSolver(p::FE_TensorProductProblem) = TensorProductOperator(map(FE_ProjectionSolver,p.problems)...)

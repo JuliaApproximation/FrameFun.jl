@@ -31,23 +31,25 @@ function ChebyFun(f::Function, domain = default_fourier_domain_1d(),
     Fun(ChebyshevBasis,f,domain,solver_type,n=n,T=T,s=s)
 end
 
-function Fun(Basis::DataType, f::Function, domain = default_fourier_domain_1d(),
+function Fun{Basis <: AbstractBasis}(::Type{Basis}, f::Function, domain = default_fourier_domain_1d(),
              solver_type = default_fourier_solver(domain);
              n = default_fourier_n(domain),
              T = default_fourier_T(domain),
-                    s = default_fourier_sampling(domain))
-    problem = discretize_problem(domain, n, T, s, Basis, eltype(f,domain,Basis))
+             s = default_fourier_sampling(domain))
+    ELT = eltype(f, domain, Basis)
+    problem = discretize_problem(domain, n, T, s, Basis, ELT)
     solver = solver_type(problem)
-    solve(solver, f, problem)
+    solve(solver, f, problem, ELT)
 end
 
-function eltype(f::Function, domain, Basis::DataType)
-    ELT=numtype(domain)
-    RT=Base.return_types(f,fill(numtype(domain),dim(domain)))[1]
+function eltype{Basis <: AbstractBasis}(f::Function, domain, ::Type{Basis})
+    ELT = numtype(domain)
+    RT = Base.return_types(f,fill(numtype(domain),dim(domain)))[1]
     if isreal(Basis)==Val{false} || (RT <: Complex)
-        ELT=Complex{ELT}
+        Complex{ELT}
+    else
+        ELT
     end
-    ELT
 end
 
 

@@ -13,7 +13,7 @@ import Base: +, *, /, ==, |, &, -, \
 
 import Base: length, eltype, size, push!
 
-import Base: eachindex, start, next, done, getindex
+import Base: eachindex, start, next, done, getindex, in
 
 import Base: show, showcompact, call, convert
 
