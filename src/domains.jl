@@ -121,7 +121,7 @@ Interval{T}(::Type{T}) = Interval{T}()
 
 Interval{T}(a::T, b::T) = Interval{T}(a, b)
 
-Interval{T <: AbstractFloat}(::Type{T}) = Interval(zero(T), one(T))
+Interval{T <: AbstractFloat}(::Type{T}) = Interval(-one(T), one(T))
 
 in(x::AnyVector, d::Interval) = in(x[1], d.a, d.b)
 
@@ -168,8 +168,10 @@ in{T}(x::AnyVector, c::Circle{T}) = (x[1]-c.center[1])^2 + (x[2]-c.center[2])^2 
 
 ## Arithmetic operations
 
-(+)(c::Circle, x::AnyVector) = Circle(c.radius, c.center+x)
-(+)(x::AnyVector, c::Circle) = c+x
+for op in (:(+), :(-))
+    @eval $op{T}(c::Circle{T}, x::AnyVector) = Circle(c.radius, $op(c.center,Vec{2,T}(x...)))
+    @eval $op{T}(x::AnyVector, c::Circle{T}) = $op(c,x)
+end
 
 (*)(c::Circle, x::Number) = Circle(c.radius*x, c.center*x)
 (*)(x::Number, c::Circle) = c*x

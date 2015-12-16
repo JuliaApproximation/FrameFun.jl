@@ -90,19 +90,31 @@ Test.with_handler(custom_handler) do
     @test TensorGs[1,1]==[G1[2],G2[3]]
 
     delimit("Domains")
+    
     # Integer interval is apparently impossible
     #try Intervala=Interval(-1,1) catch y; message(y) end
     # Interval
+    Inter1=Interval(BigFloat)
+    Inter2=Interval(Int)
+    @test Inter1==Inter2
     Intervala=Interval(-1.0,1.0)
-    Intervala=Intervala+2
+    Intervala=Intervala+1
+    Intervala=1+Intervala
     @test FE.left(Intervala)==1
     @test FE.left(2*Intervala)==2
     @test FE.right(Intervala/4)==0.75
+    @test Intervala==Interval(1.0,3.0)
     # Circle
+    @test Circle(BigFloat)==Circle(Int)
     C=Circle(2.0)
-    @test FE.in([1.4, 1.4],C)
+
+    @test C==[2;2]+C-[2; 2]
+    @test C==[2;2]-C+[2;2]
+    @test FE.in([2.4, 2.4],C+[1; 1])
     @test !FE.in([1.5, 1.5],C)
     @test FE.box(C)==FE.BBox((-2.0,-2.0),(2.0,2.0))
+    @test FE.left(C,1)==-2.0
+    @test FE.right(C,2)==2.0
     # This is certainly unwanted behavior! Due to method inheritance
     @test typeof(1.2*C)==typeof(C*1.2)
     # This is due to a wrong implementation in Scaled Domain
