@@ -1,17 +1,10 @@
 # subgrid.jl
 
 
-abstract AbstractSubGrid{N,T} <: AbstractGrid{N,T}
+abstract AbstractSubGrid{N,T,G} <: AbstractGrid{N,T}
 
-dim{N,T}(::AbstractSubGrid{N,T}) = N
-dim{N,T}(::Type{AbstractSubGrid{N,T}}) = N
-dim{G <: AbstractSubGrid}(::Type{G}) = dim(super(G))
-
-numtype{N,T}(::AbstractSubGrid{N,T}) = T
-numtype{N,T}(::Type{AbstractSubGrid{N,T}}) = T
-numtype{G <: AbstractSubGrid}(::Type{G}) = numtype(super(G))
-
-eltype(g::AbstractSubGrid) = eltype(grid(g))
+eltype{N,T,G}(::Type{AbstractSubGrid{N,T,G}}) = eltype(G)
+eltype{G <: AbstractSubGrid}(::Type{G}) = eltype(super(G))
 
 # Default index dimension is 1
 index_dim{N,T}(::AbstractSubGrid{N,T}) = 1
@@ -26,7 +19,7 @@ A MaskedGrid is a subgrid of another grid that is defined by a mask.
 The mask is true or false for each point in the supergrid. The set of points
 for which it is true make up the MaskedGrid.
 """
-immutable MaskedGrid{G <: AbstractGrid,ID,N,T} <: AbstractSubGrid{N,T}
+immutable MaskedGrid{G,ID,N,T} <: AbstractSubGrid{N,T,G}
     grid	::	G
     mask	::	Array{Bool,ID}
     indices ::  Vector{Vec{N,Int}}
@@ -78,7 +71,7 @@ getindex(g::MaskedGrid, idx::Int) = getindex(g.grid, g.indices[idx]...)
 An IndexedSubGrid is a subgrid corresponding to a certain range of indices of the
 underlying (one-dimensional) grid.
 """
-immutable IndexedSubGrid{G <: AbstractGrid1d, T} <: AbstractSubGrid{1,T}
+immutable IndexedSubGrid{G,T} <: AbstractSubGrid{1,T,G}
 	grid	::	G
 	i1		::	Int
 	i2		::	Int
