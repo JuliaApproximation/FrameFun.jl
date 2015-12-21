@@ -34,7 +34,7 @@ export Interval, Circle, Square, Cube, Sphere, Cylinder, atomium
 export numtype
 
 # from funs.jl
-export ExpFun, ChebyFun, FrameFun
+export ExpFun, ChebyFun, Fun, FrameFun
 
 # from domainframe.jl
 export DomainFrame, basis, call_set, call_set!

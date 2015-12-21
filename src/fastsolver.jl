@@ -1,16 +1,16 @@
 
 
-immutable FE_ProjectionSolver{ELT} <: FE_Solver
+immutable FE_ProjectionSolver{ELT,SRC,DEST} <: FE_Solver{ELT,SRC,DEST}
     problem     ::  FE_DiscreteProblem
     plunge_op   ::  AbstractOperator    # store the operator because it allocates memory
     W           ::  MatrixOperator
     Ut          ::  Array{ELT,2}
-    VS           ::  Array{ELT,2}
-    b           :: Array{ELT,1}
-    y           :: Array{ELT,1}
-    sy          :: Array{ELT,1}
-    x2          :: Array{ELT}
-    x1          :: Array{ELT}
+    VS          ::  Array{ELT,2}
+    b           ::  Array{ELT,1}
+    y           ::  Array{ELT,1}
+    sy          ::  Array{ELT,1}
+    x2          ::  Array{ELT}
+    x1          ::  Array{ELT}
 
     function FE_ProjectionSolver(problem::FE_DiscreteProblem)
         plunge_op = plunge_operator(problem)
@@ -33,11 +33,13 @@ immutable FE_ProjectionSolver{ELT} <: FE_Solver
     end
 end
 
-eltype{ELT}(::Type{FE_ProjectionSolver{ELT}}) = ELT
+eltype{ELT,SRC,DEST}(::Type{FE_ProjectionSolver{ELT,SRC,DEST}}) = ELT
 
 function FE_ProjectionSolver(problem::FE_DiscreteProblem)
-    
-    FE_ProjectionSolver{eltype(problem)}(problem)
+    ELT = eltype(problem)
+    SRC = typeof(time_basis_restricted(problem))
+    DEST = typeof(frequency_basis(problem))
+    FE_ProjectionSolver{ELT,SRC,DEST}(problem)
 end
 
 

@@ -1,6 +1,20 @@
 # fe_problem.jl
 
+"""
+An FE_Problem groups all the information of a Fourier extension problem.
+This data can be used in a solver to produce an approximation.
+"""
 abstract FE_Problem{N,T}
+
+numtype{N,T}(::Type{FE_Problem{N,T}}) = T
+numtype{P <: FE_Problem}(::Type{P}) = numtype(super(P))
+numtype(p::FE_Problem) = numtype(typeof(p))
+
+dim{N,T}(::Type{FE_Problem{N,T}}) = N
+dim{P <: FE_Problem}(::Type{P}) = dim(super(P))
+dim(p::FE_Problem) = dim(typeof(p))
+
+eltype(p::FE_Problem) = eltype(operator(p))
 
 immutable FE_TensorProductProblem{TP,PN} <: FE_Problem
     problems       ::  TP
@@ -34,6 +48,8 @@ for op in (:size, :size_ext)
 end
 
 domain(p::FE_TensorProductProblem) = TensorProductDomain(map(domain,p.problems)...)
+
+
 # This type groups the data corresponding to a FE problem.
 immutable FE_DiscreteProblem{N,T} <: FE_Problem{N,T}
     domain          ::  AbstractDomain{N,T}
@@ -41,11 +57,30 @@ immutable FE_DiscreteProblem{N,T} <: FE_Problem{N,T}
     op              ::  AbstractOperator
     opt             ::  AbstractOperator
 
+    # The original and extended frequency basis
+    fbasis1
+    fbasis2
+    # The original and extended time basis
+    tbasis1
+    tbasis2
+    # Time domain basis restricted to the domain of the problem
+    tbasis_restricted
 
+    # Extension and restriction operators
+    f_extension         # from fbasis1 to fbasis2
+    f_restriction       # from fbasis2 to fbasis1
+    t_extension         # from tbasis_restricted to tbasis2
+    t_restriction       # from tbasis2 to tbasis_restricted
+
+    # Transforms from time to frequency domain and back
+    transform1          # from tbasis1 to fbasis1
+    itransform1         # from fbasis1 to tbasis1
+    transform2          # from tbasis2 to fbasis2
+    itransform2         # from fbasis2 to tbasis2
 end
 
-FE_DiscreteProblem{N,T}(domain::AbstractDomain{N,T}, otherargs...) =
-    FE_DiscreteProblem{N,T}(domain, otherargs...)
+#FE_DiscreteProblem{N,T}(domain::AbstractDomain{N,T}, otherargs...) =
+#    FE_DiscreteProblem{N,T}(domain, otherargs...)
 
 
 function FE_DiscreteProblem{T}(domain::AbstractDomain{1,T}, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted)
@@ -55,14 +90,17 @@ function FE_DiscreteProblem{T}(domain::AbstractDomain{1,T}, fbasis1, fbasis2, tb
     t_extension = extension_operator(tbasis_restricted, tbasis2)
     t_restriction = restriction_operator(tbasis2, tbasis_restricted)
 
+    transform1 = transform_operator(tbasis1, fbasis1)
+    itransform1 = transform_operator(fbasis1, tbasis1)
     transform2 = transform_operator(tbasis2, fbasis2)
     itransform2 = transform_operator(fbasis2, tbasis2)
 
     op  = t_restriction * itransform2 * f_extension
     opt = f_restriction * transform2 * t_extension
 
-    FE_DiscreteProblem(domain,op,opt)
-    
+    FE_DiscreteProblem(domain, op, opt, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted,
+        f_extension, f_restriction, t_extension, t_restriction,
+        transform1, itransform1, transform2, itransform2)
 end
 
 
@@ -73,50 +111,46 @@ function FE_DiscreteProblem{N,T}(domain::AbstractDomain{N,T}, fbasis1, fbasis2, 
     t_extension = extension_operator(tbasis_restricted, tbasis2)
     t_restriction = restriction_operator(tbasis2, tbasis_restricted)
 
+    transform1 = transform_operator(tbasis1, fbasis1)
+    itransform1 = transform_operator(fbasis1, tbasis1)
     transform2 = transform_operator(tbasis2, fbasis2)
     itransform2 = transform_operator(fbasis2, tbasis2)
 
     op  = t_restriction * itransform2 * f_extension
     opt = f_restriction * transform2 * t_extension
 
-    FE_DiscreteProblem(domain,op,opt)
-    
+    FE_DiscreteProblem(domain, op, opt, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted,
+        f_extension, f_restriction, t_extension, t_restriction,
+        transform1, itransform1, transform2, itransform2)
 end
 
 
 domain(p::FE_DiscreteProblem) = p.domain
 
-numtype{N,T}(p::FE_DiscreteProblem{N,T}) = T
-
-eltype(p::FE_DiscreteProblem) = eltype(operator(p))
-
-dim{N}(p::FE_DiscreteProblem{N}) = N
-
 operator(p::FE_DiscreteProblem) = p.op
 
 operator_transpose(p::FE_DiscreteProblem) = p.opt
 
-frequency_basis(p::FE_DiscreteProblem) = dest(f_restriction(p))
+frequency_basis(p::FE_DiscreteProblem) = p.fbasis1
+frequency_basis_ext(p::FE_DiscreteProblem) = p.fbasis2
 
-frequency_basis_ext(p::FE_DiscreteProblem) = dest(f_extension(p))
+time_basis(p::FE_DiscreteProblem) = p.tbasis1
+time_basis_ext(p::FE_DiscreteProblem) = p.tbasis2
+time_basis_restricted(p::FE_DiscreteProblem) = p.tbasis_restricted
 
-#time_basis(p::FE_DiscreteProblem) = p.tbasis1
 
-time_basis_restricted(p::FE_DiscreteProblem) = dest(t_restriction(p))
+f_extension(p::FE_DiscreteProblem) = p.f_extension
+f_restriction(p::FE_DiscreteProblem) = p.f_restriction
 
-time_basis_ext(p::FE_DiscreteProblem) = dest(t_extension(p))
+t_extension(p::FE_DiscreteProblem) = p.t_extension
+t_restriction(p::FE_DiscreteProblem) = p.t_restriction
 
-t_restriction(p::FE_DiscreteProblem) = p.op.op3
 
-itransform2(p::FE_DiscreteProblem) = p.op.op2
+transform1(p::FE_DiscreteProblem) = p.transform1
+itransform1(p::FE_DiscreteProblem) = p.itransform1
+transform2(p::FE_DiscreteProblem) = p.transform2
+itransform2(p::FE_DiscreteProblem) = p.itransform2
 
-f_extension(p::FE_DiscreteProblem) = p.op.op1
-
-f_restriction(p::FE_DiscreteProblem) = p.opt.op3
-
-transform2(p::FE_DiscreteProblem) = p.opt.op2
-
-t_extension(p::FE_DiscreteProblem) = p.opt.op1
 
 size(p::FE_DiscreteProblem) = size(operator(p))
 

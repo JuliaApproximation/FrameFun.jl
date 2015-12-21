@@ -1,37 +1,6 @@
 # fe_fourier.jl
 
 
-function apply!{T,G <: MaskedGrid}(op::Extension, dest, src::DiscreteGridSpace{G}, coef_dest::Array{T}, coef_src::Array{T})
-    @assert length(coef_src) == length(src)
-    @assert length(coef_dest) == length(dest)
-
-    grid1 = grid(src)
-    fill!(coef_dest, zero(T))
-
-    l = 0
-    for i in eachindex(grid1.grid)
-        if in(i, grid1)
-            l = l+1
-            coef_dest[i] = coef_src[l]
-        end
-    end
-end
-
-
-function apply!{T,G <: MaskedGrid}(op::Restriction, dest::DiscreteGridSpace{G}, src, coef_dest::Array{T}, coef_src::Array{T})
-    @assert length(coef_src) == length(src)
-    @assert length(coef_dest) == length(dest)
-
-    grid1 = grid(dest)
-
-    l = 0
-    for i in eachindex(grid1.grid)
-        if in(i, grid1)
-            l = l+1
-            coef_dest[l] = coef_src[i]
-        end
-    end
-end
 # This might not be the best way to solve this problem
 function discretize_problem{T}(domain::AbstractDomain1d{T}, nt::Tuple{Integer}, tt::Tuple{T}, st::Tuple, basis::DataType, ELT)
     discretize_problem(domain,nt[1],tt[1],st[1],basis,ELT)
@@ -54,7 +23,7 @@ function discretize_problem{T}(domain::Interval{T}, nt::Int, tt, st, basis::Type
     grid1 = grid(fbasis1)
     grid2 = grid(fbasis2)
 
-    rgrid = IndexedSubGrid(grid2, 1, m)
+    rgrid = IndexSubGrid(grid2, 1, m)
     
     tbasis1 = DiscreteGridSpace(grid1, ELT)
     tbasis2 = DiscreteGridSpace(grid2, ELT)
@@ -112,7 +81,7 @@ function discretize_problem{N,T}(domain::AbstractDomain{N,T}, nt::Tuple, tt::Tup
     tens_grid1 = TensorProductGrid(map(x->grid(x),fbasis1)...)
     tens_grid2 = TensorProductGrid(map(x->grid(x),fbasis2)...)
 
-    tens_rgrid = TensorProductGrid(ntuple(i->IndexedSubGrid(grid(fbasis2[i]), 1, m[i]), N)...)
+    tens_rgrid = TensorProductGrid(ntuple(i->IndexSubGrid(grid(fbasis2[i]), 1, m[i]), N)...)
     tens_tbasis1 = TensorProductSet(map(x->DiscreteGridSpace(grid(x),ELT), fbasis1)...)
     tens_tbasis2 = TensorProductSet(map(x->DiscreteGridSpace(grid(x),ELT), fbasis2)...)
 
@@ -136,39 +105,57 @@ end
 # Default parameters
 ######################
 
-default_fourier_n(domain::AbstractDomain1d) = 20
+# The default parameters are:
+# - n: number of degrees of freedom in the approximation
+# - T: the extension parameter (size of the extended domain vs the original domain)
+# - sampling: the (over)sampling factor
+# - domain_nd: the domain
+# - solver: the solver to use for solving the FE problem
 
-default_fourier_n(domain::AbstractDomain2d) = (10, 10)
 
-default_fourier_n(domain::AbstractDomain3d) = (3, 3, 3)
+# The default basis is a FourierBasis
+default_frame_domain_1d() = default_frame_domain_1d(FourierBasis)
+default_frame_domain_2d() = default_frame_domain_2d(FourierBasis)
+default_frame_domain_3d() = default_frame_domain_3d(FourierBasis)
+default_frame_n(domain) = default_frame_n(domain, FourierBasis)
+default_frame_T(domain) = default_frame_T(domain, FourierBasis)
+default_frame_sampling(domain) = default_frame_sampling(domain, FourierBasis)
+default_frame_solver(domain) = default_frame_solver(domain, FourierBasis)
 
-function default_fourier_n{TD,DN,ID,N}(domain::TensorProductDomain{TD,DN,ID,N})
-    s=[default_fourier_n(domainlist(domain)[1])...]
-    for i=2:ID
-        s=[s; default_fourier_n(domainlist(domain)[i])...]
+default_frame_domain_1d{Basis}(::Type{Basis}) = Interval()
+default_frame_domain_2d{Basis}(::Type{Basis}) = Circle()
+default_frame_domain_3d{Basis}(::Type{Basis}) = Sphere()
+
+
+default_frame_n{Basis}(domain::AbstractDomain1d, ::Type{Basis}) = 20
+default_frame_n{Basis}(domain::AbstractDomain2d, ::Type{Basis}) = (10, 10)
+default_frame_n{Basis}(domain::AbstractDomain3d, ::Type{Basis}) = (3, 3, 3)
+
+default_frame_n(domain::AbstractDomain1d, ::Type{FourierBasis}) = 21
+
+
+function default_frame_n{Basis,TD,DN,ID,N}(domain::TensorProductDomain{TD,DN,ID,N}, ::Type{Basis})
+    s = [default_frame_n(domainlist(domain)[1], Basis)...]
+    for i = 2:ID
+        s=[s; default_frame_n(domainlist(domain)[i], Basis)...]
     end
-    s=round(Int,s/N)
+    s = round(Int,s/N)
     tuple(s...)
 end
 
-default_fourier_T{T}(domain::AbstractDomain{1,T}) = 2*one(T)
-default_fourier_T{N,T}(domain::AbstractDomain{N,T}) = ntuple(i->2*one(T),N)
-
-default_fourier_sampling{T}(domain::AbstractDomain{1,T}) = 2*one(T)
-default_fourier_sampling{N,T}(domain::AbstractDomain{N,T}) = ntuple(i->2*one(T),N)
+default_frame_T{T,Basis <: FunctionSet}(domain::AbstractDomain{1,T}, ::Type{Basis}) = 2*one(T)
+default_frame_T{N,T,Basis <: FunctionSet}(domain::AbstractDomain{N,T}, ::Type{Basis}) = ntuple(i->2*one(T),N)
 
 
-default_fourier_domain_1d() = Interval()
+default_frame_sampling{T}(domain::AbstractDomain{1,T}, Basis) = 2*one(T)
+default_frame_sampling{N,T}(domain::AbstractDomain{N,T}, Basis) = ntuple(i->2*one(T),N)
 
-default_fourier_domain_2d() = Circle()
 
-default_fourier_domain_3d() = Sphere()
+default_frame_solver{Basis}(domain, ::Type{Basis}) = FE_ProjectionSolver
 
-default_fourier_solver(domain) = FE_ProjectionSolver
+#default_frame_solver(domain::Interval{Float64}) = FE_ProjectionSolver
+default_frame_solver{Basis}(domain::Interval, ::Type{Basis}) = FE_ProjectionSolver
 
-#default_fourier_solver(domain::Interval{Float64}) = FE_ProjectionSolver
-default_fourier_solver(domain::Interval) = FE_ProjectionSolver
-
-default_fourier_solver(domain::TensorProductDomain) = map(default_fourier_solver,domainlist(domain))    
+default_frame_solver{Basis}(domain::TensorProductDomain, ::Type{Basis}) = map(default_frame_solver,domainlist(domain))
 
 

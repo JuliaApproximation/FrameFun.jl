@@ -4,10 +4,11 @@
 typealias FrameFun{N,T,D,B,ELT,ID} SetExpansion{DomainFrame{D,B,N,T},ELT,ID}
 
 domain(fun::SetExpansion) = domain(fun, set(fun))
-domain(fun::SetExpansion, set::DomainFrame) = domain(set)
+domain(fun::SetExpansion, s::DomainFrame) = domain(s)
 
 basis(fun::FrameFun) = basis(fun, set(fun))
 basis(fun::FrameFun, s::DomainFrame) = set(s)
+
 
 function show{D,B,N}(io::IO, fun::FrameFun{D,B,N})
     println(io, "A ", N, "-dimensional FrameFun with ", length(coefficients(fun)), " degrees of freedom.")
@@ -15,32 +16,43 @@ function show{D,B,N}(io::IO, fun::FrameFun{D,B,N})
     println(io, "Domain: ", domain(fun))
 end
 
-function ExpFun(f::Function, domain = default_fourier_domain_1d(),
-             solver_type = default_fourier_solver(domain);
-             n = default_fourier_n(domain),
-             T = default_fourier_T(domain),
-             s = default_fourier_sampling(domain))
-    Fun(FourierBasis,f,domain,solver_type,n=n,T=T,s=s)
-end
 
-function ChebyFun(f::Function, domain = default_fourier_domain_1d(),
-             solver_type = default_fourier_solver(domain);
-             n = default_fourier_n(domain),
-             T = default_fourier_T(domain),
-             s = default_fourier_sampling(domain))
-    Fun(ChebyshevBasis,f,domain,solver_type,n=n,T=T,s=s)
-end
 
-function Fun{Basis <: AbstractBasis}(::Type{Basis}, f::Function, domain = default_fourier_domain_1d(),
-             solver_type = default_fourier_solver(domain);
-             n = default_fourier_n(domain),
-             T = default_fourier_T(domain),
-             s = default_fourier_sampling(domain))
-    ELT = eltype(f, domain, Basis)
+"""
+Construct an FE problem for the given domain, using default values if necessary.
+"""
+function fe_problem{Basis <: FunctionSet,ELT}(domain, ::Type{Basis}, ::Type{ELT};
+    n = default_frame_n(domain, Basis),
+    T = default_frame_T(domain, Basis),
+    s = default_frame_sampling(domain, Basis),
+    solver = default_frame_solver(domain),
+    args...)
+    
     problem = discretize_problem(domain, n, T, s, Basis, ELT)
-    solver = solver_type(problem)
-    solve(solver, f, problem, ELT)
+    sol = solver(problem)
+
+    (problem, sol)
 end
+
+# Detect a suitable element type
+fe_problem(domain, Basis) = _fe_problem(domain, Basis, isreal(Basis))
+_fe_problem{N,T}(domain::AbstractDomain{N,T}, Basis, isreal::Type{True}) = fe_problem(domain, Basis, T)
+_fe_problem{N,T}(domain::AbstractDomain{N,T}, Basis, isreal::Type{False}) = fe_problem(domain, Basis, Complex{T})
+
+
+ExpFun(f::Function; args...) = Fun(FourierBasis, f; args...)
+ExpFun(f::Function, domain; args...) = Fun(FourierBasis, f, domain; args...)
+
+ChebyFun(f::Function; args...) = Fun(ChebyshevBasis, f; args...)
+ChebyFun(f::Function, domain; args...) = Fun(ChebyshevBasis, f, domain; args...)
+
+
+function Fun{Basis <: FunctionSet}(::Type{Basis}, f::Function, domain = default_frame_domain_1d(); args...)
+    ELT = eltype(f, domain, Basis)
+    (problem,solver) = fe_problem(domain, Basis, ELT; args...)
+    solve(solver, f, problem)
+end
+
 
 function eltype{Basis <: AbstractBasis}(f::Function, domain, ::Type{Basis})
     ELT = numtype(domain)
