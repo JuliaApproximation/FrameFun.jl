@@ -66,9 +66,9 @@ end
 #######
 
 
+
 Test.with_handler(custom_handler) do
 
-    
     delimit("Algorithm Implementation and Accuracy")
     delimit("1D")
 

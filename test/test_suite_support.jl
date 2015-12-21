@@ -67,27 +67,71 @@ end
 #######
 
 
+function test_subgrids()
+    delimit("Grid functionality")
+
+    n = 20
+    grid1 = EquispacedGrid(n, -1.0, 1.0)
+    subgrid1 = FE.MaskedGrid(grid1, Interval(-0.5, 0.7))
+    subgrid2 = FE.IndexSubGrid(grid1, 4, 12)
+
+    G1 = EquispacedGrid(n, -1.0, 1.0)
+    G2 = EquispacedGrid(n, -1.0, 1.0)
+    TensorG = G1 ⊗ G2
+    C = Circle(1.0)
+    circle_grid = FE.MaskedGrid(TensorG, C)
+    @test (length(circle_grid)/length(TensorG)-pi*0.25) < 0.01
+
+    G1s = FE.IndexSubGrid(G1,2,4)
+    G2s = FE.IndexSubGrid(G2,3,5)
+    TensorGs = G1s ⊗ G2s
+    @test G1s[1] == G1[2]
+    @test G2s[1] == G2[3]
+    @test TensorGs[1,1] == [G1[2],G2[3]]
+
+    # Generic tests for the subgrids
+    for (grid,subgrid) in ( (grid1,subgrid1), (grid1,subgrid2), (TensorG, circle_grid))
+        print("Subgrid is ")
+        println(typeof(subgrid))
+        # Count the number of elements in the subgrid
+        cnt = 0
+        for i in 1:length(grid)
+            if i ∈ subgrid
+                cnt += 1
+            end
+        end
+        @test cnt == length(subgrid)
+
+        space = DiscreteGridSpace(grid)
+        subspace = DiscreteGridSpace(subgrid)
+        R = restriction_operator(space, subspace)
+        E = extension_operator(subspace, space)
+
+        e = random_expansion(subspace)
+        e_ext = E * e
+        # Are the elements in the right place?
+        cnt = 0
+        diff = 0.0
+        for i in 1:length(grid)
+            if i ∈ subgrid
+                cnt += 1
+                diff += abs(e[cnt] - e_ext[i])
+            end
+        end
+        @test diff < 1e-6
+
+        e_rest = R * e_ext
+        @test sum([abs(e[i]-e_rest[i]) for i in 1:length(e)]) < 1e-6
+    end
+end
+
+
+
+
 Test.with_handler(custom_handler) do
 
-    delimit("grid functionality")
+    test_subgrids()
 
-    delimit("MaskedGrid")
-    G1=BA.EquispacedGrid(100,-1.0,1.0)
-    G2=BA.EquispacedGrid(100,-1.0,1.0)
-    TensorG=BA.TensorProductGrid(G1,G2)
-    C=Circle(1.0)
-    G4=FE.MaskedGrid(TensorG,C)
-    @test (length(G4)/length(TensorG)-pi*0.25)<0.01
-    # I'm assuming here MaskedGrids aren't supposed to be indexed.
-    @test_throws Exception G4[1,1]
-
-    delimit("SubGrid")
-    G1s=FE.IndexedSubGrid(G1,2,4)
-    G2s=FE.IndexedSubGrid(G2,3,5)
-    @test G1s[1]==G1[2]
-    @test G2s[1]==G2[3]
-    TensorGs=TensorProductGrid(G1s,G2s)
-    @test TensorGs[1,1]==[G1[2],G2[3]]
 
     delimit("Domains")
     # Integer interval is apparently impossible
@@ -184,7 +228,7 @@ Test.with_handler(custom_handler) do
     grid1 = grid(fbasis1)
     grid2 = grid(fbasis2)
 
-    rgrid = FE.IndexedSubGrid(grid2, 1, 2*n)
+    rgrid = FE.IndexSubGrid(grid2, 1, 2*n)
     tbasis1 = DiscreteGridSpace(grid1)
     tbasis2 = DiscreteGridSpace(grid2)
 

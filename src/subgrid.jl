@@ -4,12 +4,6 @@
 abstract AbstractSubGrid{N,T,G} <: AbstractGrid{N,T}
 
 eltype{N,T,G}(::Type{AbstractSubGrid{N,T,G}}) = eltype(G)
-eltype{G <: AbstractSubGrid}(::Type{G}) = eltype(super(G))
-
-# Default index dimension is 1
-index_dim{N,T}(::AbstractSubGrid{N,T}) = 1
-index_dim{N,T}(::Type{AbstractSubGrid{N,T}}) = 1
-index_dim{G <: AbstractSubGrid}(::Type{G}) = 1
 
 grid(g::AbstractSubGrid) = g.grid
 
@@ -66,17 +60,54 @@ in(i, g::MaskedGrid) = g.mask[i]
 getindex(g::MaskedGrid, idx::Int) = getindex(g.grid, g.indices[idx]...)
 
 
+# Efficient extension operator
+function apply!{G <: MaskedGrid}(op::Extension, dest::DiscreteGridSpace, src::DiscreteGridSpace{G}, coef_dest::AbstractArray, coef_src::AbstractArray)
+    @assert length(coef_src) == length(src)
+    @assert length(coef_dest) == length(dest)
+    @assert grid(dest) == grid(grid(src))
+
+    grid1 = grid(src)
+    fill!(coef_dest, 0)
+
+    l = 0
+    for i in eachindex(grid1.grid)
+        if in(i, grid1)
+            l = l+1
+            coef_dest[i] = coef_src[l]
+        end
+    end
+end
+
+
+# Efficient restriction operator
+function apply!{G <: MaskedGrid}(op::Restriction, dest::DiscreteGridSpace{G}, src::DiscreteGridSpace, coef_dest::AbstractArray, coef_src::AbstractArray)
+    @assert length(coef_src) == length(src)
+    @assert length(coef_dest) == length(dest)
+    @assert grid(src) == grid(grid(dest))
+
+    grid1 = grid(dest)
+
+    l = 0
+    for i in eachindex(grid1.grid)
+        if in(i, grid1)
+            l = l+1
+            coef_dest[l] = coef_src[i]
+        end
+    end
+end
+
+
 
 """
-An IndexedSubGrid is a subgrid corresponding to a certain range of indices of the
+An IndexSubGrid is a subgrid corresponding to a certain range of indices of the
 underlying (one-dimensional) grid.
 """
-immutable IndexedSubGrid{G,T} <: AbstractSubGrid{1,T,G}
+immutable IndexSubGrid{G,T} <: AbstractSubGrid{1,T,G}
 	grid	::	G
 	i1		::	Int
 	i2		::	Int
 
-	function IndexedSubGrid(grid::AbstractGrid1d{T}, i1, i2)
+	function IndexSubGrid(grid::AbstractGrid1d{T}, i1, i2)
 		@assert 1 <= i1 <= length(grid)
 		@assert 1 <= i2 <= length(grid)
 		@assert i1 <= i2
@@ -85,21 +116,54 @@ immutable IndexedSubGrid{G,T} <: AbstractSubGrid{1,T,G}
 	end
 end
 
-IndexedSubGrid{T}(grid::AbstractGrid1d{T}, i1, i2) = IndexedSubGrid{typeof(grid), T}(grid, i1, i2)
+IndexSubGrid{T}(grid::AbstractGrid1d{T}, i1, i2) = IndexSubGrid{typeof(grid), T}(grid, i1, i2)
 
-left(g::IndexedSubGrid) = g.grid[g.i1]
+left(g::IndexSubGrid) = g.grid[g.i1]
 
-right(g::IndexedSubGrid) = g.grid[g.i2]
+right(g::IndexSubGrid) = g.grid[g.i2]
 
-length(g::IndexedSubGrid) = g.i2 - g.i1 + 1
+length(g::IndexSubGrid) = g.i2 - g.i1 + 1
 
-getindex(g::IndexedSubGrid, i) = g.grid[g.i1+i-1]
+getindex(g::IndexSubGrid, i) = g.grid[g.i1+i-1]
 
-stepsize{G <: AbstractEquispacedGrid}(g::IndexedSubGrid{G}) = stepsize(g.grid)
+# Check whether element grid[i] (of the underlying grid) is in the indexed subgrid.
+in(i, g::IndexSubGrid) = (i >= g.i1) && (i <= g.i2)
 
-range{G <: AbstractEquispacedGrid}(g::IndexedSubGrid{G}) = left(g) : stepsize(g) : right(g)
+stepsize{G <: AbstractEquispacedGrid}(g::IndexSubGrid{G}) = stepsize(g.grid)
+
+range{G <: AbstractEquispacedGrid}(g::IndexSubGrid{G}) = left(g) : stepsize(g) : right(g)
 
 
+# Efficient extension operator
+function apply!{G <: IndexSubGrid}(op::Extension, dest::DiscreteGridSpace, src::DiscreteGridSpace{G}, coef_dest::AbstractArray, coef_src::AbstractArray)
+    @assert length(coef_src) == length(src)
+    @assert length(coef_dest) == length(dest)
+    @assert grid(dest) == grid(grid(src))
 
+    grid1 = grid(src)
+    fill!(coef_dest, 0)
+
+    l = 0
+    for i in grid1.i1:grid1.i2
+        l += 1
+        coef_dest[i] = coef_src[l]
+    end
+end
+
+
+# Efficient restriction operator
+function apply!{G <: IndexSubGrid}(op::Restriction, dest::DiscreteGridSpace{G}, src::DiscreteGridSpace, coef_dest::AbstractArray, coef_src::AbstractArray)
+    @assert length(coef_src) == length(src)
+    @assert length(coef_dest) == length(dest)
+    @assert grid(src) == grid(grid(dest))
+
+    grid1 = grid(dest)
+
+    l = 0
+    for i in grid1.i1:grid1.i2
+        l += 1
+        coef_dest[l] = coef_src[i]
+    end
+end
 
 
