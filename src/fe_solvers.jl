@@ -29,7 +29,7 @@ function solve(s::AbstractOperator, f::Function, p::FE_Problem)
     rhs!(p, rhs, f)
     apply!(s, coef, rhs)
     coef = reshape(coef, size(frequency_basis(p)))
-    norm = normalization_operator(frequency_basis_ext(p), frequency_basis(p), ELT)
+    norm = transform_normalization_operator(p, ELT)
     coef = norm * coef
     frame = DomainFrame(domain(p), frequency_basis(p))
     SetExpansion(frame, coef)

@@ -109,10 +109,10 @@ show(io::IO, e::RnDomain) = print(io, "the ", N, "-dimensional Euclidean space")
 ###############################################################################################
 
 immutable Interval{T} <: AbstractDomain{1,T}
-  a     ::  T
-  b     ::  T
+    a     ::  T
+    b     ::  T
 
-  Interval(a = -one(T), b = one(T)) = new(a,b)
+    Interval(a = -one(T), b = one(T)) = new(a,b)
 end
 
 Interval() = Interval{Float64}()
@@ -226,27 +226,30 @@ const unitsphere = Sphere()
 """
 A TensorProductDomain represents the tensor product of other domains.
 
-immutable TensorProductDomain{TD,DN,ID,N,T} <: AbstractDomain{N,T}
+immutable TensorProductDomain{TD,DN,LEN,N,T} <: AbstractDomain{N,T}
 
 Parameters:
 - TD is a tuple of (domain) types.
 - DN is a tuple of the dimensions of each of the domains.
-- ID is the length of TG and GN (the index dimension).
+- LEN is the length of TG and GN
 - N and T are the total dimension and numeric type of this grid.
 """
-immutable TensorProductDomain{TD,DN,ID,N,T} <: AbstractDomain{N,T}
+immutable TensorProductDomain{TD,DN,LEN,N,T} <: AbstractDomain{N,T}
 	domains	::	TD
 
 	TensorProductDomain(domains::Tuple) = new(domains)
 end
 
+length{TD,DN,LEN,N,T}(::Type{TensorProductDomain{TD,DN,LEN,N,T}}) = LEN
+length(d::TensorProductDomain) = length(typeof(d))
+
 function TensorProductDomain(domains...)
     TD = typeof(domains)
     DN = map(dim, domains)
-    ID = length(domains)
+    LEN = length(domains)
     N = sum(DN)
     T = numtype(domains[1])
-    TensorProductDomain{TD,DN,ID,N,T}(domains)
+    TensorProductDomain{TD,DN,LEN,N,T}(domains)
 end
 
 ⊗(d1::AbstractDomain, d2::AbstractDomain) = TensorProductDomain(d1, d2)
@@ -259,10 +262,10 @@ tensorproduct(d::AbstractDomain, n) = TensorProductDomain([d for i=1:n]...)
 subdomain(t::TensorProductDomain,i::Int) = t.domains[i]
 domainlist(t::TensorProductDomain) = t.domains
  
-function in{TD,DN,ID,N,T}(x::AnyVector, t::TensorProductDomain{TD,DN,ID,N,T})
+function in{TD,DN,LEN,N,T}(x::AnyVector, t::TensorProductDomain{TD,DN,LEN,N,T})
     dc = 1
     z1 = true
-    for i= 1:ID
+    for i= 1:LEN
         z2 = in(x[dc:dc+DN[i]-1],t.domains[i])
         z1 = z1 & z2
         dc+=DN[i]
@@ -273,24 +276,25 @@ function in{TD,DN,ID,N,T}(x::AnyVector, t::TensorProductDomain{TD,DN,ID,N,T})
 
 (==)(t1::TensorProductDomain, t2::TensorProductDomain) = t1.domains==t2.domains
 
- function box{TD,DN,ID,N,T}(t::TensorProductDomain{TD,DN,ID,N,T})
-     dc=1
-     verts=zeros(N,2)
-     for i=1:ID
-         verts[dc:dc+DN[i]-1,1]=left(box(t.domains[i]))
-         verts[dc:dc+DN[i]-1,2]=right(box(t.domains[i]))
-         dc+=DN[i]
-     end
-     return BBox{N,T}(verts)
- end
+function box{TD,DN,LEN,N,T}(t::TensorProductDomain{TD,DN,LEN,N,T})
+    dc=1
+    verts=zeros(N,2)
+    for i=1:LEN
+        verts[dc:dc+DN[i]-1,1]=left(box(t.domains[i]))
+        verts[dc:dc+DN[i]-1,2]=right(box(t.domains[i]))
+        dc+=DN[i]
+    end
+    return BBox{N,T}(verts)
+end
  
 
-function show{TD,DN,ID}(io::IO, t::TensorProductDomain{TD,DN,ID})
-    for i=1:ID-1
+function show(io::IO, t::TensorProductDomain)
+  LEN = length(t)
+    for i=1:LEN-1
         show(domainlist(t)[i])
         print(" x ")
     end
-    show(domainlist(t)[ID])
+    show(domainlist(t)[LEN])
 end
 
 ###############################################################################################

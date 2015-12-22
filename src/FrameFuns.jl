@@ -5,7 +5,7 @@ module FrameFuns
 using FixedSizeArrays
 using BasisFunctions
 using Debug
-using ApproxFun
+#using ApproxFun
 
 using Base.Cartesian
 
@@ -21,11 +21,13 @@ import BasisFunctions: src, dest, matrix, matrix!, apply!, numtype
 
 import BasisFunctions: dim, index_dim, grid, left, right
 
-import BasisFunctions: operator, coefficients, set, is_basis, is_frame, normalization_operator
+import BasisFunctions: operator, coefficients, set, is_basis, is_frame, transform_normalization_operator
 
 import BasisFunctions: call_set, call_set!, call_expansion, call_expansion!
 
 import BasisFunctions: True, False
+
+import BasisFunctions: tp_length
 
 
 # from domains.jl

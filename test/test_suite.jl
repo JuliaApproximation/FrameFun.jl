@@ -182,7 +182,7 @@ Test.with_handler(custom_handler) do
         println()
         println("## Basis: ", Basis)
 
-        for D in [Circle(2.0,[-2.0,-2.0]) Cube((-1.0,-1.5),(0.5,0.7))]       
+        for D in [Circle(2.0,[-2.0,-2.0]) Cube((-1.0,-1.5),(0.5,0.7))]
             show(D); println()
 
             for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)

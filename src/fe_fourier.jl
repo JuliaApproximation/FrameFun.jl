@@ -2,8 +2,8 @@
 
 
 # This might not be the best way to solve this problem
-function discretize_problem{T}(domain::AbstractDomain1d{T}, nt::Tuple{Integer}, tt::Tuple{T}, st::Tuple, basis::DataType, ELT)
-    discretize_problem(domain,nt[1],tt[1],st[1],basis,ELT)
+function discretize_problem{T}(domain::AbstractDomain1d{T}, nt::Tuple{Integer}, tt::Tuple{T}, st::Tuple, Basis, ELT)
+    discretize_problem(domain, nt[1], tt[1], st[1], Basis, ELT)
 end
 
 
@@ -62,40 +62,42 @@ function discretize_problem{T}(domain::AbstractDomain1d{T}, nt::Int, tt, st, bas
     
 end
 
-function discretize_problem{N,T}(domain::AbstractDomain{N,T}, nt::Tuple, tt::Tuple, st::Tuple, basis::DataType, ELT)
+function discretize_problem{N,T}(domain::AbstractDomain{N,T}, nt::Tuple, tt::Tuple, st::Tuple, Basis, ELT)
     n = 2*[nt...]+1
     m = 2*round(Int, [nt...].*[st...])+1
     tt = round(Int,[tt...].*(m-1)/2).*(2./(m-1))
     l = round(Int, tt.*(m-1))
-    fbasis1=Array{basis}(N)
-    fbasis2=Array{basis}(N)
+    fbasis1 = Array{Basis}(N)
+    fbasis2 = Array{Basis}(N)
     bbox = box(domain)
     for i=1:N
         t = (l[1]*one(T))/((m[1]-1)*one(T))
-        fbasis1[i] = basis(n[i], left(bbox)[i], right(bbox)[i] + (right(bbox)[i]-left(bbox)[i])*(t-1))
-        fbasis2[i] = basis(l[i], left(bbox)[i], right(bbox)[i] + (right(bbox)[i]-left(bbox)[i])*(t-1))
+        fbasis1[i] = Basis(n[i], left(bbox)[i], right(bbox)[i] + (right(bbox)[i]-left(bbox)[i])*(t-1))
+        fbasis2[i] = Basis(l[i], left(bbox)[i], right(bbox)[i] + (right(bbox)[i]-left(bbox)[i])*(t-1))
     end
     tens_fbasis1 = TensorProductSet(fbasis1...)
     tens_fbasis2 = TensorProductSet(fbasis2...)
 
-    tens_grid1 = TensorProductGrid(map(x->grid(x),fbasis1)...)
-    tens_grid2 = TensorProductGrid(map(x->grid(x),fbasis2)...)
+    tens_grid1 = TensorProductGrid(map(grid, fbasis1)...)
+    tens_grid2 = TensorProductGrid(map(grid, fbasis2)...)
 
     tens_rgrid = TensorProductGrid(ntuple(i->IndexSubGrid(grid(fbasis2[i]), 1, m[i]), N)...)
     tens_tbasis1 = TensorProductSet(map(x->DiscreteGridSpace(grid(x),ELT), fbasis1)...)
     tens_tbasis2 = TensorProductSet(map(x->DiscreteGridSpace(grid(x),ELT), fbasis2)...)
 
-    tbasis_restricted = DiscreteGridSpace(MaskedGrid(tens_grid2, domain),ELT)
+    tbasis_restricted = DiscreteGridSpace(MaskedGrid(tens_grid2, domain), ELT)
 
     FE_DiscreteProblem(domain, tens_fbasis1, tens_fbasis2, tens_tbasis1, tens_tbasis2, tbasis_restricted)
 end
 
-function discretize_problem{TD,DN,ID,N,T}(domain::TensorProductDomain{TD,DN,ID,N,T}, nt::Tuple, tt::Tuple, st::Tuple, basis::DataType, ELT)
-    problems=FE_Problem[]
+function discretize_problem{TD,DN,LEN,N,T}(domain::TensorProductDomain{TD,DN,LEN,N,T}, nt::Tuple, tt::Tuple, st::Tuple, Basis, ELT)
+    problems = FE_Problem[]
     dc = 1
-    for i=1:ID
-        push!(problems,discretize_problem(subdomain(domain,i),nt[dc:dc+DN[i]-1],tt[dc:dc+DN[i]-1],st[dc:dc+DN[i]-1],basis,ELT))
-        dc=dc+DN[i]
+    for i = 1:LEN
+        range = dc:dc+DN[i]-1
+        p = discretize_problem(subdomain(domain,i), nt[range], tt[range], st[range], Basis, ELT)
+        push!(problems, p)
+        dc += DN[i]
     end
     problem = FE_TensorProductProblem(problems...)
 end
@@ -134,12 +136,12 @@ default_frame_n{Basis}(domain::AbstractDomain3d, ::Type{Basis}) = (3, 3, 3)
 default_frame_n(domain::AbstractDomain1d, ::Type{FourierBasis}) = 21
 
 
-function default_frame_n{Basis,TD,DN,ID,N}(domain::TensorProductDomain{TD,DN,ID,N}, ::Type{Basis})
+function default_frame_n{Basis}(domain::TensorProductDomain, ::Type{Basis})
     s = [default_frame_n(domainlist(domain)[1], Basis)...]
-    for i = 2:ID
-        s=[s; default_frame_n(domainlist(domain)[i], Basis)...]
+    for i = 2:length(domain)
+        s = [s; default_frame_n(domainlist(domain)[i], Basis)...]
     end
-    s = round(Int,s/N)
+    s = round(Int,s/dim(domain))
     tuple(s...)
 end
 

@@ -16,38 +16,6 @@ dim(p::FE_Problem) = dim(typeof(p))
 
 eltype(p::FE_Problem) = eltype(operator(p))
 
-immutable FE_TensorProductProblem{TP,PN} <: FE_Problem
-    problems       ::  TP
-end
-
-function FE_TensorProductProblem(problems...)
-        TP = typeof(problems)
-        PN = length(problems)
-        FE_TensorProductProblem{TP,PN}(problems)
-end
-for op in (:frequency_basis, :frequency_basis_ext, :time_basis_restricted, :time_basis_ext)
-    @eval $op{TP,PN}(p::FE_TensorProductProblem{TP,PN}) = 
-        TensorProductSet(map($op,p.problems)...)
-end
-
-for op in (:operator, :operator_transpose, :t_restriction, :t_extension,
-           :itransform2, :transform2, :f_restriction, :f_extension,
-           :normalization_operator)
-    @eval $op{TP,PN}(p::FE_TensorProductProblem{TP,PN}) =
-        TensorProductOperator(map($op,p.problems)...)
-end
-
-for op in (:dim, :length_ext, :param_N, :param_L, :param_M)
-    @eval $op{TP,PN}(p::FE_TensorProductProblem{TP,PN}) = 
-        prod(map($op,p.problems)...)
-end
-
-for op in (:size, :size_ext)
-    @eval $op{TP,PN}(p::FE_TensorProductProblem{TP,PN}) = 
-        tuple(map($op,p.problems)...)
-end
-
-domain(p::FE_TensorProductProblem) = TensorProductDomain(map(domain,p.problems)...)
 
 
 # This type groups the data corresponding to a FE problem.
@@ -168,7 +136,7 @@ param_L(p::FE_DiscreteProblem) = length(time_basis_ext(p))
 
 param_M(p::FE_DiscreteProblem) = length(time_basis_restricted(p))
 
-normalization_operator(p::FE_DiscreteProblem) = normalization_operator(frequency_basis_ext(p),frequency_basis(p))
+
 
 function rhs(p::FE_Problem, f::Function, elt = eltype(p))
     grid1 = grid(time_basis_restricted(p))
@@ -191,6 +159,66 @@ function rhs!(grid::AbstractGrid, b::AbstractArray, f::Function)
     for i in eachindex(grid)
         b[i] = f(grid[i]...)
     end
+end
+
+
+immutable FE_TensorProductProblem{TP,PN,N,T} <: FE_Problem{N,T}
+    problems       ::  TP
+end
+
+function FE_TensorProductProblem(problems...)
+        TP = typeof(problems)
+        PN = length(problems)
+        T = numtype(problems[1])
+        N = sum(map(dim, problems))
+        FE_TensorProductProblem{TP,PN,N,T}(problems)
+end
+
+
+domain(p::FE_TensorProductProblem) = TensorProductDomain(map(domain,p.problems)...)
+
+tp_length{TP,PN,N,T}(p::FE_TensorProductProblem{TP,PN,N,T}) = PN
+
+for op in (:frequency_basis, :frequency_basis_ext, :time_basis_restricted, :time_basis_ext)
+    @eval $op{TP,PN}(p::FE_TensorProductProblem{TP,PN}) = 
+        TensorProductSet(map($op,p.problems)...)
+end
+
+for op in (:operator, :operator_transpose, :t_restriction, :t_extension,
+           :itransform2, :transform2, :f_restriction, :f_extension,
+           :normalization_operator)
+    @eval $op{TP,PN}(p::FE_TensorProductProblem{TP,PN}) =
+        TensorProductOperator(map($op,p.problems)...)
+end
+
+for op in (:dim, :length_ext, :param_N, :param_L, :param_M)
+    @eval $op{TP,PN}(p::FE_TensorProductProblem{TP,PN}) = 
+        prod(map($op,p.problems)...)
+end
+
+for op in (:size, :size_ext)
+    @eval $op{TP,PN}(p::FE_TensorProductProblem{TP,PN}) = 
+        tuple(map($op,p.problems)...)
+end
+
+
+# This code needs a revision.
+# What is the true (generic) meaning of transform_normalization_operator when there is a source and a destination?
+transform_normalization_operator(src::TensorProductSet, dest::TensorProductSet, ELT) =
+    TensorProductOperator(ELT, [transform_normalization_operator(set(src,i), set(dest,i), ELT) for i in 1:tp_length(src)]...)
+
+function transform_normalization_operator(src::FunctionSet, dest::FunctionSet, ELT)
+    factor = sqrt(ELT(length(src))/ELT(length(dest)))
+    transform_normalization_operator(src, ELT) * ScalingOperator(src, factor)
+end
+
+# Perhaps this is not always correct. Check.
+function transform_normalization_operator(p::FE_DiscreteProblem, ELT)
+    transform_normalization_operator(frequency_basis(p), frequency_basis_ext(p), ELT)
+end
+
+function transform_normalization_operator(p::FE_TensorProductProblem, ELT)
+    TensorProductOperator(ELT, [transform_normalization_operator(p.problems[i], ELT) for i in 1:tp_length(p)]...)
 end
 
 
