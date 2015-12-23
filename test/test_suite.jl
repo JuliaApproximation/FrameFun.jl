@@ -5,8 +5,8 @@ using BasisFunctions
 using FrameFuns
 using FixedSizeArrays
 using Base.Test
-FE=FrameFuns
-BA=BasisFunctions
+FE = FrameFuns
+BA = BasisFunctions
 
 ## Settings
 
@@ -153,7 +153,7 @@ Test.with_handler(custom_handler) do
         end
     end
 
-    test_bigfloat = true
+    test_bigfloat = false
     if test_bigfloat
         f(x) = cos(x.^2) - big(1.0)
         g(x) = big(1.0)im * cos(x.^2) - big(1.0)
@@ -227,7 +227,7 @@ Test.with_handler(custom_handler) do
                 n = FE.default_frame_n(D, Basis)
                 println("\tN = $n")
 
-                for T in ((1.7,1.7,1.7), FE.default_frame_T(D, Basis), (2.3,2.3,2.3))
+                for T in ((1.7,1.7,1.7), FE.default_frame_T(D, Basis))
                     print("T = $T\t")
                     F = @timed( Fun(Basis, f, D; solver=solver, n=n, T=T))
                     @printf("%3.2e s\t %3.2e bytes", F[2], F[3])
