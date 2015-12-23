@@ -10,10 +10,10 @@ basis(fun::FrameFun) = basis(fun, set(fun))
 basis(fun::FrameFun, s::DomainFrame) = set(s)
 
 
-function show{D,B,N}(io::IO, fun::FrameFun{D,B,N})
-    println(io, "A ", N, "-dimensional FrameFun with ", length(coefficients(fun)), " degrees of freedom.")
-    println(io, "Basis: ", name(basis(fun)))
-    println(io, "Domain: ", domain(fun))
+function show_setexpansion(io::IO, fun::SetExpansion, frame::DomainFrame)
+    println(io, "A ", dim(fun), "-dimensional FrameFun with ", length(coefficients(fun)), " degrees of freedom.")
+    println(io, "Basis: ", name(basis(frame)))
+    println(io, "Domain: ", domain(frame))
 end
 
 
@@ -56,11 +56,19 @@ end
 
 function eltype{Basis <: AbstractBasis}(f::Function, domain, ::Type{Basis})
     ELT = numtype(domain)
-    RT = Base.return_types(f,fill(numtype(domain),dim(domain)))[1]
-    if isreal(Basis)==Val{false} || (RT <: Complex)
-        Complex{ELT}
+    RT = Base.return_types(f,fill(numtype(domain),dim(domain)))
+    if length(RT) > 0
+        if isreal(Basis)==Val{false} || (RT[1] <: Complex)
+            Complex{ELT}
+        else
+            ELT
+        end
     else
-        ELT
+        if isreal(Basis) == Val{false}
+            Complex{ELT}
+        else
+            ELT
+        end
     end
 end
 

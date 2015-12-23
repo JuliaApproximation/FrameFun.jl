@@ -2,7 +2,7 @@
 
 
 # This might not be the best way to solve this problem
-function discretize_problem{T}(domain::AbstractDomain1d{T}, nt::Tuple{Integer}, tt::Tuple{T}, st::Tuple, Basis, ELT)
+function discretize_problem(domain::AbstractDomain1d, nt::Tuple, tt::Tuple, st::Tuple, Basis, ELT)
     discretize_problem(domain, nt[1], tt[1], st[1], Basis, ELT)
 end
 
@@ -129,16 +129,14 @@ default_frame_domain_2d{Basis}(::Type{Basis}) = Circle()
 default_frame_domain_3d{Basis}(::Type{Basis}) = Sphere()
 
 
-default_frame_n{Basis}(domain::AbstractDomain1d, ::Type{Basis}) = 20
-default_frame_n{Basis}(domain::AbstractDomain2d, ::Type{Basis}) = (10, 10)
-default_frame_n{Basis}(domain::AbstractDomain3d, ::Type{Basis}) = (3, 3, 3)
-
-default_frame_n(domain::AbstractDomain1d, ::Type{FourierBasis}) = 21
+default_frame_n(domain::AbstractDomain1d, Basis) = 20
+default_frame_n(domain::AbstractDomain2d, Basis) = (10, 10)
+default_frame_n(domain::AbstractDomain3d, Basis) = (3, 3, 3)
 
 
 function default_frame_n{Basis}(domain::TensorProductDomain, ::Type{Basis})
     s = [default_frame_n(domainlist(domain)[1], Basis)...]
-    for i = 2:length(domain)
+    for i = 2:tp_length(domain)
         s = [s; default_frame_n(domainlist(domain)[i], Basis)...]
     end
     s = round(Int,s/dim(domain))

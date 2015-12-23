@@ -3,6 +3,7 @@ module test_suite
 
 using BasisFunctions
 using FrameFuns
+using FixedSizeArrays
 using Base.Test
 FE=FrameFuns
 BA=BasisFunctions
@@ -16,9 +17,10 @@ Extensive = false
 ########
 
 # Keep track of successes, failures and errors
-global failures=0
-global successes=0
-global errors=0
+global failures = 0
+global successes = 0
+global errors = 0
+
 # Custom test handler
 custom_handler(r::Test.Success) = begin print_with_color(:green, "#\tSuccess "); println("on $(r.expr)"); global successes+=1;  end
 custom_handler(r::Test.Failure) = begin print_with_color(:red, "\"\tFailure "); println("on $(r.expr)\""); global failures+=1; end
@@ -27,27 +29,28 @@ custom_handler(r::Test.Error) = begin println("\"\t$(typeof(r.err)) in $(r.expr)
 
 
 # Check the accuracy of framefuns.
-function msqerror_tol(f::Function,F::FE.SetExpansion;vals::Int=200,tol=1e-6)
+function msqerror_tol(f::Function, F::FE.SetExpansion; vals::Int=200, tol=1e-6)
     T = numtype(F)
     N = dim(F)
 
     # Find the closest bounding grid around the domain
-    TB=FE.box(FE.domain(F))
+    TB = FE.box(FE.domain(F))
     
-    point=Array{T}(N)
-    elements=0
-    error=0
-    l=left(TB)
-    r=right(TB)
-    pvals = zeros(T,N)    
+    point = Array{T}(N)
+    elements = 0
+    error = 0
+    l = left(TB)
+    r = right(TB)
+    pvals_array = zeros(T,N)
     for i in 1:vals
-        for i=1:N,
-            pvals[i]=convert(T,rand())
+        for i = 1:N
+            pvals_array[i] = convert(T,rand())
         end
-        point=l+(r-l).*pvals
-        if FE.in(point,FE.domain(F))
-            elements+=1
-            error+=abs(f(point...)-F(point...))
+        pvals = Vec{N,T}(pvals_array)
+        point = l+(r-l).*pvals
+        if FE.in(point, FE.domain(F))
+            elements += 1
+            error += abs(f(point...)-F(point...))
             ## println("ratio ",f(point)/F(point...))
         end
     end
@@ -66,8 +69,8 @@ end
 #######
 
 
-
 Test.with_handler(custom_handler) do
+
 
     delimit("Algorithm Implementation and Accuracy")
     delimit("1D")
@@ -101,8 +104,8 @@ Test.with_handler(custom_handler) do
                             F = @timed( Fun(Basis, func, D; solver=solver, n=n, T=T) )
 
                             @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
-                            @test  msqerror_tol(func,F[1],tol=1e-7)
-                            if func==f
+                            @test  msqerror_tol(func, F[1], tol=1e-7)
+                            if func == f
                                 print("\t\t")
                             end
                         end
@@ -240,6 +243,8 @@ println()
 println("Succes rate:\t$successes/$(successes+failures+errors)")
 println("Failure rate:\t$failures/$(successes+failures+errors)")
 println("Error rate:\t$errors/$(successes+failures+errors)")
+
 (errors+failures)==0 || error("A total of $(failures+errors) tests failed")
+
 end
 

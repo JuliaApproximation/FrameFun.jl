@@ -27,34 +27,6 @@ custom_handler(r::Test.Error) = begin println("\"\t$(typeof(r.err)) in $(r.expr)
 #custom_handler(r::Test.Error) = Base.showerror(STDOUT,r); 
 
 
-# Check the accuracy of framefuns.
-function msqerror_tol(f::Function,F::FE.SetExpansion;vals::Int=200,tol=1e-6)
-    T = numtype(F)
-    N = dim(F)
-
-    # Find the closest bounding grid around the domain
-    TB=FE.box(FE.domain(F))
-    
-    point=Array{T}(N)
-    elements=0
-    error=0
-    l=left(TB)
-    r=right(TB)
-    pvals = zeros(T,N)    
-    for i in 1:vals
-        for i=1:N,
-            pvals[i]=convert(T,rand())
-        end
-        point=l+(r-l).*pvals
-        if FE.in(point,FE.domain(F))
-            elements+=1
-            error+=abs(f(point...)-F(point...))
-            ## println("ratio ",f(point)/F(point...))
-        end
-    end
-    @printf(" %3.2e",error/elements)
-    return error>0 ? error/elements<tol : false
-end
 
 function delimit(s::AbstractString)
     println("############")
@@ -143,17 +115,18 @@ Test.with_handler(custom_handler) do
     @test FE.left(2*Intervala)==2
     @test FE.right(Intervala/4)==0.75
     # Circle
-    C=Circle(2.0)
-    @test FE.in([1.4, 1.4],C)
-    @test !FE.in([1.5, 1.5],C)
-    @test FE.box(C)==FE.BBox((-2.0,-2.0),(2.0,2.0))
+    C = Circle(2.0)
+    @test FE.in([1.4, 1.4], C)
+    @test !FE.in([1.5, 1.5], C)
+    @test FE.box(C) == FE.BBox((-2.0,-2.0),(2.0,2.0))
     # This is certainly unwanted behavior! Due to method inheritance
     @test typeof(1.2*C)==typeof(C*1.2)
     # This is due to a wrong implementation in Scaled Domain
     @test FE.in([1.5,1.5],1.2*C)
     @test FE.in([1.5,1.5],C*1.2)
+
     #Square
-    D=Cube(2)
+    D = Cube(2)
     @test FE.in([0.9, 0.9],D)
     @test !FE.in([1.1, 1.1],D)
     @test FE.box(D)==FE.BBox((-1.0,-1.0),(1.0,1.0))
@@ -318,5 +291,6 @@ println("Succes rate:\t$successes/$(successes+failures+errors)")
 println("Failure rate:\t$failures/$(successes+failures+errors)")
 println("Error rate:\t$errors/$(successes+failures+errors)")
 (errors+failures)==0 || error("A total of $(failures+errors) tests failed")
+
 end
 

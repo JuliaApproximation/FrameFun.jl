@@ -17,6 +17,8 @@ import Base: eachindex, start, next, done, getindex, in
 
 import Base: show, showcompact, call, convert
 
+import BasisFunctions: ⊗
+
 import BasisFunctions: src, dest, matrix, matrix!, apply!, numtype
 
 import BasisFunctions: dim, index_dim, grid, left, right
@@ -27,11 +29,15 @@ import BasisFunctions: call_set, call_set!, call_expansion, call_expansion!
 
 import BasisFunctions: True, False
 
-import BasisFunctions: tp_length
+import BasisFunctions: tp_length, left, right
 
+import BasisFunctions: show_setexpansion
+
+# from box.jl
+export BBox, left, right
 
 # from domains.jl
-export Interval, Circle, Square, Cube, Sphere, Cylinder, atomium
+export Interval, Circle, Square, Cube, Sphere, Cylinder, atomium, ⊗, box
 
 export numtype
 
@@ -41,6 +47,11 @@ export ExpFun, ChebyFun, Fun, FrameFun
 # from domainframe.jl
 export DomainFrame, basis, call_set, call_set!
 
+# from fractal.jl
+export Mandelbrot, JuliaSet
+
+
+include("box.jl")
 
 include("domains.jl")
 

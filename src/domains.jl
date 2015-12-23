@@ -34,8 +34,8 @@ in(g::AbstractGrid, d::AbstractDomain) = evalgrid(g, d)
 left(d::AbstractDomain) = left(box(d))
 right(d::AbstractDomain) = right(box(d))
 
-left(d::AbstractDomain,index::Int) = left(box(d),index)
-right(d::AbstractDomain,index::Int) = right(box(d),index)
+left(d::AbstractDomain, index::Int) = left(box(d), index)
+right(d::AbstractDomain, index::Int) = right(box(d), index)
 
 #in{N}(m::NTuple{N}, d::AbstractDomain) = in(Grid(box(d), m), d)
 
@@ -140,7 +140,7 @@ right(d::Interval) = d.b
 
 (==)(d1::Interval,d2::Interval) = (d1.a == d2.a) && (d1.b == d2.b)
 
-box(d::Interval) = d
+box(d::Interval) = BBox(left(d), right(d))
 
 show(io::IO, d::Interval) = print(io, "the interval [", d.a, ", ", d.b, "]")
 
@@ -152,10 +152,10 @@ const unitinterval = Interval()
 ###############################################################################################
 
 immutable Circle{T} <: AbstractDomain{2,T}
-  radius    ::  T
-  center    ::  Vec{2,T}
+    radius    ::  T
+    center    ::  Vec{2,T}
 
-  Circle(radius = one(T), center = Vec{2,T}(zero(T),zero(T))) = new(radius, center)
+    Circle(radius = one(T), center = Vec{2,T}(0, 0)) = new(radius, center)
 end
 
 Circle() = Circle{Float64}()
@@ -191,11 +191,17 @@ const unitcircle = Circle()
 ###############################################################################################
 
 immutable Sphere{T} <: AbstractDomain{3,T}
-  radius    ::  T
-  center    ::  Vector{T}
+    radius    ::  T
+    center    ::  Vec{3,T}
+
+    Sphere(radius = one(T), center = Vec{3,T}(0, 0, 0)) = new(radius, center)
 end
 
-Sphere{T}(radius::T = 1.0, center::Vector{T} = zeros(T,3)) = Sphere{T}(radius, center)
+Sphere() = Sphere{Float64}()
+Sphere{T}(::Type{T}) = Sphere{T}()
+Sphere{T}(radius::T) = Sphere{T}(radius)
+Sphere{T}(radius::T, center::Vec{3,T}) = Sphere{T}(radius, center)
+Sphere{T}(radius::T, center::Vector{T}) = Sphere{T}(radius, center)
 
 in(x::AnyVector, s::Sphere) = (x[1]-s.center[1])^2 + (x[2]-s.center[2])^2 + (x[3]-s.center[3])^2 <= s.radius^2
 
@@ -240,8 +246,8 @@ immutable TensorProductDomain{TD,DN,LEN,N,T} <: AbstractDomain{N,T}
 	TensorProductDomain(domains::Tuple) = new(domains)
 end
 
-length{TD,DN,LEN,N,T}(::Type{TensorProductDomain{TD,DN,LEN,N,T}}) = LEN
-length(d::TensorProductDomain) = length(typeof(d))
+tp_length{TD,DN,LEN,N,T}(::Type{TensorProductDomain{TD,DN,LEN,N,T}}) = LEN
+tp_length(d::TensorProductDomain) = tp_length(typeof(d))
 
 function TensorProductDomain(domains...)
     TD = typeof(domains)
@@ -259,43 +265,93 @@ end
 
 tensorproduct(d::AbstractDomain, n) = TensorProductDomain([d for i=1:n]...)
 
-subdomain(t::TensorProductDomain,i::Int) = t.domains[i]
+subdomain(t::TensorProductDomain, i::Int) = t.domains[i]
 domainlist(t::TensorProductDomain) = t.domains
- 
-function in{TD,DN,LEN,N,T}(x::AnyVector, t::TensorProductDomain{TD,DN,LEN,N,T})
+
+# TODO: make this code for in more general!
+# The problem is you can't slice a Vec, so the implementation below for AbstractArray does not work
+# for FixedSizeArray's.
+# All implementations below allocate memory (arrays) except the first one.
+function in{TD,DN,N,T}(x::Vec{N,T}, t::TensorProductDomain{TD,DN,N,N,T})
+    z1 = true
+    for i = 1:N
+        z1 = z1 & in(x[i], t.domains[i])
+    end
+    z1
+end
+
+function in{TD,DN,T}(x::Vec{3,T}, t::TensorProductDomain{TD,DN,2,3,T})
+    N1 = DN[1]
+    N2 = DN[2]
+    d1 = subdomain(t, 1)
+    d2 = subdomain(t, 2)
+    x1 = Vec{N1,T}([x[j] for j=1:N1])
+    x2 = Vec{N2,T}([x[j] for j=N1+1:N1+N2])
+    in(x1, d1) && in(x2, d2)
+end
+
+function in{TD,DN,T}(x::Vec{4,T}, t::TensorProductDomain{TD,DN,2,4,T})
+    N1 = DN[1]
+    N2 = DN[2]
+    d1 = subdomain(t, 1)
+    d2 = subdomain(t, 2)
+    x1 = Vec{N1,T}([x[j] for j=1:N1])
+    x2 = Vec{N2,T}([x[j] for j=N1+1:N1+N2])
+    in(x1, d1) && in(x2, d2)
+end
+
+function in{TD,DN,T}(x::Vec{4,T}, t::TensorProductDomain{TD,DN,3,4,T})
+    d1 = subdomain(t, 1)
+    d2 = subdomain(t, 2)
+    d3 = subdomain(t, 3)
+    x1 = Vec{N1,T}([x[j] for j=1:N1])
+    x2 = Vec{N2,T}([x[j] for j=N1+1:N1+N2])
+    x3 = Vec{N3,T}([x[j] for j=N1+N2+1:N1+N2+N3])
+    in(x1, d1) && in(x2, d2) && in(x3, d3)
+end
+
+
+function in{TD,DN,LEN,N,T}(x::AbstractArray, t::TensorProductDomain{TD,DN,LEN,N,T})
     dc = 1
     z1 = true
-    for i= 1:LEN
+    for i = 1:LEN
         z2 = in(x[dc:dc+DN[i]-1],t.domains[i])
         z1 = z1 & z2
         dc+=DN[i]
     end
     z1
- end
+end
+
+# TODO: provide implementation of in for tensorproductgrids
  
 
 (==)(t1::TensorProductDomain, t2::TensorProductDomain) = t1.domains==t2.domains
 
 function box{TD,DN,LEN,N,T}(t::TensorProductDomain{TD,DN,LEN,N,T})
-    dc=1
-    verts=zeros(N,2)
-    for i=1:LEN
-        verts[dc:dc+DN[i]-1,1]=left(box(t.domains[i]))
-        verts[dc:dc+DN[i]-1,2]=right(box(t.domains[i]))
-        dc+=DN[i]
+    dc = 1
+    l = zeros(N)
+    r = zeros(N)
+    for i = 1:LEN
+        for j = 1:DN[i]
+            l[dc+j-1] = left(box(t.domains[i]), j)
+            r[dc+j-1] = right(box(t.domains[i]), j)
+        end
+        dc += DN[i]
     end
-    return BBox{N,T}(verts)
+    return BBox{N,T}(l, r)
 end
  
 
 function show(io::IO, t::TensorProductDomain)
-  LEN = length(t)
-    for i=1:LEN-1
+    L = tp_length(t)
+    for i = 1:L-1
         show(domainlist(t)[i])
         print(" x ")
     end
-    show(domainlist(t)[LEN])
+    show(domainlist(t)[L])
 end
+
+
 
 ###############################################################################################
 ### An n-dimensional cube
@@ -326,6 +382,8 @@ cube(a, b, c, d, e, f) = Interval(a,b) ⊗ Interval(c,d) ⊗ Interval(d,e)
 const unitsquare = Cube(Val{2})
 const unitcube = Cube(Val{3})
 
+
+
 ###############################################################################################
 ### A cylinder
 ###############################################################################################
@@ -334,17 +392,18 @@ const unitcube = Cube(Val{3})
 Cylinder{T}(radius::T = one(T), length::T = one(T)) = Circle(radius) ⊗ Interval(zero(T),length)
 
 
+
 ###############################################################################################
 ### The union of two domains
 ###############################################################################################
 
 # Type parameters N T D1 D2: dimension, numeric type, type of domain 1, type of domain 2.
-# A stricter definition would use triangular dispatch:
-# immutable DomainUnion{N, T, D1 <: AbstractDomain{N,T}, D2 <: AbstractDomain{N,T}} <: AbstractDomain{N,T}
 # TODO: Make this a union of a list of domains
 immutable DomainUnion{N,T,D1,D2} <: AbstractDomain{N,T}
-  d1    ::  D1
-  d2    ::  D2
+    d1    ::  D1
+    d2    ::  D2
+
+    DomainUnion(d1::AbstractDomain{N,T}, d2::AbstractDomain{N,T}) = new(d1, d2)
 end
 
 DomainUnion{N,T}(d1::AbstractDomain{N,T}, d2::AbstractDomain{N,T}) = DomainUnion{N,T,typeof(d1),typeof(d2)}(d1, d2)
@@ -369,9 +428,9 @@ end
 in(x::AnyVector, d::DomainUnion) = in(x, d.d1) || in(x, d.d2)
 
 function in(g::AbstractGrid, d::DomainUnion)
-  z1 = in(g, d.d1)
-  z2 = in(g, d.d2)
-  z1 | z2
+    z1 = in(g, d.d1)
+    z2 = in(g, d.d2)
+    z1 | z2
 end
 
 (+)(d1::AbstractDomain, d2::AbstractDomain) = join(d1,d2)
@@ -393,8 +452,10 @@ end
 ###############################################################################################
 
 immutable DomainIntersection{N,T,D1,D2} <: AbstractDomain{N,T}
-  d1    ::  D1
-  d2    ::  D2
+    d1    ::  D1
+    d2    ::  D2
+
+    DomainIntersection(d1::AbstractDomain{N,T}, d2::AbstractDomain{N,T}) = new(d1, d2)
 end
 
 DomainIntersection{N,T}(d1::AbstractDomain{N,T},d2::AbstractDomain{N,T}) = DomainIntersection{N,T,typeof(d1),typeof(d2)}(d1, d2)
@@ -403,9 +464,9 @@ DomainIntersection{N,T}(d1::AbstractDomain{N,T},d2::AbstractDomain{N,T}) = Domai
 in(x::AnyVector, d::DomainIntersection) = in(x, d.d1) && in(x, d.d2)
 
 function in(g::AbstractGrid, d::DomainIntersection)
-  z1 = in(g, d.d1)
-  z2 = in(g, d.d2)
-  z1 & z2
+    z1 = in(g, d.d1)
+    z2 = in(g, d.d2)
+    z1 & z2
 end
 
 (&)(d1::AbstractDomain, d2::AbstractDomain) = intersect(d1,d2)
@@ -441,8 +502,10 @@ end
 ###############################################################################################
 
 immutable DomainDifference{N,T,D1,D2} <: AbstractDomain{N,T}
-  d1    ::  D1
-  d2    ::  D2
+    d1    ::  D1
+    d2    ::  D2
+
+    DomainDifference(d1::AbstractDomain{N,T}, d2::AbstractDomain{N,T}) = new(d1, d2)
 end
 
 DomainDifference{N,T}(d1::AbstractDomain{N,T}, d2::AbstractDomain{N,T}) = DomainDifference{N,T,typeof(d1),typeof(d2)}(d1,d2)
@@ -475,7 +538,7 @@ end
 ###############################################################################################
 
 immutable RevolvedDomain{T,D} <: AbstractDomain{3,T}
-  d     ::  D
+    d     ::  D
 end
 
 revolve{T}(d::AbstractDomain{2,T}) = RevolvedDomain{T,typeof(d)}(d)
@@ -527,6 +590,8 @@ in(x::AnyVector, d::RotatedDomain) = in(d.rotationmatrix*x, d.d)
  # very crude bounding box (doesn't work!!!)
  box(r::RotatedDomain)= box(r.d)
 
+
+
 ###############################################################################################
 ### A scaled domain
 ###############################################################################################
@@ -550,6 +615,8 @@ end
 
 box(s::ScaledDomain)=s.scalefactor*box(s.d)
 
+
+
 ###############################################################################################
 ### A translated domain
 ###############################################################################################
@@ -570,6 +637,8 @@ end
 
 box(t::TranslatedDomain) = box(t.d)+trans
 
+
+
 ###############################################################################################
 ### A collection of domains
 ###############################################################################################
@@ -579,6 +648,10 @@ type DomainCollection{N,T} <: AbstractDomain{N,T}
 end
 
 DomainCollection{N,T}(d::AbstractDomain{N,T}) = DomainCollection{N,T}([d])
+
+length(d::DomainCollection) = length(d.list)
+
+domain(d::DomainCollection, i) = d.list[i]
 
 function in(x::AnyVector, d::DomainCollection)
     reduce( |, map( u -> in(x, u), d.list))
@@ -608,110 +681,72 @@ push!(dc::DomainCollection, d::AbstractDomain) = push!(dc.list, d)
  
 show(io::IO, d::DomainCollection) = print(io, "a collection of ", length(d.list), " domains")
 
-###############################################################################################
-### A domain Bounding box
- ###############################################################################################
 
-immutable BBox{N,T} <: AbstractDomain{N,T}
-  verts ::  Array{T,2}
-end
-
-
-BBox{T <: Number}(a::T, b::T) = Interval(a,b)
-
-BBox{N,T}(left::NTuple{N,T}, right::NTuple{N,T}) = BBox{N,T}([[left...] [right...]])
-
- BBox{T}(left::Array{T,1}, right::Array{T,1}) = BBox{length(left),T}([left right])
-
- # operations
-
-(+)(c::BBox, x::AnyVector) = BBox(c.verts .+ x)
-(+)(x::AnyVector, c::BBox) = c+x
-
-(*)(c::BBox, x::Number) = BBox(c.verts * x)
-(*)(x::Number, c::BBox) = c*x
-
-(/)(c::BBox, x::Number) = c * (1/x)
-
-(==)(c1::BBox, c2::BBox) = (c1.verts == c2.verts)
-
-show(io::IO, c::BBox{2}) = print(io, "the rectangular box [", c.verts[1,1], ",", c.verts[1,2], "] x [", c.verts[2,1], ",", c.verts[2,2], "]")
-
-show(io::IO, c::BBox{3}) = print(io, "the box [", c.verts[1,1], ",", c.verts[1,2], "] x [", c.verts[2,1], ",", c.verts[2,2], "] x [", c.verts[3,1], ",", c.verts[3,2], "]")
-
- # Duck typing : all bounding boxes 'must' implement just these methods
- left(c::BBox) = c.verts[:,1]
- right(c::BBox) = c.verts[:,2]
  
- left(c::BBox, index::Int) = c.verts[index,1]
- right(c::BBox, index::Int) = c.verts[index,2]
-join(c::BBox, d::BBox) = BBox(tuple(min(c.verts[:,1],d.verts[:,1])...),tuple(max(c.verts[:,2],d.verts[:,2])...)) 
-
-intersect(c::BBox, d::BBox) = BBox(tuple(max(c.verts[:,1],d.verts[:,1])...),tuple(min(c.verts[:,2],d.verts[:,2])...))
- 
- ##########################################################################
- ### Assorted Domains
 ##########################################################################
- 
+### Assorted Domains
+##########################################################################
+
+
 function randomcircles(n)
     list = [Circle(0.2, (2*rand(2)-1)*0.8) for i=1:n]
     DC = DomainCollection(list[1])
     for i = 2:n
         push!(DC.list, list[i])
     end
-    DC.box = FBox(-1.0, 1.0, -1.0, 1.0)
+    DC.box = BBox(-1.0, 1.0, -1.0, 1.0)
     DC
 end
 
 
 ###
-# The atomium
+# The atomium: a famous building in Belgium
 ###
 
 function atomium()
-  sphere1 = Sphere(0.25)
-  spheres = DomainCollection(sphere1)
-  push!(spheres, sphere1 + [ 0.6, 0.6, 0.6])
-  push!(spheres, sphere1 + [ 0.6, 0.6,-0.6])
-  push!(spheres, sphere1 + [ 0.6,-0.6, 0.6])
-  push!(spheres, sphere1 + [ 0.6,-0.6,-0.6])
-  push!(spheres, sphere1 + [-0.6, 0.6, 0.6])
-  push!(spheres, sphere1 + [-0.6, 0.6,-0.6])
-  push!(spheres, sphere1 + [-0.6,-0.6, 0.6])
-  push!(spheres, sphere1 + [-0.6,-0.6,-0.6])
-  cyl1 = Cylinder(0.10, 1.2)
-  push!(spheres, cyl1 + [-0.6, 0.6, 0.6]);
-  push!(spheres, cyl1 + [-0.6,-0.6, 0.6]);
-  push!(spheres, cyl1 + [-0.6, 0.6,-0.6]);
-  push!(spheres, cyl1 + [-0.6,-0.6,-0.6]);
-  cyl2 = rotate(cyl1, 0.0, 0.0, pi/2.0)
-  push!(spheres, cyl2 + [ 0.6, -0.6, 0.6])
-  push!(spheres, cyl2 + [-0.6, -0.6, 0.6])
-  push!(spheres, cyl2 + [ 0.6, -0.6,-0.6])
-  push!(spheres, cyl2 + [-0.6, -0.6,-0.6])
-  cyl2b = rotate(cyl1, 0.0, pi/2.0, 0.0)
-  push!(spheres, cyl2b + [ 0.6,  0.6, 0.6])
-  push!(spheres, cyl2b + [-0.6,  0.6, 0.6])
-  push!(spheres, cyl2b + [ 0.6, -0.6, 0.6])
-  push!(spheres, cyl2b + [-0.6, -0.6, 0.6])
-  cyl3 = Cylinder(0.10, 1.2*sqrt(3))
-  cyl3 = rotate(cyl3, 0.0, asin(1/sqrt(3)), 0.0)
-  cyl3 = rotate(cyl3, 0.0, 0.0, pi/4)
-  push!(spheres, cyl3 + [ -0.6, -0.6, +0.6])
-  cyl4 = Cylinder(0.10, 1.2*sqrt(3))
-  cyl4 = rotate(cyl4, 0.0, -asin(1/sqrt(3)), 0.0)
-  cyl4 = rotate(cyl4, 0.0, 0.0, pi/4)
-  push!(spheres, cyl4 + [ -0.6, -0.6, -0.6])
-  cyl5 = Cylinder(0.10, 1.2*sqrt(3))
-  cyl5 = rotate(cyl5, 0.0, asin(1/sqrt(3)), 0.0)
-  cyl5 = rotate(cyl5, 0.0, 0.0, -pi/4)
-  push!(spheres, cyl5 + [ -0.6, +0.6, +0.6])
-  cyl6 = Cylinder(0.10, 1.2*sqrt(3))
-  cyl6 = rotate(cyl6, 0.0, -asin(1/sqrt(3)), 0.0)
-  cyl6 = rotate(cyl6, 0.0, 0.0, -pi/4)
-  push!(spheres, cyl6 + [ -0.6, +0.6, -0.6])
-  spheres.box = unitbox3
-  atomium = spheres
+    sphere1 = Sphere(0.25)
+    spheres = DomainCollection(sphere1)
+    push!(spheres, sphere1 + [ 0.6, 0.6, 0.6])
+    push!(spheres, sphere1 + [ 0.6, 0.6,-0.6])
+    push!(spheres, sphere1 + [ 0.6,-0.6, 0.6])
+    push!(spheres, sphere1 + [ 0.6,-0.6,-0.6])
+    push!(spheres, sphere1 + [-0.6, 0.6, 0.6])
+    push!(spheres, sphere1 + [-0.6, 0.6,-0.6])
+    push!(spheres, sphere1 + [-0.6,-0.6, 0.6])
+    push!(spheres, sphere1 + [-0.6,-0.6,-0.6])
+    cyl1 = Cylinder(0.10, 1.2)
+    push!(spheres, cyl1 + [-0.6, 0.6, 0.6]);
+    push!(spheres, cyl1 + [-0.6,-0.6, 0.6]);
+    push!(spheres, cyl1 + [-0.6, 0.6,-0.6]);
+    push!(spheres, cyl1 + [-0.6,-0.6,-0.6]);
+    cyl2 = rotate(cyl1, 0.0, 0.0, pi/2.0)
+    push!(spheres, cyl2 + [ 0.6, -0.6, 0.6])
+    push!(spheres, cyl2 + [-0.6, -0.6, 0.6])
+    push!(spheres, cyl2 + [ 0.6, -0.6,-0.6])
+    push!(spheres, cyl2 + [-0.6, -0.6,-0.6])
+    cyl2b = rotate(cyl1, 0.0, pi/2.0, 0.0)
+    push!(spheres, cyl2b + [ 0.6,  0.6, 0.6])
+    push!(spheres, cyl2b + [-0.6,  0.6, 0.6])
+    push!(spheres, cyl2b + [ 0.6, -0.6, 0.6])
+    push!(spheres, cyl2b + [-0.6, -0.6, 0.6])
+    cyl3 = Cylinder(0.10, 1.2*sqrt(3))
+    cyl3 = rotate(cyl3, 0.0, asin(1/sqrt(3)), 0.0)
+    cyl3 = rotate(cyl3, 0.0, 0.0, pi/4)
+    push!(spheres, cyl3 + [ -0.6, -0.6, +0.6])
+    cyl4 = Cylinder(0.10, 1.2*sqrt(3))
+    cyl4 = rotate(cyl4, 0.0, -asin(1/sqrt(3)), 0.0)
+    cyl4 = rotate(cyl4, 0.0, 0.0, pi/4)
+    push!(spheres, cyl4 + [ -0.6, -0.6, -0.6])
+    cyl5 = Cylinder(0.10, 1.2*sqrt(3))
+    cyl5 = rotate(cyl5, 0.0, asin(1/sqrt(3)), 0.0)
+    cyl5 = rotate(cyl5, 0.0, 0.0, -pi/4)
+    push!(spheres, cyl5 + [ -0.6, +0.6, +0.6])
+    cyl6 = Cylinder(0.10, 1.2*sqrt(3))
+    cyl6 = rotate(cyl6, 0.0, -asin(1/sqrt(3)), 0.0)
+    cyl6 = rotate(cyl6, 0.0, 0.0, -pi/4)
+    push!(spheres, cyl6 + [ -0.6, +0.6, -0.6])
+    spheres.box = unitbox3
+    atomium = spheres
 end
 
 
