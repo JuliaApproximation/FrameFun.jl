@@ -14,6 +14,7 @@ suitable_subgrid(grid, domain, basis, m) = MaskedGrid(grid, domain)
 suitable_subgrid(grid, domain::Interval, ::Type{FourierBasis}, m) = IndexSubGrid(grid, 1, m)
 
 
+# We should be doing this adaptively, in order to guarantee a certain oversampling rate
 function discretize_problem{T}(domain::AbstractDomain1d{T}, n::Int, tt, st, Basis, ELT)
     m = round(Int, n.*st)+1
     t = convert(numtype(domain),(tt.*(m-1)/2).*(2./(m-1)))
