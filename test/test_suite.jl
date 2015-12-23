@@ -91,7 +91,7 @@ Test.with_handler(custom_handler) do
             for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
                 show(solver); println()
 
-                for n in [FE.default_frame_n(D, Basis) 100]
+                for n in [FE.default_frame_n(D, Basis) 201]
                     println("\tN = $n")
 
                     # There is some symmetry around T=2, test smaller and larger values
@@ -130,7 +130,7 @@ Test.with_handler(custom_handler) do
             for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
                 show(solver); println()
 
-                for n in [FE.default_frame_n(D, Basis) 49]
+                for n in [FE.default_frame_n(D, Basis) 99]
                     println("\tN = $n")
                     # There is some symmetry around T=2, test smaller and larger values
                     for T in [1.7 FE.default_frame_T(D, Basis) 2.3]
@@ -153,24 +153,25 @@ Test.with_handler(custom_handler) do
         end
     end
 
-    test_bigfloat = false
-    if test_bigfloat    
+    test_bigfloat = true
+    if test_bigfloat
         f(x) = cos(x.^2) - big(1.0)
         g(x) = big(1.0)im * cos(x.^2) - big(1.0)
-        Basis = FourierBasis
-        # Some BigFloat tests (ExpFun/DirectSolver only)
-        for D in [Interval(BigFloat(-3//2),BigFloat(7//10)) Interval(BigFloat(-3//2),BigFloat(-1//2))+Interval(BigFloat(1//2),BigFloat(3//2))]
-            show(D); print("\n")
-            for T in [BigFloat(17//10) FE.default_frame_T(D, Basis) BigFloat(23//10)]
-                print("T = $T \t")
-                for func in (f,g)
+        for Basis in (FourierBasis, ChebyshevBasis)
+            # Some BigFloat tests (ExpFun/DirectSolver only)
+            for D in [Interval(BigFloat(-3//2),BigFloat(7//10)) Interval(BigFloat(-3//2),BigFloat(-1//2))+Interval(BigFloat(1//2),BigFloat(3//2))]
+                show(D); print("\n")
+                for T in [BigFloat(17//10) FE.default_frame_T(D, Basis) BigFloat(23//10)]
+                    print("T = $T \t")
+                    for func in (f,g)
 
-                    F = @timed( ExpFun(func, D; solver = FE.FE_DirectSolver, n=35, T=T) )
+                        F = @timed( ExpFun(func, D; solver = FE.FE_DirectSolver, n=71, T=T) )
 
-                    @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
-                    @test  msqerror_tol(func,F[1],tol=1e-20)
-                    if func==f
-                        print("\t\t")
+                        @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
+                        @test  msqerror_tol(func,F[1],tol=1e-20)
+                        if func==f
+                            print("\t\t")
+                        end
                     end
                 end
             end
@@ -191,7 +192,7 @@ Test.with_handler(custom_handler) do
             for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
                 show(solver); println()
 
-                for n in ((5,5),)
+                for n in ((11,11),)
                     println("\tN = $n")
                     for T in (Extensive ? (FE.default_frame_T(D, Basis),) : ((1.7,1.7),FE.default_frame_T(D, Basis),(2.3,2.3)))
                         print("T = $T\t")
