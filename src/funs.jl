@@ -21,7 +21,7 @@ end
 """
 Construct an FE problem for the given domain, using default values if necessary.
 """
-function fe_problem{Basis <: FunctionSet,ELT}(domain, ::Type{Basis}, ::Type{ELT};
+function fe_problem(domain, Basis, ELT;
     n = default_frame_n(domain, Basis),
     T = default_frame_T(domain, Basis),
     s = default_frame_sampling(domain, Basis),
@@ -34,10 +34,6 @@ function fe_problem{Basis <: FunctionSet,ELT}(domain, ::Type{Basis}, ::Type{ELT}
     (problem, sol)
 end
 
-# Detect a suitable element type
-fe_problem(domain, Basis) = _fe_problem(domain, Basis, isreal(Basis))
-_fe_problem{N,T}(domain::AbstractDomain{N,T}, Basis, isreal::Type{True}) = fe_problem(domain, Basis, T)
-_fe_problem{N,T}(domain::AbstractDomain{N,T}, Basis, isreal::Type{False}) = fe_problem(domain, Basis, Complex{T})
 
 
 ExpFun(f::Function; args...) = Fun(FourierBasis, f; args...)

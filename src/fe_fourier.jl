@@ -47,7 +47,7 @@ end
 
 function discretize_problem{N,T}(domain::AbstractDomain{N,T}, nt::Tuple, tt::Tuple, st::Tuple, Basis, ELT)
     n = [nt...]
-    m = round(Int, [n...].*[st...])+1
+    m = round(Int, [nt...].*[st...])+1
     tt = round(Int,[tt...].*(m-1)/2).*(2./(m-1))
     l = round(Int, tt.*(m-1))
     fbasis1 = Array{Basis}(N)
@@ -118,8 +118,8 @@ default_frame_domain_2d(Basis) = Circle()
 default_frame_domain_3d(Basis) = Sphere()
 
 
-default_frame_n(domain::AbstractDomain1d, Basis) = 41
-default_frame_n(domain::AbstractDomain2d, Basis) = (21, 21)
+default_frame_n(domain::AbstractDomain1d, Basis) = 61
+default_frame_n(domain::AbstractDomain2d, Basis) = (31, 31)
 default_frame_n(domain::AbstractDomain3d, Basis) = (7, 7, 7)
 
 
@@ -144,5 +144,6 @@ default_frame_solver(domain, Basis) = FE_ProjectionSolver
 
 default_frame_solver{N}(domain::AbstractDomain{N,BigFloat}, Basis) = FE_DirectSolver
 
-default_frame_solver(domain::TensorProductDomain, Basis) = map(default_frame_solver, domainlist(domain))
+# Does not seem to work (anymore)
+#default_frame_solver(domain::TensorProductDomain, Basis) = map(default_frame_solver, domainlist(domain))
 

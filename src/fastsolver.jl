@@ -1,5 +1,11 @@
+# fastsolver.jl
 
-
+"""
+A fast FE solver based on a low-rank approximation of the plunge region. The plunge region
+is isolated using a projection operator.
+For more details, see the paper 'Fast algorithms for the computation of Fourier extensions of arbitrary length'
+http://arxiv.org/abs/1509.00206
+"""
 immutable FE_ProjectionSolver{ELT,SRC,DEST} <: FE_Solver{ELT,SRC,DEST}
     problem     ::  FE_DiscreteProblem
     plunge_op   ::  AbstractOperator    # store the operator because it allocates memory
@@ -20,15 +26,15 @@ immutable FE_ProjectionSolver{ELT,SRC,DEST} <: FE_Solver{ELT,SRC,DEST}
         ## println("min operator forward",minimum(svd(matrix(operator(problem).op2))[2]))
         ## println("max operator backward",maximum(svd(matrix(operator_transpose(problem).op2))[2]))
         ## println("min operator backward",minimum(svd(matrix(operator_transpose(problem).op2))[2]))
-        USV= svd(matrix(plunge_op * operator(problem) * W))
-        maxind=maximum(find(USV[2].>1e-12))
-        S=USV[2]
-        Sinv=1./S[1:maxind]
-        b=zeros(size(dest(plunge_op)))
-        y=zeros(size(USV[3],1))
-        x1=zeros(size(src(operator(problem))))
-        x2=zeros(size(src(operator(problem))))
-        sy=zeros(maxind,)
+        USV = svd(matrix(plunge_op * operator(problem) * W))
+        S = USV[2]
+        maxind = findlast(S.>1e-12)
+        Sinv = 1./S[1:maxind]
+        b = zeros(size(dest(plunge_op)))
+        y = zeros(size(USV[3],1))
+        x1 = zeros(size(src(operator(problem))))
+        x2 = zeros(size(src(operator(problem))))
+        sy = zeros(maxind,)
         new(problem, plunge_op, W, USV[1][:,1:maxind]',USV[3][:,1:maxind]*diagm(Sinv[:]),b,y,sy,x1,x2)
     end
 end
