@@ -11,6 +11,8 @@ using Base.Cartesian
 
 import Base: +, *, /, ==, |, &, -, \
 
+import Base: intersect, union, isapprox
+
 import Base: length, eltype, size, push!
 
 import Base: eachindex, start, next, done, getindex, in
@@ -35,9 +37,11 @@ import BasisFunctions: show_setexpansion
 
 # from box.jl
 export BBox, left, right
+export ⊂
 
 # from domains.jl
-export Interval, Circle, Square, Cube, Sphere, Cylinder, atomium, ⊗, box
+export Interval, Disk, Square, Cube, Ball, Cylinder, atomium, box
+export ⊗, ∩
 
 export numtype
 
@@ -51,6 +55,11 @@ export DomainFrame, basis, call_set, call_set!
 export Mandelbrot, JuliaSet
 
 
+
+# We support both vectors (AbstractVector) and FixedSizeArray's (Vec)
+typealias AnyVector Union{AbstractVector,Vec}
+
+
 include("box.jl")
 
 include("domains.jl")
@@ -59,13 +68,13 @@ include("subgrid.jl")
 
 include("domainframe.jl")
 
+include("funs.jl")
+
 include("fe_problem.jl")
 
 include("fe_solvers.jl")
 
 include("fastsolver.jl")
-
-include("funs.jl")
 
 include("fe_fourier.jl")
 

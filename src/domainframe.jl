@@ -26,4 +26,9 @@ for op in (:size, :length)
     @eval $op(f::DomainFrame, args...) = $op(f.basis, args...)
 end
 
+# Should we check whether x lies in the domain?
+call_set(fun::SetExpansion, s::DomainFrame, coef, x...) = call_expansion(basis(s), coef, x...)
+
+call_set!(result, fun::SetExpansion, s::DomainFrame, coef, x...) = call_expansion!(result, basis(s), coef, x...)
+
 

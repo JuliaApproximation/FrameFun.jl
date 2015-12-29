@@ -16,9 +16,6 @@ typealias AbstractDomain2d{T <: AbstractFloat} AbstractDomain{2,T}
 typealias AbstractDomain3d{T <: AbstractFloat} AbstractDomain{3,T}
 typealias AbstractDomain4d{T <: AbstractFloat} AbstractDomain{4,T}
 
-# We support both vectors (AbstractVector) and FixedSizeArray's (Vec)
-typealias AnyVector Union{AbstractVector,Vec}
-
 # Domains are evaluated using vectors to specify the points, except in 1D
 # Provide fallback routine for users not using vectors in 1d
 in{T,S <: Number}(x::S, d::AbstractDomain1d{T}) = in(Vec{1,S}(x), d)
@@ -151,77 +148,77 @@ const unitinterval = Interval()
 ### A circle
 ###############################################################################################
 
-immutable Circle{T} <: AbstractDomain{2,T}
+immutable Disk{T} <: AbstractDomain{2,T}
     radius    ::  T
     center    ::  Vec{2,T}
 
-    Circle(radius = one(T), center = Vec{2,T}(0, 0)) = new(radius, center)
+    Disk(radius = one(T), center = Vec{2,T}(0, 0)) = new(radius, center)
 end
 
-Circle() = Circle{Float64}()
-Circle{T}(::Type{T}) = Circle{T}()
-Circle{T}(radius::T) = Circle{T}(radius)
-Circle{T}(radius::T, center::Vec{2,T}) = Circle{T}(radius, center)
-Circle{T}(radius::T, center::Vector{T}) = Circle{T}(radius, center)
+Disk() = Disk{Float64}()
+Disk{T}(::Type{T}) = Disk{T}()
+Disk{T}(radius::T) = Disk{T}(radius)
+Disk{T}(radius::T, center::Vec{2,T}) = Disk{T}(radius, center)
+Disk{T}(radius::T, center::Vector{T}) = Disk{T}(radius, center)
 
-in{T}(x::AnyVector, c::Circle{T}) = (x[1]-c.center[1])^2 + (x[2]-c.center[2])^2 <= c.radius^2+10eps(T)
+in{T}(x::AnyVector, c::Disk{T}) = (x[1]-c.center[1])^2 + (x[2]-c.center[2])^2 <= c.radius^2+10eps(T)
 
 ## Arithmetic operations
 
-(+)(c::Circle, x::AnyVector) = Circle(c.radius, c.center+x)
-(+)(x::AnyVector, c::Circle) = c+x
+(+)(c::Disk, x::AnyVector) = Disk(c.radius, c.center+x)
+(+)(x::AnyVector, c::Disk) = c+x
 
-(*)(c::Circle, x::Number) = Circle(c.radius*x, c.center*x)
-(*)(x::Number, c::Circle) = c*x
+(*)(c::Disk, x::Number) = Disk(c.radius*x, c.center*x)
+(*)(x::Number, c::Disk) = c*x
 
-(/)(c::Circle, x::Number) = c * (1/x)
+(/)(c::Disk, x::Number) = c * (1/x)
 
-(==)(c1::Circle,c2::Circle) = (c1.radius == c2.radius) && (c1.center == c2.center)
+(==)(c1::Disk,c2::Disk) = (c1.radius == c2.radius) && (c1.center == c2.center)
 
-box(c::Circle) = BBox((c.center[1]-c.radius,c.center[2]-c.radius),(c.center[1]+c.radius,c.center[2]+c.radius))
+box(c::Disk) = BBox((c.center[1]-c.radius,c.center[2]-c.radius),(c.center[1]+c.radius,c.center[2]+c.radius))
 
-show(io::IO, c::Circle) = print(io, "a circle of radius ", c.radius, " centered at ", c.center)
+show(io::IO, c::Disk) = print(io, "a circle of radius ", c.radius, " centered at ", c.center)
 
-const unitcircle = Circle()
+const unitdisk = Disk()
 
 
 
 ###############################################################################################
-### A sphere
+### A 3D ball
 ###############################################################################################
 
-immutable Sphere{T} <: AbstractDomain{3,T}
+immutable Ball{T} <: AbstractDomain{3,T}
     radius    ::  T
     center    ::  Vec{3,T}
 
-    Sphere(radius = one(T), center = Vec{3,T}(0, 0, 0)) = new(radius, center)
+    Ball(radius = one(T), center = Vec{3,T}(0, 0, 0)) = new(radius, center)
 end
 
-Sphere() = Sphere{Float64}()
-Sphere{T}(::Type{T}) = Sphere{T}()
-Sphere{T}(radius::T) = Sphere{T}(radius)
-Sphere{T}(radius::T, center::Vec{3,T}) = Sphere{T}(radius, center)
-Sphere{T}(radius::T, center::Vector{T}) = Sphere{T}(radius, center)
+Ball() = Ball{Float64}()
+Ball{T}(::Type{T}) = Ball{T}()
+Ball{T}(radius::T) = Ball{T}(radius)
+Ball{T}(radius::T, center::Vec{3,T}) = Ball{T}(radius, center)
+Ball{T}(radius::T, center::Vector{T}) = Ball{T}(radius, center)
 
-in(x::AnyVector, s::Sphere) = (x[1]-s.center[1])^2 + (x[2]-s.center[2])^2 + (x[3]-s.center[3])^2 <= s.radius^2
+in(x::AnyVector, s::Ball) = (x[1]-s.center[1])^2 + (x[2]-s.center[2])^2 + (x[3]-s.center[3])^2 <= s.radius^2
 
 ## Arithmetic operations
 
-(+)(s::Sphere, x::AnyVector) = Sphere(s.radius, s.center+x)
-(+)(x::AnyVector, s::Sphere) = Sphere(s.radius, s.center+x)
+(+)(s::Ball, x::AnyVector) = Ball(s.radius, s.center+x)
+(+)(x::AnyVector, s::Ball) = Ball(s.radius, s.center+x)
 
-(*)(s::Sphere, x::Number) = Sphere(s.radius * x, s.center * x)
-(*)(x::Number, s::Sphere) = s*x
+(*)(s::Ball, x::Number) = Ball(s.radius * x, s.center * x)
+(*)(x::Number, s::Ball) = s*x
 
-(/)(s::Sphere, x::Number) = s * (1/x)
+(/)(s::Ball, x::Number) = s * (1/x)
 
-(==)(s1::Sphere, s2::Sphere) = (s1.radius == s2.radius) && (s1.center == s2.center)
+(==)(s1::Ball, s2::Ball) = (s1.radius == s2.radius) && (s1.center == s2.center)
 
-box(c::Sphere) = BBox((c.center[1]-c.radius,c.center[2]-c.radius,c.center[3]-c.radius),(c.center[1]+c.radius,c.center[2]+c.radius,c.center[3]+c.radius))
+box(c::Ball) = BBox((c.center[1]-c.radius,c.center[2]-c.radius,c.center[3]-c.radius),(c.center[1]+c.radius,c.center[2]+c.radius,c.center[3]+c.radius))
 
-show(io::IO, s::Sphere) = print(io, "a sphere of radius ", s.radius, " centered at ", s.center)
+show(io::IO, s::Ball) = print(io, "a sphere of radius ", s.radius, " centered at ", s.center)
 
-const unitsphere = Sphere()
+const unitsphere = Ball()
 
 
 
@@ -345,10 +342,10 @@ end
 function show(io::IO, t::TensorProductDomain)
     L = tp_length(t)
     for i = 1:L-1
-        show(domainlist(t)[i])
-        print(" x ")
+        show(io, domainlist(t)[i])
+        print(io, " x ")
     end
-    show(domainlist(t)[L])
+    show(io, domainlist(t)[L])
 end
 
 
@@ -389,7 +386,7 @@ const unitcube = Cube(Val{3})
 ###############################################################################################
 
 
-Cylinder{T}(radius::T = one(T), length::T = one(T)) = Circle(radius) ⊗ Interval(zero(T),length)
+Cylinder{T}(radius::T = one(T), length::T = one(T)) = Disk(radius) ⊗ Interval(zero(T),length)
 
 
 
@@ -408,9 +405,9 @@ end
 
 DomainUnion{N,T}(d1::AbstractDomain{N,T}, d2::AbstractDomain{N,T}) = DomainUnion{N,T,typeof(d1),typeof(d2)}(d1, d2)
 
-join(d1::AbstractDomain, d2::AbstractDomain) = (d1 == d2 ? d1 : DomainUnion(d1,d2))
+union(d1::AbstractDomain, d2::AbstractDomain) = (d1 == d2 ? d1 : DomainUnion(d1,d2))
 
-function join(d1::Interval, d2::Interval)
+function union(d1::Interval, d2::Interval)
     a = left(d1)
     b = right(d1)
     c = left(d2)
@@ -433,12 +430,12 @@ function in(g::AbstractGrid, d::DomainUnion)
     z1 | z2
 end
 
-(+)(d1::AbstractDomain, d2::AbstractDomain) = join(d1,d2)
-(|)(d1::AbstractDomain, d2::AbstractDomain) = join(d1,d2)
+(+)(d1::AbstractDomain, d2::AbstractDomain) = union(d1,d2)
+(|)(d1::AbstractDomain, d2::AbstractDomain) = union(d1,d2)
 
 (==)(d1::DomainUnion, d2::DomainUnion) = (d1.d1 == d2.d1) && (d1.d2 == d2.d2)
 
-box(d::DomainUnion) = BBox(min(left(d.d1),left(d.d2)),max(right(d.d1),right(d.d2)))
+box(d::DomainUnion) = box(d.d1) ∪ box(d.d2)
 
 function show(io::IO, d::DomainUnion)
     print(io, "A union of two domains: \n")
@@ -486,9 +483,13 @@ function intersect{T}(d1::Interval{T}, d2::Interval{T})
     end
 end
 
+intersect{TD1,TD2,DN,LEN}(d1::TensorProductDomain{TD1,DN,LEN}, d2::TensorProductDomain{TD2,DN,LEN}) =
+    TensorProductDomain([intersect(subdomain(d1,i), subdomain(d2,i)) for i in 1:LEN]...)
+
+
 (==)(d1::DomainIntersection, d2::DomainIntersection) = (d1.d1 == d2.d1) && (d1.d2 == d2.d2)
 
-box(d::DomainIntersection) = BBox(max(left(d.d1),left(d.d2)),min(right(d.d1),right(d.d2)))
+box(d::DomainIntersection) = box(d.d1) ∩ box(d.d2)
 
 function show(io::IO, d::DomainIntersection)
     print(io, "the intersection of two domains: \n")
@@ -587,8 +588,8 @@ in(x::AnyVector, d::RotatedDomain) = in(d.rotationmatrix*x, d.d)
 
 (==)(d1::RotatedDomain, d2::RotatedDomain) = (d1.d == d2.d) && (d1.angle == d2.angle) #&& (d1.rotationmatrix == d2.rotationmatrix)
 
- # very crude bounding box (doesn't work!!!)
- box(r::RotatedDomain)= box(r.d)
+# very crude bounding box (doesn't work!!!)
+box(r::RotatedDomain)= box(r.d)
 
 
 
@@ -600,20 +601,27 @@ in(x::AnyVector, d::RotatedDomain) = in(d.rotationmatrix*x, d.d)
 # So the location of the origin matters. Two times a circle of radius 1 at a distance d of the origin
 # becomes a circle of radius 2 at a distance 2d of the origin.
 immutable ScaledDomain{N,T,D} <: AbstractDomain{N,T}
-    d           ::  D
-    scalefactor ::  Number
+    domain      ::  D
+    scalefactor ::  T
+
+    ScaledDomain(domain::AbstractDomain{N,T}, scalefactor) = new(domain, scalefactor)
 end
 
-ScaledDomain{N,T}(d::AbstractDomain{N,T}, scalefactor) = ScaledDomain{N,T,typeof(d)}(d, scalefactor)
+ScaledDomain{N,T}(domain::AbstractDomain{N,T}, scalefactor) = ScaledDomain{N,T,typeof(domain)}(domain, scalefactor)
+
+domain(s::ScaledDomain) = d.domain
+
+scalefactor(s::ScaledDomain) = d.scalefactor
 
 function in(x::AnyVector, d::ScaledDomain)
-  in(x/d.scalefactor, d.d)
+    in(x/d.scalefactor, d.domain)
 end
 
-(*){N,T <: Number}(a::Number, d::AbstractDomain{N,T}) = ScaledDomain(d,a)
-(*){N,T <: Number}(d::AbstractDomain{N,T}, a::Number) = a*d
+(*)(a::Number, d::AbstractDomain) = ScaledDomain(d, a)
+(*)(a::Number, d::ScaledDomain) = ScaledDomain(domain(d), a*scalefactor(d))
+(*)(d::AbstractDomain, a::Number) = a*d
 
-box(s::ScaledDomain)=s.scalefactor*box(s.d)
+box(s::ScaledDomain) = s.scalefactor * box(s.domain)
 
 
 
@@ -622,20 +630,27 @@ box(s::ScaledDomain)=s.scalefactor*box(s.d)
 ###############################################################################################
 
 immutable TranslatedDomain{N,T,D} <: AbstractDomain{N,T}
-    d       ::  D
-    trans   ::  Vector{T}
+    domain  ::  D
+    trans   ::  Vec{N,T}
+
+    TranslatedDomain(domain::AbstractDomain{N,T}, trans) = new(domain, trans)
 end
 
-TranslatedDomain{N,T}(d::AbstractDomain{N,T}, trans::Vector{T}) = TranslatedDomain{N,T,typeof(d)}(d, trans)
+TranslatedDomain{N,T}(domain::AbstractDomain{N,T}, trans::AnyVector) = TranslatedDomain{N,T,typeof(domain)}(domain, trans)
+
+domain(d::TranslatedDomain) = d.domain
+
+translationvector(d::TranslatedDomain) = d.trans
 
 function in(x::AnyVector, d::TranslatedDomain)
-    in(x-d.trans, d.d)
+    in(x-d.trans, d.domain)
 end
 
-(+)(d::AbstractDomain, trans::AnyVector) = TranslatedDomain(d,trans)
+(+)(d::AbstractDomain, trans::AnyVector) = TranslatedDomain(d, trans)
+(+)(d::TranslatedDomain, trans::AnyVector) = TranslatedDomain(domain(d), trans+translationvector(d))
 (+)(trans::AnyVector, d::AbstractDomain) = d + a
 
-box(t::TranslatedDomain) = box(t.d)+trans
+box(d::TranslatedDomain) = box(domain(d)) + trans
 
 
 
@@ -673,7 +688,7 @@ push!(dc::DomainCollection, d::AbstractDomain) = push!(dc.list, d)
  function box(d::DomainCollection)
      ubox=box(d.list[1])
      for i = 2:length(d.list)
-         ubox=join(ubox,box(d.list[1]))
+         ubox = union(ubox, box(d.list[1]))
      end
      ubox
  end
@@ -689,7 +704,7 @@ show(io::IO, d::DomainCollection) = print(io, "a collection of ", length(d.list)
 
 
 function randomcircles(n)
-    list = [Circle(0.2, (2*rand(2)-1)*0.8) for i=1:n]
+    list = [Disk(0.2, (2*rand(2)-1)*0.8) for i=1:n]
     DC = DomainCollection(list[1])
     for i = 2:n
         push!(DC.list, list[i])
@@ -704,7 +719,7 @@ end
 ###
 
 function atomium()
-    sphere1 = Sphere(0.25)
+    sphere1 = Ball(0.25)
     spheres = DomainCollection(sphere1)
     push!(spheres, sphere1 + [ 0.6, 0.6, 0.6])
     push!(spheres, sphere1 + [ 0.6, 0.6,-0.6])

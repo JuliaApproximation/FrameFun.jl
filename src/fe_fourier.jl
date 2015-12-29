@@ -1,6 +1,63 @@
 # fe_fourier.jl
 
 
+"An ExpFun is a FrameFun based on Fourier series."
+ExpFun(f::Function; args...) = Fun(FourierBasis, f; args...)
+ExpFun(f::Function, domain; args...) = Fun(FourierBasis, f, domain; args...)
+
+"A ChebyFun is a FrameFun based on Chebyshev polynomials."
+ChebyFun(f::Function; args...) = Fun(ChebyshevBasis, f; args...)
+ChebyFun(f::Function, domain; args...) = Fun(ChebyshevBasis, f, domain; args...)
+
+
+function Fun{Basis <: FunctionSet}(::Type{Basis}, f::Function, domain = default_frame_domain_1d(); args...)
+    ELT = eltype(f, domain, Basis)
+    (problem,solver) = fe_problem(domain, Basis, ELT; args...)
+    coef = solve(solver, f, problem)
+    FrameFun(domain, frequency_basis(problem), coef)
+end
+
+
+function eltype{Basis <: AbstractBasis}(f::Function, domain, ::Type{Basis})
+    ELT = numtype(domain)
+    RT = Base.return_types(f,fill(numtype(domain),dim(domain)))
+    if length(RT) > 0
+        if isreal(Basis) == False || (RT[1] <: Complex)
+            Complex{ELT}
+        else
+            ELT
+        end
+    else
+        if isreal(Basis) == False
+            Complex{ELT}
+        else
+            ELT
+        end
+    end
+end
+
+
+
+"""
+Construct an FE problem for the given domain, using default values if necessary.
+"""
+function fe_problem(domain, Basis, ELT;
+    n = default_frame_n(domain, Basis),
+    T = default_frame_T(domain, Basis),
+    s = default_frame_sampling(domain, Basis),
+    solver = default_frame_solver(domain),
+    args...)
+    
+    problem = discretize_problem(domain, n, T, s, Basis, ELT)
+    sol = solver(problem)
+
+    (problem, sol)
+end
+
+
+
+
+
 # This might not be the best way to solve this problem
 function discretize_problem(domain::AbstractDomain1d, nt::Tuple, tt::Tuple, st::Tuple, Basis, ELT)
     discretize_problem(domain, nt[1], tt[1], st[1], Basis, ELT)
@@ -103,20 +160,14 @@ end
 for op in (:default_frame_1d, :default_frame_2d, :default_frame_3d)
     @eval $op() = $op(FourierBasis)
 end
+
 for op in (:default_frame_n, :default_frame_T, :default_frame_sampling, :default_frame_solver)
     @eval $op(domain) = $op(domain, FourierBasis)
 end
-default_frame_domain_1d() = default_frame_domain_1d(FourierBasis)
-default_frame_domain_2d() = default_frame_domain_2d(FourierBasis)
-default_frame_domain_3d() = default_frame_domain_3d(FourierBasis)
-default_frame_n(domain) = default_frame_n(domain, FourierBasis)
-default_frame_T(domain) = default_frame_T(domain, FourierBasis)
-default_frame_sampling(domain) = default_frame_sampling(domain, FourierBasis)
-default_frame_solver(domain) = default_frame_solver(domain, FourierBasis)
 
 default_frame_domain_1d(Basis) = Interval()
-default_frame_domain_2d(Basis) = Circle()
-default_frame_domain_3d(Basis) = Sphere()
+default_frame_domain_2d(Basis) = Disk()
+default_frame_domain_3d(Basis) = Ball()
 
 
 default_frame_n(domain::AbstractDomain1d, Basis) = 61

@@ -29,7 +29,7 @@ custom_handler(r::Test.Error) = begin println("\"\t$(typeof(r.err)) in $(r.expr)
 
 
 # Check the accuracy of framefuns.
-function msqerror_tol(f::Function, F::FE.SetExpansion; vals::Int=200, tol=1e-6)
+function msqerror_tol(f::Function, F; vals::Int=200, tol=1e-6)
     T = numtype(F)
     N = dim(F)
 
@@ -186,7 +186,7 @@ Test.with_handler(custom_handler) do
         println()
         println("## Basis: ", Basis)
 
-        for D in [Circle(2.0,[-2.0,-2.0]) Cube((-1.0,-1.5),(0.5,0.7))]
+        for D in [Disk(2.0,[-2.0,-2.0]) Cube((-1.0,-1.5),(0.5,0.7))]
             show(D); println()
 
             for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
@@ -219,7 +219,7 @@ Test.with_handler(custom_handler) do
         println()
         println("## Basis: ", Basis)
 
-        for D in (Cube((-0.2,-2.0,0.0),(1.0,-0.1,1.2)),FE.TensorProductDomain(Interval(-1.0,1.0),Circle(1.05)), FE.Sphere(1.2,[-1.3,0.25,1.0]))
+        for D in (Cube((-0.2,-2.0,0.0),(1.0,-0.1,1.2)),FE.TensorProductDomain(Interval(-1.0,1.0),Disk(1.05)), FE.Ball(1.2,[-1.3,0.25,1.0]))
             show(D); println()
             for solver in (FE.FE_ProjectionSolver, )
                 show(solver); println()

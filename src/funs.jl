@@ -1,77 +1,61 @@
 # funs.jl
 
-" A FrameFun is an expansion in a basis on a subset of its domain (i.e. in a DomainFrame)."
-typealias FrameFun{N,T,D,B,ELT,ID} SetExpansion{DomainFrame{D,B,N,T},ELT,ID}
+abstract AbstractFun
 
-domain(fun::SetExpansion) = domain(fun, set(fun))
-domain(fun::SetExpansion, s::DomainFrame) = domain(s)
+"""
+A FrameFun corresponds to an expansion in a function set, but it adds a simple user
+interface for computing with functions.
+"""
+immutable FrameFun <: AbstractFun
+    expansion   ::  SetExpansion
+end
 
-basis(fun::FrameFun) = basis(fun, set(fun))
-basis(fun::FrameFun, s::DomainFrame) = set(s)
+
+FrameFun{N,T}(domain::AbstractDomain{N,T}, basis::FunctionSet{N,T}, coefficients) =
+    FrameFun(SetExpansion(DomainFrame(domain, basis), coefficients))
+
+FrameFun(domain::AbstractDomain, basis::FunctionSet) = FrameFun(domain, basis, zeros(eltype(basis), size(basis)))
+
+expansion(fun::FrameFun) = fun.expansion
+
+for op in (:set, :dim, :coefficients, :eltype, :numtype)
+    @eval $op(fun::FrameFun) = $op(fun.expansion)
+end
+
+for op in (:domainframe, :domain, :basis)
+    @eval $op(fun::FrameFun) = $op(fun, set(fun))
+end
+
+domainframe(fun::FrameFun, set::DomainFrame) = set
+
+domain(fun::FrameFun, set::DomainFrame) = domain(set)
+
+basis(fun::FrameFun, set::DomainFrame) = basis(set)
 
 
-function show_setexpansion(io::IO, fun::SetExpansion, frame::DomainFrame)
+# Delegate all calling to the underlying expansion.
+call(fun::FrameFun, x...) = call(expansion(fun), x...)
+
+
+show(io::IO, fun::FrameFun) = show(io, fun, set(fun))
+
+function show(io::IO, fun::FrameFun, set::DomainFrame)
     println(io, "A ", dim(fun), "-dimensional FrameFun with ", length(coefficients(fun)), " degrees of freedom.")
-    println(io, "Basis: ", name(basis(frame)))
-    println(io, "Domain: ", domain(frame))
+    println(io, "Basis: ", name(basis(set)))
+    println(io, "Domain: ", domain(set))
+end
+
+getindex(fun::FrameFun, x...) = getindex(fun, set(fun), x...)
+
+function getindex(fun::FrameFun, set::DomainFrame, domain1::AbstractDomain)
+    @assert dim(fun) == dim(domain1)
+
+    domain2 = domain(fun)
+    newdomain = domain1 ∩ domain2
+    FrameFun(newdomain, basis(fun), coefficients(fun))
 end
 
 
 
-"""
-Construct an FE problem for the given domain, using default values if necessary.
-"""
-function fe_problem(domain, Basis, ELT;
-    n = default_frame_n(domain, Basis),
-    T = default_frame_T(domain, Basis),
-    s = default_frame_sampling(domain, Basis),
-    solver = default_frame_solver(domain),
-    args...)
-    
-    problem = discretize_problem(domain, n, T, s, Basis, ELT)
-    sol = solver(problem)
-
-    (problem, sol)
-end
-
-
-
-ExpFun(f::Function; args...) = Fun(FourierBasis, f; args...)
-ExpFun(f::Function, domain; args...) = Fun(FourierBasis, f, domain; args...)
-
-ChebyFun(f::Function; args...) = Fun(ChebyshevBasis, f; args...)
-ChebyFun(f::Function, domain; args...) = Fun(ChebyshevBasis, f, domain; args...)
-
-
-function Fun{Basis <: FunctionSet}(::Type{Basis}, f::Function, domain = default_frame_domain_1d(); args...)
-    ELT = eltype(f, domain, Basis)
-    (problem,solver) = fe_problem(domain, Basis, ELT; args...)
-    solve(solver, f, problem)
-end
-
-
-function eltype{Basis <: AbstractBasis}(f::Function, domain, ::Type{Basis})
-    ELT = numtype(domain)
-    RT = Base.return_types(f,fill(numtype(domain),dim(domain)))
-    if length(RT) > 0
-        if isreal(Basis)==Val{false} || (RT[1] <: Complex)
-            Complex{ELT}
-        else
-            ELT
-        end
-    else
-        if isreal(Basis) == Val{false}
-            Complex{ELT}
-        else
-            ELT
-        end
-    end
-end
-
-
-#call(fun::FrameFun, x...) = in([x[i] for i=1:length(x)], domain(fun)) ? call(fun.expansion, x...) : NaN
-call_set(fun::SetExpansion, s::DomainFrame, coef, x...) = call_expansion(basis(s), coef, x...)
-
-call_set!(result, fun::SetExpansion, s::DomainFrame, coef, x...) = call_expansion!(result, basis(s), coef, x...)
 
 

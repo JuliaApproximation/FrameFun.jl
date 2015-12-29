@@ -76,8 +76,8 @@ function solve!{T}(s::FE_ProjectionSolver, coef::AbstractArray{T}, rhs::Abstract
     #x2 = reshape(s.W * y,size(src(A)))
     apply!(A,s.b,s.x2)
     apply!(At,s.x1,rhs-s.b)
-    for i=1:length(coef)
-        coef[i]=s.x1[i]+s.x2[i]
+    for i = 1:length(coef)
+        coef[i] = s.x1[i] + s.x2[i]
     end
 end
 
@@ -93,8 +93,8 @@ end
     #x2 = reshape(s.W * y,size(src(A)))
     apply!(A,s.b,s.x2)
     apply!(At,s.x1,coef_src-s.b)
-    for i=1:length(coef_dest)
-        coef_dest[i]=s.x1[i]+s.x2[i]
+    for i = 1:length(coef_dest)
+        coef_dest[i] = s.x1[i] + s.x2[i]
     end
 end
 

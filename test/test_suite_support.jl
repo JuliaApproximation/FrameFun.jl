@@ -5,8 +5,8 @@ module test_suite_support
 using BasisFunctions
 using FrameFuns
 using Base.Test
-FE=FrameFuns
-BA=BasisFunctions
+FE = FrameFuns
+BA = BasisFunctions
 
 ## Settings
 
@@ -50,7 +50,7 @@ function test_subgrids()
     G1 = EquispacedGrid(n, -1.0, 1.0)
     G2 = EquispacedGrid(n, -1.0, 1.0)
     TensorG = G1 ⊗ G2
-    C = Circle(1.0)
+    C = Disk(1.0)
     circle_grid = FE.MaskedGrid(TensorG, C)
     @test (length(circle_grid)/length(TensorG)-pi*0.25) < 0.01
 
@@ -114,8 +114,8 @@ Test.with_handler(custom_handler) do
     @test FE.left(Intervala)==1
     @test FE.left(2*Intervala)==2
     @test FE.right(Intervala/4)==0.75
-    # Circle
-    C = Circle(2.0)
+    # Disk
+    C = Disk(2.0)
     @test FE.in([1.4, 1.4], C)
     @test !FE.in([1.5, 1.5], C)
     @test FE.box(C) == FE.BBox((-2.0,-2.0),(2.0,2.0))
@@ -130,22 +130,22 @@ Test.with_handler(custom_handler) do
     @test FE.in([0.9, 0.9],D)
     @test !FE.in([1.1, 1.1],D)
     @test FE.box(D)==FE.BBox((-1.0,-1.0),(1.0,1.0))
-    DS=FE.join(D,C)
+    DS=FE.union(D,C)
     #Cube
     D=Cube((-1.5,0.5,-3.0),(2.2,0.7,-1.0))
     @test FE.in([0.9, 0.6, -2.5],D)
     @test !FE.in([0.0, 0.6, 0.0],D)
     @test FE.box(D)==FE.BBox((-1.5,0.5,-3.0),(2.2,0.7,-1.0))
 
-    #Sphere
-    S=Sphere(2.0)
+    #Ball
+    S=Ball(2.0)
     @test FE.in([1.9,0.0,0.0],S)
     @test FE.in([0,-1.9,0.0],S)
     @test FE.in([0.0,0.0,-1.9],S)
     @test !FE.in([1.9,1.9,0.0],S)
     @test FE.box(S)==FE.BBox((-2.0,-2.0,-2.0),(2.0,2.0,2.0))
     # joint domain
-    DS=FE.join(D,S)
+    DS=FE.union(D,S)
     @test FE.in([0.0,0.6,0.0],DS)
     @test FE.in([0.9, 0.6, -2.5],DS)
     @test FE.box(DS)==FE.BBox((-2.0,-2.0,-3.0),(2.2,2.0,2.0))
@@ -164,7 +164,7 @@ Test.with_handler(custom_handler) do
     @test !FE.in([-1.1,0.3],T)
 
     # TensorProductDomain 2
-    T=FE.TensorProductDomain(Circle(1.05),Interval(-1.0,1.0))
+    T=FE.TensorProductDomain(Disk(1.05),Interval(-1.0,1.0))
     @test FE.in([0.5,0.5,0.8],T)
     @test !FE.in([-1.1,0.3,0.1],T)
 
@@ -265,7 +265,7 @@ Test.with_handler(custom_handler) do
     ## @test @allocated(FE.apply!(op,coef_dest,coef_src)) <1081
     ## @test @allocated(FE.apply!(opt,coef_src,coef_dest)) <1081
     ## delimit("2D")
-    ## C=Circle(1.0)
+    ## C=Disk(1.0)
     ## for n=[10,100,200]
     ##     problem = FE.discretize_problem(C,(n,n),(2.0,2.0),(2.0,2.0),FourierBasis,Complex{Float64})
     ##     op=operator(problem)
