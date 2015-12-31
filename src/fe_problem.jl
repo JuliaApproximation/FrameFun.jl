@@ -45,15 +45,18 @@ immutable FE_DiscreteProblem{N,T} <: FE_Problem{N,T}
     itransform1         # from fbasis1 to tbasis1
     transform2          # from tbasis2 to fbasis2
     itransform2         # from fbasis2 to tbasis2
+
+    normalization       # transform normalization operator
 end
 
 #FE_DiscreteProblem{N,T}(domain::AbstractDomain{N,T}, otherargs...) =
 #    FE_DiscreteProblem{N,T}(domain, otherargs...)
 
 
-function FE_DiscreteProblem{T}(domain::AbstractDomain{1,T}, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted)
-    f_extension = extension_operator(fbasis1, fbasis2)
-    f_restriction = restriction_operator(fbasis2, fbasis1)
+function FE_DiscreteProblem(domain::AbstractDomain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted)
+    ELT = promote_type(eltype(tbasis_restricted), eltype(fbasis1))
+    f_extension = extension_operator(fbasis1, fbasis2, ELT)
+    f_restriction = restriction_operator(fbasis2, fbasis1, ELT)
 
     t_extension = extension_operator(tbasis_restricted, tbasis2)
     t_restriction = restriction_operator(tbasis2, tbasis_restricted)
@@ -63,34 +66,16 @@ function FE_DiscreteProblem{T}(domain::AbstractDomain{1,T}, fbasis1, fbasis2, tb
     transform2 = transform_operator(tbasis2, fbasis2)
     itransform2 = transform_operator(fbasis2, tbasis2)
 
-    op  = t_restriction * itransform2 * f_extension
-    opt = f_restriction * transform2 * t_extension
-
-    FE_DiscreteProblem(domain, op, opt, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted,
-        f_extension, f_restriction, t_extension, t_restriction,
-        transform1, itransform1, transform2, itransform2)
-end
-
-
-function FE_DiscreteProblem{N,T}(domain::AbstractDomain{N,T}, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted)
-    f_extension = extension_operator(fbasis1, fbasis2, eltype(tbasis_restricted))
-    f_restriction = restriction_operator(fbasis2, fbasis1, eltype(tbasis_restricted))
-
-    t_extension = extension_operator(tbasis_restricted, tbasis2)
-    t_restriction = restriction_operator(tbasis2, tbasis_restricted)
-
-    transform1 = transform_operator(tbasis1, fbasis1)
-    itransform1 = transform_operator(fbasis1, tbasis1)
-    transform2 = transform_operator(tbasis2, fbasis2)
-    itransform2 = transform_operator(fbasis2, tbasis2)
+    normalization = transform_normalization_operator(fbasis1, fbasis2, ELT)
 
     op  = t_restriction * itransform2 * f_extension
     opt = f_restriction * transform2 * t_extension
 
     FE_DiscreteProblem(domain, op, opt, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted,
         f_extension, f_restriction, t_extension, t_restriction,
-        transform1, itransform1, transform2, itransform2)
+        transform1, itransform1, transform2, itransform2, normalization)
 end
+
 
 
 domain(p::FE_DiscreteProblem) = p.domain
@@ -98,6 +83,8 @@ domain(p::FE_DiscreteProblem) = p.domain
 operator(p::FE_DiscreteProblem) = p.op
 
 operator_transpose(p::FE_DiscreteProblem) = p.opt
+
+normalization(p::FE_DiscreteProblem) = p.normalization
 
 frequency_basis(p::FE_DiscreteProblem) = p.fbasis1
 frequency_basis_ext(p::FE_DiscreteProblem) = p.fbasis2
@@ -204,6 +191,7 @@ end
 
 # This code needs a revision.
 # What is the true (generic) meaning of transform_normalization_operator when there is a source and a destination?
+# We also have to do something about the types added as arguments here.
 transform_normalization_operator(src::TensorProductSet, dest::TensorProductSet, ELT) =
     TensorProductOperator(ELT, [transform_normalization_operator(set(src,i), set(dest,i), ELT) for i in 1:tp_length(src)]...)
 
