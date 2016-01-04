@@ -34,7 +34,7 @@ function msqerror_tol(f::Function, F; vals::Int=200, tol=1e-6)
     N = dim(F)
 
     # Find the closest bounding grid around the domain
-    TB = FE.box(FE.domain(F))
+    TB = FE.boundingbox(FE.domain(F))
     
     point = Array{T}(N)
     elements = 0
@@ -236,7 +236,6 @@ Test.with_handler(custom_handler) do
             end
         end
     end
-        
 end
 
 # Diagnostics

@@ -28,13 +28,13 @@ in{T <: AbstractFloat, S <: Number}(x::S, a::T, b::T) = (a-10eps(T) <= x <= b+10
 in(g::AbstractGrid, d::AbstractDomain) = evalgrid(g, d)
 
 # left and right of domains falls back to bounding box domains
-left(d::AbstractDomain) = left(box(d))
-right(d::AbstractDomain) = right(box(d))
+left(d::AbstractDomain) = left(boundingbox(d))
+right(d::AbstractDomain) = right(boundingbox(d))
 
-left(d::AbstractDomain, index::Int) = left(box(d), index)
-right(d::AbstractDomain, index::Int) = right(box(d), index)
+left(d::AbstractDomain, index::Int) = left(boundingbox(d), index)
+right(d::AbstractDomain, index::Int) = right(boundingbox(d), index)
 
-#in{N}(m::NTuple{N}, d::AbstractDomain) = in(Grid(box(d), m), d)
+#in{N}(m::NTuple{N}, d::AbstractDomain) = in(Grid(boundingbox(d), m), d)
 
 # Default methods for evaluation on a grid: the default is to call eval on the domain with 
 # points as arguments. Domains that have faster grid evaluation routines may define their own version.
@@ -137,7 +137,7 @@ right(d::Interval) = d.b
 
 (==)(d1::Interval,d2::Interval) = (d1.a == d2.a) && (d1.b == d2.b)
 
-box(d::Interval) = BBox(left(d), right(d))
+boundingbox(d::Interval) = BBox(left(d), right(d))
 
 show(io::IO, d::Interval) = print(io, "the interval [", d.a, ", ", d.b, "]")
 
@@ -175,7 +175,7 @@ in{T}(x::AnyVector, c::Disk{T}) = (x[1]-c.center[1])^2 + (x[2]-c.center[2])^2 <=
 
 (==)(c1::Disk,c2::Disk) = (c1.radius == c2.radius) && (c1.center == c2.center)
 
-box(c::Disk) = BBox((c.center[1]-c.radius,c.center[2]-c.radius),(c.center[1]+c.radius,c.center[2]+c.radius))
+boundingbox(c::Disk) = BBox((c.center[1]-c.radius,c.center[2]-c.radius),(c.center[1]+c.radius,c.center[2]+c.radius))
 
 show(io::IO, c::Disk) = print(io, "a circle of radius ", c.radius, " centered at ", c.center)
 
@@ -214,7 +214,7 @@ in(x::AnyVector, s::Ball) = (x[1]-s.center[1])^2 + (x[2]-s.center[2])^2 + (x[3]-
 
 (==)(s1::Ball, s2::Ball) = (s1.radius == s2.radius) && (s1.center == s2.center)
 
-box(c::Ball) = BBox((c.center[1]-c.radius,c.center[2]-c.radius,c.center[3]-c.radius),(c.center[1]+c.radius,c.center[2]+c.radius,c.center[3]+c.radius))
+boundingbox(c::Ball) = BBox((c.center[1]-c.radius,c.center[2]-c.radius,c.center[3]-c.radius),(c.center[1]+c.radius,c.center[2]+c.radius,c.center[3]+c.radius))
 
 show(io::IO, s::Ball) = print(io, "a sphere of radius ", s.radius, " centered at ", s.center)
 
@@ -324,14 +324,14 @@ end
 
 (==)(t1::TensorProductDomain, t2::TensorProductDomain) = t1.domains==t2.domains
 
-function box{TD,DN,LEN,N,T}(t::TensorProductDomain{TD,DN,LEN,N,T})
+function boundingbox{TD,DN,LEN,N,T}(t::TensorProductDomain{TD,DN,LEN,N,T})
     dc = 1
     l = zeros(N)
     r = zeros(N)
     for i = 1:LEN
         for j = 1:DN[i]
-            l[dc+j-1] = left(box(t.domains[i]), j)
-            r[dc+j-1] = right(box(t.domains[i]), j)
+            l[dc+j-1] = left(boundingbox(t.domains[i]), j)
+            r[dc+j-1] = right(boundingbox(t.domains[i]), j)
         end
         dc += DN[i]
     end
@@ -435,7 +435,7 @@ end
 
 (==)(d1::DomainUnion, d2::DomainUnion) = (d1.d1 == d2.d1) && (d1.d2 == d2.d2)
 
-box(d::DomainUnion) = box(d.d1) ∪ box(d.d2)
+boundingbox(d::DomainUnion) = boundingbox(d.d1) ∪ boundingbox(d.d2)
 
 function show(io::IO, d::DomainUnion)
     print(io, "A union of two domains: \n")
@@ -489,7 +489,7 @@ intersect{TD1,TD2,DN,LEN}(d1::TensorProductDomain{TD1,DN,LEN}, d2::TensorProduct
 
 (==)(d1::DomainIntersection, d2::DomainIntersection) = (d1.d1 == d2.d1) && (d1.d2 == d2.d2)
 
-box(d::DomainIntersection) = box(d.d1) ∩ box(d.d2)
+boundingbox(d::DomainIntersection) = boundingbox(d.d1) ∩ boundingbox(d.d2)
 
 function show(io::IO, d::DomainIntersection)
     print(io, "the intersection of two domains: \n")
@@ -525,7 +525,7 @@ end
 
 (==)(d1::DomainDifference, d2::DomainDifference) = (d1.d1 == d2.d1) && (d1.d2 == d2.d2)
 
-box(d::DomainDifference) = box(d.d1)
+boundingbox(d::DomainDifference) = boundingbox(d.d1)
 
 function show(io::IO, d::DomainDifference)
     print(io, "the difference of two domains: \n")
@@ -553,7 +553,7 @@ end
 
 (==)(d1::RevolvedDomain, d2::RevolvedDomain) = (d1.d == d2.d)
 
-box(d::RevolvedDomain) = BBox((left(d.d)[1],left(d.d)...),(right(d.d)[1],right(d.d)...))
+boundingbox(d::RevolvedDomain) = BBox((left(d.d)[1],left(d.d)...),(right(d.d)[1],right(d.d)...))
 
 function show(io::IO, r::RevolvedDomain)
     print(io, "the revolution of: ", r.d1)
@@ -589,7 +589,7 @@ in(x::AnyVector, d::RotatedDomain) = in(d.rotationmatrix*x, d.d)
 (==)(d1::RotatedDomain, d2::RotatedDomain) = (d1.d == d2.d) && (d1.angle == d2.angle) #&& (d1.rotationmatrix == d2.rotationmatrix)
 
 # very crude bounding box (doesn't work!!!)
-box(r::RotatedDomain)= box(r.d)
+boundingbox(r::RotatedDomain)= boundingbox(r.d)
 
 
 
@@ -621,7 +621,7 @@ end
 (*)(a::Number, d::ScaledDomain) = ScaledDomain(domain(d), a*scalefactor(d))
 (*)(d::AbstractDomain, a::Number) = a*d
 
-box(s::ScaledDomain) = s.scalefactor * box(s.domain)
+boundingbox(s::ScaledDomain) = s.scalefactor * boundingbox(s.domain)
 
 
 
@@ -650,7 +650,7 @@ end
 (+)(d::TranslatedDomain, trans::AnyVector) = TranslatedDomain(domain(d), trans+translationvector(d))
 (+)(trans::AnyVector, d::AbstractDomain) = d + a
 
-box(d::TranslatedDomain) = box(domain(d)) + trans
+boundingbox(d::TranslatedDomain) = boundingbox(domain(d)) + trans
 
 
 
@@ -685,10 +685,10 @@ push!(dc::DomainCollection, d::AbstractDomain) = push!(dc.list, d)
 
 (==)(d1::DomainCollection, d2::DomainCollection) = reduce(&, map( (x,y) -> x==y, d1.list, d2.list))
 
- function box(d::DomainCollection)
-     ubox=box(d.list[1])
+ function boundingbox(d::DomainCollection)
+     ubox=boundingbox(d.list[1])
      for i = 2:length(d.list)
-         ubox = union(ubox, box(d.list[1]))
+         ubox = union(ubox, boundingbox(d.list[1]))
      end
      ubox
  end

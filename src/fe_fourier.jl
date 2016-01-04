@@ -64,14 +64,8 @@ function discretize_problem(domain::AbstractDomain1d, nt::Tuple, tt::Tuple, st::
 end
 
 
-# This routine allows to generalize discretize_problem, but it is very specific.
-# TODO: make this more general. The parameter 'm' is rather ugly.
-suitable_subgrid(grid, domain, basis, m) = MaskedGrid(grid, domain)
-
-suitable_subgrid(grid, domain::Interval, ::Type{FourierBasis}, m) = IndexSubGrid(grid, 1, m)
 
 
-# We should be doing this adaptively, in order to guarantee a certain oversampling rate
 function discretize_problem{T}(domain::AbstractDomain1d{T}, n::Int, tt, st, Basis, ELT)
     m = round(Int, n.*st)+1
     t = convert(numtype(domain),(tt.*(m-1)/2).*(2./(m-1)))
@@ -83,24 +77,17 @@ function discretize_problem{T}(domain::AbstractDomain1d{T}, n::Int, tt, st, Basi
     b = right(domain)
 
     fbasis1 = Basis(n, a, b + (b-a)*(t-1))
-    fbasis2 = Basis(l, a, b + (b-a)*(t-1))
 
+    # Compute the reduced grid and a larger basis, based on the oversampling factor
+    rgrid, fbasis2 = oversampled_grid(domain, fbasis1, st)
     grid1 = grid(fbasis1)
     grid2 = grid(fbasis2)
-
-    # For FourierBasis and Interval:
-    #rgrid = IndexSubGrid(grid2, 1, m)
-    # For anything else:
-    #rgrid = MaskedGrid(grid2, domain)
-    rgrid = suitable_subgrid(grid2, domain, Basis, m)
     
     tbasis1 = DiscreteGridSpace(grid1, ELT)
     tbasis2 = DiscreteGridSpace(grid2, ELT)
-    
     tbasis_restricted = DiscreteGridSpace(rgrid, ELT)
 
     FE_DiscreteProblem(domain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted)
-    
 end
 
 function discretize_problem{N,T}(domain::AbstractDomain{N,T}, nt::Tuple, tt::Tuple, st::Tuple, Basis, ELT)
@@ -108,27 +95,23 @@ function discretize_problem{N,T}(domain::AbstractDomain{N,T}, nt::Tuple, tt::Tup
     m = round(Int, [nt...].*[st...])+1
     tt = round(Int,[tt...].*(m-1)/2).*(2./(m-1))
     l = round(Int, tt.*(m-1))
-    fbasis1 = Array{Basis}(N)
-    fbasis2 = Array{Basis}(N)
-    bbox = box(domain)
+    fbasis1_list = Array{Basis}(N)
+    bbox = boundingbox(domain)
     for i=1:N
         t = (l[1]*one(T))/((m[1]-1)*one(T))
-        fbasis1[i] = Basis(n[i], left(bbox)[i], right(bbox)[i] + (right(bbox)[i]-left(bbox)[i])*(t-1))
-        fbasis2[i] = Basis(l[i], left(bbox)[i], right(bbox)[i] + (right(bbox)[i]-left(bbox)[i])*(t-1))
+        fbasis1_list[i] = Basis(n[i], left(bbox)[i], right(bbox)[i] + (right(bbox)[i]-left(bbox)[i])*(t-1))
     end
-    tens_fbasis1 = TensorProductSet(fbasis1...)
-    tens_fbasis2 = TensorProductSet(fbasis2...)
+    fbasis1 = TensorProductSet(fbasis1_list...)
 
-    tens_grid1 = TensorProductGrid(map(grid, fbasis1)...)
-    tens_grid2 = TensorProductGrid(map(grid, fbasis2)...)
+    rgrid, fbasis2 = oversampled_grid(domain, fbasis1, st[1])
+    grid1 = grid(fbasis1)
+    grid2 = grid(fbasis2)
 
-    tens_rgrid = TensorProductGrid(ntuple(i->IndexSubGrid(grid(fbasis2[i]), 1, m[i]), N)...)
-    tens_tbasis1 = TensorProductSet(map(x->DiscreteGridSpace(grid(x),ELT), fbasis1)...)
-    tens_tbasis2 = TensorProductSet(map(x->DiscreteGridSpace(grid(x),ELT), fbasis2)...)
+    tbasis1 = DiscreteGridSpace(grid1, ELT)
+    tbasis2 = DiscreteGridSpace(grid2, ELT)
+    tbasis_restricted = DiscreteGridSpace(rgrid, ELT)
 
-    tbasis_restricted = DiscreteGridSpace(MaskedGrid(tens_grid2, domain), ELT)
-
-    FE_DiscreteProblem(domain, tens_fbasis1, tens_fbasis2, tens_tbasis1, tens_tbasis2, tbasis_restricted)
+    FE_DiscreteProblem(domain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted)
 end
 
 function discretize_problem{TD,DN,LEN,N,T}(domain::TensorProductDomain{TD,DN,LEN,N,T}, nt::Tuple, tt::Tuple, st::Tuple, Basis, ELT)

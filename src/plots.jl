@@ -57,7 +57,7 @@ end
 ## end
 
 function plot(f::FrameFun; n=35)
-    Tgrid = TensorProductGrid([EquispacedGrid(n, left(box(domain(f)),idx), right(box(domain(f)),idx)) for idx = 1:dim(f)]...)
+    Tgrid = TensorProductGrid([EquispacedGrid(n, left(boundingbox(domain(f)),idx), right(boundingbox(domain(f)),idx)) for idx = 1:dim(f)]...)
     data = real(f(Tgrid))
     Main.PyPlot.surf(BasisFunctions.range(grid(Tgrid,1)),BasisFunctions.range(grid(Tgrid,2)),data,rstride=1, cstride=1, cmap=Main.PyPlot.ColorMap("coolwarm"),linewidth=0, antialiased=false,vmin=-1.0,vmax=1.0)
 end

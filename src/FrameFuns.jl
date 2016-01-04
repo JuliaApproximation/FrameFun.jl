@@ -23,7 +23,7 @@ import BasisFunctions: ⊗
 
 import BasisFunctions: src, dest, matrix, matrix!, apply!, numtype
 
-import BasisFunctions: dim, index_dim, grid, left, right
+import BasisFunctions: dim, index_dim, grid, left, right, stepsize
 
 import BasisFunctions: operator, coefficients, set, is_basis, is_frame, transform_normalization_operator
 
@@ -40,7 +40,7 @@ export BBox, left, right
 export ⊂
 
 # from domains.jl
-export Interval, Disk, Square, Cube, Ball, Cylinder, atomium, box
+export Interval, Disk, Square, Cube, Ball, Cylinder, atomium, boundingbox
 export ⊗, ∩
 
 export numtype

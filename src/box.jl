@@ -44,6 +44,12 @@ getindex(b::BBox, i::Int, j::Int) = j == 1 ? left(b, i) : right(b, i)
 
 size(b::BBox, dim) = right(b, dim) - left(b, dim)
 
+"Create an equispaced grid on the box with ns[dim] points in each dimension."
+equispaced_grid(box, ns) = TensorProductGrid([EquispacedGrid(ns[idx], left(box, idx), right(box, idx)) for idx = 1:dim(box)]...)    
+
+"Create an equispaced grid on the box with n points in each dimension."
+equispaced_grid{N}(box::BBox{N}, n::Int) = equispaced_grid(box, ntuple(x->n, Val{N}))
+
 
 # Extend a box by a factor of t[i] in each dimension
 function extend{N,T}(b::BBox{N,T}, t::Vec{N,T})
@@ -77,8 +83,10 @@ intersect(b1::BBox, b2::BBox) = BBox(max(left(b1),left(b2)), min(right(b1),right
 (+)(b1::BBox, b2::BBox) = union(b1, b2)
 (&)(b1::BBox, b2::BBox) = intersect(b1, b2)
 
+volume(box::BBox) = prod(right(box)-left(box))
 
 # There has to be a neater way...
+# The implementation of isapprox for Vec is for use in the definition of isapprox for BBox
 isapprox(v1::Vec{1}, v2::Vec{1}) = (v1[1] ≈ v2[1])
 isapprox(v1::Vec{2}, v2::Vec{2}) = (v1[1] ≈ v2[1]) && (v1[2] ≈ v2[2])
 isapprox(v1::Vec{3}, v2::Vec{3}) = (v1[1] ≈ v2[1]) && (v1[2] ≈ v2[2]) && (v1[3] ≈ v2[3])

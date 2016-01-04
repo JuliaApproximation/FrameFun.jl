@@ -167,3 +167,17 @@ function apply!{G <: IndexSubGrid}(op::Restriction, dest::DiscreteGridSpace{G}, 
 end
 
 
+
+"Create a suitable subgrid that covers a given domain."
+function subgrid(grid::AbstractEquispacedGrid, domain::Interval)
+    a = left(domain)
+    b = right(domain)
+    h = stepsize(grid)
+    idx_a = convert(Int, ceil( (a-left(grid))/stepsize(grid))+1 )
+    idx_b = convert(Int, floor( (b-left(grid))/stepsize(grid))+1 )
+    IndexSubGrid(grid, idx_a, idx_b)
+end
+
+subgrid(grid::AbstractGrid, domain::AbstractDomain) = MaskedGrid(grid, domain)
+
+

@@ -118,7 +118,7 @@ Test.with_handler(custom_handler) do
     C = Disk(2.0)
     @test FE.in([1.4, 1.4], C)
     @test !FE.in([1.5, 1.5], C)
-    @test FE.box(C) == FE.BBox((-2.0,-2.0),(2.0,2.0))
+    @test FE.boundingbox(C) == FE.BBox((-2.0,-2.0),(2.0,2.0))
     # This is certainly unwanted behavior! Due to method inheritance
     @test typeof(1.2*C)==typeof(C*1.2)
     # This is due to a wrong implementation in Scaled Domain
@@ -129,13 +129,13 @@ Test.with_handler(custom_handler) do
     D = Cube(2)
     @test FE.in([0.9, 0.9],D)
     @test !FE.in([1.1, 1.1],D)
-    @test FE.box(D)==FE.BBox((-1.0,-1.0),(1.0,1.0))
+    @test FE.boundingbox(D)==FE.BBox((-1.0,-1.0),(1.0,1.0))
     DS=FE.union(D,C)
     #Cube
     D=Cube((-1.5,0.5,-3.0),(2.2,0.7,-1.0))
     @test FE.in([0.9, 0.6, -2.5],D)
     @test !FE.in([0.0, 0.6, 0.0],D)
-    @test FE.box(D)==FE.BBox((-1.5,0.5,-3.0),(2.2,0.7,-1.0))
+    @test FE.boundingbox(D)==FE.BBox((-1.5,0.5,-3.0),(2.2,0.7,-1.0))
 
     #Ball
     S=Ball(2.0)
@@ -143,20 +143,20 @@ Test.with_handler(custom_handler) do
     @test FE.in([0,-1.9,0.0],S)
     @test FE.in([0.0,0.0,-1.9],S)
     @test !FE.in([1.9,1.9,0.0],S)
-    @test FE.box(S)==FE.BBox((-2.0,-2.0,-2.0),(2.0,2.0,2.0))
+    @test FE.boundingbox(S)==FE.BBox((-2.0,-2.0,-2.0),(2.0,2.0,2.0))
     # joint domain
     DS=FE.union(D,S)
     @test FE.in([0.0,0.6,0.0],DS)
     @test FE.in([0.9, 0.6, -2.5],DS)
-    @test FE.box(DS)==FE.BBox((-2.0,-2.0,-3.0),(2.2,2.0,2.0))
+    @test FE.boundingbox(DS)==FE.BBox((-2.0,-2.0,-3.0),(2.2,2.0,2.0))
     # domain intersection
     DS=FE.intersect(D,S)
     @test !FE.in([0.0,0.6,0.0],DS)
     @test FE.in([0.2, 0.6, -1.1],DS)
-    @test FE.box(DS)==FE.BBox((-1.5,0.5,-2.0),(2.0,0.7,-1.0))
+    @test FE.boundingbox(DS)==FE.BBox((-1.5,0.5,-2.0),(2.0,0.7,-1.0))
     # domain difference
     DS=D-S
-    @test FE.box(DS)==FE.box(D)
+    @test FE.boundingbox(DS)==FE.boundingbox(D)
     # TensorProductDomain 1
     T=FE.tensorproduct(Interval(-1.0,1.0),2)
     FE.in([0.5,0.5],T)
