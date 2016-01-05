@@ -5,8 +5,8 @@ module test_suite_support
 using BasisFunctions
 using FrameFuns
 using Base.Test
-FE=FrameFuns
-BA=BasisFunctions
+FE = FrameFuns
+BA = BasisFunctions
 
 ## Settings
 
@@ -27,34 +27,6 @@ custom_handler(r::Test.Error) = begin println("\"\t$(typeof(r.err)) in $(r.expr)
 #custom_handler(r::Test.Error) = Base.showerror(STDOUT,r); 
 
 
-# Check the accuracy of framefuns.
-function msqerror_tol(f::Function,F::FE.SetExpansion;vals::Int=200,tol=1e-6)
-    T = numtype(F)
-    N = dim(F)
-
-    # Find the closest bounding grid around the domain
-    TB=FE.box(FE.domain(F))
-    
-    point=Array{T}(N)
-    elements=0
-    error=0
-    l=left(TB)
-    r=right(TB)
-    pvals = zeros(T,N)    
-    for i in 1:vals
-        for i=1:N,
-            pvals[i]=convert(T,rand())
-        end
-        point=l+(r-l).*pvals
-        if FE.in(point,FE.domain(F))
-            elements+=1
-            error+=abs(f(point...)-F(point...))
-            ## println("ratio ",f(point)/F(point...))
-        end
-    end
-    @printf(" %3.2e",error/elements)
-    return error>0 ? error/elements<tol : false
-end
 
 function delimit(s::AbstractString)
     println("############")
@@ -67,27 +39,71 @@ end
 #######
 
 
+function test_subgrids()
+    delimit("Grid functionality")
+
+    n = 20
+    grid1 = EquispacedGrid(n, -1.0, 1.0)
+    subgrid1 = FE.MaskedGrid(grid1, Interval(-0.5, 0.7))
+    subgrid2 = FE.IndexSubGrid(grid1, 4, 12)
+
+    G1 = EquispacedGrid(n, -1.0, 1.0)
+    G2 = EquispacedGrid(n, -1.0, 1.0)
+    TensorG = G1 ⊗ G2
+    C = Disk(1.0)
+    circle_grid = FE.MaskedGrid(TensorG, C)
+    @test (length(circle_grid)/length(TensorG)-pi*0.25) < 0.01
+
+    G1s = FE.IndexSubGrid(G1,2,4)
+    G2s = FE.IndexSubGrid(G2,3,5)
+    TensorGs = G1s ⊗ G2s
+    @test G1s[1] == G1[2]
+    @test G2s[1] == G2[3]
+    @test TensorGs[1,1] == [G1[2],G2[3]]
+
+    # Generic tests for the subgrids
+    for (grid,subgrid) in ( (grid1,subgrid1), (grid1,subgrid2), (TensorG, circle_grid))
+        print("Subgrid is ")
+        println(typeof(subgrid))
+        # Count the number of elements in the subgrid
+        cnt = 0
+        for i in 1:length(grid)
+            if i ∈ subgrid
+                cnt += 1
+            end
+        end
+        @test cnt == length(subgrid)
+
+        space = DiscreteGridSpace(grid)
+        subspace = DiscreteGridSpace(subgrid)
+        R = restriction_operator(space, subspace)
+        E = extension_operator(subspace, space)
+
+        e = random_expansion(subspace)
+        e_ext = E * e
+        # Are the elements in the right place?
+        cnt = 0
+        diff = 0.0
+        for i in 1:length(grid)
+            if i ∈ subgrid
+                cnt += 1
+                diff += abs(e[cnt] - e_ext[i])
+            end
+        end
+        @test diff < 1e-6
+
+        e_rest = R * e_ext
+        @test sum([abs(e[i]-e_rest[i]) for i in 1:length(e)]) < 1e-6
+    end
+end
+
+
+
+
 Test.with_handler(custom_handler) do
 
-    delimit("grid functionality")
+    test_subgrids()
 
-    delimit("MaskedGrid")
-    G1=BA.EquispacedGrid(100,-1.0,1.0)
-    G2=BA.EquispacedGrid(100,-1.0,1.0)
-    TensorG=BA.TensorProductGrid(G1,G2)
-    C=Circle(1.0)
-    G4=FE.MaskedGrid(TensorG,C)
-    @test (length(G4)/length(TensorG)-pi*0.25)<0.01
-    # I'm assuming here MaskedGrids aren't supposed to be indexed.
-    @test_throws Exception G4[1,1]
-
-    delimit("SubGrid")
-    G1s=FE.IndexedSubGrid(G1,2,4)
-    G2s=FE.IndexedSubGrid(G2,3,5)
-    @test G1s[1]==G1[2]
-    @test G2s[1]==G2[3]
-    TensorGs=TensorProductGrid(G1s,G2s)
-    @test TensorGs[1,1]==[G1[2],G2[3]]
 
     delimit("Domains")
     
@@ -103,55 +119,49 @@ Test.with_handler(custom_handler) do
     @test FE.left(Intervala)==1
     @test FE.left(2*Intervala)==2
     @test FE.right(Intervala/4)==0.75
-    @test Intervala==Interval(1.0,3.0)
-    # Circle
-    @test Circle(BigFloat)==Circle(Int)
-    C=Circle(2.0)
-
-    @test C==[2;2]+C-[2; 2]
-    @test C==[2;2]-C+[2;2]
-    @test FE.in([2.4, 2.4],C+[1; 1])
-    @test !FE.in([1.5, 1.5],C)
-    @test FE.box(C)==FE.BBox((-2.0,-2.0),(2.0,2.0))
-    @test FE.left(C,1)==-2.0
-    @test FE.right(C,2)==2.0
+    # Disk
+    C = Disk(2.0)
+    @test FE.in([1.4, 1.4], C)
+    @test !FE.in([1.5, 1.5], C)
+    @test FE.boundingbox(C) == FE.BBox((-2.0,-2.0),(2.0,2.0))
     # This is certainly unwanted behavior! Due to method inheritance
     @test typeof(1.2*C)==typeof(C*1.2)
     # This is due to a wrong implementation in Scaled Domain
     @test FE.in([1.5,1.5],1.2*C)
     @test FE.in([1.5,1.5],C*1.2)
+
     #Square
-    D=Cube(2)
+    D = Cube(2)
     @test FE.in([0.9, 0.9],D)
     @test !FE.in([1.1, 1.1],D)
-    @test FE.box(D)==FE.BBox((-1.0,-1.0),(1.0,1.0))
-    DS=FE.join(D,C)
+    @test FE.boundingbox(D)==FE.BBox((-1.0,-1.0),(1.0,1.0))
+    DS=FE.union(D,C)
     #Cube
     D=Cube((-1.5,0.5,-3.0),(2.2,0.7,-1.0))
     @test FE.in([0.9, 0.6, -2.5],D)
     @test !FE.in([0.0, 0.6, 0.0],D)
-    @test FE.box(D)==FE.BBox((-1.5,0.5,-3.0),(2.2,0.7,-1.0))
+    @test FE.boundingbox(D)==FE.BBox((-1.5,0.5,-3.0),(2.2,0.7,-1.0))
 
-    #Sphere
-    S=Sphere(2.0)
+    #Ball
+    S=Ball(2.0)
     @test FE.in([1.9,0.0,0.0],S)
     @test FE.in([0,-1.9,0.0],S)
     @test FE.in([0.0,0.0,-1.9],S)
     @test !FE.in([1.9,1.9,0.0],S)
-    @test FE.box(S)==FE.BBox((-2.0,-2.0,-2.0),(2.0,2.0,2.0))
+    @test FE.boundingbox(S)==FE.BBox((-2.0,-2.0,-2.0),(2.0,2.0,2.0))
     # joint domain
-    DS=FE.join(D,S)
+    DS=FE.union(D,S)
     @test FE.in([0.0,0.6,0.0],DS)
     @test FE.in([0.9, 0.6, -2.5],DS)
-    @test FE.box(DS)==FE.BBox((-2.0,-2.0,-3.0),(2.2,2.0,2.0))
+    @test FE.boundingbox(DS)==FE.BBox((-2.0,-2.0,-3.0),(2.2,2.0,2.0))
     # domain intersection
     DS=FE.intersect(D,S)
     @test !FE.in([0.0,0.6,0.0],DS)
     @test FE.in([0.2, 0.6, -1.1],DS)
-    @test FE.box(DS)==FE.BBox((-1.5,0.5,-2.0),(2.0,0.7,-1.0))
+    @test FE.boundingbox(DS)==FE.BBox((-1.5,0.5,-2.0),(2.0,0.7,-1.0))
     # domain difference
     DS=D-S
-    @test FE.box(DS)==FE.box(D)
+    @test FE.boundingbox(DS)==FE.boundingbox(D)
     # TensorProductDomain 1
     T=FE.tensorproduct(Interval(-1.0,1.0),2)
     FE.in([0.5,0.5],T)
@@ -159,7 +169,7 @@ Test.with_handler(custom_handler) do
     @test !FE.in([-1.1,0.3],T)
 
     # TensorProductDomain 2
-    T=FE.TensorProductDomain(Circle(1.05),Interval(-1.0,1.0))
+    T=FE.TensorProductDomain(Disk(1.05),Interval(-1.0,1.0))
     @test FE.in([0.5,0.5,0.8],T)
     @test !FE.in([-1.1,0.3,0.1],T)
 
@@ -196,7 +206,7 @@ Test.with_handler(custom_handler) do
     grid1 = grid(fbasis1)
     grid2 = grid(fbasis2)
 
-    rgrid = FE.IndexedSubGrid(grid2, 1, 2*n)
+    rgrid = FE.IndexSubGrid(grid2, 1, 2*n)
     tbasis1 = DiscreteGridSpace(grid1)
     tbasis2 = DiscreteGridSpace(grid2)
 
@@ -260,7 +270,7 @@ Test.with_handler(custom_handler) do
     ## @test @allocated(FE.apply!(op,coef_dest,coef_src)) <1081
     ## @test @allocated(FE.apply!(opt,coef_src,coef_dest)) <1081
     ## delimit("2D")
-    ## C=Circle(1.0)
+    ## C=Disk(1.0)
     ## for n=[10,100,200]
     ##     problem = FE.discretize_problem(C,(n,n),(2.0,2.0),(2.0,2.0),FourierBasis,Complex{Float64})
     ##     op=operator(problem)
@@ -286,5 +296,6 @@ println("Succes rate:\t$successes/$(successes+failures+errors)")
 println("Failure rate:\t$failures/$(successes+failures+errors)")
 println("Error rate:\t$errors/$(successes+failures+errors)")
 (errors+failures)==0 || error("A total of $(failures+errors) tests failed")
+
 end
 

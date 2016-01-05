@@ -1,3 +1,5 @@
+# fractal.jl
+
 ###############################################################################
 ## The Mandelbrot set
 ###############################################################################
@@ -6,11 +8,11 @@ immutable Mandelbrot{T} <: AbstractDomain{2,T}
     maxiter     ::  Int
     threshold   ::  T
     maskcache   ::  Dict
-    box         ::  FBox2{T}
+    box         ::  BBox2{T}
 end
 
 function Mandelbrot(maxiter = 1000, threshold = 1000.0)
-    box = FBox(-1.0, 1.0, -1.0, 1.0)
+    box = BBox(-1.0, 1.0, -1.0, 1.0)
     M1 = 136
     M2 = 200
     mask1 = computemandelbrotgrid(Grid(box, (M1,M1)), maxiter, threshold)
@@ -24,31 +26,30 @@ end
 
 function mandelbrotiteration(x, maxiter, threshold)
     c = 2*(x[1]+1im*x[2])
-    z = 0
+    T = typeof(c)
+    z = zero(T)
     iter = 0
     while abs(z) < threshold && iter < maxiter
-        z = z^2+c
+        z = z^2 + c
         iter += 1
     end
     abs(z) < threshold
 end
 
 function computemandelbrotgrid(g::AbstractGrid2d, maxiter, threshold)
-    m = size(g)
-    mask = zeros(Bool, m)
-    for i_2 = 1:m[2]
-        for i_1 = 1:m[1]
-            a,b = g[i_1,i_2]
+    mask = zeros(Bool, size(g))
+    for i_2 = 1:size(g, 2)
+        for i_1 = 1:size(g, 1)
             mask[i_1,i_2] = mandelbrotiteration(g[i_1,i_2], maxiter, threshold)
         end
     end
     mask
 end
 
-in(x::AbstractVector, m::Mandelbrot) = mandelbrotiteration(x, m.maxiter, m.threshold)
+in(x, m::Mandelbrot) = mandelbrotiteration(x, m.maxiter, m.threshold)
 
 function in(g::AbstractGrid2d, m::Mandelbrot)
-    if isequal(left(g),left(m.box)) && isequal(right(g),right(m.box))
+    if (left(g) ≈ left(m.box)) && (right(g) ≈ right(m.box)
         if haskey(m.maskcache, size(g,1))
             mask = m.maskcache[size(g,1)]
         else # compute mask and cache it
@@ -64,8 +65,9 @@ end
 show(io::IO, m::Mandelbrot) = print(io, "The Mandelbrot set")
 
 
-
+################
 ## Julia sets
+################
 
 immutable JuliaSet{T} <: AbstractDomain{2,T}
     c           ::  Complex{T}
@@ -75,7 +77,7 @@ immutable JuliaSet{T} <: AbstractDomain{2,T}
 end
 
 function JuliaSet(c = -0.122565+0.744866im, maxiter = 1000)
-    box = FBox(-0.2, 1.2, -0.4, 0.4)
+    box = BBox(-0.2, 1.2, -0.4, 0.4)
 
     mask1 = computejuliasetgrid(Grid(box, (100,100)), c, maxiter)
     mask2 = computejuliasetgrid(Grid(box, (200,200)), c, maxiter)

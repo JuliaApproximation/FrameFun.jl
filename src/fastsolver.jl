@@ -1,16 +1,22 @@
+# fastsolver.jl
 
-
-immutable FE_ProjectionSolver{ELT} <: FE_Solver
+"""
+A fast FE solver based on a low-rank approximation of the plunge region. The plunge region
+is isolated using a projection operator.
+For more details, see the paper 'Fast algorithms for the computation of Fourier extensions of arbitrary length'
+http://arxiv.org/abs/1509.00206
+"""
+immutable FE_ProjectionSolver{ELT,SRC,DEST} <: FE_Solver{ELT,SRC,DEST}
     problem     ::  FE_DiscreteProblem
     plunge_op   ::  AbstractOperator    # store the operator because it allocates memory
     W           ::  MatrixOperator
     Ut          ::  Array{ELT,2}
-    VS           ::  Array{ELT,2}
-    b           :: Array{ELT,1}
-    y           :: Array{ELT,1}
-    sy          :: Array{ELT,1}
-    x2          :: Array{ELT}
-    x1          :: Array{ELT}
+    VS          ::  Array{ELT,2}
+    b           ::  Array{ELT,1}
+    y           ::  Array{ELT,1}
+    sy          ::  Array{ELT,1}
+    x2          ::  Array{ELT}
+    x1          ::  Array{ELT}
 
     function FE_ProjectionSolver(problem::FE_DiscreteProblem)
         plunge_op = plunge_operator(problem)
@@ -20,24 +26,26 @@ immutable FE_ProjectionSolver{ELT} <: FE_Solver
         ## println("min operator forward",minimum(svd(matrix(operator(problem).op2))[2]))
         ## println("max operator backward",maximum(svd(matrix(operator_transpose(problem).op2))[2]))
         ## println("min operator backward",minimum(svd(matrix(operator_transpose(problem).op2))[2]))
-        USV= svd(matrix(plunge_op * operator(problem) * W))
-        maxind=maximum(find(USV[2].>1e-12))
-        S=USV[2]
-        Sinv=1./S[1:maxind]
-        b=zeros(size(dest(plunge_op)))
-        y=zeros(size(USV[3],1))
-        x1=zeros(size(src(operator(problem))))
-        x2=zeros(size(src(operator(problem))))
-        sy=zeros(maxind,)
+        USV = svd(matrix(plunge_op * operator(problem) * W))
+        S = USV[2]
+        maxind = findlast(S.>1e-12)
+        Sinv = 1./S[1:maxind]
+        b = zeros(size(dest(plunge_op)))
+        y = zeros(size(USV[3],1))
+        x1 = zeros(size(src(operator(problem))))
+        x2 = zeros(size(src(operator(problem))))
+        sy = zeros(maxind,)
         new(problem, plunge_op, W, USV[1][:,1:maxind]',USV[3][:,1:maxind]*diagm(Sinv[:]),b,y,sy,x1,x2)
     end
 end
 
-eltype{ELT}(::Type{FE_ProjectionSolver{ELT}}) = ELT
+eltype{ELT,SRC,DEST}(::Type{FE_ProjectionSolver{ELT,SRC,DEST}}) = ELT
 
 function FE_ProjectionSolver(problem::FE_DiscreteProblem)
-    
-    FE_ProjectionSolver{eltype(problem)}(problem)
+    ELT = eltype(problem)
+    SRC = typeof(time_basis_restricted(problem))
+    DEST = typeof(frequency_basis(problem))
+    FE_ProjectionSolver{ELT,SRC,DEST}(problem)
 end
 
 
@@ -56,21 +64,39 @@ estimate_plunge_rank{N}(problem::FE_DiscreteProblem{N}) = min(round(Int, 9*log(p
 
 estimate_plunge_rank(problem::FE_DiscreteProblem{1,BigFloat}) = round(Int, 28*log(param_N(problem)) + 5)
 
+#function solve!{T}(s::FE_ProjectionSolver, coef::AbstractArray{T}, rhs::AbstractArray{T})
+#    A = operator(s)
+#    At = operator_transpose(s)
+#    
+#    P = s.plunge_op
+#    apply!(P,s.b,rhs)
+#    A_mul_B!(s.sy,s.Ut,s.b)
+#    A_mul_B!(s.y,s.VS,s.sy)
+#    apply!(s.W,s.x2,s.y)
+#    #x2 = reshape(s.W * y,size(src(A)))
+#    apply!(A,s.b,s.x2)
+#    apply!(At,s.x1,rhs-s.b)
+#    for i = 1:length(coef)
+#        coef[i] = s.x1[i] + s.x2[i]
+#    end
+#end
 
-function apply!(s::FE_ProjectionSolver, dest, src, coef_dest, coef_src)
+
+@debug function apply!(s::FE_ProjectionSolver, dest, src, coef_dest, coef_src)
     A = operator(s)
     At = operator_transpose(s)
     P = s.plunge_op
-    apply!(P,s.b,coef_src)
-    A_mul_B!(s.sy,s.Ut,s.b)
-    A_mul_B!(s.y,s.VS,s.sy)
-    apply!(s.W,s.x2,s.y)
+    apply!(P,s.b, coef_src)
+    A_mul_B!(s.sy, s.Ut, s.b)
+    A_mul_B!(s.y, s.VS, s.sy)
+    apply!(s.W, s.x2, s.y)
     #x2 = reshape(s.W * y,size(src(A)))
-    apply!(A,s.b,s.x2)
-    apply!(At,s.x1,coef_src-s.b)
-    for i=1:length(coef_dest)
-        coef_dest[i]=s.x1[i]+s.x2[i]
+    apply!(A, s.b, s.x2)
+    apply!(At, s.x1, coef_src-s.b)
+    for i = 1:length(coef_dest)
+        coef_dest[i] = s.x1[i] + s.x2[i]
     end
+    apply!(normalization(problem(s)), coef_dest)
 end
 
 
