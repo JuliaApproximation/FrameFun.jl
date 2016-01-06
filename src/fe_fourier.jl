@@ -10,7 +10,7 @@ ChebyFun(f::Function; args...) = Fun(ChebyshevBasis, f; args...)
 ChebyFun(f::Function, domain; args...) = Fun(ChebyshevBasis, f, domain; args...)
 
 
-function Fun{Basis <: FunctionSet}(::Type{Basis}, f::Function, domain = default_frame_domain_1d(); args...)
+function Fun{Basis <: FunctionSet}(::Type{Basis}, f::Function, domain = default_frame_domain_1d(Basis); args...)
     ELT = eltype(f, domain, Basis)
     (problem,solver) = fe_problem(domain, Basis, ELT; args...)
     coef = solve(solver, f, problem)
