@@ -76,8 +76,7 @@ function discretize_problem{T}(domain::AbstractDomain1d{T}, n::Int, tt, st, Basi
     a = left(domain)
     b = right(domain)
 
-    fbasis1 = Basis(n, a, b + (b-a)*(t-1))
-
+    fbasis1 = rescale(Basis(n,T), a, b + (b-a)*(t-1))
     # Compute the reduced grid and a larger basis, based on the oversampling factor
     rgrid, fbasis2 = oversampled_grid(domain, fbasis1, st)
     grid1 = grid(fbasis1)
