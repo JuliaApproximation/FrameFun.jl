@@ -153,7 +153,7 @@ Test.with_handler(custom_handler) do
         end
     end
 
-    test_bigfloat = true
+    test_bigfloat = false
     if test_bigfloat
         f(x) = cos(x.^2) - big(1.0)
         g(x) = big(1.0)im * cos(x.^2) - big(1.0)
