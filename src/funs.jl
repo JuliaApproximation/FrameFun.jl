@@ -6,13 +6,13 @@ abstract AbstractFun
 A FrameFun corresponds to an expansion in a function set, but it adds a simple user
 interface for computing with functions.
 """
-immutable FrameFun <: AbstractFun
+immutable FrameFun{N,T} <: AbstractFun
     expansion   ::  SetExpansion
 end
 
 
-FrameFun{N,T}(domain::AbstractDomain{N,T}, basis::FunctionSet{N,T}, coefficients) =
-    FrameFun(SetExpansion(DomainFrame(domain, basis), coefficients))
+FrameFun{N,T,ELT}(domain::AbstractDomain{N,T}, basis::FunctionSet{N,ELT}, coefficients) =
+    FrameFun{N,ELT}(SetExpansion(DomainFrame(domain, basis), coefficients))
 
 FrameFun(domain::AbstractDomain, basis::FunctionSet) = FrameFun(domain, basis, zeros(eltype(basis), size(basis)))
 
