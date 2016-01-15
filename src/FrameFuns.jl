@@ -11,7 +11,7 @@ using Base.Cartesian
 
 import Base: +, *, /, ==, |, &, -, \
 
-import Base: intersect, union, isapprox
+import Base: intersect, union, isapprox, setdiff
 
 import Base: length, eltype, size, push!
 

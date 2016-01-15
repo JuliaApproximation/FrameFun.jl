@@ -511,6 +511,8 @@ end
 
 DomainDifference{N,T}(d1::AbstractDomain{N,T}, d2::AbstractDomain{N,T}) = DomainDifference{N,T,typeof(d1),typeof(d2)}(d1,d2)
 
+setdiff(d1::AbstractDomain, d2::AbstractDomain) = DomainDifference(d1, d2)
+
 # The difference between two domains corresponds to a logical AND NOT of their characteristic functions
 in(x::AnyVector, d::DomainDifference) = in(x, d.d1) && (~in(x, d.d2))
 

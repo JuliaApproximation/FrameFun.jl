@@ -153,19 +153,21 @@ Test.with_handler(custom_handler) do
         end
     end
 
-    test_bigfloat = false
+    test_bigfloat = true
     if test_bigfloat
         f(x) = cos(x.^2) - big(1.0)
         g(x) = big(1.0)im * cos(x.^2) - big(1.0)
         for Basis in (FourierBasis, ChebyshevBasis)
-            # Some BigFloat tests (ExpFun/DirectSolver only)
+            println()
+            println("## Basis: ", Basis)
+            # Some BigFloat tests (DirectSolver only)
             for D in [Interval(BigFloat(-3//2),BigFloat(7//10)) Interval(BigFloat(-3//2),BigFloat(-1//2))+Interval(BigFloat(1//2),BigFloat(3//2))]
                 show(D); print("\n")
                 for T in [BigFloat(17//10) FE.default_frame_T(D, Basis) BigFloat(23//10)]
                     print("T = $T \t")
                     for func in (f,g)
 
-                        F = @timed( ExpFun(func, D; solver = FE.FE_DirectSolver, n=71, T=T) )
+                        F = @timed( Fun(Basis, func, D; solver = FE.FE_DirectSolver, n=71, T=T) )
 
                         @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
                         @test  msqerror_tol(func,F[1],tol=1e-20)
