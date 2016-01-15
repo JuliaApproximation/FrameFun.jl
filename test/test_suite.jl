@@ -99,7 +99,6 @@ Test.with_handler(custom_handler) do
                         print("T = $T \t")
 
                         for func in (f,g)
-
                             F = @timed( Fun(Basis, func, D; solver=solver, n=n, T=T) )
                             F = @timed( Fun(Basis, func, D; solver=solver, n=n, T=T) )
 

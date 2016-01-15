@@ -55,18 +55,17 @@ end
 
 function FE_DiscreteProblem(domain::AbstractDomain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted)
     ELT = promote_type(eltype(tbasis_restricted), eltype(fbasis1))
-    f_extension = extension_operator(fbasis1, fbasis2, ELT)
-    f_restriction = restriction_operator(fbasis2, fbasis1, ELT)
+    f_extension = extension_operator(fbasis1, fbasis2)
+    f_restriction = restriction_operator(fbasis2, fbasis1)
 
     t_extension = extension_operator(tbasis_restricted, tbasis2)
     t_restriction = restriction_operator(tbasis2, tbasis_restricted)
-
     transform1 = transform_operator(tbasis1, fbasis1)
     itransform1 = transform_operator(fbasis1, tbasis1)
     transform2 = transform_operator(tbasis2, fbasis2)
     itransform2 = transform_operator(fbasis2, tbasis2)
 
-    normalization = transform_normalization_operator(fbasis1, fbasis2, ELT)
+    normalization = transform_normalization_operator(fbasis1, fbasis2)
 
     op  = t_restriction * itransform2 * f_extension
     opt = f_restriction * transform2 * t_extension
@@ -192,21 +191,22 @@ end
 # This code needs a revision.
 # What is the true (generic) meaning of transform_normalization_operator when there is a source and a destination?
 # We also have to do something about the types added as arguments here.
-transform_normalization_operator(src::TensorProductSet, dest::TensorProductSet, ELT) =
-    TensorProductOperator(ELT, [transform_normalization_operator(set(src,i), set(dest,i), ELT) for i in 1:tp_length(src)]...)
+transform_normalization_operator(src::TensorProductSet, dest::TensorProductSet) =
+    TensorProductOperator([transform_normalization_operator(set(src,i), set(dest,i)) for i in 1:tp_length(src)]...)
 
-function transform_normalization_operator(src::FunctionSet, dest::FunctionSet, ELT)
+function transform_normalization_operator(src::FunctionSet, dest::FunctionSet)
+    ELT = eltype(src,dest)
     factor = sqrt(ELT(length(src))/ELT(length(dest)))
-    transform_normalization_operator(src, ELT) * ScalingOperator(src, factor)
+    transform_normalization_operator(src) * ScalingOperator(src, factor)
 end
 
 # Perhaps this is not always correct. Check.
-function transform_normalization_operator(p::FE_DiscreteProblem, ELT)
-    transform_normalization_operator(frequency_basis(p), frequency_basis_ext(p), ELT)
+function transform_normalization_operator(p::FE_DiscreteProblem)
+    transform_normalization_operator(frequency_basis(p), frequency_basis_ext(p))
 end
 
-function transform_normalization_operator(p::FE_TensorProductProblem, ELT)
-    TensorProductOperator(ELT, [transform_normalization_operator(p.problems[i], ELT) for i in 1:tp_length(p)]...)
+function transform_normalization_operator(p::FE_TensorProductProblem)
+    TensorProductOperator(ELT, [transform_normalization_operator(p.problems[i]) for i in 1:tp_length(p)]...)
 end
 
 

@@ -106,11 +106,16 @@ Test.with_handler(custom_handler) do
 
 
     delimit("Domains")
+    
     # Integer interval is apparently impossible
     #try Intervala=Interval(-1,1) catch y; message(y) end
     # Interval
+    Inter1=Interval(BigFloat)
+    Inter2=Interval(Int)
+    @test Inter1==Inter2
     Intervala=Interval(-1.0,1.0)
-    Intervala=Intervala+2
+    Intervala=Intervala+1
+    Intervala=1+Intervala
     @test FE.left(Intervala)==1
     @test FE.left(2*Intervala)==2
     @test FE.right(Intervala/4)==0.75

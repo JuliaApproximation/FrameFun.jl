@@ -118,7 +118,7 @@ Interval{T}(::Type{T}) = Interval{T}()
 
 Interval{T}(a::T, b::T) = Interval{T}(a, b)
 
-Interval{T <: AbstractFloat}(::Type{T}) = Interval(zero(T), one(T))
+Interval{T <: AbstractFloat}(::Type{T}) = Interval(-one(T), one(T))
 
 in(x::AnyVector, d::Interval) = in(x[1], d.a, d.b)
 
