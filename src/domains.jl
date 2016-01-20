@@ -688,7 +688,7 @@ push!(dc::DomainCollection, d::AbstractDomain) = push!(dc.list, d)
  function boundingbox(d::DomainCollection)
      ubox=boundingbox(d.list[1])
      for i = 2:length(d.list)
-         ubox = union(ubox, boundingbox(d.list[1]))
+         ubox = union(ubox, boundingbox(d.list[i]))
      end
      ubox
  end
@@ -709,7 +709,6 @@ function randomcircles(n)
     for i = 2:n
         push!(DC.list, list[i])
     end
-    DC.box = BBox(-1.0, 1.0, -1.0, 1.0)
     DC
 end
 

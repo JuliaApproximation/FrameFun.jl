@@ -39,7 +39,7 @@ call(fun::FrameFun, x...) = call(expansion(fun), x...)
 
 show(io::IO, fun::FrameFun) = show(io, fun, set(fun))
 
-function show(io::IO, fun::FrameFun, set::DomainFrame)
+@debug function show(io::IO, fun::FrameFun, set::DomainFrame)
     println(io, "A ", dim(fun), "-dimensional FrameFun with ", length(coefficients(fun)), " degrees of freedom.")
     println(io, "Basis: ", name(basis(set)))
     println(io, "Domain: ", domain(set))
