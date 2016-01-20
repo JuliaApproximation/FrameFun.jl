@@ -180,114 +180,21 @@ Test.with_handler(custom_handler) do
     a=-1.2
     b=0.7
     delimit("Fourier Basis")
-    fbasis1 = FourierBasis(n+1,a,b)
+    fbasis1 = rescale(FourierBasis(n+1),a,b)
     @test grid(fbasis1)==BA.PeriodicEquispacedGrid(n+1,a,b)
     r=rand()
     @test abs(fbasis1(2,r)-exp(2*pi*1im*(2-1)*(r-a)/(b-a)))<1e-13
     r=sqrt(BigFloat(pi))
     @test abs(fbasis1(2,r)-exp(2*pi*1im*(2-1)*(r-a)/(b-a)))<1e-13
     a=BigFloat(-1.0); b=BigFloat(1.0)
-    fbasis1 = FourierBasis(n+1,a,b)
+    fbasis1 = rescale(FourierBasis(n+1,BigFloat),a,b)
     r=rand()
     @test abs(fbasis1(2,r)-exp(2*pi*1im*(2-1)*(r-a)/(b-a)))<1e-13
     r=sqrt(BigFloat(pi))
     @test abs(fbasis1(2,r)-exp(2*BigFloat(pi)*1im*(2-1)*(r-a)/(b-a)))<1e-30
-    delimit("Operator Functionality")
 
-    
-    # This is probably too much operators! Close to half of these should be replaceable by transposes
+    # Operator functionality is tested in BasisFunctions/test_suite.jl
 
-    a=-1.0
-    b=1.0
-    n=1001
-    fbasis1 = FourierBasis(n, a, b)
-    fbasis2 = FourierBasis(4*n, a, b)
-
-    grid1 = grid(fbasis1)
-    grid2 = grid(fbasis2)
-
-    rgrid = FE.IndexSubGrid(grid2, 1, 2*n)
-    tbasis1 = DiscreteGridSpace(grid1)
-    tbasis2 = DiscreteGridSpace(grid2)
-
-    tbasis_restricted = DiscreteGridSpace(rgrid)
-
-    f_extension = Extension(fbasis1, fbasis2)
-    f_restriction = Restriction(fbasis2, fbasis1)
-
-    t_extension = Extension(tbasis_restricted, tbasis2)
-    t_restriction = Restriction(tbasis2, tbasis_restricted)
-   
-    transform1 = transform_operator(tbasis1, fbasis1)
-    itransform1 = transform_operator(fbasis1, tbasis1)
-
-    transform2 = transform_operator(tbasis2, fbasis2)
-    itransform2 = transform_operator(fbasis2, tbasis2)
-
-    I=IdentityOperator(tbasis1)
-    S=ScalingOperator(tbasis1,2)
-
-    coef_src=rand(length(grid1))
-    coef2=rand(length(grid2))
-
-    @test I*coef_src==coef_src
-    @test S*coef_src==2*coef_src
-    # Verify transposes of Identity and Scaling operators
-    @test I'*coef_src==coef_src
-    @test S'*coef_src==2*coef_src 
-
-    # Extension and Restriction nullify (this doesn't work for even n!)
-    coef_restricted = rand(length(rgrid))
-    @test t_restriction*t_extension*coef_restricted==coef_restricted
-    coef_restricted = rand(length(grid1))+1im*rand(length(grid1))
-    @test f_restriction*f_extension*coef_restricted==coef_restricted
-    @test (f_restriction*f_extension)*coef_restricted==f_restriction*(f_extension*coef_restricted)
-
-    
-    
-    # Provisional: Restriction transposed is Zeropadding and vice versa
-    @test f_restriction'*coef_restricted==f_extension*coef_restricted
-
-    # Provisional:    
-    op  = t_restriction * itransform2 * f_extension
-    opt = f_restriction * transform2 * t_extension
-    @test op*coef_restricted==(opt')*coef_restricted
-
-    ## delimit("Memory Allocation")
-    ## delimit("1D")
-    ## coef_src = rand(length(grid1))+1im*rand(length(grid1))
-    ## coef_dest = rand(length(rgrid))+1im*rand(length(rgrid))
-    ## coef2=rand(length(grid2))+1im*rand(length(grid2))
-
-    ## # Until precompilation
-    ## FE.apply!(S,coef_src)
-    ## FE.apply!(transform2,coef2)
-    ## FE.apply!(op,coef_dest,coef_src)
-    ## FE.apply!(opt,coef_src,coef_dest)
-    ## # In place operators don't allocate (much) memory ()
-    ## @test @allocated(FE.apply!(S,coef_src))<100
-    ## @test @allocated(FE.apply!(transform2,coef2))<1081
-    ## @test @allocated(FE.apply!(op,coef_dest,coef_src)) <1081
-    ## @test @allocated(FE.apply!(opt,coef_src,coef_dest)) <1081
-    ## delimit("2D")
-    ## C=Disk(1.0)
-    ## for n=[10,100,200]
-    ##     problem = FE.discretize_problem(C,(n,n),(2.0,2.0),(2.0,2.0),FourierBasis,Complex{Float64})
-    ##     op=operator(problem)
-    ##     opt=FE.operator_transpose(problem)
-    ##     coef_src = rand(size(FE.frequency_basis(problem)))+1im*rand(size(FE.frequency_basis(problem)))
-    ##     coef_dest = rand(size(FE.time_basis_restricted(problem)))+1im*rand(size(FE.time_basis_restricted(problem)))
-    ##     if n==10
-    ##         A=FE.matrix(op)
-    ##         @test size(A)==size(op)
-    ##     end
-    ##     FE.apply!(op,coef_dest,coef_src)
-    ##     FE.apply!(opt,coef_src,coef_dest)
-    ##     mem = @allocated(FE.apply!(op,coef_dest,coef_src))
-    ##     println(mem)
-    ##     @test @allocated(FE.apply!(op,coef_dest,coef_src)) < 4500
-    ##     @test @allocated(FE.apply!(opt,coef_src,coef_dest)) < 4500
-    ## end
 end
 
 # Diagnostics
