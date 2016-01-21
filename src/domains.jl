@@ -182,6 +182,24 @@ show(io::IO, c::Disk) = print(io, "a circle of radius ", c.radius, " centered at
 const unitdisk = Disk()
 
 
+###############################################################################################
+### A domain described by a characteristic function
+###############################################################################################
+
+immutable Characteristic{N,T} <: AbstractDomain{N,T}
+    char    ::  Function
+    box    ::  BBox{N,T}
+end
+
+
+in{N,T}(x::AnyVector, c::Characteristic{N,T}) = c.char(x)
+
+boundingbox(c::Characteristic) = c.box
+
+show(io::IO, c::Disk) = print(io, "a domain described by a characteristic function")
+
+
+
 
 ###############################################################################################
 ### A 3D ball
