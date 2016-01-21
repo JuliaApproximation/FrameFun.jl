@@ -167,7 +167,7 @@ function default_frame_n(domain::TensorProductDomain, Basis)
 end
 
 default_frame_T{T}(domain::AbstractDomain{1,T}, Basis) = 2*one(T)
-default_frame_T{N,T}(domain::AbstractDomain{N,T}, Basis) = ntuple(i->1.2*one(T),N)
+default_frame_T{N,T}(domain::AbstractDomain{N,T}, Basis) = ntuple(i->2*one(T),N)
 
 
 default_frame_sampling{T}(domain::AbstractDomain{1,T}, Basis) = 2*one(T)
