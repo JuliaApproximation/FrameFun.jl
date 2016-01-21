@@ -6,7 +6,7 @@ function plot(f::FrameFun{1}; n=200)
     grid = EquispacedGrid(n,left(domain(f)),right(domain(f)))
     data = real(f(grid))
     Main.PyPlot.plot(BasisFunctions.range(grid),data)
-    Main.PyPlot.title("Fourier Extension")
+    Main.PyPlot.title("Extension (domain)")
 end
 
 ## # One-dimensional plot, including extension
@@ -20,7 +20,7 @@ function plot_expansion(f::FrameFun{1}; n=200, repeats=0)
         Main.PyPlot.plot(BasisFunctions.range(grid)+i*(right(grid)-left(grid)),data,linestyle="dashed",color="blue")
     end
     Main.PyPlot.plot(BasisFunctions.range(grid),data,color="blue")
-    Main.PyPlot.title("Full extension")
+    Main.PyPlot.title("Extension (Full)")
 end
 
 function plot_error(f::FrameFun{1}, g::Function; n=200, repeats = 0)
@@ -43,53 +43,93 @@ function plot_samples(f::FrameFun{1}; gamma=2)
 end 
 
 function plot_domain(d::AbstractDomain{2}; n=1000)
-    B = boundingbox(d)
-    grid = equispaced_grid(B,n)
+    B = boundingbox(d)    
+    grid = equispaced_aspect_grid(B,n)
     Z = evalgrid(grid, d)
-    Main.PyPlot.imshow(Z,interpolation="bicubic",cmap="Blues",extent=(left(B)[1], right(B)[1], left(B)[2], right(B)[2]))
-    Main.PyPlot.axis("equal")
+    Main.PyPlot.imshow(Z,interpolation="bicubic",cmap="Blues",extent=(left(B)[1], right(B)[1], left(B)[2], right(B)[2]),origin="lower",aspect="equal")
 end
 
-# Maybe place this in funs.jl?
-function call(f::FrameFun, g::AbstractGrid)
-    result = Array(eltype(f), size(g))
+## # Maybe place this in funs.jl?
+## function call(f::FrameFun, g::AbstractGrid)
+##     result = Array(eltype(f), size(g))
+##     call!(f, result, g)
+##     result
+## end
+
+## function call!{N}(f::FrameFun, result::AbstractArray, g::AbstractGrid{N})
+##     x = Array(eltype(f), N)
+##     for i in eachindex(g)
+##         getindex!(x, g, i)
+##         result[i] = call(f, x...)
+##     end
+## end
+
+## function call!(f::FrameFun, result::AbstractArray, g::AbstractGrid1d)
+##     for i in eachindex(g)
+##         result[i] = call(f, g[i])
+##     end
+## end
+
+## function call!(f::FrameFun, result::AbstractArray, x::AbstractArray)
+##     @assert size(result) == size(x)
+##     for i = 1:length(x)
+##         result[i] = call(f, x[i])
+##     end
+## end
+
+function apply(f::Function, return_type, g::AbstractGrid)
+    result = Array(return_type, size(g))
     call!(f, result, g)
     result
 end
 
-function call!{N}(f::FrameFun, result::AbstractArray, g::AbstractGrid{N})
-    x = Array(eltype(f), N)
+function call!{N}(f::Function, result::AbstractArray, g::AbstractGrid{N})
     for i in eachindex(g)
-        getindex!(x, g, i)
-        result[i] = call(f, x...)
+        result[i] = f(getindex(g, i)...)
     end
 end
-
-function call!(f::FrameFun, result::AbstractArray, g::AbstractGrid1d)
-    for i in eachindex(g)
-        result[i] = call(f, g[i])
-    end
-end
-
-function call!(f::FrameFun, result::AbstractArray, x::AbstractArray)
-    @assert size(result) == size(x)
-    for i = 1:length(x)
-        result[i] = call(f, x[i])
-    end
-end
-
 
 
 function plot(f::FrameFun{2};n=1000)
     B = boundingbox(domain(set(expansion(f))))
     Tgrid = equispaced_grid(B,n)
-    Mgrid=MaskedGrid(Tgrid, domain(f))
-    data = expansion(f)(Mgrid)
+    Mgrid=MaskedGrid(Tgrid, domain(set(expansion(f))))
+    data = real(expansion(f)(Mgrid))
     x=[Mgrid[i][1] for i = 1:length(Mgrid)]
     y=[Mgrid[i][2] for i = 1:length(Mgrid)]
     Main.PyPlot.plot_trisurf(x,y,data)
 end
 
+function plot_image(f::FrameFun{2};n=200)
+    d =domain(set(expansion(f)))
+    B = BBox(left(basis(set(expansion(f)))),right(basis(set(expansion(f)))))
+    Tgrid = equispaced_aspect_grid(B,n)
+    Mgrid=MaskedGrid(Tgrid, domain(f))
+    Z = evalgrid(Tgrid, d)
+    data = real(expansion(f)(Mgrid))
+    vmin = minimum(data)
+    vmax = maximum(data)
+    data = real(expansion(f)(Tgrid))
+    Main.PyPlot.imshow(data./Z,interpolation="bicubic", extent=(left(B)[1], right(B)[1], left(B)[2], right(B)[2]), vmin=vmin, vmax=vmax, alpha=1.0,origin="lower")
+    Main.PyPlot.imshow(data./(1-Z),interpolation="bicubic", extent=(left(B)[1], right(B)[1], left(B)[2], right(B)[2]), vmin=vmin, vmax=vmax, alpha=1.0,origin="lower")
+    Main.PyPlot.colorbar()
+end
+
+function plot_error(f::FrameFun{2},g::Function;n=200)
+    d =domain(set(expansion(f)))
+    B = boundingbox(d)
+    Tgrid = equispaced_aspect_grid(B,n)
+    Mgrid=MaskedGrid(Tgrid, domain(f))
+    Z = evalgrid(Tgrid, d)
+    data = real(expansion(f)(Mgrid))
+    vmin = minimum(data)
+    vmax = maximum(data)
+    data = log10(abs(expansion(f)(Tgrid)-apply(g,eltype(f),Tgrid)))
+    Main.PyPlot.imshow(data./Z,interpolation="bicubic", extent=(left(B)[1], right(B)[1], left(B)[2], right(B)[2]) , alpha=1.0, origin="lower",vmin=-16.0,vmax=1.0,aspect="equal")
+    Main.PyPlot.imshow(data./(1-Z),interpolation="bicubic", extent=(left(B)[1], right(B)[1], left(B)[2], right(B)[2]) , alpha=1.0, origin="lower",vmin=-16.0,vmax=1.0,aspect="equal")
+    Main.PyPlot.colorbar()
+    Main.PyPlot.title("log10 of absolute error")
+end
 ## function plot{B}(f::FrameFun{N,T}; n=35)
 ##     Tgrid = TensorProductGrid([EquispacedGrid(n, left(boundingbox(domain(f)),idx), right(boundingbox(domain(f)),idx)) for idx = 1:dim(f)]...)
 ##     data = real(f(Tgrid))

@@ -50,7 +50,8 @@ equispaced_grid(box, ns) = TensorProductGrid([EquispacedGrid(ns[idx], left(box, 
 "Create an equispaced grid on the box with n points in each dimension."
 equispaced_grid{N}(box::BBox{N}, n::Int) = equispaced_grid(box, ntuple(x->n, Val{N}))
 
-
+"Create an equispaced grid with n points in the first dimension, and approximately equal stepsize in all dimensions"
+equispaced_aspect_grid{N}(box::BBox{N}, n::Int) = equispaced_grid(box, ntuple(i->round(Int,n*(left(box)[i]-right(box)[i])/(left(box)[1]-right(box)[1])), Val{N}))
 # Extend a box by a factor of t[i] in each dimension
 function extend{N,T}(b::BBox{N,T}, t::Vec{N,T})
     r = Vec{N,T}( [ t[i]*size(b,i) for i in 1:N ] )

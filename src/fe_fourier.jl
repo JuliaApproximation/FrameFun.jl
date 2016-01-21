@@ -76,7 +76,7 @@ function discretize_problem{T}(domain::AbstractDomain1d{T}, n::Int, tt, st, Basi
     a = left(domain)
     b = right(domain)
 
-    fbasis1 = rescale(Basis(n,ELT), a, b + (b-a)*(t-1))
+    fbasis1 = rescale(Basis(n,ELT), a-(b-a)*(t-1)/2, b + (b-a)*(t-1)/2)
     # Compute the reduced grid and a larger basis, based on the oversampling factor
     rgrid, fbasis2 = oversampled_grid(domain, fbasis1, st)
     grid1 = grid(fbasis1)
@@ -98,7 +98,7 @@ function discretize_problem{N,T}(domain::AbstractDomain{N,T}, nt::Tuple, tt::Tup
     bbox = boundingbox(domain)
     for i=1:N
         t = (l[1]*one(T))/((m[1]-1)*one(T))
-        fbasis1_list[i] = rescale(Basis(n[i],ELT), left(bbox)[i], right(bbox)[i] + (right(bbox)[i]-left(bbox)[i])*(t-1))
+        fbasis1_list[i] = rescale(Basis(n[i],ELT), left(bbox)[i] - (right(bbox)[i]-left(bbox)[i])*(t-1)/2, right(bbox)[i] + (right(bbox)[i]-left(bbox)[i])*(t-1)/2)
     end
     fbasis1 = TensorProductSet(fbasis1_list...)
 
@@ -167,7 +167,7 @@ function default_frame_n(domain::TensorProductDomain, Basis)
 end
 
 default_frame_T{T}(domain::AbstractDomain{1,T}, Basis) = 2*one(T)
-default_frame_T{N,T}(domain::AbstractDomain{N,T}, Basis) = ntuple(i->2*one(T),N)
+default_frame_T{N,T}(domain::AbstractDomain{N,T}, Basis) = ntuple(i->1.2*one(T),N)
 
 
 default_frame_sampling{T}(domain::AbstractDomain{1,T}, Basis) = 2*one(T)

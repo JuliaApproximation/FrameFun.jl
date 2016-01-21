@@ -25,7 +25,7 @@ in{T <: AbstractFloat, S <: Number}(x::S, a::T, b::T) = (a-10eps(T) <= x <= b+10
 
 # Fallback routine when evaluated on a grid. This routine is general, in order to avoid ambiguity
 # with other routines later on. Dispatch on dimension is done by a different routine evalgrid below.
-in(g::AbstractGrid, d::AbstractDomain) = evalgrid(g, d)
+in{N}(g::AbstractGrid{N}, d::AbstractDomain{N}) = evalgrid(g, d)
 
 # left and right of domains falls back to bounding box domains
 left(d::AbstractDomain) = left(boundingbox(d))

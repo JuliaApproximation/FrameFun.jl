@@ -36,7 +36,7 @@ import BasisFunctions: tp_length, left, right
 import BasisFunctions: show_setexpansion
 
 # from box.jl
-export BBox, left, right
+export BBox, BBox1, BBox2, left, right
 export ⊂
 
 # from domains.jl
@@ -55,7 +55,7 @@ export DomainFrame, basis, call_set, call_set!
 export Mandelbrot, JuliaSet
 
 # from plots.jl
-export plot, plot_expansion, plot_error, plot_samples
+export plot, plot_expansion, plot_error, plot_samples, plot_domain, plot_image
 
 # We support both vectors (AbstractVector) and FixedSizeArray's (Vec)
 typealias AnyVector Union{AbstractVector,Vec}
@@ -64,6 +64,8 @@ typealias AnyVector Union{AbstractVector,Vec}
 include("box.jl")
 
 include("domains.jl")
+
+include("fractals.jl")
 
 include("subgrid.jl")
 
