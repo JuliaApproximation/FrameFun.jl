@@ -26,7 +26,7 @@ immutable FE_ProjectionSolver{ELT,SRC,DEST} <: FE_Solver{ELT,SRC,DEST}
         ## println("min operator forward",minimum(svd(matrix(operator(problem).op2))[2]))
         ## println("max operator backward",maximum(svd(matrix(operator_transpose(problem).op2))[2]))
         ## println("min operator backward",minimum(svd(matrix(operator_transpose(problem).op2))[2]))
-        USV = svd(matrix(plunge_op * operator(problem) * W))
+        USV = LAPACK.gesvd!('S','S',matrix(plunge_op * operator(problem) * W))
         S = USV[2]
         maxind = findlast(S.>1e-12)
         Sinv = 1./S[1:maxind]
@@ -35,7 +35,7 @@ immutable FE_ProjectionSolver{ELT,SRC,DEST} <: FE_Solver{ELT,SRC,DEST}
         x1 = zeros(size(src(operator(problem))))
         x2 = zeros(size(src(operator(problem))))
         sy = zeros(maxind,)
-        new(problem, plunge_op, W, USV[1][:,1:maxind]',USV[3][:,1:maxind]*diagm(Sinv[:]),b,y,sy,x1,x2)
+        new(problem, plunge_op, W, USV[1][:,1:maxind]',USV[3][1:maxind,:]'*diagm(Sinv[:]),b,y,sy,x1,x2)
     end
 end
 

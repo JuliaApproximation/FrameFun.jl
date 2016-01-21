@@ -4,40 +4,51 @@
 # One-dimensional plot, just the domain
 function plot(f::FrameFun{1}; n=200)
     grid = EquispacedGrid(n,left(domain(f)),right(domain(f)))
-    data = f(grid)
+    data = real(f(grid))
     Main.PyPlot.plot(BasisFunctions.range(grid),data)
+    Main.PyPlot.title("Fourier Extension")
 end
 
 ## # One-dimensional plot, including extension
 ## function plot_full{1}(f::Fun{1})
     
 ## end
-function plot_expansion(f::FrameFun{1}; n=200)
+function plot_expansion(f::FrameFun{1}; n=200, repeats=0)
     grid = EquispacedGrid(n,left(basis(set(f))),right(basis(set(f))))
-    data = f(grid)
-    for i=-2:2
+    data = real(f(grid))
+    for i=-repeats:repeats
         Main.PyPlot.plot(BasisFunctions.range(grid)+i*(right(grid)-left(grid)),data,linestyle="dashed",color="blue")
     end
     Main.PyPlot.plot(BasisFunctions.range(grid),data,color="blue")
+    Main.PyPlot.title("Full extension")
 end
 
-function plot_error(f::FrameFun{1}, g::Function; n=200)
+function plot_error(f::FrameFun{1}, g::Function; n=200, repeats = 0)
     grid = EquispacedGrid(n,left(basis(set(f))),right(basis(set(f))))
-    data = f(grid)
-    for i=-2:2
+    data = real(f(grid))
+    for i=-repeats:repeats
         Main.PyPlot.semilogy(BasisFunctions.range(grid)+i*(right(grid)-left(grid)),abs(g(BasisFunctions.range(grid))-data),linestyle="dashed",color="blue")
     end
     Main.PyPlot.semilogy(BasisFunctions.range(grid),abs(g(BasisFunctions.range(grid))-data),color="blue")
     Main.PyPlot.ylim([-16,1])
+    Main.PyPlot.title("Absolute Error")
 end 
 
 function plot_samples(f::FrameFun{1}; gamma=2)
     grid, fbasis2 = oversampled_grid(domain(f), basis(f), gamma)
     x = [grid[i] for i in eachindex(grid)]
-    data = f(grid)
+    data = real(f(grid))
     Main.PyPlot.stem(x,data)
+    Main.PyPlot.title("samples")
 end 
 
+function plot_domain(d::AbstractDomain{2}; n=1000)
+    B = boundingbox(d)
+    grid = equispaced_grid(B,n)
+    Z = evalgrid(grid, d)
+    Main.PyPlot.imshow(Z,interpolation="bicubic",cmap="Blues",extent=(left(B)[1], right(B)[1], left(B)[2], right(B)[2]))
+    Main.PyPlot.axis("equal")
+end
 
 # Maybe place this in funs.jl?
 function call(f::FrameFun, g::AbstractGrid)
@@ -69,8 +80,9 @@ end
 
 
 
-function plot{N,T}(f::FrameFun{N,T};n=100)
-    Tgrid=TensorProductGrid([EquispacedGrid(100, left(set(expansion(f)),idx), right(set(expansion(f)),idx)) for idx = 1:N]...)
+function plot(f::FrameFun{2};n=1000)
+    B = boundingbox(domain(set(expansion(f))))
+    Tgrid = equispaced_grid(B,n)
     Mgrid=MaskedGrid(Tgrid, domain(f))
     data = expansion(f)(Mgrid)
     x=[Mgrid[i][1] for i = 1:length(Mgrid)]

@@ -54,7 +54,8 @@ export DomainFrame, basis, call_set, call_set!
 # from fractal.jl
 export Mandelbrot, JuliaSet
 
-
+# from plots.jl
+export plot, plot_expansion, plot_error, plot_samples
 
 # We support both vectors (AbstractVector) and FixedSizeArray's (Vec)
 typealias AnyVector Union{AbstractVector,Vec}
@@ -79,7 +80,7 @@ include("fastsolver.jl")
 include("fe_fourier.jl")
 
 # TODO: try out Plots.jl
-FrameFuns.include("plots.jl")
+include("plots.jl")
 
 end # module
 
