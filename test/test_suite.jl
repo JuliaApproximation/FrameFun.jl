@@ -91,7 +91,7 @@ Test.with_handler(custom_handler) do
             for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
                 show(solver); println()
 
-                for n in [FE.default_frame_n(D, Basis) 201]
+                for n in [FE.default_frame_n(D, Basis) 99]
                     println("\tN = $n")
 
                     # There is some symmetry around T=2, test smaller and larger values

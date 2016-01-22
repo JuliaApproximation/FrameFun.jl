@@ -25,7 +25,7 @@ in{T <: AbstractFloat, S <: Number}(x::S, a::T, b::T) = (a-10eps(T) <= x <= b+10
 
 # Fallback routine when evaluated on a grid. This routine is general, in order to avoid ambiguity
 # with other routines later on. Dispatch on dimension is done by a different routine evalgrid below.
-in(g::AbstractGrid, d::AbstractDomain) = evalgrid(g, d)
+in{N}(g::AbstractGrid{N}, d::AbstractDomain{N}) = evalgrid(g, d)
 
 # left and right of domains falls back to bounding box domains
 left(d::AbstractDomain) = left(boundingbox(d))
@@ -180,6 +180,24 @@ boundingbox(c::Disk) = BBox((c.center[1]-c.radius,c.center[2]-c.radius),(c.cente
 show(io::IO, c::Disk) = print(io, "a circle of radius ", c.radius, " centered at ", c.center)
 
 const unitdisk = Disk()
+
+
+###############################################################################################
+### A domain described by a characteristic function
+###############################################################################################
+
+immutable Characteristic{N,T} <: AbstractDomain{N,T}
+    char    ::  Function
+    box    ::  BBox{N,T}
+end
+
+
+in{N,T}(x::AnyVector, c::Characteristic{N,T}) = c.char(x)
+
+boundingbox(c::Characteristic) = c.box
+
+show(io::IO, c::Disk) = print(io, "a domain described by a characteristic function")
+
 
 
 

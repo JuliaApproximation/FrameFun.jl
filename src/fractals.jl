@@ -12,11 +12,11 @@ immutable Mandelbrot{T} <: AbstractDomain{2,T}
 end
 
 function Mandelbrot(maxiter = 1000, threshold = 1000.0)
-    box = BBox(-1.0, 1.0, -1.0, 1.0)
+    box = BBox(-1.0, 0.35, -0.65, 0.65)
     M1 = 136
     M2 = 200
-    mask1 = computemandelbrotgrid(Grid(box, (M1,M1)), maxiter, threshold)
-    mask2 = computemandelbrotgrid(Grid(box, (M2,M2)), maxiter, threshold)
+    mask1 = computemandelbrotgrid(equispaced_grid(box, (M1,M1)), maxiter, threshold)
+    mask2 = computemandelbrotgrid(equispaced_grid(box, (M2,M2)), maxiter, threshold)
     cache = Dict{Int,Array{Bool,2}}()
     cache[M1] = mask1
     cache[M2] = mask2
@@ -36,7 +36,7 @@ function mandelbrotiteration(x, maxiter, threshold)
     abs(z) < threshold
 end
 
-function computemandelbrotgrid(g::AbstractGrid2d, maxiter, threshold)
+function computemandelbrotgrid(g::AbstractGrid{2}, maxiter, threshold)
     mask = zeros(Bool, size(g))
     for i_2 = 1:size(g, 2)
         for i_1 = 1:size(g, 1)
@@ -46,10 +46,8 @@ function computemandelbrotgrid(g::AbstractGrid2d, maxiter, threshold)
     mask
 end
 
-in(x, m::Mandelbrot) = mandelbrotiteration(x, m.maxiter, m.threshold)
-
-function in(g::AbstractGrid2d, m::Mandelbrot)
-    if (left(g) ≈ left(m.box)) && (right(g) ≈ right(m.box)
+function in(g::AbstractGrid{2}, m::Mandelbrot)
+    if (left(g) ≈ left(m.box)) && (right(g) ≈ right(m.box))
         if haskey(m.maskcache, size(g,1))
             mask = m.maskcache[size(g,1)]
         else # compute mask and cache it
@@ -62,6 +60,16 @@ function in(g::AbstractGrid2d, m::Mandelbrot)
     mask
 end
 
+function isapprox{T}(t::Tuple{T,T}, v::Vec{2,T})
+    return t[1]≈v[1] && t[2]≈v[2]
+end
+function isapprox{T}(v::Vec{2,T}, t::Tuple{T,T})
+    return t[1]≈v[1] && t[2]≈v[2]
+end
+boundingbox(m::Mandelbrot) = m.box
+
+in(x, m::Mandelbrot) = mandelbrotiteration(x, m.maxiter, m.threshold)
+
 show(io::IO, m::Mandelbrot) = print(io, "The Mandelbrot set")
 
 
@@ -73,14 +81,14 @@ immutable JuliaSet{T} <: AbstractDomain{2,T}
     c           ::  Complex{T}
     maxiter     ::  Int
     maskcache   ::  Dict
-    box         ::  FBox2{T}
+    box         ::  BBox2{T}
 end
 
 function JuliaSet(c = -0.122565+0.744866im, maxiter = 1000)
     box = BBox(-0.2, 1.2, -0.4, 0.4)
 
-    mask1 = computejuliasetgrid(Grid(box, (100,100)), c, maxiter)
-    mask2 = computejuliasetgrid(Grid(box, (200,200)), c, maxiter)
+    mask1 = computejuliasetgrid(equispaced_grid(box, (100,100)), c, maxiter)
+    mask2 = computejuliasetgrid(equispaced_grid(box, (200,200)), c, maxiter)
     cache = Dict{Int,Array{Bool,2}}()
     cache[100] = mask1
     cache[200] = mask2
@@ -97,7 +105,7 @@ function juliasetiteration(x, c, maxiter)
     abs(z) < 1000
 end
 
-function computejuliasetgrid(g::AbstractGrid2d, c, maxiter)
+function computejuliasetgrid(g::AbstractGrid{2}, c, maxiter)
     m = size(g)
     mask = zeros(Bool, m)
     for i_2 = 1:m[2]
@@ -109,9 +117,7 @@ function computejuliasetgrid(g::AbstractGrid2d, c, maxiter)
     mask
 end
 
-in(x::AbstractVector, js::JuliaSet) = juliasetiteration(x, js.c, js.maxiter)
-
-function in(g::AbstractGrid2d, js::JuliaSet)
+function in(g::AbstractGrid{2}, js::JuliaSet)
     if isequal(left(g),left(js.box)) && isequal(right(g),right(js.box))
         if haskey(js.maskcache, size(g,1))
             mask = js.maskcache[size(g,1)]
@@ -125,5 +131,8 @@ function in(g::AbstractGrid2d, js::JuliaSet)
     mask
 end
 
+in(x, js::JuliaSet) = juliasetiteration(x, js.c, js.maxiter)
+
 show(io::IO, js::JuliaSet) = print(io, "A particular Julia Set also known as the Douady rabbit")
 
+boundingbox(js::JuliaSet) = js.box

@@ -181,3 +181,72 @@ end
 subgrid(grid::AbstractGrid, domain::AbstractDomain) = MaskedGrid(grid, domain)
 
 
+"A grid that is a simple collection of grid locations without structure"
+immutable CollectionGrid{N,T} <: AbstractGrid{N,T}
+    points     ::  Array{Vec{N,T},1}
+end
+
+CollectionGrid{N,T}(points::Array{Vec{N,T},1}) = CollectionGrid{N,T}(points)
+
+length(g::CollectionGrid) = length(g.points)
+
+getindex{N,T}(g::CollectionGrid{N,T}, idx::Int) = g.points[idx]
+
+function midpoint{N,T}(v1::Vec{N,T}, v2::Vec{N,T}, dom::AbstractDomain)
+    # There has to be a midpoint
+    @assert in(v2,dom) != in(v1,dom)
+    if in(v2,dom)
+        min=v1
+        max=v2
+    else
+        min=v2
+        max=v1
+    end
+    mid = NaN
+    while norm(max-min) > 10.0^-12
+        step = (max-min)/2
+        mid = min+step
+        in(mid,dom) ? max=mid : min=mid
+    end
+    mid
+end
+
+function boundary{TG,GN,LEN,N,T}(g::TensorProductGrid{TG,GN,LEN,N,T},dom::AbstractDomain{N})
+    # Initialize neighbours
+    neighbours=Array(Int64,2^N-1,N)
+    # adjust columns
+    for i=1:N
+        # The very first is not a neighbour but the point itself.
+        for j=2:2^N
+            neighbours[j-1,i]=(floor(Int,(j-1)/(2^(i-1))) % 2)
+        end
+    end
+    println(neighbours)
+    CartesianNeighbours = Array(CartesianIndex{N},2^N)
+    for j=1:2^N
+        CartesianNeighbours[j]=CartesianIndex{N}(neighbours[j,:]...)
+    end
+    midpoints = Vec{N,T}[]
+    # for each element
+    for i in eachindex(g)
+        # for all neighbours
+        for j=1:2^N
+            neighbour = i + CartesianNeighbours[j]
+            # check if any are on the other side of the boundary
+            try
+                if in(g[i],dom) != in(g[neighbour],dom)
+                    # add the midpoint to the grid
+                    push!(midpoints, midpoint(g[i],g[neighbour],dom))
+                end
+            catch y
+                isa(y,BoundsError) || rethrow(y)
+            end
+        end
+    end
+    CollectionGrid(midpoints)
+end
+    
+function boundary{G,ID,N}(g::MaskedGrid{G,ID,N},dom::AbstractDomain{N})
+    boundary(grid(g),dom)
+end
+
