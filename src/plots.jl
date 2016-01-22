@@ -42,13 +42,7 @@ function plot_samples(f::FrameFun{1}; gamma=2)
     Main.PyPlot.title("samples")
 end 
 
-function plot_domain(d::AbstractDomain{2}; n=1000)
-    B = boundingbox(d)    
-    grid = equispaced_aspect_grid(B,n)
-    Z = evalgrid(grid, d)
-    Main.PyPlot.imshow(Z,interpolation="bicubic",cmap="Blues",extent=(left(B)[1], right(B)[1], left(B)[2], right(B)[2]),origin="lower",aspect="equal")
-end
-
+    
 ## # Maybe place this in funs.jl?
 ## function call(f::FrameFun, g::AbstractGrid)
 ##     result = Array(eltype(f), size(g))
@@ -90,6 +84,14 @@ function call!{N}(f::Function, result::AbstractArray, g::AbstractGrid{N})
 end
 
 
+function plot_domain(d::AbstractDomain{2}; n=1000)
+    B = boundingbox(d)    
+    grid = equispaced_aspect_grid(B,n)
+    Z = evalgrid(grid, d)
+    Main.PyPlot.imshow(Z',interpolation="bicubic",cmap="Blues",extent=(left(B)[1], right(B)[1], left(B)[2], right(B)[2]),aspect="equal",origin="lower")
+end
+
+
 function plot(f::FrameFun{2};n=1000)
     B = boundingbox(domain(set(expansion(f))))
     Tgrid = equispaced_grid(B,n)
@@ -110,8 +112,8 @@ function plot_image(f::FrameFun{2};n=200)
     vmin = minimum(data)
     vmax = maximum(data)
     data = real(expansion(f)(Tgrid))
-    Main.PyPlot.imshow(data./Z,interpolation="bicubic", extent=(left(B)[1], right(B)[1], left(B)[2], right(B)[2]), vmin=vmin, vmax=vmax, alpha=1.0,origin="lower")
-    Main.PyPlot.imshow(data./(1-Z),interpolation="bicubic", extent=(left(B)[1], right(B)[1], left(B)[2], right(B)[2]), vmin=vmin, vmax=vmax, alpha=1.0,origin="lower")
+    Main.PyPlot.imshow((data./Z)',interpolation="bicubic", extent=(left(B)[1], right(B)[1], left(B)[2], right(B)[2]), vmin=vmin, vmax=vmax, alpha=1.0,origin="lower")
+    Main.PyPlot.imshow((data./(1-Z))',interpolation="bicubic", extent=(left(B)[1], right(B)[1], left(B)[2], right(B)[2]), vmin=vmin, vmax=vmax, alpha=1.0,origin="lower")
     Main.PyPlot.colorbar()
 end
 
@@ -125,20 +127,33 @@ function plot_error(f::FrameFun{2},g::Function;n=200)
     vmin = minimum(data)
     vmax = maximum(data)
     data = log10(abs(expansion(f)(Tgrid)-apply(g,eltype(f),Tgrid)))
-    Main.PyPlot.imshow(data./Z,interpolation="bicubic", extent=(left(B)[1], right(B)[1], left(B)[2], right(B)[2]) , alpha=1.0, origin="lower",vmin=-16.0,vmax=1.0,aspect="equal")
-    Main.PyPlot.imshow(data./(1-Z),interpolation="bicubic", extent=(left(B)[1], right(B)[1], left(B)[2], right(B)[2]) , alpha=1.0, origin="lower",vmin=-16.0,vmax=1.0,aspect="equal")
+    Main.PyPlot.imshow((data./Z)',interpolation="bicubic", extent=(left(B)[1], right(B)[1], left(B)[2], right(B)[2]) , alpha=1.0,vmin=-16.0,vmax=1.0,aspect="equal",origin="lower")
+    Main.PyPlot.imshow((data./(1-Z))',interpolation="bicubic", extent=(left(B)[1], right(B)[1], left(B)[2], right(B)[2]) , alpha=1.0,vmin=-16.0,vmax=1.0,aspect="equal",origin="lower")
     Main.PyPlot.colorbar()
     Main.PyPlot.title("log10 of absolute error")
 end
-## function plot{B}(f::FrameFun{N,T}; n=35)
-##     Tgrid = TensorProductGrid([EquispacedGrid(n, left(boundingbox(domain(f)),idx), right(boundingbox(domain(f)),idx)) for idx = 1:dim(f)]...)
-##     data = real(f(Tgrid))
-##     Main.PyPlot.surf(BasisFunctions.range(grid(Tgrid,1)),BasisFunctions.range(grid(Tgrid,2)),data,rstride=1, cstride=1, cmap=Main.PyPlot.ColorMap("coolwarm"),linewidth=0, antialiased=false,vmin=-1.0,vmax=1.0)
-## end
-## # One-dimensional plot, including extension
-## function plot_full{1}(f::Fun{1})
-    
-## end
+
+function plot_grid(grid::AbstractGrid2d)
+    x=[grid[i][1] for i = 1:length(grid)]
+    y=[grid[i][2] for i = 1:length(grid)]
+    Main.PyPlot.plot(x,y,linestyle="none",marker="o",color="blue")
+    Main.PyPlot.axis("equal")
+end
+
+function plot_grid(grid::AbstractGrid3d)
+    x=[grid[i][1] for i = 1:length(grid)]
+    y=[grid[i][2] for i = 1:length(grid)]
+    z=[grid[i][3] for i = 1:length(grid)]
+    Main.PyPlot.plot3D(x,y,z,linestyle="none",marker="o",color="blue")
+    Main.PyPlot.axis("equal")
+end
+
+function plot_grid{TG,GN,ID}(grid::TensorProductGrid{TG,GN,ID,2})
+    dom = Cube(left(grid),right(grid))
+    Mgrid = MaskedGrid(grid,dom)
+    plot_grid(Mgrid)
+end
+
 function plot_expansion{N,T}(f::FrameFun{N,T}; n=35)
     Tgrid = TensorProductGrid([EquispacedGrid(n, left(set(expansion(f)),idx), right(set(expansion(f)),idx)) for idx = 1:dim(f)]...)
     data = real(expansion(f)(Tgrid))
