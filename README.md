@@ -18,22 +18,22 @@ F = ExpFun(f,D)
 plot_expansion(F); plot_error(F,f)
 ```
 
-[](images/lowprecision.png)
+![](images/lowprecision.png)
 
-The bases support any AbstractFloat subtype, so high precision approximations are straightforward
+The bases support any AbstractFloat subtype, so high precision approximations are straightforward:
 
 ```julia
-B = FourierBasis(21,BigFloat)
+B = FourierBasis(61,BigFloat)
 F = ExpFun(f,D)
 
 plot_expansion(F); plot_error(F,f)
 ```
 
-[](images/highprecision.png)
+![](images/highprecision.png)
 
 # Frame Approximations in 2D
 
-In higher dimensions, a basis can be any tensorproduct of (scaled) lower dimensional bases.
+In higher dimensions, a basis can be any tensorproduct of (scaled) lower dimensional bases:
 ```julia
 C = Disk(1.0)- Disk(0.3,[0.2; 0.5])
 B = rescale(FourierBasis(31),-1.3,1.3) ⊗ rescale(FourierBasis(31),-1.3,1.3)
@@ -43,9 +43,9 @@ F = Fun(f,B,C)
 plot_image(F); plot_error(F,f)
 ```
 
-[](images/deathstar.png)
+![](images/deathstar.png)
 
-Basis types can easily be mixed and matched, and domains can be arbitrarily complex.
+Basis types can easily be mixed and matched, and domains can be arbitrarily complex:
 
 ```julia
 dom = randomcircles(10)
@@ -56,10 +56,9 @@ F = Fun(f,B,dom)
 plot_image(F), plot_error(F,f)
 ```
 
-[](images/circles.png)
+![](images/circles.png)
 
-Even fractal domains are not a problem
-
+Even fractal domains are not a problem:
 
 ```julia
 B = rescale(FourierBasis(31),-1.0,0.35) ⊗ rescale(FourierBasis(31),-0.65,0.65)
@@ -69,4 +68,4 @@ F = Fun(f, B, Mandelbrot())
 plot_image(F), plot_error(F,f)
 ```
 
-[](images/mandelbrot.png)
+![](images/mandelbrot.png)
