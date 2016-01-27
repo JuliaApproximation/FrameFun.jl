@@ -13,7 +13,7 @@ using FrameFuns
 B = FourierBasis(61)
 D = Interval(-0.5,0.5)
 f(x) = x
-F = ExpFun(f,D)
+F = ExpFun(f,B,D)
 
 plot_expansion(F); plot_error(F,f)
 ```
@@ -24,7 +24,7 @@ The bases support any AbstractFloat subtype, so high precision approximations ar
 
 ```julia
 B = FourierBasis(61,BigFloat)
-F = ExpFun(f,D)
+F = ExpFun(f,B,D)
 
 plot_expansion(F); plot_error(F,f)
 ```
