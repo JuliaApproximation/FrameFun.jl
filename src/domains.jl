@@ -196,7 +196,7 @@ in{N,T}(x::AnyVector, c::Characteristic{N,T}) = c.char(x)
 
 boundingbox(c::Characteristic) = c.box
 
-show(io::IO, c::Disk) = print(io, "a domain described by a characteristic function")
+show(io::IO, c::Characteristic) = print(io, "a domain described by a characteristic function")
 
 
 

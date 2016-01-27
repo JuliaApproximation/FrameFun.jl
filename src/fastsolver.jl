@@ -28,7 +28,8 @@ immutable FE_ProjectionSolver{ELT,SRC,DEST} <: FE_Solver{ELT,SRC,DEST}
         ## println("min operator backward",minimum(svd(matrix(operator_transpose(problem).op2))[2]))
         USV = LAPACK.gesvd!('S','S',matrix(plunge_op * operator(problem) * W))
         S = USV[2]
-        maxind = findlast(S.>1e-12)
+        limit = 10^(3/4*log10(eps(numtype(frequency_basis(problem)))))
+        maxind = findlast(S.>limit)
         Sinv = 1./S[1:maxind]
         b = zeros(size(dest(plunge_op)))
         y = zeros(size(USV[3],1))

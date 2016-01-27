@@ -4,7 +4,7 @@
 # One-dimensional plot, just the domain
 function plot(f::FrameFun{1}; n=200)
     grid = EquispacedGrid(n,left(domain(f)),right(domain(f)))
-    data = real(f(grid))
+    data = convert(Array{Float64},real(f(grid)))
     Main.PyPlot.plot(BasisFunctions.range(grid),data)
     Main.PyPlot.title("Extension (domain)")
 end
@@ -15,7 +15,7 @@ end
 ## end
 function plot_expansion(f::FrameFun{1}; n=200, repeats=0)
     grid = EquispacedGrid(n,left(basis(set(f))),right(basis(set(f))))
-    data = real(f(grid))
+    data = convert(Array{Float64},real(f(grid)))
     for i=-repeats:repeats
         Main.PyPlot.plot(BasisFunctions.range(grid)+i*(right(grid)-left(grid)),data,linestyle="dashed",color="blue")
     end
@@ -26,18 +26,19 @@ end
 function plot_error(f::FrameFun{1}, g::Function; n=200, repeats = 0)
     grid = EquispacedGrid(n,left(basis(set(f))),right(basis(set(f))))
     data = real(f(grid))
+    plotdata=convert(Array{Float64},abs(g(BasisFunctions.range(grid))-data))    
     for i=-repeats:repeats
-        Main.PyPlot.semilogy(BasisFunctions.range(grid)+i*(right(grid)-left(grid)),abs(g(BasisFunctions.range(grid))-data),linestyle="dashed",color="blue")
+        Main.PyPlot.semilogy(BasisFunctions.range(grid)+i*(right(grid)-left(grid)),plotdata,linestyle="dashed",color="blue")
     end
-    Main.PyPlot.semilogy(BasisFunctions.range(grid),abs(g(BasisFunctions.range(grid))-data),color="blue")
-    Main.PyPlot.ylim([-16,1])
+    Main.PyPlot.semilogy(BasisFunctions.range(grid),plotdata,color="blue")
+    Main.PyPlot.ylim([min(minimum(log10(plotdata)),-16),1])
     Main.PyPlot.title("Absolute Error")
 end 
 
 function plot_samples(f::FrameFun{1}; gamma=2)
     grid, fbasis2 = oversampled_grid(domain(f), basis(f), gamma)
     x = [grid[i] for i in eachindex(grid)]
-    data = real(f(grid))
+    data = convert(Array{Float64},real(f(grid)))
     Main.PyPlot.stem(x,data)
     Main.PyPlot.title("samples")
 end 
@@ -96,7 +97,7 @@ function plot(f::FrameFun{2};n=1000)
     B = boundingbox(domain(set(expansion(f))))
     Tgrid = equispaced_grid(B,n)
     Mgrid=MaskedGrid(Tgrid, domain(set(expansion(f))))
-    data = real(expansion(f)(Mgrid))
+    data = convert(Array{Float64},real(expansion(f)(Mgrid)))
     x=[Mgrid[i][1] for i = 1:length(Mgrid)]
     y=[Mgrid[i][2] for i = 1:length(Mgrid)]
     Main.PyPlot.plot_trisurf(x,y,data)
@@ -108,7 +109,7 @@ function plot_image(f::FrameFun{2};n=200)
     Tgrid = equispaced_aspect_grid(B,n)
     Mgrid=MaskedGrid(Tgrid, domain(f))
     Z = evalgrid(Tgrid, d)
-    data = real(expansion(f)(Mgrid))
+    data = convert(Array{Float64},real(expansion(f)(Mgrid)))
     vmin = minimum(data)
     vmax = maximum(data)
     data = real(expansion(f)(Tgrid))

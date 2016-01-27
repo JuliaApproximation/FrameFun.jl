@@ -25,6 +25,7 @@ function solve(s::AbstractOperator, f::Function, p::FE_Problem)
     rhs = Array(ELT, size(time_basis_restricted(p)))
 
     rhs!(p, rhs, f)
+    
     apply!(s, coef, rhs)
 #    norm = transform_normalization_operator(p, ELT)
 #    coef = norm * coef
@@ -32,10 +33,11 @@ function solve(s::AbstractOperator, f::Function, p::FE_Problem)
 end
 
 
-function solve!{T}(s::FE_Solver, coef::AbstractArray{T}, rhs::AbstractArray{T}, f::Function)
-    rhs!(problem(s), rhs, f)
-    apply!(s, coef, rhs)
-end
+## function solve!{T}(s::FE_Solver, coef::AbstractArray{T}, rhs::AbstractArray{T}, f::Function)
+##     rhs!(problem(s), rhs, f)
+##     println(rhs)
+##     apply!(s, coef, rhs)
+## end
 
 
 
@@ -59,10 +61,10 @@ end
 FE_DirectSolver(p::FE_TensorProductProblem) = TensorProductOperator(map(FE_DirectSolver, p.problems)...)
 
 
-function solve!{T}(s::FE_DirectSolver, coef::AbstractArray{T}, rhs::AbstractArray{T})
-    coef[:] = s.QR \ rhs
-    apply!(normalization(problem(s)), coef)
-end
+## function solve!{T}(s::FE_DirectSolver, coef::AbstractArray{T}, rhs::AbstractArray{T})
+##     coef[:] = s.QR \ rhs
+##     apply!(normalization(problem(s)), coef)
+## end
 
 
 function apply!(s::FE_DirectSolver, dest, src, coef_dest, coef_src)

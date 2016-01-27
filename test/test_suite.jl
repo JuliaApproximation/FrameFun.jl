@@ -76,74 +76,39 @@ Test.with_handler(custom_handler) do
     delimit("1D")
 
     # Complex and real functions / Float64
-    f(x) = cos(x.^2)-1.0
-    g(x) = 1im*cos(x.^2)-1.0
+    f(x) = cos(x.^2-0.5)-1
+    g(x) = 1im*cos(x.^2-0.5)-1
     # Chebyshev and Fourier Bases
-    for Basis in (FourierBasis, ChebyshevBasis)
-        println()
-        println("## Basis: ", Basis)
+    
+    for ELT in (Float32,Float64)
+        for Basis in (FourierBasis, ChebyshevBasis)
+            println()
+            println("## Basis: ", Basis)
 
-        # Only 2 possible domains: an Interval and a Maskedgrid
-        for D in [Interval(-1.5,0.7) Interval(-1.5,-0.5)+Interval(0.5,1.5)]
-            show(D); println()
+            # Only 2 possible domains: an Interval and a Maskedgrid
+            for D in [Interval(-1.5,0.7) Interval(-1.5,-0.5)+Interval(0.5,1.5)]
+                show(D); println()
 
-            # 2 possible solvers
-            for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
-                show(solver); println()
+                # 2 possible solvers
+                for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
+                    show(solver); println()
 
-                for n in [FE.default_frame_n(D, Basis) 99]
-                    println("\tN = $n")
+                    for n in [FE.default_frame_n(D, Basis) 99]
+                        println("\tN = $n")
 
-                    # There is some symmetry around T=2, test smaller and larger values
-                    for T in [1.7 FE.default_frame_T(D, Basis) 2.3]
-                        print("T = $T \t")
+                        # There is some symmetry around T=2, test smaller and larger values
+                        for T in [1.7 FE.default_frame_T(D, Basis) 2.3]
+                            print("T = $T \t")
+                            B=Basis(n,-T,T,ELT)
+                            for func in (f,g)
+                                F = @timed( Fun(func, B, D; solver=solver) )
+                                F = @timed( Fun(func, B, D; solver=solver) )
 
-                        for func in (f,g)
-                            F = @timed( Fun(Basis, func, D; solver=solver, n=n, T=T) )
-                            F = @timed( Fun(Basis, func, D; solver=solver, n=n, T=T) )
-
-                            @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
-                            @test  msqerror_tol(func, F[1], tol=1e-7)
-                            if func == f
-                                print("\t\t")
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    ## Float32
-    f(x) = cos(x.^2)-1.0f0
-    g(x) = 1.0f0im*cos(x.^2)-1.0f0
-    # Chebyshev and Fourier Bases
-    for Basis in (FourierBasis, ChebyshevBasis)
-        println()
-        println("## Basis: ", Basis)
-        # Only 2 possible domains: an Interval and a Maskedgrid
-        for D in [Interval(-1.5f0,0.7f0) Interval(-1.5f0,-0.5f0)+Interval(0.5f0,1.5f0)]
-            show(D); println()
-
-            # 2 possible solvers
-            for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
-                show(solver); println()
-
-                for n in [FE.default_frame_n(D, Basis) 99]
-                    println("\tN = $n")
-                    # There is some symmetry around T=2, test smaller and larger values
-                    for T in [1.7 FE.default_frame_T(D, Basis) 2.3]
-                        print("T = $T \t")
-
-                        for func in (f,g)
-
-                            F = @timed( Fun(Basis, func, D; solver=solver, n=n, T=T))
-                            F = @timed( Fun(Basis, func, D; solver=solver, n=n, T=T))
-
-                            @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
-                            @test  msqerror_tol(func,F[1],tol=1e-4)
-                            if func==f
-                                print("\t\t")
+                                @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
+                                @test  msqerror_tol(func, F[1], tol=sqrt(eps(ELT))*10)
+                                if func == f
+                                    print("\t\t")
+                                end
                             end
                         end
                     end
@@ -187,7 +152,7 @@ Test.with_handler(custom_handler) do
         println()
         println("## Basis: ", Basis)
 
-        for D in [Disk(2.0,[-2.0,-2.0]) Cube((-1.0,-1.5),(0.5,0.7))]
+        for D in [Disk(1.2,[-0.1,-0.2]) Cube((-1.0,-1.5),(0.5,0.7))]
             show(D); println()
 
             for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
@@ -197,14 +162,15 @@ Test.with_handler(custom_handler) do
                     println("\tN = $n")
                     for T in (Extensive ? (FE.default_frame_T(D, Basis),) : ((1.7,1.7),FE.default_frame_T(D, Basis),(2.3,2.3)))
                         print("T = $T\t")
+                        B = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2])
                         for func in (f,g)
-
-                            F = @timed( Fun(Basis, func, D; solver=solver, n=n, T=T))
+                            F = @timed( Fun(func, B, D; solver=solver, n=n, T=T))
 
                             @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
                             @test msqerror_tol(func, F[1], tol=1e-3)
                             if func==f
                                 print("\t\t")
+                                B = Basis(n[1],-T[1],T[1],Complex{Float64}) ⊗ Basis(n[2],-T[2],T[2],Complex{Float64})
                             end
                         end
                     end
@@ -220,7 +186,7 @@ Test.with_handler(custom_handler) do
         println()
         println("## Basis: ", Basis)
 
-        for D in (Cube((-0.2,-2.0,0.0),(1.0,-0.1,1.2)),FE.TensorProductDomain(Interval(-1.0,1.0),Disk(1.05)), FE.Ball(1.2,[-1.3,0.25,1.0]))
+        for D in (Cube((-0.2,-1.0,0.0),(1.0,-0.1,1.2)),FE.TensorProductDomain(Interval(-1.0,1.0),Disk(1.05)), FE.Ball(1.2,[-0.3,0.25,0.1]))
             show(D); println()
             for solver in (FE.FE_ProjectionSolver, )
                 show(solver); println()
@@ -230,7 +196,8 @@ Test.with_handler(custom_handler) do
 
                 for T in ((1.7,1.7,1.7), FE.default_frame_T(D, Basis))
                     print("T = $T\t")
-                    F = @timed( Fun(Basis, f, D; solver=solver, n=n, T=T))
+                    B = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2]) ⊗ Basis(n[3],-T[3],T[3])
+                    F = @timed( Fun(f, B, D; solver=solver, n=n, T=T))
                     @printf("%3.2e s\t %3.2e bytes", F[2], F[3])
                     @test msqerror_tol(f, F[1], tol=1e-2)
                 end

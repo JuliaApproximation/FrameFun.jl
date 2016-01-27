@@ -1,16 +1,16 @@
 # fe_fourier.jl
 
 
-"An ExpFun is a FrameFun based on Fourier series."
-ExpFun(f::Function; args...) = Fun(FourierBasis, f; args...)
-ExpFun(f::Function, domain; args...) = Fun(FourierBasis, f, domain; args...)
+## "An ExpFun is a FrameFun based on Fourier series."
+## ExpFun(f::Function; args...) = Fun(FourierBasis, f; args...)
+## ExpFun(f::Function, domain; args...) = Fun(FourierBasis, f, domain; args...)
 
-"A ChebyFun is a FrameFun based on Chebyshev polynomials."
-ChebyFun(f::Function; args...) = Fun(ChebyshevBasis, f; args...)
-ChebyFun(f::Function, domain; args...) = Fun(ChebyshevBasis, f, domain; args...)
+## "A ChebyFun is a FrameFun based on Chebyshev polynomials."
+## ChebyFun(f::Function; args...) = Fun(ChebyshevBasis, f; args...)
+## ChebyFun(f::Function, domain; args...) = Fun(ChebyshevBasis, f, domain; args...)
 
 
-function Fun{Basis <: FunctionSet}(::Type{Basis}, f::Function, domain = default_frame_domain_1d(Basis); args...)
+function Fun(f::Function, Basis::FunctionSet, domain = default_frame_domain_1d(typeof(Basis)); args...)
     ELT = eltype(f, domain, Basis)
     (problem,solver) = fe_problem(domain, Basis, ELT; args...)
     coef = solve(solver, f, problem)
@@ -18,17 +18,17 @@ function Fun{Basis <: FunctionSet}(::Type{Basis}, f::Function, domain = default_
 end
 
 
-function eltype{Basis <: AbstractBasis}(f::Function, domain, ::Type{Basis})
-    ELT = numtype(domain)
+function eltype(f::Function, domain, Basis)
+    ELT = numtype(Basis)
     RT = Base.return_types(f,fill(numtype(domain),dim(domain)))
     if length(RT) > 0
-        if isreal(Basis) == False || (RT[1] <: Complex)
+        if isreal(typeof(Basis)) == False || (RT[1] <: Complex)
             Complex{ELT}
         else
             ELT
         end
     else
-        if isreal(Basis) == False
+        if isreal(typeof(Basis)) == False
             Complex{ELT}
         else
             ELT
@@ -45,7 +45,7 @@ function fe_problem(domain, Basis, ELT;
     n = default_frame_n(domain, Basis),
     T = default_frame_T(domain, Basis),
     s = default_frame_sampling(domain, Basis),
-    solver = default_frame_solver(domain),
+    solver = default_frame_solver(domain, Basis),
     args...)
     
     problem = discretize_problem(domain, n, T, s, Basis, ELT)
@@ -66,17 +66,16 @@ end
 
 
 
-function discretize_problem{T}(domain::AbstractDomain1d{T}, n::Int, tt, st, Basis, ELT)
-    m = round(Int, n.*st)+1
-    t = convert(numtype(domain),(tt.*(m-1)/2).*(2./(m-1)))
-    l = round(Int, t.*(m-1))
+function discretize_problem{T}(domain::AbstractDomain1d{T}, n::Int, tt, st, fbasis1, ELT)
+    ## m = round(Int, n.*st)+1
+    ## t = convert(numtype(domain),(tt.*(m-1)/2).*(2./(m-1)))
+    ## l = round(Int, t.*(m-1))
 
-    t = (l*one(T)) / ((m-1)*one(T))
+    ## t = (l*one(T)) / ((m-1)*one(T))
 
-    a = left(domain)
-    b = right(domain)
+    ## a = left(domain)
+    ## b = right(domain)
 
-    fbasis1 = rescale(Basis(n,ELT), a-(b-a)*(t-1)/2, b + (b-a)*(t-1)/2)
     # Compute the reduced grid and a larger basis, based on the oversampling factor
     rgrid, fbasis2 = oversampled_grid(domain, fbasis1, st)
     grid1 = grid(fbasis1)
@@ -85,22 +84,21 @@ function discretize_problem{T}(domain::AbstractDomain1d{T}, n::Int, tt, st, Basi
     tbasis1 = DiscreteGridSpace(grid1, ELT)
     tbasis2 = DiscreteGridSpace(grid2, ELT)
     tbasis_restricted = DiscreteGridSpace(rgrid, ELT)
-
     FE_DiscreteProblem(domain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted)
 end
 
-function discretize_problem{N,T}(domain::AbstractDomain{N,T}, nt::Tuple, tt::Tuple, st::Tuple, Basis, ELT)
-    n = [nt...]
-    m = round(Int, [nt...].*[st...])+1
-    tt = round(Int,[tt...].*(m-1)/2).*(2./(m-1))
-    l = round(Int, tt.*(m-1))
-    fbasis1_list = Array{FunctionSet}(N)
-    bbox = boundingbox(domain)
-    for i=1:N
-        t = (l[1]*one(T))/((m[1]-1)*one(T))
-        fbasis1_list[i] = rescale(Basis(n[i],ELT), left(bbox)[i] - (right(bbox)[i]-left(bbox)[i])*(t-1)/2, right(bbox)[i] + (right(bbox)[i]-left(bbox)[i])*(t-1)/2)
-    end
-    fbasis1 = TensorProductSet(fbasis1_list...)
+function discretize_problem{N,T}(domain::AbstractDomain{N,T}, nt::Tuple, tt::Tuple, st::Tuple, fbasis1, ELT)
+    ## n = [nt...]
+    ## m = round(Int, [nt...].*[st...])+1
+    ## tt = round(Int,[tt...].*(m-1)/2).*(2./(m-1))
+    ## l = round(Int, tt.*(m-1))
+    ## fbasis1_list = Array{FunctionSet}(N)
+    ## bbox = boundingbox(domain)
+    ## for i=1:N
+    ##     t = (l[1]*one(T))/((m[1]-1)*one(T))
+    ##     fbasis1_list[i] = rescale(Basis(n[i],ELT), left(bbox)[i] - (right(bbox)[i]-left(bbox)[i])*(t-1)/2, right(bbox)[i] + (right(bbox)[i]-left(bbox)[i])*(t-1)/2)
+    ## end
+    ## fbasis1 = TensorProductSet(fbasis1_list...)
 
     rgrid, fbasis2 = oversampled_grid(domain, fbasis1, st[1])
     grid1 = grid(fbasis1)
@@ -118,7 +116,7 @@ function discretize_problem{TD,DN,LEN,N,T}(domain::TensorProductDomain{TD,DN,LEN
     dc = 1
     for i = 1:LEN
         range = dc:dc+DN[i]-1
-        p = discretize_problem(subdomain(domain,i), nt[range], tt[range], st[range], Basis, ELT)
+        p = discretize_problem(subdomain(domain,i), nt[range], tt[range], st[range], set(Basis,range), ELT)
         push!(problems, p)
         dc += DN[i]
     end
@@ -176,8 +174,8 @@ default_frame_sampling{N,T}(domain::AbstractDomain{N,T}, Basis) = ntuple(i->2*on
 
 default_frame_solver(domain, Basis) = FE_ProjectionSolver
 
-default_frame_solver{N}(domain::AbstractDomain{N,BigFloat}, Basis) = FE_DirectSolver
-
+default_frame_solver{N}(domain::AbstractDomain, Basis::FunctionSet{N,BigFloat}) = FE_DirectSolver
+default_frame_solver{N}(domain::AbstractDomain, Basis::FunctionSet{N,Complex{BigFloat}}) = FE_DirectSolver
 # Does not seem to work (anymore)
 #default_frame_solver(domain::TensorProductDomain, Basis) = map(default_frame_solver, domainlist(domain))
 
