@@ -36,7 +36,7 @@ plot_expansion(F); plot_error(F,f)
 In higher dimensions, a basis can be any tensorproduct of (scaled) lower dimensional bases:
 ```julia
 C = Disk(1.0)- Disk(0.3,[0.2; 0.5])
-B = rescale(FourierBasis(31),-1.3,1.3) ⊗ rescale(FourierBasis(31),-1.3,1.3)
+B = FourierBasis(31,-1.3,1.3) ⊗ FourierBasis(31,-1.3,1.3)
 f(x,y) = exp(x+y)
 F = Fun(f,B,C)
 
@@ -61,7 +61,7 @@ plot_image(F), plot_error(F,f)
 Even fractal domains are not a problem:
 
 ```julia
-B = rescale(FourierBasis(31),-1.0,0.35) ⊗ rescale(FourierBasis(31),-0.65,0.65)
+B = FourierBasis(31,-1.0,0.35) ⊗ FourierBasis(31,-0.65,0.65)
 f(x,y) = cos(10*x*y)
 F = Fun(f, B, Mandelbrot())
 
