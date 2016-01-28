@@ -32,6 +32,10 @@ domain(fun::FrameFun, set::DomainFrame) = domain(set)
 
 basis(fun::FrameFun, set::DomainFrame) = basis(set)
 
+function matrix(fun::FrameFun)
+    problem = fe_problem(domain(fun), basis(fun), eltype(fun))[1]
+    matrix(operator(problem))
+end
 
 # Delegate all calling to the underlying expansion.
 call(fun::FrameFun, x...) = call(expansion(fun), x...)
