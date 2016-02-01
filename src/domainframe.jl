@@ -22,9 +22,10 @@ basis(f::DomainFrame) = f.basis
 
 domain(f::DomainFrame) = f.domain
 
-for op in (:size, :length)
+for op in (:size, :length, :differentiate)
     @eval $op(f::DomainFrame, args...) = $op(f.basis, args...)
 end
+
 
 # Should we check whether x lies in the domain?
 call_set(fun::SetExpansion, s::DomainFrame, coef, x...) = call_expansion(basis(s), coef, x...)

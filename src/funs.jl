@@ -26,6 +26,8 @@ for op in (:domainframe, :domain, :basis)
     @eval $op(fun::FrameFun) = $op(fun, set(fun))
 end
 
+ctranspose{N,T}(fun::FrameFun{N,T}) = FrameFun{N,T}(expansion(fun)')
+    
 domainframe(fun::FrameFun, set::DomainFrame) = set
 
 domain(fun::FrameFun, set::DomainFrame) = domain(set)

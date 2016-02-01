@@ -13,7 +13,7 @@ import Base: +, *, /, ==, |, &, -, \
 
 import Base: intersect, union, isapprox, setdiff
 
-import Base: length, eltype, size, push!
+import Base: length, eltype, size, push!, ctranspose
 
 import Base: eachindex, start, next, done, getindex, in
 
@@ -27,7 +27,7 @@ import BasisFunctions: dim, index_dim, grid, left, right, stepsize
 
 import BasisFunctions: operator, coefficients, set, is_basis, is_frame, transform_normalization_operator, evaluation_operator, interpolation_operator
 
-import BasisFunctions: call_set, call_set!, call_expansion, call_expansion!
+import BasisFunctions: call_set, call_set!, call_expansion, call_expansion!, differentiate
 
 import BasisFunctions: True, False
 
