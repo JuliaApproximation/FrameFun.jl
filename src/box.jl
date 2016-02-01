@@ -45,7 +45,7 @@ getindex(b::BBox, i::Int, j::Int) = j == 1 ? left(b, i) : right(b, i)
 size(b::BBox, dim) = right(b, dim) - left(b, dim)
 
 "Create an equispaced grid on the box with ns[dim] points in each dimension."
-equispaced_grid(box, ns) = TensorProductGrid([EquispacedGrid(ns[idx], left(box, idx), right(box, idx)) for idx = 1:dim(box)]...)    
+equispaced_grid(box, ns) = TensorProductGrid([PeriodicEquispacedGrid(ns[idx], left(box, idx), right(box, idx)) for idx = 1:dim(box)]...)    
 
 "Create an equispaced grid on the box with n points in each dimension."
 equispaced_grid{N}(box::BBox{N}, n::Int) = equispaced_grid(box, ntuple(x->n, Val{N}))

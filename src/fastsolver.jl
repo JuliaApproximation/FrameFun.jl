@@ -83,7 +83,7 @@ estimate_plunge_rank(problem::FE_DiscreteProblem{1,BigFloat}) = round(Int, 28*lo
 #end
 
 
-@debug function apply!(s::FE_ProjectionSolver, dest, src, coef_dest, coef_src)
+function apply!(s::FE_ProjectionSolver, dest, src, coef_dest, coef_src)
     A = operator(s)
     At = operator_transpose(s)
     P = s.plunge_op

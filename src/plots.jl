@@ -2,10 +2,12 @@
 
 
 # One-dimensional plot, just the domain
-function plot(f::FrameFun{1}; n=200)
-    grid = EquispacedGrid(n,left(domain(f)),right(domain(f)))
-    data = convert(Array{Float64},real(f(grid)))
-    Main.PyPlot.plot(BasisFunctions.range(grid),data)
+function plot(f::FrameFun{1}; n=201)
+    G = grid(similar(basis(f),eltype(f),n))
+    G = MaskedGrid(G,domain(f))
+    x = convert(Array{Float64},apply(x->x,eltype(f),G))
+    data = convert(Array{Float64},real(f(G)))
+    Main.PyPlot.plot(x,data)
     Main.PyPlot.title("Extension (domain)")
 end
 
@@ -13,24 +15,26 @@ end
 ## function plot_full{1}(f::Fun{1})
     
 ## end
-function plot_expansion(f::FrameFun{1}; n=200, repeats=0)
-    grid = EquispacedGrid(n,left(basis(set(f))),right(basis(set(f))))
-    data = convert(Array{Float64},real(f(grid)))
+function plot_expansion(f::FrameFun{1}; n=201, repeats=0)
+    G = grid(similar(basis(f),eltype(f),n))
+    data = convert(Array{Float64},real(f(G)))
+    x = convert(Array{Float64},apply(x->x,eltype(f),G))
     for i=-repeats:repeats
-        Main.PyPlot.plot(BasisFunctions.range(grid)+i*(right(grid)-left(grid)),data,linestyle="dashed",color="blue")
+        Main.PyPlot.plot(x+i*(right(G)-left(G)),data,linestyle="dashed",color="blue")
     end
-    Main.PyPlot.plot(BasisFunctions.range(grid),data,color="blue")
+    Main.PyPlot.plot(x,data,color="blue")
     Main.PyPlot.title("Extension (Full)")
 end
 
-function plot_error(f::FrameFun{1}, g::Function; n=200, repeats = 0)
-    grid = EquispacedGrid(n,left(basis(set(f))),right(basis(set(f))))
-    data = real(f(grid))
-    plotdata=convert(Array{Float64},abs(g(BasisFunctions.range(grid))-data))    
+function plot_error(f::FrameFun{1}, g::Function; n=201, repeats = 0)
+    G = grid(similar(basis(f),eltype(f),n))
+    data = real(f(G))
+    x = convert(Array{Float64},apply(x->x,eltype(f),G))
+    plotdata=convert(Array{Float64},abs(apply(g,eltype(f),G)-data))    
     for i=-repeats:repeats
-        Main.PyPlot.semilogy(BasisFunctions.range(grid)+i*(right(grid)-left(grid)),plotdata,linestyle="dashed",color="blue")
+        Main.PyPlot.semilogy(x+i*(right(G)-left(G)),plotdata,linestyle="dashed",color="blue")
     end
-    Main.PyPlot.semilogy(BasisFunctions.range(grid),plotdata,color="blue")
+    Main.PyPlot.semilogy(x,plotdata,color="blue")
     Main.PyPlot.ylim([min(minimum(log10(plotdata)),-16),1])
     Main.PyPlot.title("Absolute Error")
 end 
@@ -103,33 +107,43 @@ function plot(f::FrameFun{2};n=1000)
     Main.PyPlot.plot_trisurf(x,y,data)
 end
 
-function plot_image(f::FrameFun{2};n=200)
+function plot_image(f::FrameFun{2};n=300)
     d =domain(set(expansion(f)))
-    B = BBox(left(basis(set(expansion(f)))),right(basis(set(expansion(f)))))
-    Tgrid = equispaced_aspect_grid(B,n)
+    Tgrid = grid(similar(basis(f),eltype(f),(n,n)))
     Mgrid=MaskedGrid(Tgrid, domain(f))
     Z = evalgrid(Tgrid, d)
     data = convert(Array{Float64},real(expansion(f)(Mgrid)))
     vmin = minimum(data)
     vmax = maximum(data)
     data = real(expansion(f)(Tgrid))
-    Main.PyPlot.imshow((data./Z)',interpolation="bicubic", extent=(left(B)[1], right(B)[1], left(B)[2], right(B)[2]), vmin=vmin, vmax=vmax, alpha=1.0,origin="lower")
-    Main.PyPlot.imshow((data./(1-Z))',interpolation="bicubic", extent=(left(B)[1], right(B)[1], left(B)[2], right(B)[2]), vmin=vmin, vmax=vmax, alpha=1.0,origin="lower")
+    X = convert(Array{Float64},real(apply((x,y)->x,eltype(f),Tgrid)))
+    Y = convert(Array{Float64},real(apply((x,y)->y,eltype(f),Tgrid)))
+    Main.PyPlot.pcolormesh(X,Y,data,vmin=vmin, vmax=vmax, shading = "gouraud")
+    bound = boundary(Tgrid,d)
+    plot_grid(bound)
+    Main.PyPlot.axis("scaled")
+    Main.PyPlot.xlim([left(Tgrid)[1], right(Tgrid)[1]])
+    Main.PyPlot.ylim([left(Tgrid)[2], right(Tgrid)[2]])
     Main.PyPlot.colorbar()
 end
 
-function plot_error(f::FrameFun{2},g::Function;n=200)
+function plot_error(f::FrameFun{2},g::Function;n=300)
     d =domain(set(expansion(f)))
-    B = boundingbox(d)
-    Tgrid = equispaced_aspect_grid(B,n)
+    Tgrid = grid(similar(basis(f),eltype(f),(n,n)))
     Mgrid=MaskedGrid(Tgrid, domain(f))
     Z = evalgrid(Tgrid, d)
     data = real(expansion(f)(Mgrid))
     vmin = minimum(data)
     vmax = maximum(data)
     data = log10(abs(expansion(f)(Tgrid)-apply(g,eltype(f),Tgrid)))
-    Main.PyPlot.imshow((data./Z)',interpolation="bicubic", extent=(left(B)[1], right(B)[1], left(B)[2], right(B)[2]) , alpha=1.0,vmin=-16.0,vmax=1.0,aspect="equal",origin="lower")
-    Main.PyPlot.imshow((data./(1-Z))',interpolation="bicubic", extent=(left(B)[1], right(B)[1], left(B)[2], right(B)[2]) , alpha=1.0,vmin=-16.0,vmax=1.0,aspect="equal",origin="lower")
+    X = convert(Array{Float64},real(apply((x,y)->x,eltype(f),Tgrid)))
+    Y = convert(Array{Float64},real(apply((x,y)->y,eltype(f),Tgrid)))
+    Main.PyPlot.pcolormesh(X,Y,data,vmin=-16.0, vmax=1.0, shading = "gouraud")
+    bound = boundary(Tgrid,d)
+    plot_grid(bound)
+    Main.PyPlot.axis("scaled")
+    Main.PyPlot.xlim([left(Tgrid)[1], right(Tgrid)[1]])
+    Main.PyPlot.ylim([left(Tgrid)[2], right(Tgrid)[2]])
     Main.PyPlot.colorbar()
     Main.PyPlot.title("log10 of absolute error")
 end
@@ -137,7 +151,7 @@ end
 function plot_grid(grid::AbstractGrid2d)
     x=[grid[i][1] for i = 1:length(grid)]
     y=[grid[i][2] for i = 1:length(grid)]
-    Main.PyPlot.plot(x,y,linestyle="none",marker="o",color="blue")
+    Main.PyPlot.plot(x,y,linestyle="none",marker="o",color="black",mec="black",markersize=1.5)
     Main.PyPlot.axis("equal")
 end
 
