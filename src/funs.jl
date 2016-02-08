@@ -22,11 +22,13 @@ for op in (:set, :dim, :coefficients, :eltype, :numtype)
     @eval $op(fun::FrameFun) = $op(fun.expansion)
 end
 
+for op in (:ctranspose, :∫, :∂x, :∂y, :∂z, :∫∂x, :∫∂y, :∫∂z, :differentiate, :antidifferentiate)
+    @eval $op{N,T}(fun::FrameFun{N,T}, args...) = FrameFun{N,T}($op(fun.expansion, args...))
+end
+
 for op in (:domainframe, :domain, :basis)
     @eval $op(fun::FrameFun) = $op(fun, set(fun))
 end
-
-ctranspose{N,T}(fun::FrameFun{N,T}) = FrameFun{N,T}(expansion(fun)')
     
 domainframe(fun::FrameFun, set::DomainFrame) = set
 

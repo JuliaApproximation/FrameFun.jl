@@ -25,9 +25,9 @@ import BasisFunctions: src, dest, matrix, matrix!, apply!, numtype
 
 import BasisFunctions: dim, index_dim, grid, left, right, stepsize
 
-import BasisFunctions: operator, coefficients, set, is_basis, is_frame, transform_normalization_operator, evaluation_operator, interpolation_operator
+import BasisFunctions: operator, coefficients, set, is_basis, is_frame, transform_normalization_operator, evaluation_operator, interpolation_operator, differentiation_operator, antidifferentiation_operator
 
-import BasisFunctions: call_set, call_set!, call_expansion, call_expansion!, differentiate
+import BasisFunctions: call_set, call_set!, call_expansion, call_expansion!, differentiate, ∂x, ∂y, ∂z, ∫∂x, ∫∂y, ∫∂z, ∫ 
 
 import BasisFunctions: True, False
 
