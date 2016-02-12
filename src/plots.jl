@@ -2,12 +2,12 @@
 
 
 # One-dimensional plot, just the domain
-function plot(f::FrameFun{1}; n=201)
+function plot(f::FrameFun{1}; n=201, color="blue")
     G = grid(similar(basis(f),eltype(f),n))
     G = MaskedGrid(G,domain(f))
     x = convert(Array{Float64},apply(x->x,eltype(f),G))
     data = convert(Array{Float64},real(f(G)))
-    Main.PyPlot.plot(x,data)
+    Main.PyPlot.plot(x,data, color=color)
     Main.PyPlot.title("Extension (domain)")
 end
 
@@ -15,26 +15,26 @@ end
 ## function plot_full{1}(f::Fun{1})
     
 ## end
-function plot_expansion(f::FrameFun{1}; n=201, repeats=0)
+function plot_expansion(f::FrameFun{1}; n=201, repeats=0, color="blue", alpha=1.0)
     G = grid(similar(basis(f),eltype(f),n))
     data = convert(Array{Float64},real(f(G)))
     x = convert(Array{Float64},apply(x->x,eltype(f),G))
     for i=-repeats:repeats
-        Main.PyPlot.plot(x+i*(right(G)-left(G)),data,linestyle="dashed",color="blue")
+        Main.PyPlot.plot(x+i*(right(G)-left(G)),data,linestyle="dashed", color=color, alpha=alpha)
     end
-    Main.PyPlot.plot(x,data,color="blue")
+    Main.PyPlot.plot(x,data, color=color, alpha=alpha)
     Main.PyPlot.title("Extension (Full)")
 end
 
-function plot_error(f::FrameFun{1}, g::Function; n=201, repeats = 0)
+function plot_error(f::FrameFun{1}, g::Function; n=201, repeats = 0, color="blue")
     G = grid(similar(basis(f),eltype(f),n))
     data = real(f(G))
     x = convert(Array{Float64},apply(x->x,eltype(f),G))
     plotdata=convert(Array{Float64},abs(apply(g,eltype(f),G)-data))    
     for i=-repeats:repeats
-        Main.PyPlot.semilogy(x+i*(right(G)-left(G)),plotdata,linestyle="dashed",color="blue")
+        Main.PyPlot.semilogy(x+i*(right(G)-left(G)),plotdata,linestyle="dashed", color=color)
     end
-    Main.PyPlot.semilogy(x,plotdata,color="blue")
+    Main.PyPlot.semilogy(x,plotdata,color=color)
     Main.PyPlot.ylim([min(minimum(log10(plotdata)),-16),1])
     Main.PyPlot.title("Absolute Error")
 end 
@@ -76,6 +76,7 @@ end
 ##     end
 ## end
 
+
 function apply(f::Function, return_type, g::AbstractGrid)
     result = Array(return_type, size(g))
     call!(f, result, g)
@@ -87,7 +88,6 @@ function call!{N}(f::Function, result::AbstractArray, g::AbstractGrid{N})
         result[i] = f(getindex(g, i)...)
     end
 end
-
 
 function plot_domain(d::AbstractDomain{2}; n=1000)
     B = boundingbox(d)    
@@ -195,3 +195,8 @@ function plot_expansion{N,T}(f::FrameFun{N,T}; n=35)
     Main.PyPlot.surf(BasisFunctions.range(grid(Tgrid,1)),BasisFunctions.range(grid(Tgrid,2)),data,rstride=1, cstride=1, cmap=Main.PyPlot.ColorMap("coolwarm"),linewidth=0, antialiased=false,vmin=-1.0,vmax=1.0)
 end
 
+function plot_boundary(d::AbstractDomain, B::BBox; n =100)
+    Tgrid = equispaced_aspect_grid(B,n)
+    bound = boundary(Tgrid,d)
+    plot_grid(bound)
+end

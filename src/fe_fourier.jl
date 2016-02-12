@@ -41,16 +41,16 @@ end
 
 
 
-"""
-Construct an FE problem for the given domain, using default values if necessary.
-"""
+## """
+## Construct an FE problem for the given domain, using default values if necessary.
+## """
+## remove
 function fe_problem(domain, Basis, ELT;
     s = 2,
     solver = default_frame_solver(domain, Basis),
     args...)
-    
     problem = discretize_problem(domain, Basis, ELT, s)
-    sol = solver(problem)
+    sol = solver(problem; args...)
 
     (problem, sol)
 end
