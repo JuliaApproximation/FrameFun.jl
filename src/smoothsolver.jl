@@ -81,7 +81,7 @@ FE_SmoothProjectionSolver(p::FE_TensorProductProblem) = TensorProductOperator(ma
                 s.x2[i] = s.x2[i] - s.x3[i]
         end
         
-        # post smoothing step
+        post smoothing step
         apply!(A, s.b, s.x2)
         apply!(At, s.x1, coef_src-s.b)
         for i = 1:length(coef_dest)

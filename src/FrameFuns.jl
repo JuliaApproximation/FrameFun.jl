@@ -79,6 +79,8 @@ include("fe_solvers.jl")
 
 include("fastsolver.jl")
 
+include("smoothsolver.jl")
+
 include("fe_fourier.jl")
 
 # TODO: try out Plots.jl
