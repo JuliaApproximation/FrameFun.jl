@@ -550,7 +550,7 @@ boundingbox(d::DomainDifference) = boundingbox(d.d1)
 function show(io::IO, d::DomainDifference)
     print(io, "the difference of two domains: \n")
     print(io, "    First domain: ", d.d1, "\n")
-    print(io, "    Second domain: ", d.d1, "\n")
+    print(io, "    Second domain: ", d.d2, "\n")
 end
 
 

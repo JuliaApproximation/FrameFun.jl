@@ -26,6 +26,15 @@ for op in (:size, :length)
     @eval $op(f::DomainFrame, args...) = $op(f.basis, args...)
 end
 
+for op in (:differentiation_operator, :antidifferentiation_operator)
+    @eval function $op(f::DomainFrame, order)
+        op = $op(basis(f), order)
+        WrappedOperator(f,DomainFrame(domain(f),dest(op)),op)
+    end
+end
+
+
+
 # Should we check whether x lies in the domain?
 call_set(fun::SetExpansion, s::DomainFrame, coef, x...) = call_expansion(basis(s), coef, x...)
 

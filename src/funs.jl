@@ -22,10 +22,14 @@ for op in (:set, :dim, :coefficients, :eltype, :numtype)
     @eval $op(fun::FrameFun) = $op(fun.expansion)
 end
 
+for op in (:ctranspose, :∫, :∂x, :∂y, :∂z, :∫∂x, :∫∂y, :∫∂z, :differentiate, :antidifferentiate)
+    @eval $op{N,T}(fun::FrameFun{N,T}, args...) = FrameFun{N,T}($op(fun.expansion, args...))
+end
+
 for op in (:domainframe, :domain, :basis)
     @eval $op(fun::FrameFun) = $op(fun, set(fun))
 end
-
+    
 domainframe(fun::FrameFun, set::DomainFrame) = set
 
 domain(fun::FrameFun, set::DomainFrame) = domain(set)
@@ -48,7 +52,7 @@ call(fun::FrameFun, x...) = call(expansion(fun), x...)
 
 show(io::IO, fun::FrameFun) = show(io, fun, set(fun))
 
-@debug function show(io::IO, fun::FrameFun, set::DomainFrame)
+function show(io::IO, fun::FrameFun, set::DomainFrame)
     println(io, "A ", dim(fun), "-dimensional FrameFun with ", length(coefficients(fun)), " degrees of freedom.")
     println(io, "Basis: ", name(basis(set)))
     println(io, "Domain: ", domain(set))

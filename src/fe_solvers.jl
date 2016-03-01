@@ -87,7 +87,7 @@ end
 ## FE_DirectSolver(p::FE_TensorProductProblem) = TensorProductOperator(map(FE_DirectSolver,p.problems)...)
 
 
-## @debug function apply!(s::FE_DirectSolver, dest, src, coef_dest, coef_src)
+## function apply!(s::FE_DirectSolver, dest, src, coef_dest, coef_src)
 ##     @bp
 ##     coef_dest[:] = matrix(operator(problem(s))) \ coef_src
 ## end

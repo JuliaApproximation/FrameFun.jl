@@ -226,16 +226,15 @@ function boundary{TG,GN,LEN,N,T}(g::TensorProductGrid{TG,GN,LEN,N,T},dom::Abstra
             neighbours[j-1,i]=(floor(Int,(j-1)/(2^(i-1))) % 2)
         end
     end
-    println(neighbours)
     CartesianNeighbours = Array(CartesianIndex{N},2^N)
-    for j=1:2^N
+    for j=1:2^N-1
         CartesianNeighbours[j]=CartesianIndex{N}(neighbours[j,:]...)
     end
     midpoints = Vec{N,T}[]
     # for each element
     for i in eachindex(g)
         # for all neighbours
-        for j=1:2^N
+        for j=1:2^N-1
             neighbour = i + CartesianNeighbours[j]
             # check if any are on the other side of the boundary
             try
@@ -255,3 +254,7 @@ function boundary{G,ID,N}(g::MaskedGrid{G,ID,N},dom::AbstractDomain{N})
     boundary(grid(g),dom)
 end
 
+function evaluation_operator{G <: AbstractSubGrid}(s::FunctionSet,d::DiscreteGridSpace{G})
+    d2 = DiscreteGridSpace(grid(grid(d)))
+    restriction_operator(d2,d)*evaluation_operator(s,d2)
+end
