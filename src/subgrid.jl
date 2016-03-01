@@ -61,7 +61,7 @@ getindex(g::MaskedGrid, idx::Int) = getindex(g.grid, g.indices[idx]...)
 
 
 # Efficient extension operator
-function apply!{G <: MaskedGrid}(op::Extension, dest, src::DiscreteGridSpace{G}, coef_dest::AbstractArray, coef_src::AbstractArray)
+function apply!{G <: MaskedGrid}(op::Extension, dest, src::DiscreteGridSpace{G}, coef_dest, coef_src)
     @assert length(coef_src) == length(src)
     @assert length(coef_dest) == length(dest)
     @assert grid(dest) == grid(grid(src))
@@ -76,11 +76,12 @@ function apply!{G <: MaskedGrid}(op::Extension, dest, src::DiscreteGridSpace{G},
             coef_dest[i] = coef_src[l]
         end
     end
+    coef_dest
 end
 
 
 # Efficient restriction operator
-function apply!{G <: MaskedGrid}(op::Restriction, dest::DiscreteGridSpace{G}, src, coef_dest::AbstractArray, coef_src::AbstractArray)
+function apply!{G <: MaskedGrid}(op::Restriction, dest::DiscreteGridSpace{G}, src, coef_dest, coef_src)
     @assert length(coef_src) == length(src)
     @assert length(coef_dest) == length(dest)
     @assert grid(src) == grid(grid(dest))
@@ -94,6 +95,7 @@ function apply!{G <: MaskedGrid}(op::Restriction, dest::DiscreteGridSpace{G}, sr
             coef_dest[l] = coef_src[i]
         end
     end
+    coef_dest
 end
 
 
@@ -148,6 +150,7 @@ function apply!{G <: IndexSubGrid}(op::Extension, dest::DiscreteGridSpace, src::
         l += 1
         coef_dest[i] = coef_src[l]
     end
+    coef_dest
 end
 
 
@@ -165,6 +168,7 @@ function apply!{G <: IndexSubGrid}(op::Restriction, dest::DiscreteGridSpace{G}, 
         l += 1
         coef_dest[l] = coef_src[i]
     end
+    coef_dest
 end
 
 
