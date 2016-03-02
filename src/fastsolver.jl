@@ -31,11 +31,11 @@ immutable FE_ProjectionSolver{ELT,SRC,DEST} <: FE_Solver{ELT,SRC,DEST}
         limit = 10^(3/4*log10(eps(numtype(frequency_basis(problem)))))
         maxind = findlast(S.>limit)
         Sinv = 1./S[1:maxind]
-        b = zeros(size(dest(plunge_op)))
-        y = zeros(size(USV[3],1))
-        x1 = zeros(size(src(operator(problem))))
-        x2 = zeros(size(src(operator(problem))))
-        sy = zeros(maxind,)
+        b = zeros(ELT, size(dest(plunge_op)))
+        y = zeros(ELT, size(USV[3],1))
+        x1 = zeros(ELT, size(src(operator(problem))))
+        x2 = zeros(ELT, size(src(operator(problem))))
+        sy = zeros(ELT, maxind)
         new(problem, plunge_op, W, USV[1][:,1:maxind]',USV[3][1:maxind,:]'*diagm(Sinv[:]),b,y,sy,x1,x2)
     end
 end

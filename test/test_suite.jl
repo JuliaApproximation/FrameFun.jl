@@ -99,8 +99,8 @@ Test.with_handler(custom_handler) do
                         # There is some symmetry around T=2, test smaller and larger values
                         for T in [1.7 FE.default_frame_T(D, Basis) 2.3]
                             print("T = $T \t")
-                            B=Basis(n,-T,T,ELT)
-                            for func in (f,g)
+                            for (func,TT) in ((f,ELT),(g,Complex{ELT}))
+                                B = Basis(n, -T, T, TT)
                                 F = @timed( Fun(func, B, D; solver=solver) )
                                 F = @timed( Fun(func, B, D; solver=solver) )
 

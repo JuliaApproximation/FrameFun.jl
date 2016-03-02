@@ -4,6 +4,7 @@
 abstract FE_Solver{ELT,SRC,DEST} <: AbstractOperator{SRC,DEST}
 
 eltype{ELT,SRC,DEST}(::Type{FE_Solver{ELT,SRC,DEST}}) = ELT
+eltype{S <: FE_Solver}(::Type{S}) = eltype(super(S))
 
 problem(s::FE_Solver) = s.problem
 

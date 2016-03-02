@@ -65,7 +65,7 @@ function FE_DiscreteProblem(domain::AbstractDomain, fbasis1, fbasis2, tbasis1, t
     transform2 = transform_operator(tbasis2, fbasis2)
     itransform2 = transform_operator(fbasis2, tbasis2)
 
-    normalization = transform_normalization_operator(fbasis1, fbasis2)
+    normalization = f_restriction * transform_normalization_operator(fbasis2) * f_extension
 
     op  = t_restriction * itransform2 * f_extension
     opt = f_restriction * transform2 * t_extension
@@ -185,28 +185,6 @@ end
 for op in (:size, :size_ext)
     @eval $op{TP,PN}(p::FE_TensorProductProblem{TP,PN}) = 
         tuple(map($op,p.problems)...)
-end
-
-
-# This code needs a revision.
-# What is the true (generic) meaning of transform_normalization_operator when there is a source and a destination?
-# We also have to do something about the types added as arguments here.
-transform_normalization_operator(src::TensorProductSet, dest::TensorProductSet) =
-    TensorProductOperator([transform_normalization_operator(set(src,i), set(dest,i)) for i in 1:tp_length(src)]...)
-
-function transform_normalization_operator(src::FunctionSet, dest::FunctionSet)
-    ELT = eltype(src,dest)
-    factor = sqrt(ELT(length(src))/ELT(length(dest)))
-    transform_normalization_operator(src) * ScalingOperator(src, factor)
-end
-
-# Perhaps this is not always correct. Check.
-function transform_normalization_operator(p::FE_DiscreteProblem)
-    transform_normalization_operator(frequency_basis(p), frequency_basis_ext(p))
-end
-
-function transform_normalization_operator(p::FE_TensorProductProblem)
-    TensorProductOperator(ELT, [transform_normalization_operator(p.problems[i]) for i in 1:tp_length(p)]...)
 end
 
 
