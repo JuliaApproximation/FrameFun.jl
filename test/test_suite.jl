@@ -99,8 +99,8 @@ Test.with_handler(custom_handler) do
                         # There is some symmetry around T=2, test smaller and larger values
                         for T in [1.7 FE.default_frame_T(D, Basis) 2.3]
                             print("T = $T \t")
-                            for (func,TT) in ((f,ELT),(g,Complex{ELT}))
-                                B = Basis(n, -T, T, TT)
+                            for (func,CT) in ((f,ELT),(g,Complex{ELT}))
+                                B = Basis(n, -T, T, CT)
                                 F = @timed( Fun(func, B, D; solver=solver) )
                                 F = @timed( Fun(func, B, D; solver=solver) )
 
@@ -129,9 +129,9 @@ Test.with_handler(custom_handler) do
                 show(D); print("\n")
                 for T in [BigFloat(17//10) FE.default_frame_T(D, Basis) BigFloat(23//10)]
                     print("T = $T \t")
-                    for func in (f,g)
-
-                        F = @timed( Fun(Basis, func, D; solver = FE.FE_DirectSolver, n=71, T=T) )
+                    for (func,CT) in ((f,BigFloat),(g,Complex{BigFloat}))
+                        B = Basis(71, -T, T, CT)
+                        F = @timed( Fun(func, B, D; solver = FE.FE_DirectSolver) )
 
                         @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
                         @test  msqerror_tol(func,F[1],tol=1e-20)
