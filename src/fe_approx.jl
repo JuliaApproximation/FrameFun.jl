@@ -14,8 +14,8 @@
 
 
 function Fun(f::Function, basis::FunctionSet, domain::AbstractDomain; args...)
-#    ELT = eltype(f, basis)
-    frame = domainframe(domain, basis)
+    ELT = eltype(f, basis)
+    frame = domainframe(domain, promote_eltype(basis, ELT))
     A = approximation_operator(frame; args...)
     coef = A * f
     FrameFun(domain, dest(A), coef, A)
@@ -42,6 +42,18 @@ function approximation_operator(set::DomainFrame;
     solver(problem)
 end
 
+
+immutable FE_BestSolver
+end
+
+function FE_BestSolver(problem::FE_DiscreteProblem)
+    R = estimate_plunge_rank(problem)
+    if R < size(problem, 2)/2
+        FE_ProjectionSolver(problem)
+    else
+        FE_DirectSolver(problem)
+    end
+end
 
 
 
@@ -77,10 +89,10 @@ function default_frame_n(domain::TensorProductDomain, basis)
 end
 
 
-default_frame_T{T}(domain::AbstractDomain{1,T}, basis) = 2*one(T)
-default_frame_T{N,T}(domain::AbstractDomain{N,T}, basis) = ntuple(i->2*one(T),N)
+default_frame_T(domain::AbstractDomain{1}, basis) = 2.0
+default_frame_T{N}(domain::AbstractDomain{N}, basis) = ntuple(i->2.0,N)
 
-default_frame_solver(domain, basis) = FE_ProjectionSolver
+default_frame_solver(domain, basis) = FE_BestSolver
 
 default_frame_solver{N}(domain::AbstractDomain, basis::FunctionSet{N,BigFloat}) = FE_DirectSolver
 default_frame_solver{N}(domain::AbstractDomain, basis::FunctionSet{N,Complex{BigFloat}}) = FE_DirectSolver

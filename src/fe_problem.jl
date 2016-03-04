@@ -6,33 +6,26 @@ This data can be used in a solver to produce an approximation.
 """
 abstract FE_Problem{N,T}
 
-numtype{N,T}(::Type{FE_Problem{N,T}}) = T
-numtype{P <: FE_Problem}(::Type{P}) = numtype(super(P))
-numtype(p::FE_Problem) = numtype(typeof(p))
-
-dim{N,T}(::Type{FE_Problem{N,T}}) = N
-dim{P <: FE_Problem}(::Type{P}) = dim(super(P))
-dim(p::FE_Problem) = dim(typeof(p))
-
-eltype(p::FE_Problem) = eltype(operator(p))
-
+for op in [:eltype, :dim, :numtype]
+    @eval $op(p::FE_Problem) = $op(frequency_basis(p))
+end
 
 
 # This type groups the data corresponding to a FE problem.
 immutable FE_DiscreteProblem{N,T} <: FE_Problem{N,T}
-    domain          ::  AbstractDomain{N,T}
+    domain          ::  AbstractDomain{N}
 
     op              ::  AbstractOperator
     opt             ::  AbstractOperator
 
     # The original and extended frequency basis
-    fbasis1
-    fbasis2
+    fbasis1         ::  FunctionSet{N,T}
+    fbasis2         ::  FunctionSet{N,T}
     # The original and extended time basis
-    tbasis1
-    tbasis2
+    tbasis1         ::  FunctionSet{N,T}
+    tbasis2         ::  FunctionSet{N,T}
     # Time domain basis restricted to the domain of the problem
-    tbasis_restricted
+    tbasis_restricted         ::  FunctionSet{N,T}
 
     # Extension and restriction operators
     f_extension         # from fbasis1 to fbasis2
@@ -56,6 +49,7 @@ The result is the tuple (oversampled_grid, larger_basis)
 """
 oversampled_grid(set::DomainFrame, args...) =
     oversampled_grid(domain(set), basis(set), args...)
+
 
 function oversampled_grid(domain::AbstractDomain, basis::FunctionSet, sampling_factor)
     N = dim(basis)

@@ -1,9 +1,7 @@
 # subgrid.jl
 
 
-abstract AbstractSubGrid{N,T,G} <: AbstractGrid{N,T}
-
-eltype{N,T,G}(::Type{AbstractSubGrid{N,T,G}}) = eltype(G)
+abstract AbstractSubGrid{N,T} <: AbstractGrid{N,T}
 
 grid(g::AbstractSubGrid) = g.grid
 
@@ -13,7 +11,7 @@ A MaskedGrid is a subgrid of another grid that is defined by a mask.
 The mask is true or false for each point in the supergrid. The set of points
 for which it is true make up the MaskedGrid.
 """
-immutable MaskedGrid{G,ID,N,T} <: AbstractSubGrid{N,T,G}
+immutable MaskedGrid{G,ID,N,T} <: AbstractSubGrid{N,T}
     grid	::	G
     mask	::	Array{Bool,ID}
     indices ::  Vector{Vec{N,Int}}
@@ -35,7 +33,7 @@ convert(::Type{Tuple{Int,Int}}, i::CartesianIndex{2}) = (i[1],i[2])
 convert(::Type{Tuple{Int,Int,Int}}, i::CartesianIndex{3}) = (i[1],i[2],i[3])
 convert(::Type{Tuple{Int,Int,Int,Int}}, i::CartesianIndex{4}) = (i[1],i[2],i[3],i[4])
 
-function MaskedGrid{N,T}(grid::AbstractGrid{N,T}, domain::AbstractDomain{N,T})
+function MaskedGrid{N}(grid::AbstractGrid{N}, domain::AbstractDomain{N})
     mask = in(grid, domain)
     indices = Array(Vec{N,Int}, sum(mask))
     i = 1
@@ -104,7 +102,7 @@ end
 An IndexSubGrid is a subgrid corresponding to a certain range of indices of the
 underlying (one-dimensional) grid.
 """
-immutable IndexSubGrid{G,T} <: AbstractSubGrid{1,T,G}
+immutable IndexSubGrid{G,T} <: AbstractSubGrid{1,T}
 	grid	::	G
 	i1		::	Int
 	i2		::	Int
@@ -254,7 +252,7 @@ function boundary{G,ID,N}(g::MaskedGrid{G,ID,N},dom::AbstractDomain{N})
     boundary(grid(g),dom)
 end
 
-function evaluation_operator{G <: AbstractSubGrid}(s::FunctionSet,d::DiscreteGridSpace{G})
-    d2 = DiscreteGridSpace(grid(grid(d)))
-    restriction_operator(d2,d)*evaluation_operator(s,d2)
+function evaluation_operator{G <: AbstractSubGrid}(s::FunctionSet, d::DiscreteGridSpace{G})
+    d2 = DiscreteGridSpace(grid(grid(d)), eltype(s))
+    restriction_operator(d2, d) * evaluation_operator(s, d2)
 end

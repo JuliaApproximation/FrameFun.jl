@@ -59,6 +59,7 @@ function msqerror_tol(f::Function, F; vals::Int=200, tol=1e-6)
 end
 
 function delimit(s::AbstractString)
+    println()
     println("############")
     println("# ",s)
     println("############")
@@ -86,7 +87,7 @@ Test.with_handler(custom_handler) do
             println("## Basis: ", Basis)
 
             # Only 2 possible domains: an Interval and a Maskedgrid
-            for D in [Interval(-1.5,0.7) Interval(-1.5,-0.5)+Interval(0.5,1.5)]
+            for D in [Interval(), Interval(-1.5,0.7), Interval(-1.5,-0.5)+Interval(0.5,1.5)]
                 show(D); println()
 
                 # 2 possible solvers
@@ -99,8 +100,8 @@ Test.with_handler(custom_handler) do
                         # There is some symmetry around T=2, test smaller and larger values
                         for T in [1.7 FE.default_frame_T(D, Basis) 2.3]
                             print("T = $T \t")
-                            for (func,CT) in ((f,ELT),(g,Complex{ELT}))
-                                B = Basis(n, -T, T, CT)
+                            for func in (f,g)
+                                B = Basis(n, -T, T, ELT)
                                 F = @timed( Fun(func, B, D; solver=solver) )
                                 F = @timed( Fun(func, B, D; solver=solver) )
 
@@ -152,7 +153,7 @@ Test.with_handler(custom_handler) do
         println()
         println("## Basis: ", Basis)
 
-        for D in [Disk(1.2,[-0.1,-0.2]) Cube((-1.0,-1.5),(0.5,0.7))]
+        for D in [Disk(), Disk(1.2,[-0.1,-0.2]), Cube((-1.0,-1.5),(0.5,0.7))]
             show(D); println()
 
             for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
@@ -204,6 +205,12 @@ Test.with_handler(custom_handler) do
             end
         end
     end
+
+    delimit("Random circles")
+    dom = FE.randomcircles(10)
+    b = FourierBasis(21) ⊗ FourierBasis(21)
+    f(x,y) = cos(20*x+22*y)
+    @time F = Fun(f,b,dom)
 end
 
 # Diagnostics

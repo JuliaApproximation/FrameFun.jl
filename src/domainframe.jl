@@ -4,11 +4,11 @@
 A DomainFrame is the restriction of a basis to a subset of its domain. This results
 in a frame.
 """
-immutable DomainFrame{D,B,N,T} <: AbstractFrame{N,T}
-    domain      ::  D
-    basis       ::  B
+immutable DomainFrame{N,T} <: AbstractFrame{N,T}
+    domain      ::  AbstractDomain{N}
+    basis       ::  FunctionSet{N,T}
 
-    function DomainFrame(domain::AbstractDomain{N}, basis::FunctionSet{N,T})
+    function DomainFrame(domain::AbstractDomain, basis::FunctionSet)
         @assert is_basis(basis) == True()
         
         new(domain, basis)
@@ -16,7 +16,7 @@ immutable DomainFrame{D,B,N,T} <: AbstractFrame{N,T}
 end
 
 DomainFrame{N,T}(domain::AbstractDomain{N}, basis::FunctionSet{N,T}) =
-    DomainFrame{typeof(domain),typeof(basis),N,T}(domain, basis)
+    DomainFrame{N,T}(domain, basis)
 
 basis(f::DomainFrame) = f.basis
 
@@ -26,6 +26,8 @@ promote_eltype{S}(f::DomainFrame, ::Type{S}) =
     DomainFrame(f.domain, promote_eltype(f.basis, S))
 
 resize(f::DomainFrame, n) = DomainFrame(domain(f), resize(basis(f), n))
+
+extension_size(f::DomainFrame) = extension_size(basis(f))
 
 
 for op in (:size, :length)
@@ -53,8 +55,6 @@ Make a DomainFrame, but match tensor product domains with tensor product sets in
 For example: an interval ⊗ a disk (= a cylinder) combined with a 3D Fourier series, leads to a
 tensor product of a Fourier series on the interval ⊗ a 2D Fourier series on the disk.
 """
-a = 0
-
 function domainframe{TD,DN,LEN}(domain::TensorProductDomain{TD,DN,LEN}, basis::TensorProductSet)
     domainframes = FunctionSet[]
     dc = 1

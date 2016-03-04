@@ -6,7 +6,7 @@ is isolated using a projection operator.
 For more details, see the paper 'Fast algorithms for the computation of Fourier extensions of arbitrary length'
 http://arxiv.org/abs/1509.00206
 """
-immutable FE_ProjectionSolver{ELT,SRC,DEST} <: FE_Solver{ELT,SRC,DEST}
+immutable FE_ProjectionSolver{ELT,SRC,DEST} <: FE_Solver{SRC,DEST}
     problem     ::  FE_DiscreteProblem
     plunge_op   ::  AbstractOperator    # store the operator because it allocates memory
     W           ::  MatrixOperator
@@ -40,7 +40,6 @@ immutable FE_ProjectionSolver{ELT,SRC,DEST} <: FE_Solver{ELT,SRC,DEST}
     end
 end
 
-eltype{ELT,SRC,DEST}(::Type{FE_ProjectionSolver{ELT,SRC,DEST}}) = ELT
 
 function FE_ProjectionSolver(problem::FE_DiscreteProblem)
     ELT = eltype(problem)
@@ -63,14 +62,14 @@ estimate_plunge_rank{N}(problem::FE_DiscreteProblem{N}) = min(round(Int, 9*log(p
 
 estimate_plunge_rank(problem::FE_DiscreteProblem{1,BigFloat}) = round(Int, 28*log(param_N(problem)) + 5)
 
-function apply!(s::FE_ProjectionSolver, dest, src, coef_dest, coef_src)
-    A = operator(s)
-    At = operator_transpose(s)
-    P = s.plunge_op
-    apply!(P,s.b, coef_src)
+apply!(s::FE_ProjectionSolver, dest, src, coef_dest, coef_src) =
+    apply!(s, dest, src, coef_dest, coef_src, operator(s), operator_transpose(s), s.plunge_op, s.W)
+
+function apply!(s::FE_ProjectionSolver, dest, src, coef_dest, coef_src, A, At, P, W)
+    apply!(P, s.b, coef_src)
     A_mul_B!(s.sy, s.Ut, s.b)
     A_mul_B!(s.y, s.VS, s.sy)
-    apply!(s.W, s.x2, s.y)
+    apply!(W, s.x2, s.y)
     #x2 = reshape(s.W * y,size(src(A)))
     apply!(A, s.b, s.x2)
     apply!(At, s.x1, coef_src-s.b)

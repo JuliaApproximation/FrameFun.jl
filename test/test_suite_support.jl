@@ -108,9 +108,6 @@ Test.with_handler(custom_handler) do
     delimit("Domains")
     
     # Interval
-    Inter1=Interval(BigFloat)
-    Inter2=Interval(Int)
-    @test Inter1==Inter2
     Intervala=Interval(-1.0,1.0)
     Intervala=Intervala+1
     Intervala=1+Intervala
@@ -132,7 +129,7 @@ Test.with_handler(custom_handler) do
     D = Cube(2)
     @test FE.in([0.9, 0.9],D)
     @test !FE.in([1.1, 1.1],D)
-    @test FE.boundingbox(D)==FE.BBox((-1.0,-1.0),(1.0,1.0))
+    @test FE.boundingbox(D)==FE.BBox((-1,-1),(1,1))
     DS=FE.union(D,C)
     #Cube
     D=Cube((-1.5,0.5,-3.0),(2.2,0.7,-1.0))

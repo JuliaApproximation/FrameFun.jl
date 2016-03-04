@@ -11,7 +11,7 @@ using Base.Cartesian
 
 import Base: +, *, /, ==, |, &, -, \
 
-import Base: intersect, union, isapprox, setdiff
+import Base: intersect, union, isapprox, setdiff, float
 
 import Base: length, eltype, size, push!, ctranspose, similar
 
@@ -27,7 +27,8 @@ import BasisFunctions: dim, index_dim, grid, left, right, stepsize, sample
 
 import BasisFunctions: operator, coefficients, set, is_basis, is_frame,
     transform_normalization_operator, evaluation_operator, interpolation_operator,
-    differentiation_operator, antidifferentiation_operator, approximation_operator
+    differentiation_operator, antidifferentiation_operator, approximation_operator,
+    extend, extension_size
 
 import BasisFunctions: call_set, call_set!, call_expansion, call_expansion!, differentiate, ∂x, ∂y, ∂z, ∫∂x, ∫∂y, ∫∂z, ∫
 
