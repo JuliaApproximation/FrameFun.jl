@@ -59,7 +59,7 @@ function FE_DirectSolver(problem::FE_Problem)
     FE_DirectSolver{ELT,SRC,DEST}(problem)
 end
 
-FE_DirectSolver(p::FE_TensorProductProblem) = TensorProductOperator(map(FE_DirectSolver, p.problems)...)
+#FE_DirectSolver(p::FE_TensorProductProblem) = TensorProductOperator(map(FE_DirectSolver, p.problems)...)
 
 
 ## function solve!{T}(s::FE_DirectSolver, coef::AbstractArray{T}, rhs::AbstractArray{T})

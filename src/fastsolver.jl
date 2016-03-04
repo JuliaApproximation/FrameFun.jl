@@ -50,8 +50,6 @@ function FE_ProjectionSolver(problem::FE_DiscreteProblem)
 end
 
 
-FE_ProjectionSolver(p::FE_TensorProductProblem) = TensorProductOperator(map(FE_ProjectionSolver,p.problems)...)
-
 function plunge_operator(problem::FE_DiscreteProblem)
     A = operator(problem)
     Ap = operator_transpose(problem)

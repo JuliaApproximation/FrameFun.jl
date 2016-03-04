@@ -164,7 +164,7 @@ Test.with_handler(custom_handler) do
                         print("T = $T\t")
                         B = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2])
                         for func in (f,g)
-                            F = @timed( Fun(func, B, D; solver=solver, n=n, T=T))
+                            F = @timed( Fun(func, B, D; solver=solver))
 
                             @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
                             @test msqerror_tol(func, F[1], tol=1e-3)
@@ -197,7 +197,7 @@ Test.with_handler(custom_handler) do
                 for T in ((1.7,1.7,1.7), FE.default_frame_T(D, Basis))
                     print("T = $T\t")
                     B = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2]) ⊗ Basis(n[3],-T[3],T[3])
-                    F = @timed( Fun(f, B, D; solver=solver, n=n, T=T))
+                    F = @timed( Fun(f, B, D; solver=solver))
                     @printf("%3.2e s\t %3.2e bytes", F[2], F[3])
                     @test msqerror_tol(f, F[1], tol=1e-2)
                 end

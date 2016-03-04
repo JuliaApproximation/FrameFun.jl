@@ -49,8 +49,43 @@ immutable FE_DiscreteProblem{N,T} <: FE_Problem{N,T}
     normalization       # transform normalization operator
 end
 
-#FE_DiscreteProblem{N,T}(domain::AbstractDomain{N,T}, otherargs...) =
-#    FE_DiscreteProblem{N,T}(domain, otherargs...)
+"""
+Compute a grid of a larger basis, but restricted to the given domain, using oversampling by the given factor
+(approximately) in each dimension.
+The result is the tuple (oversampled_grid, larger_basis)
+"""
+oversampled_grid(set::DomainFrame, args...) =
+    oversampled_grid(domain(set), basis(set), args...)
+
+function oversampled_grid(domain::AbstractDomain, basis::FunctionSet, sampling_factor)
+    N = dim(basis)
+    n_goal = length(basis) * sampling_factor^N
+    grid1 = grid(basis)
+    grid2 = subgrid(grid1, domain)
+    ratio = length(grid2) / length(grid1)
+    # This could be way off if the original size was small.
+    n = approx_length(basis, ceil(Int, n_goal/ratio))
+    large_basis = resize(basis, n)
+    grid3 = grid(large_basis)
+    grid4 = subgrid(grid3, domain)
+    grid4, large_basis
+end
+
+
+function FE_DiscreteProblem(domain, basis, sampling_factor)
+    fbasis1 = basis
+    rgrid, fbasis2 = oversampled_grid(domain, fbasis1, sampling_factor)
+    grid1 = grid(fbasis1)
+    grid2 = grid(fbasis2)
+
+    ELT = eltype(fbasis1)
+    tbasis1 = DiscreteGridSpace(grid1, ELT)
+    tbasis2 = DiscreteGridSpace(grid2, ELT)
+    tbasis_restricted = DiscreteGridSpace(rgrid, ELT)
+
+    FE_DiscreteProblem(domain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted)
+end
+
 
 
 function FE_DiscreteProblem(domain::AbstractDomain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted)
@@ -121,71 +156,5 @@ param_N(p::FE_DiscreteProblem) = length(frequency_basis(p))
 param_L(p::FE_DiscreteProblem) = length(time_basis_ext(p))
 
 param_M(p::FE_DiscreteProblem) = length(time_basis_restricted(p))
-
-
-
-function rhs(p::FE_Problem, f::Function, elt = eltype(p))
-    grid1 = grid(time_basis_restricted(p))
-    M = length(grid1)
-    b = Array(elt, M)
-    rhs!(p, b, f)
-    b
-end
-
-function rhs!(p::FE_Problem, b::AbstractArray, f::Function)
-    grid1 = grid(time_basis_restricted(p))
-    M = length(grid1)
-
-    @assert length(b) == M
-
-    rhs!(grid1, b, f)
-end
-
-function rhs!(grid::AbstractGrid, b::AbstractArray, f::Function)
-    for i in eachindex(grid)
-        b[i] = f(grid[i]...)
-    end
-end
-
-
-immutable FE_TensorProductProblem{TP,PN,N,T} <: FE_Problem{N,T}
-    problems       ::  TP
-end
-
-function FE_TensorProductProblem(problems...)
-        TP = typeof(problems)
-        PN = length(problems)
-        T = numtype(problems[1])
-        N = sum(map(dim, problems))
-        FE_TensorProductProblem{TP,PN,N,T}(problems)
-end
-
-
-domain(p::FE_TensorProductProblem) = TensorProductDomain(map(domain,p.problems)...)
-
-tp_length{TP,PN,N,T}(p::FE_TensorProductProblem{TP,PN,N,T}) = PN
-
-for op in (:frequency_basis, :frequency_basis_ext, :time_basis_restricted, :time_basis_ext)
-    @eval $op{TP,PN}(p::FE_TensorProductProblem{TP,PN}) = 
-        TensorProductSet(map($op,p.problems)...)
-end
-
-for op in (:operator, :operator_transpose, :t_restriction, :t_extension,
-           :itransform2, :transform2, :f_restriction, :f_extension,
-           :normalization_operator)
-    @eval $op{TP,PN}(p::FE_TensorProductProblem{TP,PN}) =
-        TensorProductOperator(map($op,p.problems)...)
-end
-
-for op in (:dim, :length_ext, :param_N, :param_L, :param_M)
-    @eval $op{TP,PN}(p::FE_TensorProductProblem{TP,PN}) = 
-        prod(map($op,p.problems)...)
-end
-
-for op in (:size, :size_ext)
-    @eval $op{TP,PN}(p::FE_TensorProductProblem{TP,PN}) = 
-        tuple(map($op,p.problems)...)
-end
-
 
 

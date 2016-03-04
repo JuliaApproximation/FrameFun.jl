@@ -13,7 +13,7 @@ import Base: +, *, /, ==, |, &, -, \
 
 import Base: intersect, union, isapprox, setdiff
 
-import Base: length, eltype, size, push!, ctranspose
+import Base: length, eltype, size, push!, ctranspose, similar
 
 import Base: eachindex, start, next, done, getindex, in
 
@@ -23,13 +23,15 @@ import BasisFunctions: ⊗
 
 import BasisFunctions: src, dest, matrix, matrix!, apply!, numtype
 
-import BasisFunctions: dim, index_dim, grid, left, right, stepsize
+import BasisFunctions: dim, index_dim, grid, left, right, stepsize, sample
 
-import BasisFunctions: operator, coefficients, set, is_basis, is_frame, transform_normalization_operator, evaluation_operator, interpolation_operator, differentiation_operator, antidifferentiation_operator
+import BasisFunctions: operator, coefficients, set, is_basis, is_frame,
+    transform_normalization_operator, evaluation_operator, interpolation_operator,
+    differentiation_operator, antidifferentiation_operator, approximation_operator
 
-import BasisFunctions: call_set, call_set!, call_expansion, call_expansion!, differentiate, ∂x, ∂y, ∂z, ∫∂x, ∫∂y, ∫∂z, ∫ 
+import BasisFunctions: call_set, call_set!, call_expansion, call_expansion!, differentiate, ∂x, ∂y, ∂z, ∫∂x, ∫∂y, ∫∂z, ∫
 
-import BasisFunctions: True, False
+import BasisFunctions: True, False, complexify, resize, promote_eltype
 
 import BasisFunctions: tp_length, left, right
 
@@ -79,7 +81,7 @@ include("fe_solvers.jl")
 
 include("fastsolver.jl")
 
-include("fe_fourier.jl")
+include("fe_approx.jl")
 
 # TODO: try out Plots.jl
 include("plots.jl")

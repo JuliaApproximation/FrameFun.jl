@@ -8,13 +8,17 @@ interface for computing with functions.
 """
 immutable FrameFun{N,T} <: AbstractFun
     expansion   ::  SetExpansion
+    approx_op   ::  AbstractOperator
+
+    FrameFun(e::SetExpansion, approx_op = approximation_operator(set(e))) = new(e, approx_op)
 end
 
+FrameFun(e::SetExpansion, args...) = FrameFun{dim(e),eltype(e)}(e, args...)
 
-FrameFun{N,T,ELT}(domain::AbstractDomain{N,T}, basis::FunctionSet{N,ELT}, coefficients) =
-    FrameFun{N,ELT}(SetExpansion(DomainFrame(domain, basis), coefficients))
+FrameFun{N,T}(frame::FunctionSet{N,T}, coefficients = zeros(eltype(frame), size(frame)), args...) =
+    FrameFun{N,T}(SetExpansion(frame, coefficients), args...)
 
-FrameFun(domain::AbstractDomain, basis::FunctionSet) = FrameFun(domain, basis, zeros(eltype(basis), size(basis)))
+FrameFun(domain::AbstractDomain, basis::FunctionSet, args...) = FrameFun(DomainFrame(domain, basis), args...)
 
 expansion(fun::FrameFun) = fun.expansion
 
