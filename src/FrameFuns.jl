@@ -30,7 +30,9 @@ import BasisFunctions: operator, coefficients, set, is_basis, is_frame,
     differentiation_operator, antidifferentiation_operator, approximation_operator,
     extend, extension_size
 
-import BasisFunctions: call_set, call_set!, call_expansion, call_expansion!, differentiate, ∂x, ∂y, ∂z, ∫∂x, ∫∂y, ∫∂z, ∫
+import BasisFunctions: call_set, call_set!, call_expansion, call_expansion!, call_element, name
+
+import BasisFunctions: differentiate, ∂x, ∂y, ∂z, ∫∂x, ∫∂y, ∫∂z, ∫
 
 import BasisFunctions: True, False, complexify, resize, promote_eltype
 

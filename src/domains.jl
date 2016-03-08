@@ -114,6 +114,9 @@ Interval() = Interval(-1, 1)
 
 Interval{T}(::Type{T}) = Interval{T}(-1, 1)
 
+Interval{T <: Number}(a::T, b::T) = Interval{T}(a, b)
+Interval{S <: Number, T <: Number}(a::S, b::T) = Interval(promote(a,b)...)
+
 
 in(x::AnyVector, d::Interval) = in(x[1], d.a, d.b)
 

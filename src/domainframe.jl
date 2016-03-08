@@ -22,6 +22,8 @@ basis(f::DomainFrame) = f.basis
 
 domain(f::DomainFrame) = f.domain
 
+name(f::DomainFrame) = "A frame of " * name(f.basis)
+
 promote_eltype{S}(f::DomainFrame, ::Type{S}) =
     DomainFrame(f.domain, promote_eltype(f.basis, S))
 
@@ -44,10 +46,11 @@ end
 
 
 # Should we check whether x lies in the domain?
-call_set(fun::SetExpansion, s::DomainFrame, coef, x...) = call_expansion(basis(s), coef, x...)
+call_set(e::SetExpansion, s::DomainFrame, coef, x...) = call_expansion(basis(s), coef, x...)
 
-call_set!(result, fun::SetExpansion, s::DomainFrame, coef, x...) = call_expansion!(result, basis(s), coef, x...)
+call_set!(result, e::SetExpansion, s::DomainFrame, coef, x...) = call_expansion!(result, basis(s), coef, x...)
 
+call_element(s::DomainFrame, idx::Int, x...) = call_element(basis(s), idx, x...)
 
 """
 Make a DomainFrame, but match tensor product domains with tensor product sets in a suitable way.

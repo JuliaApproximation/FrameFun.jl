@@ -19,6 +19,8 @@ immutable MaskedGrid{G,ID,N,T} <: AbstractSubGrid{N,T}
 
     MaskedGrid(grid::AbstractGrid{N,T},  mask, indices) = new(grid, mask, indices, sum(mask))
 end
+# TODO: In MaskedGrid, perhaps we should not be storing pointers to the points of the underlying grid, but
+# rather the points themselves. In that case we wouldn't need to specialize on the type of grid (parameter G can go).
 
 function MaskedGrid{N,T}(grid::AbstractGrid{N,T}, mask, indices)
 	@assert size(grid) == size(mask)
@@ -178,6 +180,8 @@ function subgrid(grid::AbstractEquispacedGrid, domain::Interval)
     h = stepsize(grid)
     idx_a = convert(Int, ceil( (a-left(grid))/stepsize(grid))+1 )
     idx_b = convert(Int, floor( (b-left(grid))/stepsize(grid))+1 )
+    idx_a = max(idx_a, 1)
+    idx_b = min(idx_b, length(grid))
     IndexSubGrid(grid, idx_a, idx_b)
 end
 
@@ -193,7 +197,7 @@ CollectionGrid{N,T}(points::Array{Vec{N,T},1}) = CollectionGrid{N,T}(points)
 
 length(g::CollectionGrid) = length(g.points)
 
-getindex{N,T}(g::CollectionGrid{N,T}, idx::Int) = g.points[idx]
+getindex(g::CollectionGrid, idx::Int) = g.points[idx]
 
 function midpoint{N,T}(v1::Vec{N,T}, v2::Vec{N,T}, dom::AbstractDomain)
     # There has to be a midpoint
