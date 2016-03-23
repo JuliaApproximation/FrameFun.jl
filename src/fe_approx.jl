@@ -13,10 +13,10 @@
 ## ChebyFun(f::Function, domain; args...) = Fun(ChebyshevBasis, f, domain; args...)
 
 
-function Fun(f::Function, basis::FunctionSet, domain::AbstractDomain; args...)
+function Fun(f::Function, basis::FunctionSet, domain::AbstractDomain; options...)
     ELT = eltype(f, basis)
     frame = domainframe(domain, promote_eltype(basis, ELT))
-    A = approximation_operator(frame; args...)
+    A = approximation_operator(frame; options...)
     coef = A * f
     FrameFun(domain, dest(A), coef, A)
 end
@@ -24,7 +24,7 @@ end
 
 function eltype(f::Function, basis)
     ELT = eltype(basis)
-    RT = Base.return_types(f,fill(ELT,dim(basis)))
+    RT = Base.return_types(f, fill(ELT, dim(basis)) )
     if (length(RT) > 0) && (RT[1] <: Complex)
         complexify(ELT)
     else
@@ -35,23 +35,22 @@ end
 
 
 function approximation_operator(set::DomainFrame;
-    sampling_factor = 2,
-    solver = default_frame_solver(domain(set), basis(set)) )
+    sampling_factor = 2, solver = default_frame_solver(domain(set), basis(set)), options... )
 
-    problem = FE_DiscreteProblem(domain(set), basis(set), sampling_factor)
-    solver(problem)
+    problem = FE_DiscreteProblem(domain(set), basis(set), sampling_factor; options...)
+    solver(problem; options...)
 end
 
 
 immutable FE_BestSolver
 end
 
-function FE_BestSolver(problem::FE_DiscreteProblem)
+function FE_BestSolver(problem::FE_DiscreteProblem; options...)
     R = estimate_plunge_rank(problem)
     if R < size(problem, 2)/2
-        FE_ProjectionSolver(problem)
+        FE_ProjectionSolver(problem; options...)
     else
-        FE_DirectSolver(problem)
+        FE_DirectSolver(problem; options...)
     end
 end
 

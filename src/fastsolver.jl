@@ -18,7 +18,7 @@ immutable FE_ProjectionSolver{ELT,SRC,DEST} <: FE_Solver{SRC,DEST}
     x2          ::  Array{ELT}
     x1          ::  Array{ELT}
 
-    function FE_ProjectionSolver(problem::FE_DiscreteProblem)
+    function FE_ProjectionSolver(problem::FE_DiscreteProblem; options...)
         plunge_op = plunge_operator(problem)
         R = estimate_plunge_rank(problem)
         W = MatrixOperator( map(ELT, rand(param_N(problem), R)) )
@@ -40,12 +40,11 @@ immutable FE_ProjectionSolver{ELT,SRC,DEST} <: FE_Solver{SRC,DEST}
     end
 end
 
-
-function FE_ProjectionSolver(problem::FE_DiscreteProblem)
+function FE_ProjectionSolver(problem::FE_DiscreteProblem; options...)
     ELT = eltype(problem)
     SRC = typeof(time_basis_restricted(problem))
     DEST = typeof(frequency_basis(problem))
-    FE_ProjectionSolver{ELT,SRC,DEST}(problem)
+    FE_ProjectionSolver{ELT,SRC,DEST}(problem; options...)
 end
 
 

@@ -28,7 +28,7 @@ immutable FE_DirectSolver{SRC,DEST} <: FE_Solver{SRC,DEST}
     end
 end
 
-function FE_DirectSolver(problem::FE_Problem)
+function FE_DirectSolver(problem::FE_Problem; options...)
     SRC = typeof(time_basis_restricted(problem))
     DEST = typeof(frequency_basis(problem))
     FE_DirectSolver{SRC,DEST}(problem)
