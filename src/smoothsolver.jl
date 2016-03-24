@@ -19,7 +19,6 @@ immutable FE_SmoothProjectionSolver{ELT,SRC,DEST} <: FE_Solver{ELT,SRC,DEST}
         x3          ::  Array{ELT}
         QQ          ::  Array{ELT,2}
         scale       ::  Function
-
         function FE_SmoothProjectionSolver(problem::FE_DiscreteProblem, scale::Function)
                 plunge_op = plunge_operator(problem)
                 R = estimate_plunge_rank(problem)
@@ -35,7 +34,7 @@ immutable FE_SmoothProjectionSolver{ELT,SRC,DEST} <: FE_Solver{ELT,SRC,DEST}
                 AD = inv(D)
                 limitv = 10^(1/2*log10(eps(numtype(frequency_basis(problem)))))
                 maxindv = findlast(SU.>limitv)
-                ADV = (USVV[1][:,1:maxindv])./diag(matrix(AD))
+                ADV = (USVV[1][:,1:maxindv]).*diag(matrix(AD))
                 Q, R = qr(ADV)
                 b = zeros(size(dest(plunge_op)))
                 y = zeros(size(USVU[3],1))
@@ -81,7 +80,7 @@ FE_SmoothProjectionSolver(p::FE_TensorProductProblem) = TensorProductOperator(ma
                 s.x2[i] = s.x2[i] - s.x3[i]
         end
         
-        post smoothing step
+        # post smoothing step
         apply!(A, s.b, s.x2)
         apply!(At, s.x1, coef_src-s.b)
         for i = 1:length(coef_dest)
