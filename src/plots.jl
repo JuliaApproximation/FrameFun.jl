@@ -3,7 +3,7 @@
 
 # One-dimensional plot, just the domain
 function plot(f::FrameFun{1}; n=201, color="blue")
-    G = grid(similar(basis(f),eltype(f),n))
+    G = grid(resize(basis(f),n))
     G = MaskedGrid(G,domain(f))
     x = convert(Array{Float64},apply(x->x,eltype(f),G))
     data = convert(Array{Float64},real(f(G)))
@@ -16,7 +16,7 @@ end
     
 ## end
 function plot_expansion(f::FrameFun{1}; n=201, repeats=0, color="blue", alpha=1.0)
-    G = grid(similar(basis(f),eltype(f),n))
+    G = grid(resize(basis(f),n))
     data = convert(Array{Float64},real(f(G)))
     x = convert(Array{Float64},apply(x->x,eltype(f),G))
     for i=-repeats:repeats
@@ -27,7 +27,7 @@ function plot_expansion(f::FrameFun{1}; n=201, repeats=0, color="blue", alpha=1.
 end
 
 function plot_error(f::FrameFun{1}, g::Function; n=201, repeats = 0, color="blue")
-    G = grid(similar(basis(f),eltype(f),n))
+    G = grid(resize(basis(f),n))
     data = real(f(G))
     x = convert(Array{Float64},apply(x->x,eltype(f),G))
     plotdata=convert(Array{Float64},abs(apply(g,eltype(f),G)-data))    
@@ -109,7 +109,7 @@ end
 
 function plot_image(f::FrameFun{2};n=300)
     d =domain(set(expansion(f)))
-    Tgrid = grid(similar(basis(f),eltype(f),(n,n)))
+    Tgrid = grid(resize(basis(f), (n,n)))
     Mgrid=MaskedGrid(Tgrid, domain(f))
     Z = evalgrid(Tgrid, d)
     data = convert(Array{Float64},real(expansion(f)(Mgrid)))
@@ -129,7 +129,7 @@ end
 
 function plot_image(f::FrameFun{2}, g::Function; n=300)
     d =domain(set(expansion(f)))
-    Tgrid = grid(similar(basis(f),eltype(f),(n,n)))
+    Tgrid = grid(resize(basis(f), (n,n)))
     Mgrid=MaskedGrid(Tgrid, domain(f))
     Z = evalgrid(Tgrid, d)
     data = real(apply(g,eltype(f),Mgrid))
@@ -149,7 +149,7 @@ end
 
 function plot_error(f::FrameFun{2},g::Function;n=300)
     d =domain(set(expansion(f)))
-    Tgrid = grid(similar(basis(f),eltype(f),(n,n)))
+    Tgrid = grid(resize(basis(f), (n,n)))
     Mgrid=MaskedGrid(Tgrid, domain(f))
     Z = evalgrid(Tgrid, d)
     data = real(expansion(f)(Mgrid))

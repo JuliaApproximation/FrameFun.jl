@@ -4,11 +4,11 @@
 A DomainFrame is the restriction of a basis to a subset of its domain. This results
 in a frame.
 """
-immutable DomainFrame{D,B,N,T} <: AbstractFrame{N,T}
-    domain      ::  D
-    basis       ::  B
+immutable DomainFrame{N,T} <: AbstractFrame{N,T}
+    domain      ::  AbstractDomain{N}
+    basis       ::  FunctionSet{N,T}
 
-    function DomainFrame(domain::AbstractDomain{N}, basis::FunctionSet{N,T})
+    function DomainFrame(domain::AbstractDomain, basis::FunctionSet)
         @assert is_basis(basis) == True()
         
         new(domain, basis)
@@ -16,11 +16,21 @@ immutable DomainFrame{D,B,N,T} <: AbstractFrame{N,T}
 end
 
 DomainFrame{N,T}(domain::AbstractDomain{N}, basis::FunctionSet{N,T}) =
-    DomainFrame{typeof(domain),typeof(basis),N,T}(domain, basis)
+    DomainFrame{N,T}(domain, basis)
 
 basis(f::DomainFrame) = f.basis
 
 domain(f::DomainFrame) = f.domain
+
+name(f::DomainFrame) = "A frame of " * name(f.basis)
+
+promote_eltype{S}(f::DomainFrame, ::Type{S}) =
+    DomainFrame(f.domain, promote_eltype(f.basis, S))
+
+resize(f::DomainFrame, n) = DomainFrame(domain(f), resize(basis(f), n))
+
+extension_size(f::DomainFrame) = extension_size(basis(f))
+
 
 for op in (:size, :length)
     @eval $op(f::DomainFrame, args...) = $op(f.basis, args...)
@@ -36,31 +46,28 @@ end
 
 
 # Should we check whether x lies in the domain?
-call_set(fun::SetExpansion, s::DomainFrame, coef, x...) = call_expansion(basis(s), coef, x...)
+call_set(e::SetExpansion, s::DomainFrame, coef, x...) = call_expansion(basis(s), coef, x...)
 
-call_set!(result, fun::SetExpansion, s::DomainFrame, coef, x...) = call_expansion!(result, basis(s), coef, x...)
+call_set!(result, e::SetExpansion, s::DomainFrame, coef, x...) = call_expansion!(result, basis(s), coef, x...)
 
-
+call_element(s::DomainFrame, idx::Int, x...) = call_element(basis(s), idx, x...)
 
 """
-Compute a grid of a larger basis, but restricted to the given domain, using oversampling by the given factor
-(approximately) in each dimension.
-The result is the tuple (oversampled_grid, larger_basis)
-"""
-oversampled_grid(set::DomainFrame, sampling_factor = 2) = compute_subgrid(domain(set), basis(set), sampling_factor)
+Make a DomainFrame, but match tensor product domains with tensor product sets in a suitable way.
 
-function oversampled_grid(domain::AbstractDomain, basis::FunctionSet, sampling_factor)
-    N = dim(basis)
-    n_goal = length(basis) * sampling_factor^N
-    grid1 = grid(basis)
-    grid2 = subgrid(grid1, domain)
-    ratio = length(grid2) / length(grid1)
-    # This could be way off if the original size was small.
-    n = approx_length(basis, ceil(Int, n_goal/ratio))
-    large_basis = similar(basis, n)
-    grid3 = grid(large_basis)
-    grid4 = subgrid(grid3, domain)
-    grid4, large_basis
+For example: an interval ⊗ a disk (= a cylinder) combined with a 3D Fourier series, leads to a
+tensor product of a Fourier series on the interval ⊗ a 2D Fourier series on the disk.
+"""
+function domainframe{TD,DN,LEN}(domain::TensorProductDomain{TD,DN,LEN}, basis::TensorProductSet)
+    domainframes = FunctionSet[]
+    dc = 1
+    for i = 1:LEN
+        range = dc:dc+DN[i]-1
+        push!(domainframes, DomainFrame(subdomain(domain, i), set(basis, range)))
+        dc += DN[i]
+    end
+    TensorProductSet(domainframes...)
 end
 
+domainframe(domain::AbstractDomain, basis::FunctionSet) = DomainFrame(domain, basis)
 

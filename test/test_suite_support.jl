@@ -107,12 +107,7 @@ Test.with_handler(custom_handler) do
 
     delimit("Domains")
     
-    # Integer interval is apparently impossible
-    #try Intervala=Interval(-1,1) catch y; message(y) end
     # Interval
-    Inter1=Interval(BigFloat)
-    Inter2=Interval(Int)
-    @test Inter1==Inter2
     Intervala=Interval(-1.0,1.0)
     Intervala=Intervala+1
     Intervala=1+Intervala
@@ -134,7 +129,7 @@ Test.with_handler(custom_handler) do
     D = Cube(2)
     @test FE.in([0.9, 0.9],D)
     @test !FE.in([1.1, 1.1],D)
-    @test FE.boundingbox(D)==FE.BBox((-1.0,-1.0),(1.0,1.0))
+    @test FE.boundingbox(D)==FE.BBox((-1,-1),(1,1))
     DS=FE.union(D,C)
     #Cube
     D=Cube((-1.5,0.5,-3.0),(2.2,0.7,-1.0))
@@ -172,28 +167,6 @@ Test.with_handler(custom_handler) do
     T=FE.TensorProductDomain(Disk(1.05),Interval(-1.0,1.0))
     @test FE.in([0.5,0.5,0.8],T)
     @test !FE.in([-1.1,0.3,0.1],T)
-
-    delimit("Basis and operator functionality")
-
-    
-    n=100
-    a=-1.2
-    b=0.7
-    delimit("Fourier Basis")
-    fbasis1 = rescale(FourierBasis(n+1),a,b)
-    @test grid(fbasis1)==BA.PeriodicEquispacedGrid(n+1,a,b)
-    r=rand()
-    @test abs(fbasis1(2,r)-exp(2*pi*1im*(2-1)*(r-a)/(b-a)))<1e-13
-    r=sqrt(BigFloat(pi))
-    @test abs(fbasis1(2,r)-exp(2*pi*1im*(2-1)*(r-a)/(b-a)))<1e-13
-    a=BigFloat(-1.0); b=BigFloat(1.0)
-    fbasis1 = rescale(FourierBasis(n+1,BigFloat),a,b)
-    r=rand()
-    @test abs(fbasis1(2,r)-exp(2*pi*1im*(2-1)*(r-a)/(b-a)))<1e-13
-    r=sqrt(BigFloat(pi))
-    @test abs(fbasis1(2,r)-exp(2*BigFloat(pi)*1im*(2-1)*(r-a)/(b-a)))<1e-30
-
-    # Operator functionality is tested in BasisFunctions/test_suite.jl
 
 end
 

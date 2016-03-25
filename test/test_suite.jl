@@ -59,6 +59,7 @@ function msqerror_tol(f::Function, F; vals::Int=200, tol=1e-6)
 end
 
 function delimit(s::AbstractString)
+    println()
     println("############")
     println("# ",s)
     println("############")
@@ -86,7 +87,7 @@ Test.with_handler(custom_handler) do
             println("## Basis: ", Basis)
 
             # Only 2 possible domains: an Interval and a Maskedgrid
-            for D in [Interval(-1.5,0.7) Interval(-1.5,-0.5)+Interval(0.5,1.5)]
+            for D in [Interval(), Interval(-1.5,0.7), Interval(-1.5,-0.5)+Interval(0.5,1.5)]
                 show(D); println()
 
                 # 2 possible solvers
@@ -99,8 +100,8 @@ Test.with_handler(custom_handler) do
                         # There is some symmetry around T=2, test smaller and larger values
                         for T in [1.7 FE.default_frame_T(D, Basis) 2.3]
                             print("T = $T \t")
-                            B=Basis(n,-T,T,ELT)
                             for func in (f,g)
+                                B = Basis(n, -T, T, ELT)
                                 F = @timed( Fun(func, B, D; solver=solver) )
                                 F = @timed( Fun(func, B, D; solver=solver) )
 
@@ -129,9 +130,9 @@ Test.with_handler(custom_handler) do
                 show(D); print("\n")
                 for T in [BigFloat(17//10) FE.default_frame_T(D, Basis) BigFloat(23//10)]
                     print("T = $T \t")
-                    for func in (f,g)
-
-                        F = @timed( Fun(Basis, func, D; solver = FE.FE_DirectSolver, n=71, T=T) )
+                    for (func,CT) in ((f,BigFloat),(g,Complex{BigFloat}))
+                        B = Basis(71, -T, T, CT)
+                        F = @timed( Fun(func, B, D; solver = FE.FE_DirectSolver) )
 
                         @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
                         @test  msqerror_tol(func,F[1],tol=1e-20)
@@ -152,7 +153,7 @@ Test.with_handler(custom_handler) do
         println()
         println("## Basis: ", Basis)
 
-        for D in [Disk(1.2,[-0.1,-0.2]) Cube((-1.0,-1.5),(0.5,0.7))]
+        for D in [Disk(), Disk(1.2,[-0.1,-0.2]), Cube((-1.0,-1.5),(0.5,0.7))]
             show(D); println()
 
             for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
@@ -164,7 +165,7 @@ Test.with_handler(custom_handler) do
                         print("T = $T\t")
                         B = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2])
                         for func in (f,g)
-                            F = @timed( Fun(func, B, D; solver=solver, n=n, T=T))
+                            F = @timed( Fun(func, B, D; solver=solver))
 
                             @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
                             @test msqerror_tol(func, F[1], tol=1e-3)
@@ -197,13 +198,19 @@ Test.with_handler(custom_handler) do
                 for T in ((1.7,1.7,1.7), FE.default_frame_T(D, Basis))
                     print("T = $T\t")
                     B = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2]) ⊗ Basis(n[3],-T[3],T[3])
-                    F = @timed( Fun(f, B, D; solver=solver, n=n, T=T))
+                    F = @timed( Fun(f, B, D; solver=solver))
                     @printf("%3.2e s\t %3.2e bytes", F[2], F[3])
                     @test msqerror_tol(f, F[1], tol=1e-2)
                 end
             end
         end
     end
+
+    delimit("Random circles")
+    dom = FE.randomcircles(10)
+    b = FourierBasis(21) ⊗ FourierBasis(21)
+    f(x,y) = cos(20*x+22*y)
+    @time F = Fun(f,b,dom)
 end
 
 # Diagnostics

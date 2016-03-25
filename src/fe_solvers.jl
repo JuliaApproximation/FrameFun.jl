@@ -1,9 +1,7 @@
 # fe_solvers.jl
 
 
-abstract FE_Solver{ELT,SRC,DEST} <: AbstractOperator{SRC,DEST}
-
-eltype{ELT,SRC,DEST}(::Type{FE_Solver{ELT,SRC,DEST}}) = ELT
+abstract FE_Solver{SRC,DEST} <: AbstractOperator{SRC,DEST}
 
 problem(s::FE_Solver) = s.problem
 
@@ -19,46 +17,23 @@ src(s::FE_Solver) = time_basis_restricted(s)
 
 dest(s::FE_Solver) = frequency_basis(s)
 
-function solve(s::AbstractOperator, f::Function, p::FE_Problem)
-    ELT = eltype(s)
-    coef = Array(ELT, size(frequency_basis(p)))
-    rhs = Array(ELT, size(time_basis_restricted(p)))
-
-    rhs!(p, rhs, f)
-    
-    apply!(s, coef, rhs)
-#    norm = transform_normalization_operator(p, ELT)
-#    coef = norm * coef
-    coef
-end
 
 
-## function solve!{T}(s::FE_Solver, coef::AbstractArray{T}, rhs::AbstractArray{T}, f::Function)
-##     rhs!(problem(s), rhs, f)
-##     println(rhs)
-##     apply!(s, coef, rhs)
-## end
-
-
-
-
-immutable FE_DirectSolver{ELT,SRC,DEST} <: FE_Solver{ELT,SRC,DEST}
+immutable FE_DirectSolver{SRC,DEST} <: FE_Solver{SRC,DEST}
     problem ::  FE_Problem
-    QR      ::  Factorization{ELT}
+    QR      ::  Factorization
 
     function FE_DirectSolver(problem::FE_Problem)
         new(problem, qrfact(matrix(operator(problem))))
     end
 end
 
-function FE_DirectSolver(problem::FE_Problem)
-    ELT = eltype(problem)
+function FE_DirectSolver(problem::FE_Problem; options...)
     SRC = typeof(time_basis_restricted(problem))
     DEST = typeof(frequency_basis(problem))
-    FE_DirectSolver{ELT,SRC,DEST}(problem)
+    FE_DirectSolver{SRC,DEST}(problem)
 end
 
-FE_DirectSolver(p::FE_TensorProductProblem) = TensorProductOperator(map(FE_DirectSolver, p.problems)...)
 
 
 ## function solve!{T}(s::FE_DirectSolver, coef::AbstractArray{T}, rhs::AbstractArray{T})
@@ -68,10 +43,10 @@ FE_DirectSolver(p::FE_TensorProductProblem) = TensorProductOperator(map(FE_Direc
 
 
 function apply!(s::FE_DirectSolver, dest, src, coef_dest, coef_src)
-    coef_dest[:] = matrix(operator(problem(s))) \ coef_src
+#    coef_dest[:] = matrix(operator(problem(s))) \ coef_src
+    coef_dest[:] = s.QR \ coef_src
     apply!(normalization(problem(s)), coef_dest)
     # Why is the QR factorization not used here?
-#    coef[:] = s.QR \ rhs
 end
 
 ## immutable FE_DirectSolver{ELT} <: FE_Solver

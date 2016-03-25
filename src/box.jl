@@ -6,8 +6,7 @@ immutable BBox{N,T}
     right       ::  Vec{N,T}
 end
 
-dim{N,T}(::Type{BBox{N,T}}) = N
-dim(b::BBox) = dim(typeof(b))
+dim{N}(b::BBox{N}) = N
 
 eltype{N,T}(::Type{BBox{N,T}}) = T
 
@@ -18,16 +17,15 @@ typealias BBox3{T} BBox{3,T}
 typealias BBox4{T} BBox{4,T}
 
 # Dimension-specific constructors
-BBox{T}(a::T, b::T) = BBox(Vec{1,T}(a), Vec{1,T}(b))
-BBox{T}(a::T, b::T, c::T, d::T) = BBox(Vec{2,T}(a,c), Vec{2,T}(b,d))
-BBox{T}(a::T, b::T, c::T, d::T, e::T, f::T) = BBox(Vec{3,T}(a,c,e), Vec{3,T}(b,d,f))
-BBox{T}(a::T, b::T, c::T, d::T, e::T, f::T, g::T, h::T) = BBox(Vec{4,T}(a,c,e,g), Vec{4,T}(b,d,f,h))
+BBox(a::Number, b::Number) = BBox( Vec(a), Vec(b) )
+BBox(a, b, c, d) = BBox( Vec(a,c), Vec(b,d) )
+BBox(a, b, c, d, e, f) = BBox( Vec(a,c,e), Vec(b,d,f) )
+BBox(a, b, c, d, e, f, g, h) = BBox( Vec(a,c,e,g), Vec(b,d,f,h) )
 
-BBox{N,T}(left::NTuple{N,T}, right::NTuple{N,T}) = BBox{N,T}(Vec{N,T}(left), Vec{N,T}(right))
+BBox(left, right) = BBox(Vec(left...), Vec(right...))
 
-BBox{N,T}(left::AbstractVector{T}, right::AbstractVector{T}, ::Type{Val{N}}) =
-    BBox{N,T}(Vec{N,T}(left), Vec{N,T}(right))
-BBox(left::AbstractVector, right::AbstractVector) = BBox(left, right, Val{length(left)})
+⊗{N1,N2,T,S}(b1::BBox{N1,T}, b2::BBox{N2,S}) =
+    BBox(promote_type(T,S)[left(b1)..., left(b2)...], promote_type(T,S)[right(b1)..., right(b2)...])
 
 left(b::BBox) = b.left
 left(b::BBox, dim) = b.left[dim]
@@ -105,9 +103,9 @@ show(io::IO, c::BBox{3}) = print(io, "the cube [", left(c, 1), ",", right(c, 1),
 show(io::IO, c::BBox{4}) = print(io, "the 4-cube [", left(c, 1), ",", right(c, 1), "] x [", left(c, 2), ",", right(c, 2), "] x [", left(c, 3), ",", right(c, 3), "] x [", left(c, 4), ",", right(c, 4), "]")
 
 # Define the unit box
-const unitbox1 = BBox(-1.0, 1.0)
-const unitbox2 = BBox(-1.0, 1.0, -1.0, 1.0)
-const unitbox3 = BBox(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
-const unitbox4 = BBox(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+const unitbox1 = BBox(-1, 1)
+const unitbox2 = BBox(-1, 1, -1, 1)
+const unitbox3 = BBox(-1, 1, -1, 1, -1, 1)
+const unitbox4 = BBox(-1, 1, -1, 1, -1, 1, -1, 1)
 
 

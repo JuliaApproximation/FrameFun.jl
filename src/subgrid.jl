@@ -1,9 +1,7 @@
 # subgrid.jl
 
 
-abstract AbstractSubGrid{N,T,G} <: AbstractGrid{N,T}
-
-eltype{N,T,G}(::Type{AbstractSubGrid{N,T,G}}) = eltype(G)
+abstract AbstractSubGrid{N,T} <: AbstractGrid{N,T}
 
 grid(g::AbstractSubGrid) = g.grid
 
@@ -13,7 +11,7 @@ A MaskedGrid is a subgrid of another grid that is defined by a mask.
 The mask is true or false for each point in the supergrid. The set of points
 for which it is true make up the MaskedGrid.
 """
-immutable MaskedGrid{G,ID,N,T} <: AbstractSubGrid{N,T,G}
+immutable MaskedGrid{G,ID,N,T} <: AbstractSubGrid{N,T}
     grid	::	G
     mask	::	Array{Bool,ID}
     indices ::  Vector{Vec{N,Int}}
@@ -21,6 +19,8 @@ immutable MaskedGrid{G,ID,N,T} <: AbstractSubGrid{N,T,G}
 
     MaskedGrid(grid::AbstractGrid{N,T},  mask, indices) = new(grid, mask, indices, sum(mask))
 end
+# TODO: In MaskedGrid, perhaps we should not be storing pointers to the points of the underlying grid, but
+# rather the points themselves. In that case we wouldn't need to specialize on the type of grid (parameter G can go).
 
 function MaskedGrid{N,T}(grid::AbstractGrid{N,T}, mask, indices)
 	@assert size(grid) == size(mask)
@@ -35,7 +35,7 @@ convert(::Type{Tuple{Int,Int}}, i::CartesianIndex{2}) = (i[1],i[2])
 convert(::Type{Tuple{Int,Int,Int}}, i::CartesianIndex{3}) = (i[1],i[2],i[3])
 convert(::Type{Tuple{Int,Int,Int,Int}}, i::CartesianIndex{4}) = (i[1],i[2],i[3],i[4])
 
-function MaskedGrid{N,T}(grid::AbstractGrid{N,T}, domain::AbstractDomain{N,T})
+function MaskedGrid{N}(grid::AbstractGrid{N}, domain::AbstractDomain{N})
     mask = in(grid, domain)
     indices = Array(Vec{N,Int}, sum(mask))
     i = 1
@@ -61,7 +61,7 @@ getindex(g::MaskedGrid, idx::Int) = getindex(g.grid, g.indices[idx]...)
 
 
 # Efficient extension operator
-function apply!{G <: MaskedGrid}(op::Extension, dest, src::DiscreteGridSpace{G}, coef_dest::AbstractArray, coef_src::AbstractArray)
+function apply!{G <: MaskedGrid}(op::Extension, dest, src::DiscreteGridSpace{G}, coef_dest, coef_src)
     @assert length(coef_src) == length(src)
     @assert length(coef_dest) == length(dest)
     @assert grid(dest) == grid(grid(src))
@@ -76,11 +76,12 @@ function apply!{G <: MaskedGrid}(op::Extension, dest, src::DiscreteGridSpace{G},
             coef_dest[i] = coef_src[l]
         end
     end
+    coef_dest
 end
 
 
 # Efficient restriction operator
-function apply!{G <: MaskedGrid}(op::Restriction, dest::DiscreteGridSpace{G}, src, coef_dest::AbstractArray, coef_src::AbstractArray)
+function apply!{G <: MaskedGrid}(op::Restriction, dest::DiscreteGridSpace{G}, src, coef_dest, coef_src)
     @assert length(coef_src) == length(src)
     @assert length(coef_dest) == length(dest)
     @assert grid(src) == grid(grid(dest))
@@ -94,6 +95,7 @@ function apply!{G <: MaskedGrid}(op::Restriction, dest::DiscreteGridSpace{G}, sr
             coef_dest[l] = coef_src[i]
         end
     end
+    coef_dest
 end
 
 
@@ -102,7 +104,7 @@ end
 An IndexSubGrid is a subgrid corresponding to a certain range of indices of the
 underlying (one-dimensional) grid.
 """
-immutable IndexSubGrid{G,T} <: AbstractSubGrid{1,T,G}
+immutable IndexSubGrid{G,T} <: AbstractSubGrid{1,T}
 	grid	::	G
 	i1		::	Int
 	i2		::	Int
@@ -148,6 +150,7 @@ function apply!{G <: IndexSubGrid}(op::Extension, dest::DiscreteGridSpace, src::
         l += 1
         coef_dest[i] = coef_src[l]
     end
+    coef_dest
 end
 
 
@@ -165,6 +168,7 @@ function apply!{G <: IndexSubGrid}(op::Restriction, dest::DiscreteGridSpace{G}, 
         l += 1
         coef_dest[l] = coef_src[i]
     end
+    coef_dest
 end
 
 
@@ -176,6 +180,8 @@ function subgrid(grid::AbstractEquispacedGrid, domain::Interval)
     h = stepsize(grid)
     idx_a = convert(Int, ceil( (a-left(grid))/stepsize(grid))+1 )
     idx_b = convert(Int, floor( (b-left(grid))/stepsize(grid))+1 )
+    idx_a = max(idx_a, 1)
+    idx_b = min(idx_b, length(grid))
     IndexSubGrid(grid, idx_a, idx_b)
 end
 
@@ -191,7 +197,7 @@ CollectionGrid{N,T}(points::Array{Vec{N,T},1}) = CollectionGrid{N,T}(points)
 
 length(g::CollectionGrid) = length(g.points)
 
-getindex{N,T}(g::CollectionGrid{N,T}, idx::Int) = g.points[idx]
+getindex(g::CollectionGrid, idx::Int) = g.points[idx]
 
 function midpoint{N,T}(v1::Vec{N,T}, v2::Vec{N,T}, dom::AbstractDomain)
     # There has to be a midpoint
@@ -250,7 +256,7 @@ function boundary{G,ID,N}(g::MaskedGrid{G,ID,N},dom::AbstractDomain{N})
     boundary(grid(g),dom)
 end
 
-function evaluation_operator{G <: AbstractSubGrid}(s::FunctionSet,d::DiscreteGridSpace{G})
-    d2 = DiscreteGridSpace(grid(grid(d)))
-    restriction_operator(d2,d)*evaluation_operator(s,d2)
+function evaluation_operator{G <: AbstractSubGrid}(s::FunctionSet, d::DiscreteGridSpace{G})
+    d2 = DiscreteGridSpace(grid(grid(d)), eltype(s))
+    restriction_operator(d2, d) * evaluation_operator(s, d2)
 end
