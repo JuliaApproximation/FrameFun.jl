@@ -107,7 +107,7 @@ function plot(f::FrameFun{2};n=1000)
     Main.PyPlot.plot_trisurf(x,y,data)
 end
 
-function plot_image(f::FrameFun{2};n=300)
+function plot_image(f::FrameFun{2};n=300,unscaled=false)
     d =domain(set(expansion(f)))
     Tgrid = grid(resize(basis(f), (n,n)))
     Mgrid=MaskedGrid(Tgrid, domain(f))
@@ -116,6 +116,10 @@ function plot_image(f::FrameFun{2};n=300)
     vmin = minimum(data)
     vmax = maximum(data)
     data = real(expansion(f)(Tgrid))
+    if unscaled
+        vmin = minimum(data)
+        vmax = maximum(data)
+    end
     X = convert(Array{Float64},real(apply((x,y)->x,eltype(f),Tgrid)))
     Y = convert(Array{Float64},real(apply((x,y)->y,eltype(f),Tgrid)))
     Main.PyPlot.pcolormesh(X,Y,data,vmin=vmin, vmax=vmax, shading = "gouraud")

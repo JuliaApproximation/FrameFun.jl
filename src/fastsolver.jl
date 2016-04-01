@@ -18,9 +18,8 @@ immutable FE_ProjectionSolver{ELT,SRC,DEST} <: FE_Solver{SRC,DEST}
     x2          ::  Array{ELT}
     x1          ::  Array{ELT}
 
-    function FE_ProjectionSolver(problem::FE_DiscreteProblem; options...)
+    function FE_ProjectionSolver(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), R = estimate_plunge_rank(problem), options...)
         plunge_op = plunge_operator(problem)
-        R = estimate_plunge_rank(problem)
         W = MatrixOperator( map(ELT, rand(param_N(problem), R)) )
         ## println("max operator forward",maximum(svd(matrix(operator(problem).op2))[2]))
         ## println("min operator forward",minimum(svd(matrix(operator(problem).op2))[2]))
@@ -28,8 +27,8 @@ immutable FE_ProjectionSolver{ELT,SRC,DEST} <: FE_Solver{SRC,DEST}
         ## println("min operator backward",minimum(svd(matrix(operator_transpose(problem).op2))[2]))
         USV = LAPACK.gesvd!('S','S',matrix(plunge_op * operator(problem) * W))
         S = USV[2]
-        limit = 10^(3/4*log10(eps(numtype(frequency_basis(problem)))))
-        maxind = findlast(S.>limit)
+        
+        maxind = findlast(S.>cutoff)
         Sinv = 1./S[1:maxind]
         b = zeros(ELT, size(dest(plunge_op)))
         y = zeros(ELT, size(USV[3],1))
@@ -55,7 +54,8 @@ function plunge_operator(problem::FE_DiscreteProblem)
 
     A*Ap - I
 end
- 
+
+default_cutoff(problem::FE_DiscreteProblem) = 10^(4/5*log10(eps(numtype(frequency_basis(problem)))))
 estimate_plunge_rank{N}(problem::FE_DiscreteProblem{N}) = min(round(Int, 9*log(param_N(problem))*(param_M(problem)*param_N(problem)/param_L(problem))^(1-1/N) + 2),param_N(problem))
 
 estimate_plunge_rank(problem::FE_DiscreteProblem{1,BigFloat}) = round(Int, 28*log(param_N(problem)) + 5)
