@@ -197,9 +197,12 @@ CollectionGrid{N,T}(points::Array{Vec{N,T},1}) = CollectionGrid{N,T}(points)
 
 length(g::CollectionGrid) = length(g.points)
 
+size(g::CollectionGrid) = (length(g),)
+
 getindex(g::CollectionGrid, idx::Int) = g.points[idx]
 
-function midpoint{N,T}(v1::Vec{N,T}, v2::Vec{N,T}, dom::AbstractDomain)
+# Duck typing, v1 and v2 have to implement addition/substraction and scalar multiplication
+function midpoint(v1, v2, dom::AbstractDomain)
     # There has to be a midpoint
     @assert in(v2,dom) != in(v1,dom)
     if in(v2,dom)
@@ -251,7 +254,26 @@ function boundary{TG,GN,LEN,N,T}(g::TensorProductGrid{TG,GN,LEN,N,T},dom::Abstra
     end
     CollectionGrid(midpoints)
 end
-    
+
+
+function boundary{T}(g::AbstractGrid{1,T},dom::AbstractDomain{1})
+    midpoints = Vec{1,T}[]
+    # for each element
+    for i in eachindex(g)
+        # check if any are on the other side of the boundary
+        try
+            if in(g[i],dom) != in(g[i+1],dom)
+                # add the midpoint to the grid
+                push!(midpoints, Vec{1,T}(midpoint(g[i],g[i+1],dom)))
+            end
+        catch y
+            isa(y,BoundsError) || rethrow(y)
+        end
+    end
+    CollectionGrid(midpoints)
+end
+
+
 function boundary{G,ID,N}(g::MaskedGrid{G,ID,N},dom::AbstractDomain{N})
     boundary(grid(g),dom)
 end

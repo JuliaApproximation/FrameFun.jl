@@ -91,6 +91,8 @@ include("fe_approx.jl")
 # TODO: try out Plots.jl
 include("plots.jl")
 
+include("diffequation.jl")
+
 end # module
 
 

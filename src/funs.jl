@@ -34,7 +34,7 @@ for op in (:domainframe, :domain, :basis)
     @eval $op(fun::FrameFun) = $op(fun, set(fun))
 end
     
-domainframe(fun::FrameFun, set::DomainFrame) = set
+domainframe(fun::FrameFun, set::DomainFrame) = ste
 
 domain(fun::FrameFun, set::DomainFrame) = domain(set)
 
