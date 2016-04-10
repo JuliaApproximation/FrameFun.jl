@@ -130,8 +130,8 @@ Test.with_handler(custom_handler) do
                 show(D); print("\n")
                 for T in [BigFloat(17//10) FE.default_frame_T(D, Basis) BigFloat(23//10)]
                     print("T = $T \t")
-                    for (func,CT) in ((f,BigFloat),(g,Complex{BigFloat}))
-                        B = Basis(71, -T, T, CT)
+                    for func in (f,g)
+                        B = Basis(81, -T, T)
                         F = @timed( Fun(func, B, D; solver = FE.FE_DirectSolver) )
 
                         @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
