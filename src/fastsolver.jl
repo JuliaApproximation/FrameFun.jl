@@ -18,8 +18,9 @@ immutable FE_ProjectionSolver{ELT,SRC,DEST} <: FE_Solver{SRC,DEST}
     x2          ::  Array{ELT}
     x1          ::  Array{ELT}
 
-    function FE_ProjectionSolver(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), R = estimate_plunge_rank(problem), options...)
+    function FE_ProjectionSolver(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem),options...)
         plunge_op = plunge_operator(problem)
+        R = estimate_plunge_rank(problem)
         W = MatrixOperator( map(ELT, rand(param_N(problem), R)) )
         ## println("max operator forward",maximum(svd(matrix(operator(problem).op2))[2]))
         ## println("min operator forward",minimum(svd(matrix(operator(problem).op2))[2]))
