@@ -198,7 +198,7 @@ Test.with_handler(custom_handler) do
                 for T in ((1.7,1.7,1.7), FE.default_frame_T(D, Basis))
                     print("T = $T\t")
                     B = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2]) ⊗ Basis(n[3],-T[3],T[3])
-                    F = @timed( Fun(f, B, D; solver=solver))
+                    F = @timed( Fun(f, B, D; solver=solver, cutoff=10.0^(3/4*log10(eps(numtype(B))))))
                     @printf("%3.2e s\t %3.2e bytes", F[2], F[3])
                     @test msqerror_tol(f, F[1], tol=1e-2)
                 end
