@@ -34,38 +34,11 @@ function FE_DirectSolver(problem::FE_Problem; options...)
     FE_DirectSolver{SRC,DEST}(problem)
 end
 
-
-
-## function solve!{T}(s::FE_DirectSolver, coef::AbstractArray{T}, rhs::AbstractArray{T})
-##     coef[:] = s.QR \ rhs
-##     apply!(normalization(problem(s)), coef)
-## end
-
-
 function apply!(s::FE_DirectSolver, dest, src, coef_dest, coef_src)
-#    coef_dest[:] = matrix(operator(problem(s))) \ coef_src
     coef_dest[:] = s.QR \ coef_src
-    apply!(normalization(problem(s)), coef_dest)
-    # Why is the QR factorization not used here?
+    apply!(normalization(problem(s)), coef_dest, coef_dest)
 end
 
-## immutable FE_DirectSolver{ELT} <: FE_Solver
-##     problem ::  FE_Problem
-
-##     function FE_DirectSolver(problem::FE_Problem)
-##         new(problem)
-##     end
-## end
-
-## FE_DirectSolver(problem::FE_Problem) = FE_DirectSolver{eltype(problem)}(problem)
-
-## FE_DirectSolver(p::FE_TensorProductProblem) = TensorProductOperator(map(FE_DirectSolver,p.problems)...)
-
-
-## function apply!(s::FE_DirectSolver, dest, src, coef_dest, coef_src)
-##     @bp
-##     coef_dest[:] = matrix(operator(problem(s))) \ coef_src
-## end
 
 ## abstract FE_IterativeSolver <: FE_Solver
 
@@ -89,6 +62,3 @@ end
 
 ##     println("Stopped after ", ch.mvps, " iterations with residual ", abs(ch.residuals[end]), ".")
 ## end
-
-
-

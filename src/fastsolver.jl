@@ -20,14 +20,17 @@ immutable FE_ProjectionSolver{ELT,SRC,DEST} <: FE_Solver{SRC,DEST}
 
     function FE_ProjectionSolver(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), R = estimate_plunge_rank(problem), options...)
         plunge_op = plunge_operator(problem)
-        W = MatrixOperator( map(ELT, rand(param_N(problem), R)) )
+        random_matrix = map(ELT, rand(param_N(problem), R))
+        Wsrc = ELT <: Complex ? Cn{ELT}(size(random_matrix,2)) : Rn{ELT}(size(random_matrix,2))
+        Wdest = src(operator(problem))
+        W = MatrixOperator(random_matrix, Wsrc, Wdest)
         ## println("max operator forward",maximum(svd(matrix(operator(problem).op2))[2]))
         ## println("min operator forward",minimum(svd(matrix(operator(problem).op2))[2]))
         ## println("max operator backward",maximum(svd(matrix(operator_transpose(problem).op2))[2]))
         ## println("min operator backward",minimum(svd(matrix(operator_transpose(problem).op2))[2]))
         USV = LAPACK.gesvd!('S','S',matrix(plunge_op * operator(problem) * W))
         S = USV[2]
-        
+
         maxind = findlast(S.>cutoff)
         Sinv = 1./S[1:maxind]
         b = zeros(ELT, size(dest(plunge_op)))
@@ -61,20 +64,18 @@ estimate_plunge_rank{N}(problem::FE_DiscreteProblem{N}) = min(round(Int, 9*log(p
 estimate_plunge_rank(problem::FE_DiscreteProblem{1,BigFloat}) = round(Int, 28*log(param_N(problem)) + 5)
 
 apply!(s::FE_ProjectionSolver, dest, src, coef_dest, coef_src) =
-    apply!(s, dest, src, coef_dest, coef_src, operator(s), operator_transpose(s), s.plunge_op, s.W)
+    apply!(s, dest, src, coef_dest, coef_src, operator(s), operator_transpose(s), s.plunge_op, s.W, s.x1, s.x2)
 
-function apply!(s::FE_ProjectionSolver, dest, src, coef_dest, coef_src, A, At, P, W)
+@debug function apply!(s::FE_ProjectionSolver, dest, src, coef_dest, coef_src, A, At, P, W, x1, x2)
     apply!(P, s.b, coef_src)
     A_mul_B!(s.sy, s.Ut, s.b)
     A_mul_B!(s.y, s.VS, s.sy)
     apply!(W, s.x2, s.y)
     #x2 = reshape(s.W * y,size(src(A)))
-    apply!(A, s.b, s.x2)
-    apply!(At, s.x1, coef_src-s.b)
-    for i = 1:length(coef_dest)
-        coef_dest[i] = s.x1[i] + s.x2[i]
+    apply!(A, s.b, x2)
+    apply!(At, x1, coef_src-s.b)
+    for i in eachindex(x1)
+        x1[i] += x2[i]
     end
-    apply!(normalization(problem(s)), coef_dest)
+    apply!(normalization(problem(s)), coef_dest, x1)
 end
-
-

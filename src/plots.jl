@@ -1,5 +1,6 @@
 # plots.jl
 
+import BasisFunctions: plot_error, plot_expansion
 
 # One-dimensional plot, just the domain
 function plot(f::FrameFun{1}; n=201, color="blue")
@@ -13,7 +14,7 @@ end
 
 ## # One-dimensional plot, including extension
 ## function plot_full{1}(f::Fun{1})
-    
+
 ## end
 function plot_expansion(f::FrameFun{1}; n=201, repeats=0, color="blue", alpha=1.0)
     G = grid(resize(basis(f),n))
@@ -30,14 +31,14 @@ function plot_error(f::FrameFun{1}, g::Function; n=201, repeats = 0, color="blue
     G = grid(resize(basis(f),n))
     data = real(f(G))
     x = convert(Array{Float64},apply(x->x,eltype(f),G))
-    plotdata=convert(Array{Float64},abs(apply(g,eltype(f),G)-data))    
+    plotdata=convert(Array{Float64},abs(apply(g,eltype(f),G)-data))
     for i=-repeats:repeats
         Main.PyPlot.semilogy(x+i*(right(G)-left(G)),plotdata,linestyle="dashed", color=color)
     end
     Main.PyPlot.semilogy(x,plotdata,color=color)
     Main.PyPlot.ylim([min(minimum(log10(plotdata)),-16),1])
     Main.PyPlot.title("Absolute Error")
-end 
+end
 
 function plot_samples(f::FrameFun{1}; gamma=2)
     grid, fbasis2 = oversampled_grid(domain(f), basis(f), gamma)
@@ -45,9 +46,9 @@ function plot_samples(f::FrameFun{1}; gamma=2)
     data = convert(Array{Float64},real(f(grid)))
     Main.PyPlot.stem(x,data)
     Main.PyPlot.title("samples")
-end 
+end
 
-    
+
 ## # Maybe place this in funs.jl?
 ## function call(f::FrameFun, g::AbstractGrid)
 ##     result = Array(eltype(f), size(g))
@@ -90,7 +91,7 @@ function call!{N}(f::Function, result::AbstractArray, g::AbstractGrid{N})
 end
 
 function plot_domain(d::AbstractDomain{2}; n=1000)
-    B = boundingbox(d)    
+    B = boundingbox(d)
     grid = equispaced_aspect_grid(B,n)
     Z = evalgrid(grid, d)
     Main.PyPlot.imshow(Z',interpolation="bicubic",cmap="Blues",extent=(left(B)[1], right(B)[1], left(B)[2], right(B)[2]),aspect="equal",origin="lower")

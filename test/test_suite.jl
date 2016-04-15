@@ -5,6 +5,7 @@ using BasisFunctions
 using FrameFuns
 using FixedSizeArrays
 using Base.Test
+using Debug
 FE = FrameFuns
 BA = BasisFunctions
 
@@ -12,6 +13,17 @@ BA = BasisFunctions
 
 # Test fourier extensions for all parameters
 Extensive = false
+
+# Show matrix vector product timings
+const show_mv_times = true
+total_mv_allocs = 0
+total_mv_time = 0.0
+
+const include_1d_tests = true
+const include_2d_tests = true
+const include_3d_tests = true
+const include_bigfloat_tests = false
+
 ########
 # Auxiliary functions
 ########
@@ -25,7 +37,7 @@ global errors = 0
 custom_handler(r::Test.Success) = begin print_with_color(:green, "#\tSuccess "); println("on $(r.expr)"); global successes+=1;  end
 custom_handler(r::Test.Failure) = begin print_with_color(:red, "\"\tFailure "); println("on $(r.expr)\""); global failures+=1; end
 custom_handler(r::Test.Error) = begin println("\"\t$(typeof(r.err)) in $(r.expr)\""); global errors+=1; end
-#custom_handler(r::Test.Error) = Base.showerror(STDOUT,r); 
+#custom_handler(r::Test.Error) = Base.showerror(STDOUT,r);
 
 
 # Check the accuracy of framefuns.
@@ -35,7 +47,7 @@ function msqerror_tol(f::Function, F; vals::Int=200, tol=1e-6)
 
     # Find the closest bounding grid around the domain
     TB = FE.boundingbox(FE.domain(F))
-    
+
     point = Array{T}(N)
     elements = 0
     error = 0
@@ -65,22 +77,43 @@ function delimit(s::AbstractString)
     println("############")
 end
 
+show_timings(F) = show_timings(F, F.approx_op)
+
+show_timings(F, op::FE.FE_Solver) = show_timings(F, operator(op.problem))
+
+function show_timings(F, op::TensorProductOperator)
+    for i in 1:composite_length(op)
+        show_timings(F, element(op,i))
+    end
+end
+
+function show_timings(F, op)
+    if show_mv_times
+        c1 = zeros(eltype(op), size(src(op)))
+        c2 = zeros(eltype(op), size(dest(op)))
+        apply!(op, c2, c1)
+        t = @timed apply!(op, c2, c1)
+        # if t[3] > 500
+            print_with_color(:red, "\"\tMV product: ")
+            println(t[3], " bytes allocated, in ", t[2], " seconds")
+        # end
+        global total_mv_allocs += t[3]
+        global total_mv_time += t[2]
+    end
+end
+
 #######
 # Testing
 #######
 
-
-Test.with_handler(custom_handler) do
-
-
-    delimit("Algorithm Implementation and Accuracy")
+function test_1d_cases()
     delimit("1D")
 
     # Complex and real functions / Float64
     f(x) = cos(x.^2-0.5)-1
     g(x) = 1im*cos(x.^2-0.5)-1
     # Chebyshev and Fourier Bases
-    
+
     for ELT in (Float32,Float64)
         for Basis in (FourierBasis, ChebyshevBasis)
             println()
@@ -103,10 +136,10 @@ Test.with_handler(custom_handler) do
                             for func in (f,g)
                                 B = Basis(n, -T, T, ELT)
                                 F = @timed( Fun(func, B, D; solver=solver) )
-                                F = @timed( Fun(func, B, D; solver=solver) )
 
                                 @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
                                 @test  msqerror_tol(func, F[1], tol=sqrt(eps(ELT))*10)
+                                show_timings(F[1])
                                 if func == f
                                     print("\t\t")
                                 end
@@ -117,35 +150,37 @@ Test.with_handler(custom_handler) do
             end
         end
     end
+end
 
-    test_bigfloat = false
-    if test_bigfloat
-        f(x) = cos(x.^2) - big(1.0)
-        g(x) = big(1.0)im * cos(x.^2) - big(1.0)
-        for Basis in (FourierBasis, ChebyshevBasis)
-            println()
-            println("## Basis: ", Basis)
-            # Some BigFloat tests (DirectSolver only)
-            for D in [Interval(BigFloat(-3//2),BigFloat(7//10)) Interval(BigFloat(-3//2),BigFloat(-1//2))+Interval(BigFloat(1//2),BigFloat(3//2))]
-                show(D); print("\n")
-                for T in [BigFloat(17//10) FE.default_frame_T(D, Basis) BigFloat(23//10)]
-                    print("T = $T \t")
-                    for func in (f,g)
-                        B = Basis(81, -T, T)
-                        F = @timed( Fun(func, B, D; solver = FE.FE_DirectSolver) )
+function test_bigfloat()
+    f(x) = cos(x.^2) - big(1.0)
+    g(x) = big(1.0)im * cos(x.^2) - big(1.0)
+    for Basis in (FourierBasis, ChebyshevBasis)
+        println()
+        println("## Basis: ", Basis)
+        # Some BigFloat tests (DirectSolver only)
+        for D in [Interval(BigFloat(-3//2),BigFloat(7//10)) Interval(BigFloat(-3//2),BigFloat(-1//2))+Interval(BigFloat(1//2),BigFloat(3//2))]
+            show(D); print("\n")
+            for T in [BigFloat(17//10) FE.default_frame_T(D, Basis) BigFloat(23//10)]
+                print("T = $T \t")
+                for func in (f,g)
+                    B = Basis(81, -T, T)
+                    F = @timed( Fun(func, B, D; solver = FE.FE_DirectSolver) )
 
-                        @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
-                        @test  msqerror_tol(func,F[1],tol=1e-20)
-                        if func==f
-                            print("\t\t")
-                        end
+                    @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
+                    @test  msqerror_tol(func,F[1],tol=1e-20)
+                    if func==f
+                        print("\t\t")
                     end
+                    show_timings(F)
                 end
             end
         end
     end
+end
 
-    delimit("2D") 
+function test_2d_cases()
+    delimit("2D")
 
     f(x,y) = cos(0.5*x)+2*sin(0.2*y)-1.0*x*y
     g(x,y) = 1im*cos(0.5*x)+2*sin(0.2*y)-1.0im*x*y
@@ -169,9 +204,9 @@ Test.with_handler(custom_handler) do
 
                             @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
                             @test msqerror_tol(func, F[1], tol=1e-3)
+                            show_timings(F[1])
                             if func==f
                                 print("\t\t")
-                                B = Basis(n[1],-T[1],T[1],Complex{Float64}) ⊗ Basis(n[2],-T[2],T[2],Complex{Float64})
                             end
                         end
                     end
@@ -179,7 +214,9 @@ Test.with_handler(custom_handler) do
             end
         end
     end
+end
 
+function test_3d_cases()
     delimit("3D")
 
     f(x,y,z) = cos(x)+sin(y)-x*z
@@ -187,7 +224,8 @@ Test.with_handler(custom_handler) do
         println()
         println("## Basis: ", Basis)
 
-        for D in (Cube((-0.2,-1.0,0.0),(1.0,-0.1,1.2)),FE.TensorProductDomain(Interval(-1.0,1.0),Disk(1.05)), FE.Ball(1.2,[-0.3,0.25,0.1]))
+        for D in (Cube((-1.2,-1.0,-0.9),(1.0,0.9,1.2)),FE.tensorproduct(Interval(-1.0,1.0),Disk(1.05)), FE.Ball(1.2,[-0.3,0.25,0.1]))
+        # for D in (FE.Ball(1.2,[-0.3,0.25,0.1]),)
             show(D); println()
             for solver in (FE.FE_ProjectionSolver, )
                 show(solver); println()
@@ -201,16 +239,40 @@ Test.with_handler(custom_handler) do
                     F = @timed( Fun(f, B, D; solver=solver))
                     @printf("%3.2e s\t %3.2e bytes", F[2], F[3])
                     @test msqerror_tol(f, F[1], tol=1e-2)
+                    show_timings(F[1])
                 end
             end
         end
     end
+end
+
+Test.with_handler(custom_handler) do
+
+    delimit("Algorithm Implementation and Accuracy")
+
+    if include_1d_tests
+        test_1d_cases()
+    end
+
+    if include_bigfloat_tests
+        test_bigfloat()
+    end
+
+    if include_2d_tests
+        test_2d_cases()
+    end
+
+    if include_3d_tests
+        test_3d_cases()
+    end
 
     delimit("Random circles")
     dom = FE.randomcircles(10)
-    b = FourierBasis(21) ⊗ FourierBasis(21)
+#    b = FourierBasis(21) ⊗ FourierBasis(21)
+    b = FourierBasis(21) ⊗ ChebyshevBasis(21)
     f(x,y) = cos(20*x+22*y)
     @time F = Fun(f,b,dom)
+    show_timings(F)
 end
 
 # Diagnostics
@@ -218,8 +280,11 @@ println()
 println("Succes rate:\t$successes/$(successes+failures+errors)")
 println("Failure rate:\t$failures/$(successes+failures+errors)")
 println("Error rate:\t$errors/$(successes+failures+errors)")
+if show_mv_times
+    println("Total bytes in MV products:\t$total_mv_allocs")
+    println("Total time in MV products:\t$total_mv_time")
+end
 
 (errors+failures)==0 || error("A total of $(failures+errors) tests failed")
 
 end
-

@@ -30,7 +30,7 @@ in{T <: Number}(x::Number, a::T, b::T) = a <= x <= b
 in{N}(g::AbstractGrid{N}, d::AbstractDomain{N}) = evalgrid(g, d)
 
 
-# Default methods for evaluation on a grid: the default is to call eval on the domain with 
+# Default methods for evaluation on a grid: the default is to call eval on the domain with
 # points as arguments. Domains that have faster grid evaluation routines may define their own version.
 evalgrid(g::AbstractGrid, d::AbstractDomain) = evalgrid!(zeros(Bool, size(g)), g, d)
 
@@ -247,7 +247,10 @@ immutable TensorProductDomain{TD,DN,LEN,N} <: AbstractDomain{N}
 	TensorProductDomain(domains::Tuple) = new(domains)
 end
 
-tp_length{TD,DN,LEN,N}(d::TensorProductDomain{TD,DN,LEN,N}) = LEN
+# Generic functions for composite types:
+elements(d::TensorProductDomain) = d.domains
+element(d::TensorProductDomain, j::Int) = d.domains[j]
+composite_length{TD,DN,LEN,N}(d::TensorProductDomain{TD,DN,LEN,N}) = LEN
 
 function TensorProductDomain(domains...)
     TD = typeof(domains)
@@ -257,15 +260,11 @@ function TensorProductDomain(domains...)
     TensorProductDomain{TD,DN,LEN,N}(domains)
 end
 
-⊗(d1::AbstractDomain, d2::AbstractDomain) = TensorProductDomain(d1, d2)
-⊗(d1::TensorProductDomain, d2::TensorProductDomain) = TensorProductDomain(domainlist(d1)..., domainlist(d2)...)
-⊗(d1::TensorProductDomain, d2::AbstractDomain) = TensorProductDomain(domainlist(d1)..., d2)
-⊗(d1::AbstractDomain, d2::TensorProductDomain) = TensorProductDomain(d1, domainlist(d2)...)
+tensorproduct(d::AbstractDomain) = d
+tensorproduct(d::AbstractDomain, n::Int) = tensorproduct([d for i=1:n]...)
+tensorproduct(d::AbstractDomain...) =
+    TensorProductDomain(flatten(TensorProductDomain, d...)...)
 
-tensorproduct(d::AbstractDomain, n) = TensorProductDomain([d for i=1:n]...)
-
-subdomain(t::TensorProductDomain, i::Int) = t.domains[i]
-domainlist(t::TensorProductDomain) = t.domains
 
 # TODO: make this code for in more general!
 # The problem is you can't slice a Vec, so the implementation below for AbstractArray does not work
@@ -282,8 +281,8 @@ end
 function in{TD,DN,T}(x::Vec{3,T}, t::TensorProductDomain{TD,DN,2,3})
     N1 = DN[1]
     N2 = DN[2]
-    d1 = subdomain(t, 1)
-    d2 = subdomain(t, 2)
+    d1 = element(t, 1)
+    d2 = element(t, 2)
     x1 = Vec{N1,T}([x[j] for j=1:N1])
     x2 = Vec{N2,T}([x[j] for j=N1+1:N1+N2])
     in(x1, d1) && in(x2, d2)
@@ -292,17 +291,17 @@ end
 function in{TD,DN,T}(x::Vec{4,T}, t::TensorProductDomain{TD,DN,2,4})
     N1 = DN[1]
     N2 = DN[2]
-    d1 = subdomain(t, 1)
-    d2 = subdomain(t, 2)
+    d1 = element(t, 1)
+    d2 = element(t, 2)
     x1 = Vec{N1,T}([x[j] for j=1:N1])
     x2 = Vec{N2,T}([x[j] for j=N1+1:N1+N2])
     in(x1, d1) && in(x2, d2)
 end
 
 function in{TD,DN,T}(x::Vec{4,T}, t::TensorProductDomain{TD,DN,3,4})
-    d1 = subdomain(t, 1)
-    d2 = subdomain(t, 2)
-    d3 = subdomain(t, 3)
+    d1 = element(t, 1)
+    d2 = element(t, 2)
+    d3 = element(t, 3)
     x1 = Vec{N1,T}([x[j] for j=1:N1])
     x2 = Vec{N2,T}([x[j] for j=N1+1:N1+N2])
     x3 = Vec{N3,T}([x[j] for j=N1+N2+1:N1+N2+N3])
@@ -322,7 +321,7 @@ function in{TD,DN,LEN,N}(x::AbstractArray, t::TensorProductDomain{TD,DN,LEN,N})
 end
 
 # TODO: provide implementation of in for tensorproductgrids
- 
+
 
 function boundingbox{TD,DN,LEN,N}(t::TensorProductDomain{TD,DN,LEN,N})
     box = boundingbox(t.domains[1])
@@ -331,15 +330,15 @@ function boundingbox{TD,DN,LEN,N}(t::TensorProductDomain{TD,DN,LEN,N})
     end
     box
 end
- 
+
 
 function show(io::IO, t::TensorProductDomain)
-    L = tp_length(t)
-    for i = 1:L-1
-        show(io, domainlist(t)[i])
+    L = composite_length(t)
+    for i in 1:L-1
+        show(io, element(t, i))
         print(io, " x ")
     end
-    show(io, domainlist(t)[L])
+    show(io, element(t, L))
 end
 
 
@@ -467,7 +466,7 @@ function intersect(d1::Interval, d2::Interval)
 end
 
 intersect{TD1,TD2,DN,LEN}(d1::TensorProductDomain{TD1,DN,LEN}, d2::TensorProductDomain{TD2,DN,LEN}) =
-    TensorProductDomain([intersect(subdomain(d1,i), subdomain(d2,i)) for i in 1:LEN]...)
+    TensorProductDomain([intersect(element(d1,i), element(d2,i)) for i in 1:LEN]...)
 
 
 
@@ -687,11 +686,11 @@ function boundingbox(d::DomainCollection)
     ubox
 end
 
- 
+
 show(io::IO, d::DomainCollection) = print(io, "a collection of ", length(d.list), " domains")
 
 
- 
+
 ##########################################################################
 ### Assorted Domains
 ##########################################################################
@@ -765,12 +764,3 @@ end
 #     A
 #     box
 # end
-
-
-
-
-
-
-
-
-

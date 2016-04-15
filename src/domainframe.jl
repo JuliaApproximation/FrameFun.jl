@@ -10,7 +10,7 @@ immutable DomainFrame{N,T} <: AbstractFrame{N,T}
 
     function DomainFrame(domain::AbstractDomain, basis::FunctionSet)
         @assert is_basis(basis) == True()
-        
+
         new(domain, basis)
     end
 end
@@ -63,11 +63,10 @@ function domainframe{TD,DN,LEN}(domain::TensorProductDomain{TD,DN,LEN}, basis::T
     dc = 1
     for i = 1:LEN
         range = dc:dc+DN[i]-1
-        push!(domainframes, DomainFrame(subdomain(domain, i), set(basis, range)))
+        push!(domainframes, DomainFrame(element(domain, i), element(basis, range)))
         dc += DN[i]
     end
-    TensorProductSet(domainframes...)
+    tensorproduct(domainframes...)
 end
 
 domainframe(domain::AbstractDomain, basis::FunctionSet) = DomainFrame(domain, basis)
-

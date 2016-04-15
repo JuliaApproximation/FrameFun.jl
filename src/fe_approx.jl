@@ -79,9 +79,9 @@ default_frame_n(domain::AbstractDomain3d, basis) = (7, 7, 7)
 
 
 function default_frame_n(domain::TensorProductDomain, basis)
-    s = [default_frame_n(domainlist(domain)[1], basis)...]
-    for i = 2:tp_length(domain)
-        s = [s; default_frame_n(domainlist(domain)[i], basis)...]
+    s = [default_frame_n(element(domain,1), basis)...]
+    for i = 2:composite_length(domain)
+        s = [s; default_frame_n(element(domain,i), basis)...]
     end
     s = round(Int,s/dim(domain))
     tuple(s...)
@@ -95,4 +95,3 @@ default_frame_solver(domain, basis) = FE_BestSolver
 
 default_frame_solver{N}(domain::AbstractDomain, basis::FunctionSet{N,BigFloat}) = FE_DirectSolver
 default_frame_solver{N}(domain::AbstractDomain, basis::FunctionSet{N,Complex{BigFloat}}) = FE_DirectSolver
-
