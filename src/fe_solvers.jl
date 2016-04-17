@@ -1,7 +1,7 @@
 # fe_solvers.jl
 
 
-abstract FE_Solver{SRC,DEST} <: AbstractOperator{SRC,DEST}
+abstract FE_Solver{ELT} <: AbstractOperator{ELT}
 
 problem(s::FE_Solver) = s.problem
 
@@ -19,7 +19,7 @@ dest(s::FE_Solver) = frequency_basis(s)
 
 
 
-immutable FE_DirectSolver{SRC,DEST} <: FE_Solver{SRC,DEST}
+immutable FE_DirectSolver{ELT} <: FE_Solver{ELT}
     problem ::  FE_Problem
     QR      ::  Factorization
 
@@ -28,13 +28,10 @@ immutable FE_DirectSolver{SRC,DEST} <: FE_Solver{SRC,DEST}
     end
 end
 
-function FE_DirectSolver(problem::FE_Problem; options...)
-    SRC = typeof(time_basis_restricted(problem))
-    DEST = typeof(frequency_basis(problem))
-    FE_DirectSolver{SRC,DEST}(problem)
-end
+FE_DirectSolver(problem::FE_Problem; options...) =
+    FE_DirectSolver{eltype(problem)}(problem)
 
-function apply!(s::FE_DirectSolver, dest, src, coef_dest, coef_src)
+function apply!(s::FE_DirectSolver, coef_dest, coef_src)
     coef_dest[:] = s.QR \ coef_src
     apply!(normalization(problem(s)), coef_dest, coef_dest)
 end

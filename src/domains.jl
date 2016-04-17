@@ -342,6 +342,10 @@ function show(io::IO, t::TensorProductDomain)
 end
 
 
+(*)(d::TensorProductDomain, x::Number) = tensorproduct([domain*x for domain in elements(d)]...)
+
+
+
 
 ###############################################################################################
 ### An n-dimensional cube
@@ -354,7 +358,7 @@ Cube{N}(::Type{Val{N}}) = Interval() ⊗ Cube(Val{N-1})
 Cube(n::Int) = Cube(Val{n})
 
 Cube(left::Number, right::Number) = Interval(left, right)
-Cube(left, right) = TensorProductDomain(map(Interval, left, right)...)
+Cube(left, right) = tensorproduct(map(Interval, left, right)...)
 
 rectangle(a, b, c, d) = Interval(a,b) ⊗ Interval(c,d)
 

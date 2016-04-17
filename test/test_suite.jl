@@ -87,6 +87,14 @@ function show_timings(F, op::TensorProductOperator)
     end
 end
 
+function show_timings(F, op::CompositeOperator)
+    for i in 1:composite_length(op)
+        show_timings(F, element(op,i))
+    end
+end
+
+show_timings(F, op::DimensionOperator) = show_timings(F, op.op)
+
 function show_timings(F, op)
     if show_mv_times
         c1 = zeros(eltype(op), size(src(op)))

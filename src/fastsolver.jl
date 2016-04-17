@@ -6,7 +6,7 @@ is isolated using a projection operator.
 For more details, see the paper 'Fast algorithms for the computation of Fourier extensions of arbitrary length'
 http://arxiv.org/abs/1509.00206
 """
-immutable FE_ProjectionSolver{ELT,SRC,DEST} <: FE_Solver{SRC,DEST}
+immutable FE_ProjectionSolver{ELT} <: FE_Solver{ELT}
     problem     ::  FE_DiscreteProblem
     plunge_op   ::  AbstractOperator    # store the operator because it allocates memory
     W           ::  MatrixOperator
@@ -23,7 +23,7 @@ immutable FE_ProjectionSolver{ELT,SRC,DEST} <: FE_Solver{SRC,DEST}
         random_matrix = map(ELT, rand(param_N(problem), R))
         Wsrc = ELT <: Complex ? Cn{ELT}(size(random_matrix,2)) : Rn{ELT}(size(random_matrix,2))
         Wdest = src(operator(problem))
-        W = MatrixOperator(random_matrix, Wsrc, Wdest)
+        W = MatrixOperator(Wsrc, Wdest, random_matrix)
         ## println("max operator forward",maximum(svd(matrix(operator(problem).op2))[2]))
         ## println("min operator forward",minimum(svd(matrix(operator(problem).op2))[2]))
         ## println("max operator backward",maximum(svd(matrix(operator_transpose(problem).op2))[2]))
@@ -42,12 +42,8 @@ immutable FE_ProjectionSolver{ELT,SRC,DEST} <: FE_Solver{SRC,DEST}
     end
 end
 
-function FE_ProjectionSolver(problem::FE_DiscreteProblem; options...)
-    ELT = eltype(problem)
-    SRC = typeof(time_basis_restricted(problem))
-    DEST = typeof(frequency_basis(problem))
-    FE_ProjectionSolver{ELT,SRC,DEST}(problem; options...)
-end
+FE_ProjectionSolver(problem::FE_DiscreteProblem; options...) =
+    FE_ProjectionSolver{eltype(problem)}(problem; options...)
 
 
 function plunge_operator(problem::FE_DiscreteProblem)
@@ -66,7 +62,7 @@ estimate_plunge_rank(problem::FE_DiscreteProblem{1,BigFloat}) = round(Int, 28*lo
 apply!(s::FE_ProjectionSolver, dest, src, coef_dest, coef_src) =
     apply!(s, dest, src, coef_dest, coef_src, operator(s), operator_transpose(s), s.plunge_op, s.W, s.x1, s.x2)
 
-@debug function apply!(s::FE_ProjectionSolver, dest, src, coef_dest, coef_src, A, At, P, W, x1, x2)
+function apply!(s::FE_ProjectionSolver, dest, src, coef_dest, coef_src, A, At, P, W, x1, x2)
     apply!(P, s.b, coef_src)
     A_mul_B!(s.sy, s.Ut, s.b)
     A_mul_B!(s.y, s.VS, s.sy)
