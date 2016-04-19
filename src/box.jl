@@ -10,6 +10,15 @@ dim{N}(b::BBox{N}) = N
 
 eltype{N,T}(::Type{BBox{N,T}}) = T
 
+# Generic functions for composite types:
+element(b::BBox, j::Int) = BBox(b.left[j], b.right[j])
+elements(b::BBox) = tuple([element(b,j) for j in 1:dim(b)]...)
+elements(b::BBox{1}) = (element(b,1),)
+elements(b::BBox{2}) = (element(b,1),element(b,2))
+elements(b::BBox{3}) = (element(b,1),element(b,2),element(b,3))
+elements(b::BBox{4}) = (element(b,1),element(b,2),element(b,3),element(b,4))
+
+composite_length(b::BBox) = dim(b)
 
 typealias BBox1{T} BBox{1,T}
 typealias BBox2{T} BBox{2,T}
@@ -24,8 +33,13 @@ BBox(a, b, c, d, e, f, g, h) = BBox( Vec(a,c,e,g), Vec(b,d,f,h) )
 
 BBox(left, right) = BBox(Vec(left...), Vec(right...))
 
-⊗{N1,N2,T,S}(b1::BBox{N1,T}, b2::BBox{N2,S}) =
-    BBox(promote_type(T,S)[left(b1)..., left(b2)...], promote_type(T,S)[right(b1)..., right(b2)...])
+tensorproduct(b::BBox) = b
+tensorproduct(b::BBox, n::Int) = tensorproduct([b for i=1:n]...)
+tensorproduct(b1::BBox, b2::BBox, boxes::BBox...) =
+    tensorproduct(BBox(Vec(b1.left..., b2.left...), Vec(b1.right..., b2.right...)), boxes...)
+
+# ⊗{N1,N2,T,S}(b1::BBox{N1,T}, b2::BBox{N2,S}) =
+#     BBox(promote_type(T,S)[left(b1)..., left(b2)...], promote_type(T,S)[right(b1)..., right(b2)...])
 
 left(b::BBox) = b.left
 left(b::BBox, dim) = b.left[dim]
@@ -43,7 +57,7 @@ getindex(b::BBox, i::Int, j::Int) = j == 1 ? left(b, i) : right(b, i)
 size(b::BBox, dim) = right(b, dim) - left(b, dim)
 
 "Create an equispaced grid on the box with ns[dim] points in each dimension."
-equispaced_grid(box, ns) = tensorproduct([PeriodicEquispacedGrid(ns[idx], left(box, idx), right(box, idx)) for idx = 1:dim(box)]...)    
+equispaced_grid(box, ns) = tensorproduct([PeriodicEquispacedGrid(ns[idx], left(box, idx), right(box, idx)) for idx = 1:dim(box)]...)
 
 "Create an equispaced grid on the box with n points in each dimension."
 equispaced_grid{N}(box::BBox{N}, n::Int) = equispaced_grid(box, ntuple(x->n, Val{N}))
@@ -56,7 +70,7 @@ function extend{N,T}(b::BBox{N,T}, t::Vec{N,T})
     BBox(left(b), left(b) + r)
 end
 
-in{N,T}(x, b::BBox{N,T}, dim) = (x >= left(b,dim)-10eps(T)) && (x <= right(b,dim)+10eps(T))
+in{N,T}(x, b::BBox{N,T}, dim) = (x[dim] >= left(b,dim)-10eps(T)) && (x[dim] <= right(b,dim)+10eps(T))
 in(x, b::BBox) = reduce(&, [in(x,b,i) for i = 1:dim(b)])
 
 within(a, b) = (a[1] >= b[1]) && (a[2] <= b[2])

@@ -188,7 +188,7 @@ function plot_grid(grid::AbstractGrid3d)
     Main.PyPlot.axis("equal")
 end
 
-function plot_grid{TG,GN,ID}(grid::TensorProductGrid{TG,GN,ID,2})
+function plot_grid{TG}(grid::TensorProductGrid{TG,2})
     dom = Cube(left(grid),right(grid))
     Mgrid = MaskedGrid(grid,dom)
     plot_grid(Mgrid)

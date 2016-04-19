@@ -81,19 +81,19 @@ show_timings(F) = show_timings(F, F.approx_op)
 
 show_timings(F, op::FE.FE_Solver) = show_timings(F, operator(op.problem))
 
-function show_timings(F, op::TensorProductOperator)
-    for i in 1:composite_length(op)
-        show_timings(F, element(op,i))
-    end
-end
-
-function show_timings(F, op::CompositeOperator)
-    for i in 1:composite_length(op)
-        show_timings(F, element(op,i))
-    end
-end
-
-show_timings(F, op::DimensionOperator) = show_timings(F, op.op)
+# function show_timings(F, op::TensorProductOperator)
+#     for i in 1:composite_length(op)
+#         show_timings(F, element(op,i))
+#     end
+# end
+#
+# function show_timings(F, op::CompositeOperator)
+#     for i in 1:composite_length(op)
+#         show_timings(F, element(op,i))
+#     end
+# end
+#
+# show_timings(F, op::DimensionOperator) = show_timings(F, op.op)
 
 function show_timings(F, op)
     if show_mv_times
@@ -101,9 +101,14 @@ function show_timings(F, op)
         c2 = zeros(eltype(op), size(dest(op)))
         apply!(op, c2, c1)
         t = @timed apply!(op, c2, c1)
-        # if t[3] > 500
+        if t[3] > 700
             print_with_color(:red, "\"\tMV product: ")
-            println(t[3], " bytes allocated, in ", t[2], " seconds")
+        elseif t[3] == 0
+            print_with_color(:green, "\"\tMV product: ")
+        else
+            print_with_color(:blue, "\"\tMV product: ")
+        end
+        println(t[3], " bytes allocated, in ", t[2], " seconds")
         # end
         global total_mv_allocs += t[3]
         global total_mv_time += t[2]
