@@ -5,7 +5,7 @@ A fast FE solver based on a low-rank approximation of the plunge region. The plu
 is isolated using a projection operator. This algorithm contains an extra smoothing step
 
 """
-immutable FE_SmoothProjectionSolver{ELT,SRC,DEST} <: FE_Solver{SRC,DEST}
+immutable FE_SmoothProjectionSolver{ELT} <: FE_Solver{ELT}
         problem     ::  FE_DiscreteProblem
         plunge_op   ::  AbstractOperator    # store the operator because it allocates memory
         W           ::  MatrixOperator
@@ -20,11 +20,12 @@ immutable FE_SmoothProjectionSolver{ELT,SRC,DEST} <: FE_Solver{SRC,DEST}
         x3          ::  Array{ELT}
         Q          ::  Array{ELT,2}
         D           ::  AbstractOperator
+
         function FE_SmoothProjectionSolver(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), cutoffv=sqrt(cutoff), R = estimate_plunge_rank(problem), options...)
                 plunge_op = plunge_operator(problem)
             A = map(ELT, rand(param_N(problem), R))
             B = map(ELT, rand(param_M(problem), R))
-            
+
                 WU = MatrixOperator(A)
                 WV = MatrixOperator(B)
                 USVU = LAPACK.gesvd!('S','S',matrix(plunge_op * operator(problem) * WU))
@@ -49,12 +50,8 @@ immutable FE_SmoothProjectionSolver{ELT,SRC,DEST} <: FE_Solver{SRC,DEST}
 end
 
 
-function FE_SmoothProjectionSolver(problem::FE_DiscreteProblem; options...)
-        ELT = eltype(problem)
-        SRC = typeof(time_basis_restricted(problem))
-        DEST = typeof(frequency_basis(problem))
-        FE_SmoothProjectionSolver{ELT,SRC,DEST}(problem; options...)
-end
+FE_SmoothProjectionSolver(problem::FE_DiscreteProblem; options...) =
+        FE_SmoothProjectionSolver{eltype(problem)}(problem; options...)
 
 
 function apply!(s::FE_SmoothProjectionSolver, destarg, src, coef_dest, coef_src)
@@ -78,15 +75,15 @@ function apply!(s::FE_SmoothProjectionSolver, destarg, src, coef_dest, coef_src)
         for i = 1:length(s.x2)
                 s.x2[i] = s.x2[i] - s.x3[i]
         end
-        
+
         # post smoothing step
         apply!(A, s.b, s.x2)
         apply!(At, s.x1, coef_src-s.b)
         for i = 1:length(coef_dest)
                 coef_dest[i] = s.x1[i] + s.x2[i]
         end
-        
-        apply!(normalization(problem(s)), coef_dest)
+
+        apply!(normalization(problem(s)), coef_dest, coef_dest)
 end
 
 # For FunctionSets that have a DC component

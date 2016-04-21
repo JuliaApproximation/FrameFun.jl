@@ -9,8 +9,8 @@ immutable DomainFrame{N,T} <: AbstractFrame{N,T}
     basis       ::  FunctionSet{N,T}
 
     function DomainFrame(domain::AbstractDomain, basis::FunctionSet)
-        @assert is_basis(basis) == True()
-        
+        @assert is_basis(basis)
+
         new(domain, basis)
     end
 end
@@ -58,16 +58,16 @@ Make a DomainFrame, but match tensor product domains with tensor product sets in
 For example: an interval ⊗ a disk (= a cylinder) combined with a 3D Fourier series, leads to a
 tensor product of a Fourier series on the interval ⊗ a 2D Fourier series on the disk.
 """
-function domainframe{TD,DN,LEN}(domain::TensorProductDomain{TD,DN,LEN}, basis::TensorProductSet)
+function domainframe(domain::TensorProductDomain, basis::TensorProductSet)
     domainframes = FunctionSet[]
     dc = 1
-    for i = 1:LEN
-        range = dc:dc+DN[i]-1
-        push!(domainframes, DomainFrame(subdomain(domain, i), set(basis, range)))
-        dc += DN[i]
+    for i = 1:composite_length(domain)
+        el = element(domain, i)
+        range = dc:dc+dim(el)-1
+        push!(domainframes, DomainFrame(el, element(basis, range)))
+        dc += dim(el)
     end
-    TensorProductSet(domainframes...)
+    tensorproduct(domainframes...)
 end
 
 domainframe(domain::AbstractDomain, basis::FunctionSet) = DomainFrame(domain, basis)
-

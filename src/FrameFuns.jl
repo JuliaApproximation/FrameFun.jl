@@ -19,7 +19,8 @@ import Base: eachindex, start, next, done, getindex, in
 
 import Base: show, showcompact, call, convert
 
-import BasisFunctions: ⊗
+import BasisFunctions: composite_length, ⊗, tensorproduct, flatten,
+    compose, elements, element
 
 import BasisFunctions: src, dest, matrix, matrix!, apply!, numtype
 
@@ -36,7 +37,7 @@ import BasisFunctions: differentiate, ∂x, ∂y, ∂z, ∫∂x, ∫∂y, ∫∂
 
 import BasisFunctions: True, False, complexify, resize, promote_eltype
 
-import BasisFunctions: tp_length, left, right
+import BasisFunctions: left, right
 
 import BasisFunctions: show_setexpansion
 
@@ -46,7 +47,7 @@ export ⊂
 
 # from domains.jl
 export Interval, Disk, Square, Cube, Ball, Cylinder, atomium, boundingbox
-export ⊗, ∩
+export ⊗, ∩, composite_length, element, elements
 
 export numtype
 
@@ -92,5 +93,3 @@ include("fe_approx.jl")
 include("plots.jl")
 
 end # module
-
-

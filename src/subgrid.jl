@@ -218,7 +218,7 @@ function midpoint{N,T}(v1::Vec{N,T}, v2::Vec{N,T}, dom::AbstractDomain)
     mid
 end
 
-function boundary{TG,GN,LEN,N,T}(g::TensorProductGrid{TG,GN,LEN,N,T},dom::AbstractDomain{N})
+function boundary{TG,N,T}(g::TensorProductGrid{TG,N,T},dom::AbstractDomain{N})
     # Initialize neighbours
     neighbours=Array(Int64,2^N-1,N)
     # adjust columns
@@ -251,7 +251,7 @@ function boundary{TG,GN,LEN,N,T}(g::TensorProductGrid{TG,GN,LEN,N,T},dom::Abstra
     end
     CollectionGrid(midpoints)
 end
-    
+
 function boundary{G,ID,N}(g::MaskedGrid{G,ID,N},dom::AbstractDomain{N})
     boundary(grid(g),dom)
 end

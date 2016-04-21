@@ -68,7 +68,7 @@ function isapprox{T}(v::Vec{2,T}, t::Tuple{T,T})
 end
 boundingbox(m::Mandelbrot) = m.box
 
-in(x, m::Mandelbrot) = mandelbrotiteration(x, m.maxiter, m.threshold)
+in(x::Vec, m::Mandelbrot) = mandelbrotiteration(x, m.maxiter, m.threshold)
 
 show(io::IO, m::Mandelbrot) = print(io, "The Mandelbrot set")
 
@@ -131,7 +131,7 @@ function in(g::AbstractGrid{2}, js::JuliaSet)
     mask
 end
 
-in(x, js::JuliaSet) = juliasetiteration(x, js.c, js.maxiter)
+in(x::Vec, js::JuliaSet) = juliasetiteration(x, js.c, js.maxiter)
 
 show(io::IO, js::JuliaSet) = print(io, "A particular Julia Set also known as the Douady rabbit")
 

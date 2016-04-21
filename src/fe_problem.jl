@@ -83,7 +83,6 @@ end
 
 
 function FE_DiscreteProblem(domain::AbstractDomain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted; options...)
-    ELT = promote_type(eltype(tbasis_restricted), eltype(fbasis1))
     f_extension = extension_operator(fbasis1, fbasis2; options...)
     f_restriction = restriction_operator(fbasis2, fbasis1; options...)
 
@@ -150,5 +149,3 @@ param_N(p::FE_DiscreteProblem) = length(frequency_basis(p))
 param_L(p::FE_DiscreteProblem) = length(time_basis_ext(p))
 
 param_M(p::FE_DiscreteProblem) = length(time_basis_restricted(p))
-
-
