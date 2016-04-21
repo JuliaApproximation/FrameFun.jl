@@ -107,7 +107,7 @@ function plot(f::FrameFun{2};n=1000)
     Main.PyPlot.plot_trisurf(x,y,data)
 end
 
-function plot_image(f::FrameFun{2};n=300,unscaled=false, border=true)
+function plot_image(f::FrameFun{2};n=300,unscaled=false, border=true, colorbar=true)
     d =domain(set(expansion(f)))
     Tgrid = grid(resize(basis(f), (n,n)))
     Mgrid=MaskedGrid(Tgrid, domain(f))
@@ -128,7 +128,7 @@ function plot_image(f::FrameFun{2};n=300,unscaled=false, border=true)
     Main.PyPlot.axis("scaled")
     Main.PyPlot.xlim([left(Tgrid)[1], right(Tgrid)[1]])
     Main.PyPlot.ylim([left(Tgrid)[2], right(Tgrid)[2]])
-    Main.PyPlot.colorbar()
+    colorbar && Main.PyPlot.colorbar()
 end
 
 function plot_image(f::FrameFun{2}, g::Function; n=300, border=false)

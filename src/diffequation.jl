@@ -14,15 +14,16 @@ will hold.
 immutable BoundaryCondition
     S      :: FunctionSet
     diff   :: AbstractOperator
-    D      :: AbstractDomain
+    DG      :: AbstractGrid
     dRhs   :: Function
-    function BoundaryCondition(S :: FunctionSet, diff :: AbstractOperator, D :: AbstractDomain, dRhs :: Function)
+    function BoundaryCondition(S :: FunctionSet, diff :: AbstractOperator, DG :: AbstractGrid, dRhs :: Function)
         new(S,diff,D,dRhs)
     end
 end
 
-BoundaryCondition(S :: FunctionSet, D::AbstractDomain) = BoundaryCondition(S,IdentityOperator(S),D,default_boundary_condition)
-
+BoundaryCondition(S :: FunctionSet, D::AbstractDomain) = BoundaryCondition(S,IdentityOperator(S),MaskedGrid(grid(B),D),default_boundary_condition)
+BoundaryCondition(S :: FunctionSet, diff::AbstractOperator, D::AbstractDomain) = BoundaryCondition(S,diff,MaskedGrid(grid(B),D),default_boundary_condition)
+BoundaryCondition(S :: FunctionSet, diff::AbstractOperator, D::AbstractDomain, dRhs::Function) = BoundaryCondition(S,diff,MaskedGrid(grid(B),D),dRhs)
 default_boundary_condition(x) = 0
 default_boundary_condition(x,y) = 0
 default_boundary_condition(x,y,z) = 0
