@@ -6,7 +6,7 @@ This data can be used in a solver to produce an approximation.
 """
 abstract FE_Problem{N,T}
 
-for op in [:eltype, :dim, :numtype]
+for op in [:eltype, :ndims, :numtype]
     @eval $op(p::FE_Problem) = $op(frequency_basis(p))
 end
 
@@ -52,7 +52,7 @@ oversampled_grid(set::DomainFrame, args...) =
 
 
 function oversampled_grid(domain::AbstractDomain, basis::FunctionSet, sampling_factor)
-    N = dim(basis)
+    N = ndims(basis)
     n_goal = length(basis) * sampling_factor^N
     grid1 = grid(basis)
     grid2 = subgrid(grid1, domain)

@@ -19,17 +19,19 @@ import Base: eachindex, start, next, done, getindex, in
 
 import Base: show, showcompact, call, convert
 
+import Base: ndims
+
 import BasisFunctions: composite_length, ⊗, tensorproduct, flatten,
     compose, elements, element
 
 import BasisFunctions: src, dest, matrix, matrix!, apply!, numtype
 
-import BasisFunctions: dim, index_dim, grid, left, right, stepsize, sample
+import BasisFunctions: index_dim, grid, left, right, stepsize, sample
 
 import BasisFunctions: operator, coefficients, set, is_basis, is_frame,
     transform_normalization_operator, evaluation_operator, interpolation_operator,
     differentiation_operator, antidifferentiation_operator, approximation_operator,
-    extend, extension_size
+    extend, extension_size, default_approximation_operator
 
 import BasisFunctions: call_set, call_set!, call_expansion, call_expansion!, call_element, name
 
@@ -79,6 +81,8 @@ include("domainframe.jl")
 
 include("funs.jl")
 
+include("lowrank.jl")
+
 include("fe_problem.jl")
 
 include("fe_solvers.jl")
@@ -88,6 +92,8 @@ include("fastsolver.jl")
 include("smoothsolver.jl")
 
 include("fe_approx.jl")
+
+include("concat_solver.jl")
 
 # TODO: try out Plots.jl
 include("plots.jl")

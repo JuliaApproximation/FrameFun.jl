@@ -24,7 +24,7 @@ end
 
 function eltype(f::Function, basis)
     ELT = eltype(basis)
-    RT = Base.return_types(f, fill(ELT, dim(basis)) )
+    RT = Base.return_types(f, fill(ELT, ndims(basis)) )
     if (length(RT) > 0) && (RT[1] <: Complex)
         complexify(ELT)
     else
@@ -83,7 +83,7 @@ function default_frame_n(domain::TensorProductDomain, basis)
     for i = 2:composite_length(domain)
         s = [s; default_frame_n(element(domain,i), basis)...]
     end
-    s = round(Int,s/dim(domain))
+    s = round(Int,s/ndims(domain))
     tuple(s...)
 end
 

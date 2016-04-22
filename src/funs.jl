@@ -13,7 +13,7 @@ immutable FrameFun{N,T} <: AbstractFun
     FrameFun(e::SetExpansion, approx_op = approximation_operator(set(e))) = new(e, approx_op)
 end
 
-FrameFun(e::SetExpansion, args...) = FrameFun{dim(e),eltype(e)}(e, args...)
+FrameFun(e::SetExpansion, args...) = FrameFun{ndims(e),eltype(e)}(e, args...)
 
 FrameFun{N,T}(frame::FunctionSet{N,T}, coefficients = zeros(eltype(frame), size(frame)), args...) =
     FrameFun{N,T}(SetExpansion(frame, coefficients), args...)
@@ -22,7 +22,7 @@ FrameFun(domain::AbstractDomain, basis::FunctionSet, args...) = FrameFun(DomainF
 
 expansion(fun::FrameFun) = fun.expansion
 
-for op in (:set, :dim, :coefficients, :eltype, :numtype)
+for op in (:set, :ndims, :coefficients, :eltype, :numtype)
     @eval $op(fun::FrameFun) = $op(fun.expansion)
 end
 
@@ -33,7 +33,7 @@ end
 for op in (:domainframe, :domain, :basis)
     @eval $op(fun::FrameFun) = $op(fun, set(fun))
 end
-    
+
 domainframe(fun::FrameFun, set::DomainFrame) = set
 
 domain(fun::FrameFun, set::DomainFrame) = domain(set)
@@ -57,7 +57,7 @@ call(fun::FrameFun, x...) = call(expansion(fun), x...)
 show(io::IO, fun::FrameFun) = show(io, fun, set(fun))
 
 function show(io::IO, fun::FrameFun, set::DomainFrame)
-    println(io, "A ", dim(fun), "-dimensional FrameFun with ", length(coefficients(fun)), " degrees of freedom.")
+    println(io, "A ", ndims(fun), "-dimensional FrameFun with ", length(coefficients(fun)), " degrees of freedom.")
     println(io, "Basis: ", name(basis(set)))
     println(io, "Domain: ", domain(set))
 end
@@ -65,14 +65,9 @@ end
 getindex(fun::FrameFun, x...) = getindex(fun, set(fun), x...)
 
 function getindex(fun::FrameFun, set::DomainFrame, domain1::AbstractDomain)
-    @assert dim(fun) == dim(domain1)
+    @assert ndims(fun) == ndims(domain1)
 
     domain2 = domain(fun)
     newdomain = domain1 ∩ domain2
     FrameFun(newdomain, basis(fun), coefficients(fun))
 end
-
-
-
-
-

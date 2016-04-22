@@ -63,9 +63,9 @@ function domainframe(domain::TensorProductDomain, basis::TensorProductSet)
     dc = 1
     for i = 1:composite_length(domain)
         el = element(domain, i)
-        range = dc:dc+dim(el)-1
+        range = dc:dc+ndims(el)-1
         push!(domainframes, DomainFrame(el, element(basis, range)))
-        dc += dim(el)
+        dc += ndims(el)
     end
     tensorproduct(domainframes...)
 end
