@@ -43,7 +43,23 @@ for op in (:differentiation_operator, :antidifferentiation_operator)
     end
 end
 
+for op in (:extension_operator,)
+    @eval function $op(f1::DomainFrame, f2::DomainFrame)
+        @assert is_compatible(f1,f2)
+        op = $op(basis(f1),basis(f2))
+        WrappedOperator(f1,f2,op)
+    end
+end
 
+
+is_compatible(d1::DomainFrame, d2::DomainFrame) = is_compatible(basis(d1),basis(d2))
+
+function (*)(d1::DomainFrame, d2::DomainFrame, args...)
+    @assert is_compatible(d1,d2) 
+    (mset, mcoef) = (*)(basis(d1),basis(d2),args...)
+    df = DomainFrame(domain(d1) ∩ domain(d2),mset)
+    (df, mcoef)
+end
 
 # Should we check whether x lies in the domain?
 call_set(e::SetExpansion, s::DomainFrame, coef, x...) = call_expansion(basis(s), coef, x...)

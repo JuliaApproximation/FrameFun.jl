@@ -18,7 +18,7 @@ function Fun(f::Function, basis::FunctionSet, domain::AbstractDomain; options...
     frame = domainframe(domain, promote_eltype(basis, ELT))
     A = approximation_operator(frame; options...)
     coef = A * f
-    FrameFun(domain, dest(A), coef, A)
+    FrameFun(domain, dest(A), coef)
 end
 
 

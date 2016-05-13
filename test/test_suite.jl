@@ -116,7 +116,7 @@ function show_timings(F, op)
 end
 
 #######
-# Testing
+# Testing -- Accuracy
 #######
 
 function test_1d_cases()

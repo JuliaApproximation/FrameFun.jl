@@ -35,23 +35,24 @@ immutable DiffEquation
     Diff  :: AbstractOperator
     DRhs   :: Function
     BCs    :: Tuple
-    function DiffEquation(S::FunctionSet, D::AbstractDomain,Diff::AbstractOperator, DRhs:: Function, BCs)
+    function DiffEquation(S::FunctionSet, D::AbstractDomain,Diff::AbstractOperator, DRhs:: Function, BCs::Tuple)
         new(S,D,Diff,DRhs,BCs)
     end
 end
 
-DiffEquation(S::FunctionSet, D::AbstractDomain, Diff:AbstractOperator, DRhs::Function, BC) = DiffEquation(S,D,Diff,DRhs,(BC,))
+DiffEquation(S::FunctionSet, D::AbstractDomain, Diff::AbstractOperator, DRhs::Function, BC::BoundaryCondition) = DiffEquation(S,D,Diff,DRhs,(BC,))
 
 function operator(D::DiffEquation)
     problem = FE_DiscreteProblem(D.D,D.S,2)
     B = frequency_basis(problem)
     ADiff = inv_diagonal(D.Diff)
-    A = operator(problem)
-    for BC in D.BCs
-        Abc = evaluation_operator(D.S,BC.DG)*(BC.diff)*ADiff*normalization(problem)
-        A = [A; Abc]
+    A = operator(problem)*D.Diff*ADiff
+    Ac = evaluation_operator(D.S,D.BCs[1].DG)*(D.BCs[1].diff)*ADiff*normalization(problem)
+    for i = 2:length(D.BCs)
+        Abc = evaluation_operator(D.S,D.BCs[i].DG)*(D.BCs[i].diff)*ADiff*normalization(problem)
+        Ac = [Ac; Abc]
     end
-    A
+    A = [A; Ac]
 end
 
 function rhs(D::DiffEquation)

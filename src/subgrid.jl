@@ -201,6 +201,13 @@ size(g::CollectionGrid) = (length(g),)
 
 getindex(g::CollectionGrid, idx::Int) = g.points[idx]
 
+function MaskedGrid{N}(grid::CollectionGrid{N}, domain::AbstractDomain{N})
+    mask = in(grid, domain)
+    points = grid.points[mask]
+    CollectionGrid(points)
+end
+
+
 # Duck typing, v1 and v2 have to implement addition/substraction and scalar multiplication
 function midpoint(v1, v2, dom::AbstractDomain)
     # There has to be a midpoint

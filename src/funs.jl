@@ -8,9 +8,8 @@ interface for computing with functions.
 """
 immutable FrameFun{N,T} <: AbstractFun
     expansion   ::  SetExpansion
-    approx_op   ::  AbstractOperator
 
-    FrameFun(e::SetExpansion, approx_op = approximation_operator(set(e))) = new(e, approx_op)
+    FrameFun(e::SetExpansion) = new(e)
 end
 
 FrameFun(e::SetExpansion, args...) = FrameFun{dim(e),eltype(e)}(e, args...)
@@ -33,7 +32,11 @@ end
 for op in (:domainframe, :domain, :basis)
     @eval $op(fun::FrameFun) = $op(fun, set(fun))
 end
-    
+
+for op in (:+, :-, :*)
+    @eval $op(fun1::FrameFun,fun2::FrameFun) = FrameFun($op(fun1.expansion,fun2.expansion))
+end
+
 domainframe(fun::FrameFun, set::DomainFrame) = set
 
 domain(fun::FrameFun, set::DomainFrame) = domain(set)
