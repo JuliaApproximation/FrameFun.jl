@@ -85,7 +85,7 @@ end
 intersect(d1::AbstractDomain, d2::AbstractDomain) = (d1 == d2 ? d1 : DomainIntersection(d1,d2))
 
 function intersect(d1::TensorProductDomain, d2::TensorProductDomain)
-    @assert dim(d1) == dim(d2)
+    @assert ndims(d1) == ndims(d2)
     if composite_length(d1) == composite_length(d2)
         tensorproduct([intersect(element(d1,i), element(d2,i)) for i in 1:composite_length(d1)]...)
     else

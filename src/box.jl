@@ -6,19 +6,20 @@ immutable BBox{N,T}
     right       ::  Vec{N,T}
 end
 
-dim{N}(b::BBox{N}) = N
+ndims{N,T}(::Type{BBox{N,T}}) = N
+ndims{N,T}(::BBox{N,T}) = N
 
 eltype{N,T}(::Type{BBox{N,T}}) = T
 
 # Generic functions for composite types:
 element(b::BBox, j::Int) = BBox(b.left[j], b.right[j])
-elements(b::BBox) = tuple([element(b,j) for j in 1:dim(b)]...)
+elements(b::BBox) = tuple([element(b,j) for j in 1:ndims(b)]...)
 elements(b::BBox{1}) = (element(b,1),)
 elements(b::BBox{2}) = (element(b,1),element(b,2))
 elements(b::BBox{3}) = (element(b,1),element(b,2),element(b,3))
 elements(b::BBox{4}) = (element(b,1),element(b,2),element(b,3),element(b,4))
 
-composite_length(b::BBox) = dim(b)
+composite_length(b::BBox) = ndims(b)
 
 typealias BBox1{T} BBox{1,T}
 typealias BBox2{T} BBox{2,T}
@@ -57,7 +58,7 @@ getindex(b::BBox, i::Int, j::Int) = j == 1 ? left(b, i) : right(b, i)
 size(b::BBox, dim) = right(b, dim) - left(b, dim)
 
 "Create an equispaced grid on the box with ns[dim] points in each dimension."
-equispaced_grid(box, ns) = tensorproduct([PeriodicEquispacedGrid(ns[idx], left(box, idx), right(box, idx)) for idx = 1:dim(box)]...)
+equispaced_grid(box, ns) = tensorproduct([PeriodicEquispacedGrid(ns[idx], left(box, idx), right(box, idx)) for idx = 1:ndims(box)]...)
 
 "Create an equispaced grid on the box with n points in each dimension."
 equispaced_grid{N}(box::BBox{N}, n::Int) = equispaced_grid(box, ntuple(x->n, Val{N}))
@@ -71,7 +72,7 @@ function extend{N,T}(b::BBox{N,T}, t::Vec{N,T})
 end
 
 in{N,T}(x, b::BBox{N,T}, dim) = (x[dim] >= left(b,dim)-10eps(T)) && (x[dim] <= right(b,dim)+10eps(T))
-in(x, b::BBox) = reduce(&, [in(x,b,i) for i = 1:dim(b)])
+in(x, b::BBox) = reduce(&, [in(x,b,i) for i = 1:ndims(b)])
 
 within(a, b) = (a[1] >= b[1]) && (a[2] <= b[2])
 ⊂(b1::BBox{1}, b2::BBox{1}) = within(b1[1], b2[1])

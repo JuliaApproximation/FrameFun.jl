@@ -3,7 +3,9 @@
 "An N-dimensional domain."
 abstract AbstractDomain{N}
 
-dim{N}(d::AbstractDomain{N}) = N
+ndims{N}(::Type{AbstractDomain{N}}) = N
+ndims{D <: AbstractDomain}(::Type{D}) = ndims(super(D))
+ndims{N}(::AbstractDomain{N}) = N
 
 
 typealias AbstractDomain1d AbstractDomain{1}

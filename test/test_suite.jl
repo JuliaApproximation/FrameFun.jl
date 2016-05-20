@@ -43,7 +43,7 @@ custom_handler(r::Test.Error) = begin println("\"\t$(typeof(r.err)) in $(r.expr)
 # Check the accuracy of framefuns.
 function msqerror_tol(f::Function, F; vals::Int=200, tol=1e-6)
     T = numtype(F)
-    N = dim(F)
+    N = ndims(F)
 
     # Find the closest bounding grid around the domain
     TB = FE.boundingbox(FE.domain(F))

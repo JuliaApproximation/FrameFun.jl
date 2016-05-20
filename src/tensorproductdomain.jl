@@ -24,7 +24,7 @@ composite_length(d::TensorProductDomain) = length(d.domains)
 
 function TensorProductDomain(domains...)
     TD = typeof(domains)
-    N = sum(map(dim, domains))
+    N = sum(map(ndims, domains))
     TensorProductDomain{TD,N}(domains)
 end
 

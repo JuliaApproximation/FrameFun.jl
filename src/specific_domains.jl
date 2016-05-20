@@ -41,7 +41,7 @@ in(x::Vec, d::RnDomain) = true
 (*)(d::RnDomain, x::Number) = d
 
 
-show(io::IO, e::RnDomain) = print(io, "the ", N, "-dimensional Euclidean space")
+show(io::IO, e::RnDomain) = print(io, "the ", ndims(e), "-dimensional Euclidean space")
 
 
 
