@@ -15,7 +15,7 @@ BA = BasisFunctions
 Extensive = false
 
 # Show matrix vector product timings
-const show_mv_times = true
+const show_mv_times = false
 total_mv_allocs = 0
 total_mv_time = 0.0
 
@@ -77,7 +77,7 @@ function delimit(s::AbstractString)
     println("############")
 end
 
-show_timings(F) = show_timings(F, F.approx_op)
+show_timings(F) = show_mv_times && show_timings(F, F.approx_op)
 
 show_timings(F, op::FE.FE_Solver) = show_timings(F, operator(op.problem))
 
