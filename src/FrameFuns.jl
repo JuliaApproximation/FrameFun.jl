@@ -95,6 +95,8 @@ include("fe_approx.jl")
 
 include("concat_solver.jl")
 
+include("explicit_extension.jl")
+
 # TODO: try out Plots.jl
 include("plots.jl")
 
