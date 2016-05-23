@@ -19,6 +19,10 @@ FrameFun{N,T}(frame::FunctionSet{N,T}, coefficients = zeros(eltype(frame), size(
 
 FrameFun(domain::AbstractDomain, basis::FunctionSet, args...) = FrameFun(DomainFrame(domain, basis), args...)
 
+typealias FrameFun1d{T} FrameFun{1,T}
+typealias FrameFun2d{T} FrameFun{2,T}
+typealias FrameFun3d{T} FrameFun{3,T}
+
 expansion(fun::FrameFun) = fun.expansion
 
 for op in (:set, :ndims, :coefficients, :eltype, :numtype)
