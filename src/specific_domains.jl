@@ -110,7 +110,7 @@ end
 
 
 ###############################################################################################
-### A circle
+### A disk
 ###############################################################################################
 
 immutable Disk{S,T} <: AbstractDomain{2}
@@ -131,7 +131,7 @@ in(x::Vec, c::Disk) = (x[1]-c.center[1])^2 + (x[2]-c.center[2])^2 <= c.radius^2
 
 ## Arithmetic operations
 
-(+)(c::Disk, x::AnyVector) = Disk(c.radius, c.center+x)
+(+)(c::Disk, x::Vec{2}) = Disk(c.radius, c.center+x)
 
 (*)(c::Disk, x::Number) = Disk(c.radius*x, c.center*x)
 
@@ -167,7 +167,7 @@ in(x::Vec, s::Ball) = (x[1]-s.center[1])^2 + (x[2]-s.center[2])^2 + (x[3]-s.cent
 
 ## Arithmetic operations
 
-(+)(s::Ball, x::AnyVector) = Ball(s.radius, s.center+x)
+(+)(s::Ball, x::Vec) = Ball(s.radius, s.center+x)
 
 (*)(s::Ball, x::Number) = Ball(s.radius * x, s.center * x)
 
@@ -219,8 +219,8 @@ cylinder(radius = 1, length = 1) = Disk(radius) ⊗ Interval(0,length)
 ##########################################################################
 
 
-function randomcircles(n)
-    list = AbstractDomain[Disk(0.2, (2*rand(2)-1)*0.8) for i=1:n]
+function randomcircles(n, radius = 0.3)
+    list = AbstractDomain[Disk(radius, (2*rand(2)-1)*0.8) for i=1:n]
     DomainCollection{2}(list)
 end
 
