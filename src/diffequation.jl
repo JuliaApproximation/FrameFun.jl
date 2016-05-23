@@ -75,7 +75,7 @@ function solve(D::DiffEquation, solver=FE_ProjectionSolver; options...)
     DEproblem = FE_DiscreteProblem(domain(problem),op, opt, frequency_basis(problem), frequency_basis_ext(problem), time_basis(problem)⊕dest(op.op2), time_basis_ext(problem)⊕dest(op.op2),time_basis_restricted(problem)⊕dest(op.op2), f_extension(problem), f_restriction(problem), t_extension(problem)⊕IdentityOperator(dest(op.op2)), t_restriction(problem)⊗IdentityOperator(dest(op.op2)), transform1(problem), itransform1(problem), transform2(problem), itransform2(problem),normalization(problem))
     A = solver(DEproblem; options...)
     coef  = A * b
-    FrameFun(D.D, dest(A), Adiff*coef, A)
+    FrameFun(D.D, dest(A), Adiff*coef)
 end
 
 function problem(problem::FE_DiscreteProblem, op::AbstractOperator, opt::AbstractOperator)
