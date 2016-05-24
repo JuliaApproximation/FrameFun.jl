@@ -46,10 +46,15 @@ immutable FE_BestSolver
 end
 
 function FE_BestSolver(problem::FE_DiscreteProblem; options...)
-    R = estimate_plunge_rank(problem)
-    if R < size(problem, 2)/2
-        FE_ProjectionSolver(problem; options...)
+    if has_transform(frequency_basis(problem))
+        R = estimate_plunge_rank(problem)
+        if R < size(problem, 2)/2
+            FE_ProjectionSolver(problem; options...)
+        else
+            FE_DirectSolver(problem; options...)
+        end
     else
+        # Don't bother with a fast algorithm if there is no fast transform
         FE_DirectSolver(problem; options...)
     end
 end

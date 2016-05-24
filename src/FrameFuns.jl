@@ -63,7 +63,7 @@ export DomainFrame, basis, call_set, call_set!
 export Mandelbrot, JuliaSet
 
 # from plots.jl
-export plot, plot_expansion, plot_error, plot_samples, plot_domain, plot_image
+export plot, plot_error, plot_samples, plot_domain, plot_image
 
 # We support both vectors (AbstractVector) and FixedSizeArray's (Vec)
 typealias AnyVector Union{AbstractVector,Vec}

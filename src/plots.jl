@@ -1,96 +1,44 @@
 # plots.jl
 
-import BasisFunctions: plot_error, plot_expansion
+import BasisFunctions: plot_error
 
 # One-dimensional plot, just the domain
-function plot(f::FrameFun{1}; n=201, color="blue")
-    G = grid(resize(basis(f),n))
-    G = MaskedGrid(G,domain(f))
-    x = convert(Array{Float64},apply(x->x,eltype(f),G))
-    data = convert(Array{Float64},real(f(G)))
-    Main.PyPlot.plot(x,data, color=color)
-    Main.PyPlot.title("Extension (domain)")
+function plot(f::FrameFun{1}; n=201, color = "blue", alpha = 1.0)
+    g = grid(resize(basis(f),n))
+    mg = MaskedGrid(g, domain(f))
+    x = map(Float64, collect(mg))
+    data = map(Float64, real(f(mg)))
+    Main.PyPlot.plot(x, data, color=color, alpha = alpha)
+    Main.PyPlot.title("FrameFun (domain)")
 end
 
-## # One-dimensional plot, including extension
-## function plot_full{1}(f::Fun{1})
-
-## end
-function plot_expansion(f::FrameFun{1}; n=201, repeats=0, color="blue", alpha=1.0)
-    G = grid(resize(basis(f),n))
-    data = convert(Array{Float64},real(f(G)))
-    x = convert(Array{Float64},apply(x->x,eltype(f),G))
-    for i=-repeats:repeats
-        Main.PyPlot.plot(x+i*(right(G)-left(G)),data,linestyle="dashed", color=color, alpha=alpha)
-    end
-    Main.PyPlot.plot(x,data, color=color, alpha=alpha)
-    Main.PyPlot.title("Extension (Full)")
+function plot_full(f::FrameFun; args...)
+    e = SetExpansion(basis(set(f)), coefficients(f))
+    BasisFunctions.plot(e; title = "Full extension", args...)
 end
 
-function plot_error(f::FrameFun{1}, g::Function; n=201, repeats = 0, color="blue")
-    G = grid(resize(basis(f),n))
-    data = real(f(G))
-    x = convert(Array{Float64},apply(x->x,eltype(f),G))
-    plotdata=convert(Array{Float64},abs(apply(g,eltype(f),G)-data))
-    for i=-repeats:repeats
-        Main.PyPlot.semilogy(x+i*(right(G)-left(G)),plotdata,linestyle="dashed", color=color)
-    end
-    Main.PyPlot.semilogy(x,plotdata,color=color)
+function plot_error(f::FrameFun{1}, f_orig::Function; n=201, color="blue")
+    g = grid(resize(basis(f),n))
+    mg = MaskedGrid(g, domain(f))
+    x = collect(mg)
+    data = real(f(mg))
+    plotdata = abs(Float64[real(f_orig(x)) for x in mg] - data)
+    Main.PyPlot.semilogy(x, plotdata, color=color)
     Main.PyPlot.ylim([min(minimum(log10(plotdata)),-16),1])
     Main.PyPlot.title("Absolute Error")
 end
 
+
 function plot_samples(f::FrameFun{1}; gamma=2)
     grid, fbasis2 = oversampled_grid(domain(f), basis(f), gamma)
-    x = [grid[i] for i in eachindex(grid)]
-    data = convert(Array{Float64},real(f(grid)))
+    x = collect(grid)
+    data = real(f(grid))
     Main.PyPlot.stem(x,data)
     Main.PyPlot.title("samples")
 end
 
 
-## # Maybe place this in funs.jl?
-## function call(f::FrameFun, g::AbstractGrid)
-##     result = Array(eltype(f), size(g))
-##     call!(f, result, g)
-##     result
-## end
-
-## function call!{N}(f::FrameFun, result::AbstractArray, g::AbstractGrid{N})
-##     x = Array(eltype(f), N)
-##     for i in eachindex(g)
-##         getindex!(x, g, i)
-##         result[i] = call(f, x...)
-##     end
-## end
-
-## function call!(f::FrameFun, result::AbstractArray, g::AbstractGrid1d)
-##     for i in eachindex(g)
-##         result[i] = call(f, g[i])
-##     end
-## end
-
-## function call!(f::FrameFun, result::AbstractArray, x::AbstractArray)
-##     @assert size(result) == size(x)
-##     for i = 1:length(x)
-##         result[i] = call(f, x[i])
-##     end
-## end
-
-
-function apply(f::Function, return_type, g::AbstractGrid)
-    result = Array(return_type, size(g))
-    call!(f, result, g)
-    result
-end
-
-function call!{N}(f::Function, result::AbstractArray, g::AbstractGrid{N})
-    for i in eachindex(g)
-        result[i] = f(getindex(g, i)...)
-    end
-end
-
-function plot_domain(d::AbstractDomain{2}; n=1000)
+function plot_domain(d::AbstractDomain2d; n=1000)
     B = boundingbox(d)
     grid = equispaced_aspect_grid(B,n)
     Z = evalgrid(grid, d)
@@ -98,74 +46,83 @@ function plot_domain(d::AbstractDomain{2}; n=1000)
 end
 
 
-function plot(f::FrameFun{2};n=1000)
+
+function plot(f::FrameFun{2}; n=101)
     B = boundingbox(domain(set(expansion(f))))
     Tgrid = equispaced_grid(B,n)
-    Mgrid=MaskedGrid(Tgrid, domain(set(expansion(f))))
-    data = convert(Array{Float64},real(expansion(f)(Mgrid)))
-    x=[Mgrid[i][1] for i = 1:length(Mgrid)]
-    y=[Mgrid[i][2] for i = 1:length(Mgrid)]
-    Main.PyPlot.plot_trisurf(x,y,data)
+    Mgrid = MaskedGrid(Tgrid, domain(f))
+    data = map(Float64, real(expansion(f)(Mgrid)))
+    pts = collect(Mgrid)
+    x = [p[1] for p in pts]
+    y = [p[2] for p in pts]
+    Main.PyPlot.plot_trisurf(x, y, data)
 end
 
-function plot_image(f::FrameFun{2};n=300,unscaled=false, border=true, colorbar=true)
-    d =domain(set(expansion(f)))
+function plot_image(f::FrameFun{2}; n=301,unscaled=false, border=true, colorbar=true)
+    d = domain(f)
     Tgrid = grid(resize(basis(f), (n,n)))
-    Mgrid=MaskedGrid(Tgrid, domain(f))
-    Z = evalgrid(Tgrid, d)
-    data = convert(Array{Float64},real(expansion(f)(Mgrid)))
+    Mgrid = MaskedGrid(Tgrid, d)
+    data = real(f(Tgrid))
+    pts = collect(Tgrid)
+    x = [p[1] for p in pts]
+    y = [p[2] for p in pts]
+    X = reshape(x, size(Tgrid))
+    Y = reshape(y, size(Tgrid))
+
+    for i in eachindex(Tgrid)
+        if ~in(i, Mgrid)
+            data[i] = NaN
+        end
+    end
+
+    my_cmap = Main.PyPlot.matplotlib[:cm][:get_cmap]("Spectral",100)
+    my_cmap[:set_bad](color="#663300", alpha=0)
+    my_cmap[:set_under](color="#663300", alpha=0)
+    Main.PyPlot.plt[:register_cmap](name="my_cmap",cmap=my_cmap)
+
     vmin = minimum(data)
     vmax = maximum(data)
-    data = real(expansion(f)(Tgrid))
-    if unscaled
-        vmin = minimum(data)
-        vmax = maximum(data)
-    end
-    X = convert(Array{Float64},real(apply((x,y)->x,eltype(f),Tgrid)))
-    Y = convert(Array{Float64},real(apply((x,y)->y,eltype(f),Tgrid)))
-    Main.PyPlot.pcolormesh(X,Y,data,vmin=vmin, vmax=vmax, shading = "gouraud")
-    bound = boundary(Tgrid,d)
-    border && plot_grid(bound)
+    Main.PyPlot.pcolormesh(X, Y, data, vmin=vmin, vmax=vmax, shading = "gouraud",
+        cmap = my_cmap)
+    # bound = boundary(Tgrid,d)
+    # border && plot_grid(bound)
     Main.PyPlot.axis("scaled")
     Main.PyPlot.xlim([left(Tgrid)[1], right(Tgrid)[1]])
     Main.PyPlot.ylim([left(Tgrid)[2], right(Tgrid)[2]])
     colorbar && Main.PyPlot.colorbar()
 end
 
-function plot_image(f::FrameFun{2}, g::Function; n=300, border=false)
-    d =domain(set(expansion(f)))
+function plot_error(f::FrameFun{2}, f_orig::Function; n=301, border=false)
+    d = domain(f)
     Tgrid = grid(resize(basis(f), (n,n)))
-    Mgrid=MaskedGrid(Tgrid, domain(f))
-    Z = evalgrid(Tgrid, d)
-    data = real(apply(g,eltype(f),Mgrid))
-    vmin = minimum(data)
-    vmax = maximum(data)
-    data = real(apply(g,eltype(f),Tgrid))
-    X = convert(Array{Float64},real(apply((x,y)->x,eltype(f),Tgrid)))
-    Y = convert(Array{Float64},real(apply((x,y)->y,eltype(f),Tgrid)))
-    Main.PyPlot.pcolormesh(X,Y,data,vmin=vmin, vmax=vmax, shading = "gouraud")
-    bound = boundary(Tgrid,d)
-    border && plot_grid(bound)
-    Main.PyPlot.axis("scaled")
-    Main.PyPlot.xlim([left(Tgrid)[1], right(Tgrid)[1]])
-    Main.PyPlot.ylim([left(Tgrid)[2], right(Tgrid)[2]])
-    Main.PyPlot.colorbar()
-end
+    Mgrid = MaskedGrid(Tgrid, d)
+    f_data = real(f(Tgrid))
+    orig_data = Float64[f_orig(x...) for x in Tgrid]
+    orig_data = reshape(orig_data, size(Tgrid))
+    data = f_data - orig_data;
+    pts = collect(Tgrid)
+    x = [p[1] for p in pts]
+    y = [p[2] for p in pts]
+    X = reshape(x, size(Tgrid))
+    Y = reshape(y, size(Tgrid))
 
-function plot_error(f::FrameFun{2},g::Function;n=300,border=false)
-    d =domain(set(expansion(f)))
-    Tgrid = grid(resize(basis(f), (n,n)))
-    Mgrid=MaskedGrid(Tgrid, domain(f))
-    Z = evalgrid(Tgrid, d)
-    data = real(expansion(f)(Mgrid))
+    for i in eachindex(Tgrid)
+        if ~in(i, Mgrid)
+            data[i] = NaN
+        end
+    end
+
+    my_cmap = Main.PyPlot.matplotlib[:cm][:get_cmap]("Spectral",100)
+    my_cmap[:set_bad](color="#663300", alpha=0)
+    my_cmap[:set_under](color="#663300", alpha=0)
+    Main.PyPlot.plt[:register_cmap](name="my_cmap",cmap=my_cmap)
+
     vmin = minimum(data)
     vmax = maximum(data)
-    data = log10(abs(expansion(f)(Tgrid)-apply(g,eltype(f),Tgrid)))
-    X = convert(Array{Float64},real(apply((x,y)->x,eltype(f),Tgrid)))
-    Y = convert(Array{Float64},real(apply((x,y)->y,eltype(f),Tgrid)))
-    Main.PyPlot.pcolormesh(X,Y,data,vmin=-16.0, vmax=1.0, shading = "gouraud")
-    bound = boundary(Tgrid,d)
-    border && plot_grid(bound)
+    Main.PyPlot.pcolormesh(X,Y,data,vmin=vmin, vmax=vmax, shading = "gouraud",
+        cmap = my_cmap)
+    # bound = boundary(Tgrid,d)
+    # border && plot_grid(bound)
     Main.PyPlot.axis("scaled")
     Main.PyPlot.xlim([left(Tgrid)[1], right(Tgrid)[1]])
     Main.PyPlot.ylim([left(Tgrid)[2], right(Tgrid)[2]])
