@@ -56,6 +56,8 @@ show{N}(io::IO, v::Vec{N}) = print(io, Vector(v))
 (+)(x::Number, d::AbstractDomain) = d + x
 (+)(x::AnyVector, d::AbstractDomain) = d + x
 
+(+)(d::AbstractDomain, x::Vector) = d + Vec(x...)
+
 (*)(x::Number, d::AbstractDomain) = d * x
 
 (/)(d::AbstractDomain, x::Number) = d * (1/x)

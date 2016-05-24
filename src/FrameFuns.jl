@@ -5,6 +5,7 @@ module FrameFuns
 using FixedSizeArrays
 using BasisFunctions
 using Debug
+using PyPlot
 #using ApproxFun
 
 using Base.Cartesian
@@ -20,6 +21,8 @@ import Base: eachindex, start, next, done, getindex, in
 import Base: show, showcompact, call, convert
 
 import Base: ndims
+
+import PyPlot: plot
 
 import BasisFunctions: composite_length, ⊗, tensorproduct, flatten,
     compose, elements, element

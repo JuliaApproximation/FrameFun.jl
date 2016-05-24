@@ -52,9 +52,9 @@ end
 boundingbox(d::DomainUnion) = boundingbox(d.d1) ∪ boundingbox(d.d2)
 
 function show(io::IO, d::DomainUnion)
-    print(io, "A union of two domains: \n")
-    print(io, "First domain: ", d.d1, "\n")
-    print(io, "Second domain: ", d.d2, "\n")
+    print(io, "a union of two domains: \n")
+    print(io, "    First domain: ", d.d1, "\n")
+    print(io, "    Second domain: ", d.d2, "\n")
 end
 
 
@@ -245,7 +245,7 @@ immutable TranslatedDomain{D,T,N} <: AbstractDomain{N}
     TranslatedDomain(domain::AbstractDomain{N}, trans) = new(domain, trans)
 end
 
-TranslatedDomain{N}(domain::AbstractDomain{N}, trans::AnyVector) = TranslatedDomain{typeof(domain),eltype(trans),N}(domain, trans)
+TranslatedDomain{N}(domain::AbstractDomain{N}, trans::Vec{N}) = TranslatedDomain{typeof(domain),eltype(trans),N}(domain, trans)
 
 domain(d::TranslatedDomain) = d.domain
 
@@ -255,8 +255,8 @@ function in(x::Vec, d::TranslatedDomain)
     in(x-d.trans, d.domain)
 end
 
-(+)(d::AbstractDomain, trans::AnyVector) = TranslatedDomain(d, trans)
-(+)(d::TranslatedDomain, trans::AnyVector) = TranslatedDomain(domain(d), trans+translationvector(d))
+(+)(d::AbstractDomain, trans::Vec) = TranslatedDomain(d, trans)
+(+)(d::TranslatedDomain, trans::Vec) = TranslatedDomain(domain(d), trans+translationvector(d))
 
 boundingbox(d::TranslatedDomain) = boundingbox(domain(d)) + translationvector(d)
 
