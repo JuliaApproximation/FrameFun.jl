@@ -57,6 +57,11 @@ function sampling_grid(fun::FrameFun)
     grid(time_basis_restricted(problem))
 end
 
+# Delegate operator applications to the underlying expansion
+function (*)(op::AbstractOperator, fun::FrameFun)
+    @assert src(op) == basis(set(fun))
+    FrameFun(domain(fun),dest(op),op*coefficients(fun))
+end
 # Delegate all calling to the underlying expansion.
 call(fun::FrameFun, x...) = call(expansion(fun), x...)
 
@@ -77,4 +82,25 @@ function getindex(fun::FrameFun, set::DomainFrame, domain1::AbstractDomain)
     domain2 = domain(fun)
     newdomain = domain1 ∩ domain2
     FrameFun(newdomain, basis(fun), coefficients(fun))
+end
+
+# Get the mean approximation in random interior points.
+function abserror{N}(f::Function,F::FrameFun{N};vals::Int=200)
+    # Find the closest bounding grid around the domain
+    box = boundingbox(domain(F))
+    point=Array{numtype(F)}(N)
+    elements=0
+    error=0
+    # Generate some points inside the domain, and compare with the target function
+    while elements < vals
+        for j in 1:N
+            point[j]=left(box)[j]+(right(box)[j]-left(box)[j])*rand(1)[1]
+        end
+        N == 1 ? vpoint = point[1] : vpoint = Vec(point...)
+        if in(vpoint,domain(F))
+            elements+=1
+            error+=abs(f(vpoint...)-F(vpoint...))
+        end
+    end
+    return error/elements
 end
