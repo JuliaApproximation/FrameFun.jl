@@ -170,36 +170,36 @@ end
 ### A rotated domain
 ###############################################################################################
 
-#immutable RotatedDomain{D,T,N} <: AbstractDomain{N}
-#    d                 ::  D
-#    angle             ::  Vector{T}
-#    rotationmatrix    ::  Array{T,2}
+immutable RotatedDomain{D,T,N} <: AbstractDomain{N}
+   d                 ::  D
+   angle             ::  Vector{T}
+   rotationmatrix    ::  Mat{N,N,T}
 
-    # RotatedDomain(d,angle,rotationmatrix,box) = new(d, angle, rotationmatrix, box)
-#end
+    RotatedDomain(d,angle,rotationmatrix) = new(d, angle, rotationmatrix)
+end
 
 # Rotation in positive direction
-#rotationmatrix(theta) = Matrix2x2([cos(theta) -sin(theta); sin(theta) cos(theta)])
+rotationmatrix(theta) = Mat{2,2,typeof(theta)}([cos(theta) -sin(theta); sin(theta) cos(theta)])
 # Rotation about X-axis (phi), Y-axis (theta) and Z-axis (psi)
-#rotationmatrix(phi,theta,psi) =
-#    [cos(theta)*cos(psi) cos(phi)*sin(psi)+sin(phi)*sin(theta)*cos(psi) sin(phi)*sin(psi)-cos(phi)*sin(theta)*cos(psi); -cos(theta)*sin(psi) cos(phi)*cos(psi)-sin(phi)*sin(theta)*sin(psi) sin(phi)*cos(psi)+cos(phi)*sin(theta)*sin(psi); sin(theta) -sin(phi)*cos(theta) cos(phi)*cos(theta)]
+rotationmatrix(phi,theta,psi) =
+   Mat{3,3,typeof(phi)}([cos(theta)*cos(psi) cos(phi)*sin(psi)+sin(phi)*sin(theta)*cos(psi) sin(phi)*sin(psi)-cos(phi)*sin(theta)*cos(psi); -cos(theta)*sin(psi) cos(phi)*cos(psi)-sin(phi)*sin(theta)*sin(psi) sin(phi)*cos(psi)+cos(phi)*sin(theta)*sin(psi); sin(theta) -sin(phi)*cos(theta) cos(phi)*cos(theta)])
 
-#RotatedDomain{N}(d::AbstractDomain{N}, angle::Vector{T}, m::Array{T,2} = rotationmatrix(theta)) =
-#    RotatedDomain{typeof(d),T,N}(d, angle, m)
+RotatedDomain{N,T}(d::AbstractDomain{N}, angle::Vector{T}, m::Mat{N,N,T} = rotationmatrix(theta)) =
+   RotatedDomain{typeof(d),T,N}(d, angle, m)
 
-#RotatedDomain(d::AbstractDomain{2}, theta) = RotatedDomain{2,T,typeof(d)}(d, [theta], rotationmatrix(theta))
+RotatedDomain(d::AbstractDomain{2}, theta::Number) = RotatedDomain{2,typeof(theta),typeof(d)}(d, [theta], rotationmatrix(theta))
 # types annotated to remove ambiguity
-#RotatedDomain{T,D}(d::D, phi::T, theta::T, psi::T) = RotatedDomain{3,T,D}(d, [phi,theta,psi], rotationmatrix(phi,theta,psi))
+RotatedDomain{T,D}(d::D, phi::T, theta::T, psi::T) = RotatedDomain{3,T,D}(d, [phi,theta,psi], rotationmatrix(phi,theta,psi))
 
-#rotate{T}(d::AbstractDomain{2,T}, theta) = RotatedDomain{2,T,typeof(d)}(d, theta)
-#rotate{T}(d::AbstractDomain{3,T}, phi::T, theta::T, psi::T) = RotatedDomain(d, phi, theta, psi)
+rotate{T}(d::AbstractDomain{2}, theta::T) = RotatedDomain(d, theta)
+rotate{T}(d::AbstractDomain{3}, phi::T, theta::T, psi::T) = RotatedDomain(d, phi, theta, psi)
 
-#in(x::Vec, d::RotatedDomain) = in(d.rotationmatrix*x, d.d)
-
-#(==)(d1::RotatedDomain, d2::RotatedDomain) = (d1.d == d2.d) && (d1.angle == d2.angle) #&& (d1.rotationmatrix == d2.rotationmatrix)
+in(x::Vec, d::RotatedDomain) = in(d.rotationmatrix*x, d.d
+)
+(==)(d1::RotatedDomain, d2::RotatedDomain) = (d1.d == d2.d) && (d1.angle == d2.angle) #&& (d1.rotationmatrix == d2.rotationmatrix)
 
 # very crude bounding box (doesn't work!!!)
-#boundingbox(r::RotatedDomain)= boundingbox(r.d)
+boundingbox(r::RotatedDomain)= sqrt(2)*boundingbox(r.d)
 
 
 
