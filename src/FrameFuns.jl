@@ -4,7 +4,7 @@ module FrameFuns
 
 using FixedSizeArrays
 using BasisFunctions
-using Debug
+#using Debug
 using PyPlot
 #using ApproxFun
 

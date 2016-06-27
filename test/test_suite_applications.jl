@@ -19,11 +19,6 @@ const show_mv_times = true
 total_mv_allocs = 0
 total_mv_time = 0.0
 
-const include_1d_tests = true
-const include_2d_tests = true
-const include_3d_tests = true
-const include_bigfloat_tests = false
-
 ########
 # Auxiliary functions
 ########
@@ -138,7 +133,7 @@ function test_arithmetics()
                         B = Basis(n, -T, T)
                         F1 = Fun(f1, B, D)
                         F2 = Fun(f2, B, D)
-                        F3 = Fun(f3, B, D) 
+                        F3 = Fun(f3, B, D)
                         # Test Arithmetic
                         @test  msqerror_tol(x-> f1(x)+f2(x), F1+F2, tol=sqrt(eps(numtype(B)))*10)
                         @test  msqerror_tol(x-> f2(x)+f3(x), F2+F3, tol=sqrt(eps(numtype(B)))*10)
@@ -149,7 +144,7 @@ function test_arithmetics()
                 end
             end
         end
-        
+
     end
 end
 
