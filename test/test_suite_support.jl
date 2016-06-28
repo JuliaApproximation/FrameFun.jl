@@ -21,10 +21,10 @@ global failures=0
 global successes=0
 global errors=0
 # Custom test handler
-custom_handler(r::Test.Success) = begin print_with_color(:green, "#\tSuccess "); println("on $(r.expr)"); global successes+=1;  end
-custom_handler(r::Test.Failure) = begin print_with_color(:red, "\"\tFailure "); println("on $(r.expr)\""); global failures+=1; end
-custom_handler(r::Test.Error) = begin println("\"\t$(typeof(r.err)) in $(r.expr)\""); global errors+=1; end
-#custom_handler(r::Test.Error) = Base.showerror(STDOUT,r); 
+#custom_handler(r::Test.Success) = begin print_with_color(:green, "#\tSuccess "); println("on $(r.expr)"); global successes+=1;  end
+#custom_handler(r::Test.Failure) = begin print_with_color(:red, "\"\tFailure "); println("on $(r.expr)\""); global failures+=1; end
+#custom_handler(r::Test.Error) = begin println("\"\t$(typeof(r.err)) in $(r.expr)\""); global errors+=1; end
+#custom_handler(r::Test.Error) = Base.showerror(STDOUT,r);
 
 
 
@@ -100,13 +100,13 @@ end
 
 
 
-Test.with_handler(custom_handler) do
+#Test.with_handler(custom_handler) do
 
     test_subgrids()
 
 
     delimit("Domains")
-    
+
     # Interval
     Intervala=Interval(-1.0,1.0)
     Intervala=Intervala+1
@@ -168,7 +168,7 @@ Test.with_handler(custom_handler) do
     @test FE.in([0.5,0.5,0.8],T)
     @test !FE.in([-1.1,0.3,0.1],T)
 
-end
+#end
 
 # Diagnostics
 println()
@@ -178,4 +178,3 @@ println("Error rate:\t$errors/$(successes+failures+errors)")
 (errors+failures)==0 || error("A total of $(failures+errors) tests failed")
 
 end
-

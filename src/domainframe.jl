@@ -55,16 +55,16 @@ end
 is_compatible(d1::DomainFrame, d2::DomainFrame) = is_compatible(basis(d1),basis(d2))
 
 function (*)(d1::DomainFrame, d2::DomainFrame, args...)
-    @assert is_compatible(d1,d2) 
+    @assert is_compatible(d1,d2)
     (mset, mcoef) = (*)(basis(d1),basis(d2),args...)
     df = DomainFrame(domain(d1) ∩ domain(d2),mset)
     (df, mcoef)
 end
 
 # Should we check whether x lies in the domain?
-call_set(e::SetExpansion, s::DomainFrame, coef, x...) = call_expansion(basis(s), coef, x...)
+call_expansion_with_set(e::SetExpansion, s::DomainFrame, coef, x...) = call_expansion(basis(s), coef, x...)
 
-call_set!(result, e::SetExpansion, s::DomainFrame, coef, x...) = call_expansion!(result, basis(s), coef, x...)
+call_expansion_with_set!(result, e::SetExpansion, s::DomainFrame, coef, x...) = call_expansion!(result, basis(s), coef, x...)
 
 call_element(s::DomainFrame, idx::Int, x...) = call_element(basis(s), idx, x...)
 

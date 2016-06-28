@@ -5,7 +5,6 @@ using BasisFunctions
 using FrameFuns
 using FixedSizeArrays
 using Base.Test
-using Debug
 FE = FrameFuns
 BA = BasisFunctions
 
@@ -34,9 +33,9 @@ global successes = 0
 global errors = 0
 
 # Custom test handler
-custom_handler(r::Test.Success) = begin print_with_color(:green, "#\tSuccess "); println("on $(r.expr)"); global successes+=1;  end
-custom_handler(r::Test.Failure) = begin print_with_color(:red, "\"\tFailure "); println("on $(r.expr)\""); global failures+=1; end
-custom_handler(r::Test.Error) = begin println("\"\t$(typeof(r.err)) in $(r.expr)\""); global errors+=1; end
+#custom_handler(r::Test.Success) = begin print_with_color(:green, "#\tSuccess "); println("on $(r.expr)"); global successes+=1;  end
+#custom_handler(r::Test.Failure) = begin print_with_color(:red, "\"\tFailure "); println("on $(r.expr)\""); global failures+=1; end
+#custom_handler(r::Test.Error) = begin println("\"\t$(typeof(r.err)) in $(r.expr)\""); global errors+=1; end
 #custom_handler(r::Test.Error) = Base.showerror(STDOUT,r);
 
 
@@ -259,7 +258,7 @@ function test_3d_cases()
     end
 end
 
-Test.with_handler(custom_handler) do
+#Test.with_handler(custom_handler) do
 
     delimit("Algorithm Implementation and Accuracy")
 
@@ -286,7 +285,7 @@ Test.with_handler(custom_handler) do
     f(x,y) = cos(20*x+22*y)
     @time F = Fun(f,b,dom)
     show_timings(F)
-end
+#end
 
 # Diagnostics
 println()
