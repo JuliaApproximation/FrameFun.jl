@@ -57,7 +57,7 @@ export ⊗, ∩, composite_length, element, elements
 export numtype
 
 # from funs.jl
-export ExpFun, ChebyFun, Fun, FrameFun, sampling_grid, domain
+export ExpFun, ChebyFun, Fun, FrameFun, sampling_grid, domain, abserror
 
 # from domainframe.jl
 export DomainFrame, basis, call_set, call_set!

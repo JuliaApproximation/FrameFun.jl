@@ -63,7 +63,7 @@ function (*)(op::AbstractOperator, fun::FrameFun)
     FrameFun(domain(fun),dest(op),op*coefficients(fun))
 end
 # Delegate all calling to the underlying expansion.
-call(fun::FrameFun, x...) = call(expansion(fun), x...)
+call(fun::FrameFun, x...) = expansion(fun)(x...)
 
 
 show(io::IO, fun::FrameFun) = show(io, fun, set(fun))
