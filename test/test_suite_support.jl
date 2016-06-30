@@ -16,16 +16,6 @@ Extensive = false
 # Auxiliary functions
 ########
 
-# Keep track of successes, failures and errors
-global failures=0
-global successes=0
-global errors=0
-# Custom test handler
-custom_handler(r::Test.Success) = begin print_with_color(:green, "#\tSuccess "); println("on $(r.expr)"); global successes+=1;  end
-custom_handler(r::Test.Failure) = begin print_with_color(:red, "\"\tFailure "); println("on $(r.expr)\""); global failures+=1; end
-custom_handler(r::Test.Error) = begin println("\"\t$(typeof(r.err)) in $(r.expr)\""); global errors+=1; end
-#custom_handler(r::Test.Error) = Base.showerror(STDOUT,r); 
-
 
 
 function delimit(s::AbstractString)
@@ -41,7 +31,6 @@ end
 
 function test_subgrids()
     delimit("Grid functionality")
-
     n = 20
     grid1 = EquispacedGrid(n, -1.0, 1.0)
     subgrid1 = FE.MaskedGrid(grid1, Interval(-0.5, 0.7))
@@ -50,19 +39,23 @@ function test_subgrids()
     G1 = EquispacedGrid(n, -1.0, 1.0)
     G2 = EquispacedGrid(n, -1.0, 1.0)
     TensorG = G1 ⊗ G2
+    
     C = Disk(1.0)
     circle_grid = FE.MaskedGrid(TensorG, C)
-    @test (length(circle_grid)/length(TensorG)-pi*0.25) < 0.01
+    @testset begin
 
-    G1s = FE.IndexSubGrid(G1,2,4)
-    G2s = FE.IndexSubGrid(G2,3,5)
-    TensorGs = G1s ⊗ G2s
-    @test G1s[1] == G1[2]
-    @test G2s[1] == G2[3]
-    @test TensorGs[1,1] == [G1[2],G2[3]]
+        @test (length(circle_grid)/length(TensorG)-pi*0.25) < 0.01
+
+        G1s = FE.IndexSubGrid(G1,2,4)
+        G2s = FE.IndexSubGrid(G2,3,5)
+        TensorGs = G1s ⊗ G2s
+        @test G1s[1] == G1[2]
+        @test G2s[1] == G2[3]
+        @test TensorGs[1,1] == [G1[2],G2[3]]
+    end
 
     # Generic tests for the subgrids
-    for (grid,subgrid) in ( (grid1,subgrid1), (grid1,subgrid2), (TensorG, circle_grid))
+    @testset "result" for (grid,subgrid) in ( (grid1,subgrid1), (grid1,subgrid2), (TensorG, circle_grid))
         print("Subgrid is ")
         println(typeof(subgrid))
         # Count the number of elements in the subgrid
@@ -100,13 +93,13 @@ end
 
 
 
-Test.with_handler(custom_handler) do
 
-    test_subgrids()
+test_subgrids()
 
 
-    delimit("Domains")
-    
+delimit("Domains")
+
+@testset begin
     # Interval
     Intervala=Interval(-1.0,1.0)
     Intervala=Intervala+1
@@ -170,12 +163,4 @@ Test.with_handler(custom_handler) do
 
 end
 
-# Diagnostics
-println()
-println("Succes rate:\t$successes/$(successes+failures+errors)")
-println("Failure rate:\t$failures/$(successes+failures+errors)")
-println("Error rate:\t$errors/$(successes+failures+errors)")
-(errors+failures)==0 || error("A total of $(failures+errors) tests failed")
-
 end
-
