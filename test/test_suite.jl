@@ -22,7 +22,7 @@ total_mv_time = 0.0
 const include_1d_tests = true
 const include_2d_tests = true
 const include_3d_tests = true
-const include_bigfloat_tests = true
+const include_bigfloat_tests = false
 
 ########
 # Auxiliary functions
@@ -91,13 +91,13 @@ function test_1d_cases()
         println()
         println("Testing \t solver = $solver, \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = $ELT ")
         verbose && println("N\t T\t Complex?\t abserror\t time\t\t \memory   ")
-        
+
         for n in [FE.default_frame_n(D, Basis) 99]
 
             # There is some symmetry around T=2, test smaller and larger values
             for T in [1.7 FE.default_frame_T(D, Basis) 2.3]
                 for func in (f,g)
-                    
+
                     B = Basis(n, -T, T, ELT)
                     F = @timed( Fun(func, B, D; solver=solver) )
                     error = abserror(func, F[1])
@@ -111,7 +111,7 @@ function test_1d_cases()
                 end
             end
         end
-    end        
+    end
 end
 
 function test_bigfloat()
@@ -150,7 +150,7 @@ function test_2d_cases()
 
         for n in ((11,11),)
             for T in (Extensive ? (FE.default_frame_T(D, Basis),) : ((1.7,1.7),FE.default_frame_T(D, Basis),(2.3,2.3)))
-                
+
                 B = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2])
                 for func in (f,g)
                     F = @timed( Fun(func, B, D; solver=solver))
@@ -163,7 +163,7 @@ function test_2d_cases()
                     @test  error < 1e-3
                     show_timings(F)
                 end
-                
+
             end
         end
     end
