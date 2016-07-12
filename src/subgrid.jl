@@ -193,7 +193,8 @@ immutable CollectionGrid{N,T} <: AbstractGrid{N,T}
     points     ::  Array{Vec{N,T},1}
 end
 
-CollectionGrid{N,T}(points::Array{Vec{N,T},1}) = CollectionGrid{N,T}(points)
+# This constructor is identical to the default one:
+#CollectionGrid{N,T}(points::Array{Vec{N,T},1}) = CollectionGrid{N,T}(points)
 
 length(g::CollectionGrid) = length(g.points)
 
@@ -226,14 +227,6 @@ function midpoint(v1, v2, dom::AbstractDomain)
         in(mid,dom) ? max=mid : min=mid
     end
     mid
-end
-## Avoid ambiguity (because everything >=2D is tensor but 1D is not)
-function boundary{TG,T}(g::TensorProductGrid{TG,1,T},dom::AbstractDomain{1})
-    println("This method being called means there is a 1D tensorproductgrid.")
-end
-
-function boundary{G,ID}(g::MaskedGrid{G,ID,1},dom::AbstractDomain{1})
-    boundary(grid(g),dom)
 end
 
 function boundary{TG,N,T}(g::TensorProductGrid{TG,N,T},dom::AbstractDomain{N})
