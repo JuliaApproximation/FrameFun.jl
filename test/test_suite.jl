@@ -15,59 +15,20 @@ Extensive = false
 
 # Show matrix vector product timings
 const show_mv_times = false
+const verbose = true
 total_mv_allocs = 0
 total_mv_time = 0.0
 
 const include_1d_tests = true
 const include_2d_tests = true
 const include_3d_tests = true
-const include_bigfloat_tests = false
+const include_bigfloat_tests = true
 
 ########
 # Auxiliary functions
 ########
 
-# Keep track of successes, failures and errors
-global failures = 0
-global successes = 0
-global errors = 0
 
-# Custom test handler
-#custom_handler(r::Test.Success) = begin print_with_color(:green, "#\tSuccess "); println("on $(r.expr)"); global successes+=1;  end
-#custom_handler(r::Test.Failure) = begin print_with_color(:red, "\"\tFailure "); println("on $(r.expr)\""); global failures+=1; end
-#custom_handler(r::Test.Error) = begin println("\"\t$(typeof(r.err)) in $(r.expr)\""); global errors+=1; end
-#custom_handler(r::Test.Error) = Base.showerror(STDOUT,r);
-
-
-# Check the accuracy of framefuns.
-function msqerror_tol(f::Function, F; vals::Int=200, tol=1e-6)
-    T = numtype(F)
-    N = ndims(F)
-
-    # Find the closest bounding grid around the domain
-    TB = FE.boundingbox(FE.domain(F))
-
-    point = Array{T}(N)
-    elements = 0
-    error = 0
-    l = left(TB)
-    r = right(TB)
-    pvals_array = zeros(T,N)
-    for i in 1:vals
-        for i = 1:N
-            pvals_array[i] = convert(T,rand())
-        end
-        pvals = Vec{N,T}(pvals_array)
-        point = l+(r-l).*pvals
-        if FE.in(point, FE.domain(F))
-            elements += 1
-            error += abs(f(point...)-F(point...))
-            ## println("ratio ",f(point)/F(point...))
-        end
-    end
-    @printf(" %3.2e",error/elements)
-    return error>0 ? error/elements<tol : false
-end
 
 function delimit(s::AbstractString)
     println()
@@ -126,66 +87,52 @@ function test_1d_cases()
     g(x) = 1im*cos(x.^2-0.5)-1
     # Chebyshev and Fourier Bases
 
-    for ELT in (Float32,Float64)
-        for Basis in (FourierBasis, ChebyshevBasis)
-            println()
-            println("## Basis: ", Basis)
+    @testset "result" for ELT in (Float32,Float64), Basis in (FourierBasis, ChebyshevBasis), D in [Interval(), Interval(-1.5,0.7), Interval(-1.5,-0.5)+Interval(0.5,1.5)], solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
+        println()
+        println("Testing \t solver = $solver, \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = $ELT ")
+        verbose && println("N\t T\t Complex?\t abserror\t time\t\t \memory   ")
+        
+        for n in [FE.default_frame_n(D, Basis) 99]
 
-            # Only 2 possible domains: an Interval and a Maskedgrid
-            for D in [Interval(), Interval(-1.5,0.7), Interval(-1.5,-0.5)+Interval(0.5,1.5)]
-                show(D); println()
-
-                # 2 possible solvers
-                for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
-                    show(solver); println()
-
-                    for n in [FE.default_frame_n(D, Basis) 99]
-                        println("\tN = $n")
-
-                        # There is some symmetry around T=2, test smaller and larger values
-                        for T in [1.7 FE.default_frame_T(D, Basis) 2.3]
-                            print("T = $T \t")
-                            for func in (f,g)
-                                B = Basis(n, -T, T, ELT)
-                                F = @timed( Fun(func, B, D; solver=solver) )
-
-                                @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
-                                @test  msqerror_tol(func, F[1], tol=sqrt(eps(ELT))*10)
-                                show_timings(F[1])
-                                if func == f
-                                    print("\t\t")
-                                end
-                            end
-                        end
+            # There is some symmetry around T=2, test smaller and larger values
+            for T in [1.7 FE.default_frame_T(D, Basis) 2.3]
+                for func in (f,g)
+                    
+                    B = Basis(n, -T, T, ELT)
+                    F = @timed( Fun(func, B, D; solver=solver) )
+                    error = abserror(func, F[1])
+                    if verbose
+                        print("$n\t $T\t\t")
+                        func==g ? print("Y\t") : print("N\t")
+                        @printf("%3.2e\t %3.2e s\t %3.2e bytes \n",error, F[2],F[3])
                     end
+                    @test  (error < sqrt(eps(ELT))*10)
+                    show_timings(F[1])
                 end
             end
         end
-    end
+    end        
 end
 
 function test_bigfloat()
     f(x) = cos(x.^2) - big(1.0)
     g(x) = big(1.0)im * cos(x.^2) - big(1.0)
-    for Basis in (FourierBasis, ChebyshevBasis)
+    @testset "result" for Basis in (FourierBasis, ChebyshevBasis),  D in [Interval(BigFloat(-3//2),BigFloat(7//10))]
         println()
-        println("## Basis: ", Basis)
-        # Some BigFloat tests (DirectSolver only)
-        for D in [Interval(BigFloat(-3//2),BigFloat(7//10)) Interval(BigFloat(-3//2),BigFloat(-1//2))+Interval(BigFloat(1//2),BigFloat(3//2))]
-            show(D); print("\n")
-            for T in [BigFloat(17//10) FE.default_frame_T(D, Basis) BigFloat(23//10)]
-                print("T = $T \t")
-                for func in (f,g)
-                    B = Basis(81, -T, T)
-                    F = @timed( Fun(func, B, D; solver = FE.FE_DirectSolver) )
-
-                    @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
-                    @test  msqerror_tol(func,F[1],tol=1e-20)
-                    if func==f
-                        print("\t\t")
-                    end
-                    show_timings(F)
+        println("Testing \t solver = FE.FE_DirectSolver{ELT}\n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = BigFloat ")
+        verbose && println("N\t T\t Complex?\t abserror\t time\t\t \memory   ")
+        for T in [BigFloat(17//10) FE.default_frame_T(D, Basis) BigFloat(23//10)]
+            for func in (f,g)
+                B = Basis(91, -T, T)
+                F = @timed( Fun(func, B, D; solver = FE.FE_DirectSolver) )
+                error = abserror(func, F[1])
+                if verbose
+                    @printf("91\t %3.2e\t\t",T)
+                    func==g ? print("Y\t") : print("N\t")
+                    @printf("%3.2e\t %3.2e s\t %3.2e bytes \n",error, F[2],F[3])
                 end
+                @test  error < 1e-20
+                show_timings(F)
             end
         end
     end
@@ -196,33 +143,27 @@ function test_2d_cases()
 
     f(x,y) = cos(0.5*x)+2*sin(0.2*y)-1.0*x*y
     g(x,y) = 1im*cos(0.5*x)+2*sin(0.2*y)-1.0im*x*y
-    for Basis in (FourierBasis, ChebyshevBasis)
+    @testset "result" for Basis in (FourierBasis, ChebyshevBasis), D in [Disk(), Disk(1.2,[-0.1,-0.2]), Cube((-1.0,-1.5),(0.5,0.7))], solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
         println()
-        println("## Basis: ", Basis)
+        println("Testing \t solver = $solver \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10)⊗instantiate(Basis,10))),\n\t\t ELT = Float64 ")
+        verbose && println("N\t\t T\t\t Complex?\t abserror\t time\t\t \memory   ")
 
-        for D in [Disk(), Disk(1.2,[-0.1,-0.2]), Cube((-1.0,-1.5),(0.5,0.7))]
-            show(D); println()
-
-            for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
-                show(solver); println()
-
-                for n in ((11,11),)
-                    println("\tN = $n")
-                    for T in (Extensive ? (FE.default_frame_T(D, Basis),) : ((1.7,1.7),FE.default_frame_T(D, Basis),(2.3,2.3)))
-                        print("T = $T\t")
-                        B = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2])
-                        for func in (f,g)
-                            F = @timed( Fun(func, B, D; solver=solver))
-
-                            @printf("%3.2e s\t %3.2e bytes",F[2],F[3])
-                            @test msqerror_tol(func, F[1], tol=1e-3)
-                            show_timings(F[1])
-                            if func==f
-                                print("\t\t")
-                            end
-                        end
+        for n in ((11,11),)
+            for T in (Extensive ? (FE.default_frame_T(D, Basis),) : ((1.7,1.7),FE.default_frame_T(D, Basis),(2.3,2.3)))
+                
+                B = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2])
+                for func in (f,g)
+                    F = @timed( Fun(func, B, D; solver=solver))
+                    error = abserror(func, F[1])
+                    if verbose
+                        print("$n \t $T \t\t")
+                        func==g ? print("Y\t") : print("N\t")
+                        @printf("%3.2e\t %3.2e s\t %3.2e bytes \n",error, F[2],F[3])
                     end
+                    @test  error < 1e-3
+                    show_timings(F)
                 end
+                
             end
         end
     end
@@ -232,33 +173,29 @@ function test_3d_cases()
     delimit("3D")
 
     f(x,y,z) = cos(x)+sin(y)-x*z
-    for Basis in (FourierBasis, ChebyshevBasis)
-        println()
-        println("## Basis: ", Basis)
-
-        for D in (Cube((-1.2,-1.0,-0.9),(1.0,0.9,1.2)),FE.tensorproduct(Interval(-1.0,1.0),Disk(1.05)), FE.Ball(1.2,[-0.3,0.25,0.1]))
-        # for D in (FE.Ball(1.2,[-0.3,0.25,0.1]),)
-            show(D); println()
-            for solver in (FE.FE_ProjectionSolver, )
+    @testset "result" for Basis in (FourierBasis, ChebyshevBasis), D in (Cube((-1.2,-1.0,-0.9),(1.0,0.9,1.2)),FE.tensorproduct(Interval(-1.0,1.0),Disk(1.05)), FE.Ball(1.2,[-0.3,0.25,0.1])), solver in (FE.FE_ProjectionSolver, )
                 show(solver); println()
+        println()
+        println("Testing \t solver = $solver \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10)⊗instantiate(Basis,10))),\n\t\t ELT = Float64 ")
+        verbose && println("N\t\t T\t\t Complex?\t abserror\t time\t\t \memory   ")
 
-                n = FE.default_frame_n(D, Basis)
-                println("\tN = $n")
+        n = FE.default_frame_n(D, Basis)
 
-                for T in ((1.7,1.7,1.7), FE.default_frame_T(D, Basis))
-                    print("T = $T\t")
-                    B = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2]) ⊗ Basis(n[3],-T[3],T[3])
-                    F = @timed( Fun(f, B, D; solver=solver, cutoff=10.0^(3/4*log10(eps(numtype(B))))))
-                    @printf("%3.2e s\t %3.2e bytes", F[2], F[3])
-                    @test msqerror_tol(f, F[1], tol=1e-2)
-                    show_timings(F[1])
-                end
+        for T in ((1.7,1.7,1.7), FE.default_frame_T(D, Basis))
+            B = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2]) ⊗ Basis(n[3],-T[3],T[3])
+            F = @timed( Fun(f, B, D; solver=solver, cutoff=10.0^(3/4*log10(eps(numtype(B))))))
+            error = abserror(f, F[1])
+            if verbose
+                print("$n \t $T \t\t")
+                print("N\t")
+                @printf("%3.2e\t %3.2e s\t %3.2e bytes \n",error, F[2],F[3])
             end
+            @test  error < 1e-2
+            show_timings(F)
         end
     end
 end
 
-#Test.with_handler(custom_handler) do
 
     delimit("Algorithm Implementation and Accuracy")
 
@@ -285,18 +222,11 @@ end
     f(x,y) = cos(20*x+22*y)
     @time F = Fun(f,b,dom)
     show_timings(F)
-#end
 
-# Diagnostics
-println()
-println("Succes rate:\t$successes/$(successes+failures+errors)")
-println("Failure rate:\t$failures/$(successes+failures+errors)")
-println("Error rate:\t$errors/$(successes+failures+errors)")
 if show_mv_times
     println("Total bytes in MV products:\t$total_mv_allocs")
     println("Total time in MV products:\t$total_mv_time")
 end
 
-(errors+failures)==0 || error("A total of $(failures+errors) tests failed")
 
 end
