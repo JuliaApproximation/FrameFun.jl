@@ -4,7 +4,7 @@
 abstract AbstractDomain{N}
 
 ndims{N}(::Type{AbstractDomain{N}}) = N
-ndims{D <: AbstractDomain}(::Type{D}) = ndims(super(D))
+ndims{D <: AbstractDomain}(::Type{D}) = ndims(supertype(D))
 ndims{N}(::AbstractDomain{N}) = N
 
 
