@@ -187,25 +187,10 @@ end
 
 subgrid(grid::AbstractGrid, domain::AbstractDomain) = MaskedGrid(grid, domain)
 
-
-"A grid that is a simple collection of grid locations without structure"
-immutable CollectionGrid{N,T} <: AbstractGrid{N,T}
-    points     ::  Array{Vec{N,T},1}
-end
-
-# This constructor is identical to the default one:
-#CollectionGrid{N,T}(points::Array{Vec{N,T},1}) = CollectionGrid{N,T}(points)
-
-length(g::CollectionGrid) = length(g.points)
-
-size(g::CollectionGrid) = (length(g),)
-
-getindex(g::CollectionGrid, idx::Int) = g.points[idx]
-
-function subgrid(grid::CollectionGrid, domain::AbstractDomain)
+function subgrid(grid::ScatteredGrid, domain::AbstractDomain)
     mask = in(grid, domain)
     points = grid.points[mask]
-    CollectionGrid(points)
+    ScatteredGrid(points)
 end
 
 
@@ -260,7 +245,7 @@ function boundary{TG,N,T}(g::TensorProductGrid{TG,N,T},dom::AbstractDomain{N})
             end
         end
     end
-    CollectionGrid(midpoints)
+    ScatteredGrid(midpoints)
 end
 
 
@@ -278,7 +263,7 @@ function boundary{T}(g::AbstractGrid{1,T},dom::AbstractDomain{1})
             isa(y,BoundsError) || rethrow(y)
         end
     end
-    CollectionGrid(midpoints)
+    ScatteredGrid(midpoints)
 end
 
 
