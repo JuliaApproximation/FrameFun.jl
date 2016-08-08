@@ -193,6 +193,7 @@ immutable CollectionGrid{N,T} <: AbstractGrid{N,T}
     points     ::  Array{Vec{N,T},1}
 end
 
+# This constructor is identical to the default one:
 #CollectionGrid{N,T}(points::Array{Vec{N,T},1}) = CollectionGrid{N,T}(points)
 
 length(g::CollectionGrid) = length(g.points)
@@ -201,7 +202,7 @@ size(g::CollectionGrid) = (length(g),)
 
 getindex(g::CollectionGrid, idx::Int) = g.points[idx]
 
-function MaskedGrid{N}(grid::CollectionGrid{N}, domain::AbstractDomain{N})
+function subgrid(grid::CollectionGrid, domain::AbstractDomain)
     mask = in(grid, domain)
     points = grid.points[mask]
     CollectionGrid(points)

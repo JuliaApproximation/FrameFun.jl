@@ -62,8 +62,9 @@ function (*)(op::AbstractOperator, fun::FrameFun)
     @assert src(op) == basis(set(fun))
     FrameFun(domain(fun),dest(op),op*coefficients(fun))
 end
+
 # Delegate all calling to the underlying expansion.
-call(fun::FrameFun, x...) = expansion(fun)(x...)
+@compat (fun::FrameFun)(x...) = expansion(fun)(x...)
 
 
 show(io::IO, fun::FrameFun) = show(io, fun, set(fun))

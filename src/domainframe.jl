@@ -55,7 +55,7 @@ end
 is_compatible(d1::DomainFrame, d2::DomainFrame) = is_compatible(basis(d1),basis(d2))
 
 function (*)(d1::DomainFrame, d2::DomainFrame, args...)
-    @assert is_compatible(d1,d2) 
+    @assert is_compatible(d1,d2)
     (mset, mcoef) = (*)(basis(d1),basis(d2),args...)
     df = DomainFrame(domain(d1) ∩ domain(d2),mset)
     (df, mcoef)

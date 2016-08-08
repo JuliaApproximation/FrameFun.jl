@@ -17,12 +17,12 @@ end
 FourierDomain{N,T}(f::ExpFun{N,T}, relop::Function) = FourierDomain{N,T}(f, relop, dbox(f))
 
 function in(x::AbstractVector, d::FourierDomain)
-	z = call(d.f, x)
+	z = d.f(x)
 	d.relop(z)
 end
 
 function in(g::Grid, d::FourierDomain)
-	z = call(d.f, g)[1]
+	z = d.f(g)[1]
 	map(d.relop, z)
 end
 
@@ -49,14 +49,14 @@ end
 ComparisonDomain{N,T}(f::ExpFun{N,T}, g::ExpFun{N,T}, binop::Function) = FourierDomain{N,T}(f, g, binop, dbox(f))
 
 function in(x::AbstractVector, d::ComparisonDomain)
-	z1 = call(d.f, x)
-	z2 = call(d.g, x)
+	z1 = d.f(x)
+	z2 = d.g(x)
 	d.binop(z1, z2)
 end
 
 function in(g::Grid, d::ComparisonDomain)
-	z1 = call(d.f, g)
-	z2 = call(d.g, g)
+	z1 = d.f(g)
+	z2 = d.g(g)
 	map(d.binop, z1, z2)
 end
 
@@ -64,5 +64,3 @@ end
 (<=)(f::ExpFun, g::ExpFun) = ComparisonDomain(f, g, (x,y)-> x <= y)
 (>)(f::ExpFun, g::ExpFun) = ComparisonDomain(f, g, (x,y)-> x > y)
 (>=)(f::ExpFun, g::ExpFun) = ComparisonDomain(f, g, (x,y)-> x >= y)
-
-

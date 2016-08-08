@@ -35,8 +35,8 @@ function evaluate_framefun(f::FrameFun2d, n; full = false)
     mgrid = subgrid(fgrid, domain(f))
     vals = real(f(fgrid))
     pts = collect(fgrid)
-    x = [p[1] for p in pts]
-    y = [p[2] for p in pts]
+    x = Float64[p[1] for p in pts]
+    y = Float64[p[2] for p in pts]
     X = reshape(x, size(fgrid))
     Y = reshape(y, size(fgrid))
 
@@ -94,8 +94,8 @@ function plot_surf(f::FrameFun{2}; n=101)
     Mgrid = MaskedGrid(fgrid, domain(f))
     data = map(Float64, real(expansion(f)(Mgrid)))
     pts = collect(Mgrid)
-    x = [p[1] for p in pts]
-    y = [p[2] for p in pts]
+    x = Float64[p[1] for p in pts]
+    y = Float64[p[2] for p in pts]
     plot_trisurf(x, y, data)
 end
 
@@ -109,6 +109,9 @@ function plot(f::FrameFun{2}; n=301, colorbar=true)
 
     vmin = minimum(vals)
     vmax = maximum(vals)
+    println(typeof(X))
+    println(typeof(Y))
+    println(typeof(vals))
     pcolormesh(X, Y, vals, vmin=vmin, vmax=vmax, shading = "gouraud",
         cmap = my_cmap)
     axis("scaled")
