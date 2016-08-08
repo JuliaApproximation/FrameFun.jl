@@ -5,7 +5,7 @@ module FrameFuns
 using FixedSizeArrays
 using BasisFunctions
 #using Debug
-#using PyPlot
+using PyPlot
 #using ApproxFun
 
 using Base.Cartesian
@@ -22,7 +22,7 @@ import Base: show, showcompact, call, convert
 
 import Base: ndims
 
-#import PyPlot: plot
+import PyPlot: plot
 
 import BasisFunctions: composite_length, ⊗, tensorproduct, flatten,
     compose, elements, element
@@ -36,7 +36,7 @@ import BasisFunctions: operator, coefficients, set, is_basis, is_frame,
     differentiation_operator, antidifferentiation_operator, approximation_operator,
     extend, extension_size, extension_operator, default_approximation_operator
 
-import BasisFunctions: call_set, call_set!, call_expansion, call_expansion!, call_element, name
+import BasisFunctions: call_expansion_with_set, call_expansion_with_set!, call_expansion, call_expansion!, call_element, name
 
 import BasisFunctions: differentiate, ∂x, ∂y, ∂z, ∫∂x, ∫∂y, ∫∂z, ∫, is_compatible
 

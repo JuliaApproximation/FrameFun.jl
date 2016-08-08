@@ -53,7 +53,8 @@ end
 
 function plot_extension(f::FrameFun; args...)
     e = SetExpansion(basis(set(f)), coefficients(f))
-    plot(e; title = "Full extension", args...)
+    plot(e, args...)
+    title("Full Extension")
 end
 
 function plot_error(f::FrameFun1d, f_orig::Function; n=201, color="blue")

@@ -62,9 +62,9 @@ function (*)(d1::DomainFrame, d2::DomainFrame, args...)
 end
 
 # Should we check whether x lies in the domain?
-call_set(e::SetExpansion, s::DomainFrame, coef, x...) = call_expansion(basis(s), coef, x...)
+call_expansion_with_set(e::SetExpansion, s::DomainFrame, coef, x...) = call_expansion(basis(s), coef, x...)
 
-call_set!(result, e::SetExpansion, s::DomainFrame, coef, x...) = call_expansion!(result, basis(s), coef, x...)
+call_expansion_with_set!(result, e::SetExpansion, s::DomainFrame, coef, x...) = call_expansion!(result, basis(s), coef, x...)
 
 call_element(s::DomainFrame, idx::Int, x...) = call_element(basis(s), idx, x...)
 
