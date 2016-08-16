@@ -68,6 +68,8 @@ call_expansion_with_set!(result, e::SetExpansion, s::DomainFrame, coef, x...) = 
 
 call_element(s::DomainFrame, idx::Int, x...) = call_element(basis(s), idx, x...)
 
+grid(s::DomainFrame) = subgrid(grid(basis(s)),domain(s))
+
 """
 Make a DomainFrame, but match tensor product domains with tensor product sets in a suitable way.
 

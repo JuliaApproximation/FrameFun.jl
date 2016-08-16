@@ -164,3 +164,4 @@ function plot_boundary(d::AbstractDomain, B::BBox; n =100)
     bound = boundary(fgrid,d)
     plot_grid(bound)
 end
+

@@ -4,7 +4,8 @@ module FrameFuns
 
 using FixedSizeArrays
 using BasisFunctions
-using PyPlot
+#using PyPlot
+using RecipesBase
 using Compat
 
 using Base.Cartesian
@@ -21,7 +22,7 @@ import Base: show, showcompact, call, convert
 
 import Base: ndims
 
-import PyPlot: plot
+# import PyPlot: plot
 
 import BasisFunctions: composite_length, ⊗, tensorproduct, flatten,
     compose, elements, element
@@ -36,7 +37,7 @@ import BasisFunctions: operator, coefficients, set, is_basis, is_frame,
     extend, extension_size, extension_operator, default_approximation_operator
 
 import BasisFunctions: call_set, call_set!, call_expansion_with_set,
-    call_expansion_with_set!, call_expansion, call_expansion!, call_element, name
+call_expansion_with_set!, call_expansion, call_expansion!, call_element, name
 
 import BasisFunctions: differentiate, ∂x, ∂y, ∂z, ∫∂x, ∫∂y, ∫∂z, ∫, is_compatible
 
@@ -45,6 +46,8 @@ import BasisFunctions: True, False, complexify, resize, promote_eltype
 import BasisFunctions: left, right
 
 import BasisFunctions: show_setexpansion
+
+import BasisFunctions: postprocess, plotgrid
 
 # from box.jl
 export BBox, BBox1, BBox2, left, right
@@ -66,7 +69,8 @@ export DomainFrame, basis, call_set, call_set!
 export Mandelbrot, JuliaSet
 
 # from plots.jl
-export plot, plot_error, plot_samples, plot_domain, plot_image
+#export plot, plot_error, plot_samples, plot_domain, plot_image
+# from recipes.jl
 
 # We support both vectors (AbstractVector) and FixedSizeArray's (Vec)
 typealias AnyVector Union{AbstractVector,Vec}
@@ -101,7 +105,8 @@ include("concat_solver.jl")
 include("explicit_extension.jl")
 
 # TODO: try out Plots.jl
-include("plots.jl")
+#include("plots.jl")
+include("recipes.jl")
 
 include("diffequation.jl")
 
