@@ -89,3 +89,6 @@ function domainframe(domain::TensorProductDomain, basis::TensorProductSet)
 end
 
 domainframe(domain::AbstractDomain, basis::FunctionSet) = DomainFrame(domain, basis)
+
+left(d::DomainFrame, x...) = left(domain(d))
+right(d::DomainFrame, x...) = right(domain(d))
