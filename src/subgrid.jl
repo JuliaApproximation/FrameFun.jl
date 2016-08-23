@@ -11,9 +11,9 @@ A MaskedGrid is a subgrid of another grid that is defined by a mask.
 The mask is true or false for each point in the supergrid. The set of points
 for which it is true make up the MaskedGrid.
 """
-immutable MaskedGrid{G,ID,N,T} <: AbstractSubGrid{N,T}
+immutable MaskedGrid{G,M,N,T} <: AbstractSubGrid{N,T}
     grid	::	G
-    mask	::	Array{Bool,ID}
+    mask	::	M
     indices ::  Vector{Vec{N,Int}}
     M		::	Int				# Total number of points in the mask
 
@@ -25,7 +25,7 @@ end
 function MaskedGrid{N,T}(grid::AbstractGrid{N,T}, mask, indices)
 	@assert size(grid) == size(mask)
 
-	MaskedGrid{typeof(grid),index_dim(grid),N,T}(grid, mask, indices)
+	MaskedGrid{typeof(grid),typeof(mask),N,T}(grid, mask, indices)
 end
 
 # TODO: make this more elegant and general
@@ -218,7 +218,7 @@ function boundary{TG,T}(g::TensorProductGrid{TG,1,T},dom::AbstractDomain{1})
     println("This method being called means there is a 1D tensorproductgrid.")
 end
 
-function boundary{G,ID}(g::MaskedGrid{G,ID,1},dom::AbstractDomain{1})
+function boundary{G,M}(g::MaskedGrid{G,M,1},dom::AbstractDomain{1})
     boundary(grid(g),dom)
 end
 
@@ -275,7 +275,7 @@ function boundary{T}(g::AbstractGrid{1,T},dom::AbstractDomain{1})
 end
 
 
-function boundary{G,ID,N}(g::MaskedGrid{G,ID,N},dom::AbstractDomain{N})
+function boundary{G,M,N}(g::MaskedGrid{G,M,N},dom::AbstractDomain{N})
     boundary(grid(g),dom)
 end
 

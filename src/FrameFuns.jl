@@ -29,7 +29,7 @@ import BasisFunctions: composite_length, ⊗, tensorproduct, flatten,
 
 import BasisFunctions: src, dest, matrix, matrix!, apply!, numtype
 
-import BasisFunctions: index_dim, grid, left, right, stepsize, sample
+import BasisFunctions: grid, left, right, stepsize, sample
 
 import BasisFunctions: operator, coefficients, set, is_basis, is_frame,
     transform_normalization_operator, evaluation_operator, interpolation_operator,
