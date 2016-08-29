@@ -94,13 +94,15 @@ end
 # end
 #
 
-approximation_operator(set::ConcatenatedSet; options...) =
-    approximation_operator_concat(set, set1(set), set2(set); options...)
+function approximation_operator(set::MultiSet; options...)
+    @assert composite_length(set) == 2
+    approximation_operator_concat(set, element(set, 1), element(set, 2); options...)
+end
 
-approximation_operator_concat(set::ConcatenatedSet, set1::FunctionSet, set2::FunctionSet) =
+approximation_operator_concat(set::MultiSet, set1::FunctionSet, set2::FunctionSet) =
     default_approximation_operator(set)
 
-function approximation_operator_concat(concatset::ConcatenatedSet, set1::FunctionSet, set2::AugmentedSet)
+function approximation_operator_concat(concatset::MultiSet, set1::FunctionSet, set2::AugmentedSet)
     if has_transform(set1) && has_transform(set(set2))
         ConcatSolver(concatset, set1, set(set2), fun(set2))
     else
