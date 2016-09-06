@@ -32,7 +32,7 @@ import BasisFunctions: src, dest, matrix, matrix!, apply!, numtype
 import BasisFunctions: grid, left, right, stepsize, sample
 
 import BasisFunctions: operator, coefficients, set, is_basis, is_frame,
-    transform_normalization_operator, evaluation_operator, interpolation_operator,
+    transform_pre_operator, transform_post_operator, evaluation_operator, interpolation_operator,
     differentiation_operator, antidifferentiation_operator, approximation_operator,
     extend, extension_size, extension_operator, restriction_operator,
     default_approximation_operator, has_extension
