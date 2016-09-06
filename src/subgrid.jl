@@ -283,3 +283,5 @@ function evaluation_operator{G <: AbstractSubGrid}(s::FunctionSet, d::DiscreteGr
     d2 = DiscreteGridSpace(grid(grid(d)), eltype(s))
     restriction_operator(d2, d) * evaluation_operator(s, d2)
 end
+
+has_extension{G <: AbstractSubGrid}(dg::DiscreteGridSpace{G}) = true

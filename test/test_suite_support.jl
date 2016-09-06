@@ -39,7 +39,7 @@ function test_subgrids()
     G1 = EquispacedGrid(n, -1.0, 1.0)
     G2 = EquispacedGrid(n, -1.0, 1.0)
     TensorG = G1 ⊗ G2
-    
+
     C = Disk(1.0)
     circle_grid = FE.MaskedGrid(TensorG, C)
     @testset begin

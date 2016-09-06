@@ -9,7 +9,7 @@ http://arxiv.org/abs/1509.00206
 immutable FE_ProjectionSolver{ELT} <: FE_Solver{ELT}
     problem     ::  FE_DiscreteProblem
     plunge_op   ::  AbstractOperator    # store the operator because it allocates memory
-    W           ::  MatrixOperator
+    W           ::  MultiplicationOperator
     Ut          ::  Array{ELT,2}
     VS          ::  Array{ELT,2}
     b
