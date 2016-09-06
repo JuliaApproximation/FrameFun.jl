@@ -3,7 +3,7 @@
 
 ## Plot full FrameFuns as the underlying expansion
 @recipe function f(F::FrameFun; plot_ext = false)
-    plot_ext || title --> "FrameFun"
+    plot_ext || (title --> "FrameFun")
     plot_ext ? SetExpansion(basis(F),coefficients(F)) : expansion(F)
 end
 
