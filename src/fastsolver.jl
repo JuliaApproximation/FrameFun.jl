@@ -25,10 +25,7 @@ immutable FE_ProjectionSolver{ELT} <: FE_Solver{ELT}
         Wsrc = ELT <: Complex ? Cn{ELT}(size(random_matrix,2)) : Rn{ELT}(size(random_matrix,2))
         Wdest = src(operator(problem))
         W = MatrixOperator(Wsrc, Wdest, random_matrix)
-        ## println("max operator forward",maximum(svd(matrix(operator(problem).op2))[2]))
-        ## println("min operator forward",minimum(svd(matrix(operator(problem).op2))[2]))
-        ## println("max operator backward",maximum(svd(matrix(operator_transpose(problem).op2))[2]))
-        ## println("min operator backward",minimum(svd(matrix(operator_transpose(problem).op2))[2]))
+        
         USV = LAPACK.gesvd!('S','S',matrix(plunge_op * operator(problem) * W))
         S = USV[2]
 
@@ -66,7 +63,7 @@ apply!(s::FE_ProjectionSolver, dest, src, coef_dest, coef_src) =
 
 function apply!(s::FE_ProjectionSolver, destset, srcset, coef_dest, coef_src, A, At, P, W, x1, x2)
     apply!(P, s.b, coef_src)
-    BasisFunctions.linearize_coefficients!(s.blinear, dest(A), s.b)
+    BasisFunctions.linearize_coefficients!(dest(A), s.blinear, s.b)
     A_mul_B!(s.sy, s.Ut, s.blinear)
     A_mul_B!(s.y, s.VS, s.sy)
     apply!(W, s.x2, s.y)

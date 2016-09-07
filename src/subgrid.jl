@@ -258,14 +258,14 @@ end
 
 
 function boundary{T}(g::AbstractGrid{1,T},dom::AbstractDomain{1})
-    midpoints = Vec{1,T}[]
+    midpoints = T[]
     # for each element
     for i in eachindex(g)
         # check if any are on the other side of the boundary
         try
             if in(g[i],dom) != in(g[i+1],dom)
                 # add the midpoint to the grid
-                push!(midpoints, Vec{1,T}(midpoint(g[i],g[i+1],dom)))
+                push!(midpoints, midpoint(g[i],g[i+1],dom))
             end
         catch y
             isa(y,BoundsError) || rethrow(y)

@@ -58,7 +58,6 @@ end
 function rhs(D::DiffEquation)
     problem = FE_DiscreteProblem(D.D,D.S,2)
     op = operator(problem)
-    opD = operator(D)
     rhs = Array(Array{eltype(src(op)),1},0)
     push!(rhs,sample(grid(time_basis_restricted(problem)),D.DRhs, eltype(src(op))))
     for BC in D.BCs
@@ -68,18 +67,18 @@ function rhs(D::DiffEquation)
 end
 
 function solve(D::DiffEquation, solver=FE_ProjectionSolver; options...)
-    prob = FE_DiscreteProblem(D.D,D.S,2)
     Adiff= inv_diagonal(D.Diff)
-    op = operator(D)
     b = rhs(D)
-    opt = ctranspose(op)
-    DEproblem = problem(prob, op, opt)
+    DEproblem = problem(D)
     A = solver(DEproblem; options...)
     coef  = A * b
     FrameFun(D.D, dest(A), Adiff*coef)
 end
 
-function problem(problem::FE_DiscreteProblem, op::AbstractOperator, opt::AbstractOperator)
+function problem(D::DiffEquation)
+    problem = FE_DiscreteProblem(D.D,D.S,2)
+    op = operator(D)
+    opt = ctranspose(op)
     fb = frequency_basis(problem)
     fbe = frequency_basis_ext(problem)
     tb = MultiSet([time_basis(problem); elements(dest(op))[2:end]])
