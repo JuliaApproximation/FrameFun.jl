@@ -49,7 +49,7 @@ for op in (:extension_operator,)
     @eval function $op(f1::DomainFrame, f2::DomainFrame)
         @assert is_compatible(f1,f2)
         op = $op(basis(f1),basis(f2))
-        WrappedOperator(f1,f2,op)
+        wrap_operator(f1, f2, op)
     end
 end
 
