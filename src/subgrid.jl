@@ -64,7 +64,7 @@ getindex(g::MaskedGrid, idx::Int) = getindex(g.grid, g.indices[idx]...)
 function apply!{G <: MaskedGrid}(op::Extension, dest, src::DiscreteGridSpace{G}, coef_dest, coef_src)
     @assert length(coef_src) == length(src)
     @assert length(coef_dest) == length(dest)
-    @assert grid(dest) == grid(grid(src))
+    # @assert grid(dest) == grid(grid(src))
 
     grid1 = grid(src)
     fill!(coef_dest, 0)
@@ -84,7 +84,8 @@ end
 function apply!{G <: MaskedGrid}(op::Restriction, dest::DiscreteGridSpace{G}, src, coef_dest, coef_src)
     @assert length(coef_src) == length(src)
     @assert length(coef_dest) == length(dest)
-    @assert grid(src) == grid(grid(dest))
+    # This line below seems to allocate memory...
+    # @assert grid(src) == grid(grid(dest))
 
     grid1 = grid(dest)
 
