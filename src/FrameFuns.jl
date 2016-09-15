@@ -69,6 +69,9 @@ export DomainFrame, basis, call_set, call_set!
 # from fractal.jl
 export Mandelbrot, JuliaSet
 
+# from DiffEquation.jl
+export BoundaryCondition, DiffEquation, solve
+
 # from plots.jl
 #export plot, plot_error, plot_samples, plot_domain, plot_image
 # from recipes.jl
