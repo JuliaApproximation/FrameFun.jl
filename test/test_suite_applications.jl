@@ -133,7 +133,7 @@ function test_smoothing_1d()
         fscale(i) = 10.0^-4+abs(i)+abs(i)^2+abs(i)^3
         F = Fun(f,B,D;solver=FrameFuns.FE_SmoothProjectionSolver,scale=fscale)
         F = Fun(f,B,D;solver=FrameFuns.FE_ProjectionSolver)
-        @test (abserror(f,F) < sqrt(eps(numtype(B))))
+        @test (abserror(f,F) < 100*sqrt(eps(numtype(B))))
     end
 end
 
@@ -144,7 +144,7 @@ function test_smoothing_2d()
         f(x,y) = exp(x*y)
         fscale(i,j) = 10.0^-4+100*abs((i)^2+abs(j^2))
         F = Fun(f,B,D;solver=FrameFuns.FE_SmoothProjectionSolver,scale=fscale)
-        @test (abserror(f,F) < sqrt(sqrt(eps(numtype(B)))))
+        @test (abserror(f,F) < 100*sqrt(sqrt(eps(numtype(B)))))
     end
 end
 
