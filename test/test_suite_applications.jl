@@ -124,13 +124,42 @@ function test_differential_equations_2d()
     end
 end
 
+# We just test the accuracy, not the smoothing properties
+function test_smoothing_1d()
+    @testset "Smoothing $(name(instantiate(Basis,10)))" for Basis in (FourierBasis, ChebyshevBasis)
+        B = Basis(101,-1,1)
+        D = Interval(-0.5,0.5)
+        f(x) = exp(x)
+        fscale(i) = 10.0^-4+abs(i)+abs(i)^2+abs(i)^3
+        F = Fun(f,B,D;solver=FrameFuns.FE_SmoothProjectionSolver,scale=fscale)
+        F = Fun(f,B,D;solver=FrameFuns.FE_ProjectionSolver)
+        @test (abserror(f,F) < sqrt(eps(numtype(B))))
+    end
+end
+
+function test_smoothing_2d()
+    @testset "Smoothing $(name(instantiate(Basis,10)))" for Basis in (FourierBasis, ChebyshevBasis)
+        B = Basis(20,-1,1)⊗Basis(20,-1,1)
+        D = Disk(0.5)
+        f(x,y) = exp(x*y)
+        fscale(i,j) = 10.0^-4+100*abs((i)^2+abs(j^2))
+        F = Fun(f,B,D;solver=FrameFuns.FE_SmoothProjectionSolver,scale=fscale)
+        @test (abserror(f,F) < sqrt(sqrt(eps(numtype(B)))))
+    end
+end
 
 
 test_arithmetics()
 
+test_smoothing_1d()
+
+test_smoothing_2d()
+
 test_differential_equations_1d()
 
 test_differential_equations_2d()
+
+
 
 
 if show_mv_times

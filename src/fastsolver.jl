@@ -25,7 +25,7 @@ immutable FE_ProjectionSolver{ELT} <: FE_Solver{ELT}
         Wsrc = ELT <: Complex ? Cn{ELT}(size(random_matrix,2)) : Rn{ELT}(size(random_matrix,2))
         Wdest = src(operator(problem))
         W = MatrixOperator(Wsrc, Wdest, random_matrix)
-
+        
         USV = LAPACK.gesvd!('S','S',matrix(plunge_op * operator(problem) * W))
         S = USV[2]
 

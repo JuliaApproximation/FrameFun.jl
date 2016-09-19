@@ -11,7 +11,8 @@ immutable FE_SmoothProjectionSolver{ELT} <: FE_Solver{ELT}
         W           ::  MultiplicationOperator
         Ut          ::  Array{ELT,2}
         VS          ::  Array{ELT,2}
-        b           ::  Array{ELT,1}
+        b     ::  Array{ELT,1}
+        blinear     ::  Array{ELT,1}
         y           ::  Array{ELT,1}
         sy          ::  Array{ELT,1}
         syv         ::  Array{ELT,1}
@@ -22,12 +23,15 @@ immutable FE_SmoothProjectionSolver{ELT} <: FE_Solver{ELT}
         D           ::  AbstractOperator
 
         function FE_SmoothProjectionSolver(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), cutoffv=sqrt(cutoff), R = estimate_plunge_rank(problem), options...)
-                plunge_op = plunge_operator(problem)
-            A = map(ELT, rand(param_N(problem), R))
-            B = map(ELT, rand(param_M(problem), R))
-
-                WU = MatrixOperator(A)
-                WV = MatrixOperator(B)
+            plunge_op = plunge_operator(problem)
+            random_matrixU = map(ELT, rand(param_N(problem), R))
+            random_matrixV = map(ELT, rand(param_M(problem), R))
+            Usrc = ELT <: Complex ? Cn{ELT}(size(random_matrixU,2)) : Rn{ELT}(size(random_matrixU,2))
+            Vsrc = ELT <: Complex ? Cn{ELT}(size(random_matrixV,2)) : Rn{ELT}(size(random_matrixV,2))
+            Udest = src(operator(problem))
+            Vdest = dest(operator(problem))
+            WU = MatrixOperator(Usrc, Udest, random_matrixU)
+            WV = MatrixOperator(Vsrc, Vdest, random_matrixV)
                 USVU = LAPACK.gesvd!('S','S',matrix(plunge_op * operator(problem) * WU))
                 USVV = LAPACK.gesvd!('S','S',matrix(operator_transpose(problem) * plunge_op * WV))
                 SU = USVU[2]
@@ -36,16 +40,17 @@ immutable FE_SmoothProjectionSolver{ELT} <: FE_Solver{ELT}
                 D = IdxnScalingOperator(frequency_basis(problem); options...)
                 AD = inv(D)
                 maxindv = findlast(USVV[2].>cutoffv)
-                ADV = (USVV[1][:,1:maxindv]).*diag(matrix(AD))
+                ADV = (USVV[1][:,1:maxindv]).*diagonal(AD)
                 Q, R = qr(ADV)
                 b = zeros(size(dest(plunge_op)))
+                blinear = zeros(ELT, length(dest(plunge_op)))
                 y = zeros(size(USVU[3],1))
                 x1 = zeros(size(src(operator(problem))))
                 x2 = zeros(size(src(operator(problem))))
                 x3 = zeros(size(src(operator(problem))))
                 sy = zeros(maxind,)
                 syv = zeros(maxindv,)
-                new(problem, plunge_op, WU, USVU[1][:,1:maxind]',USVU[3][1:maxind,:]'*diagm(Sinv[:]),b,y,sy,syv,x1,x2,x3,Q, D)
+                new(problem, plunge_op, WU, USVU[1][:,1:maxind]',USVU[3][1:maxind,:]'*diagm(Sinv[:]),b,blinear,y,sy,syv,x1,x2,x3,Q, D)
         end
 end
 
@@ -53,12 +58,12 @@ end
 FE_SmoothProjectionSolver(problem::FE_DiscreteProblem; options...) =
         FE_SmoothProjectionSolver{eltype(problem)}(problem; options...)
 
-
 function apply!(s::FE_SmoothProjectionSolver, destarg, src, coef_dest, coef_src)
         A = operator(s)
         At = operator_transpose(s)
         P = s.plunge_op
         apply!(P,s.b, coef_src)
+        BasisFunctions.linearize_coefficients!(dest(A), s.blinear, s.b)
         A_mul_B!(s.sy, s.Ut, s.b)
         A_mul_B!(s.y, s.VS, s.sy)
         apply!(s.W, s.x2, s.y)
@@ -89,3 +94,40 @@ end
 # For FunctionSets that have a DC component
 dc_index(b::ChebyshevBasis) = 1
 dc_index(b::FourierBasis) = 1
+
+# An index scaling operator, used to generate weights for the polynomial scaling algorithm.
+immutable IdxnScalingOperator{ELT} <: AbstractOperator{ELT}
+    src     ::  FunctionSet
+    order   ::  Int
+    scale   ::  Function
+end
+
+IdxnScalingOperator(src::FunctionSet; order=1, scale = default_scaling_function) =
+    IdxnScalingOperator{eltype(src)}(src, order, scale)
+
+dest(op::IdxnScalingOperator) = src(op)
+
+default_scaling_function(i) = 10.0^-4+(abs(i))+abs(i)^2+abs(i)^3
+default_scaling_function(i,j) = 1+(abs(i)^2+abs(j)^2)
+
+is_inplace(::IdxnScalingOperator) = true
+is_diagonal(::IdxnScalingOperator) = true
+
+ctranspose(op::IdxnScalingOperator) = DiagonalOperator(src(op), conj(diagonal(op)))
+function apply_inplace!(op::IdxnScalingOperator, dest, src, coef_srcdest)
+    ELT = eltype(op)
+    for i in eachindex(dest)
+        coef_srcdest[i] *= op.scale(ELT(BasisFunctions.index(native_index(dest,i))))^op.order
+    end
+    coef_srcdest
+end
+
+function apply_inplace!{TS1,TS2}(op::IdxnScalingOperator, dest::TensorProductSet{Tuple{TS1,TS2}}, src, coef_srcdest)
+    ELT = eltype(op)
+    for i in eachindex(coef_srcdest)
+        ni = native_index(dest,i)
+        coef_srcdest[i]*=op.scale(ELT(BasisFunctions.index(ni[1])),ELT(BasisFunctions.index(ni[2])))^op.order
+    end
+    coef_srcdest
+end
+inv(op::IdxnScalingOperator) = IdxnScalingOperator(op.src, order=op.order*-1, scale=op.scale)
