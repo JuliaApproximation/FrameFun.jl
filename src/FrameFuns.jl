@@ -27,14 +27,15 @@ import Base: ndims
 import BasisFunctions: composite_length, ⊗, tensorproduct, flatten,
     compose, elements, element
 
-import BasisFunctions: src, dest, matrix, matrix!, apply!, numtype
+import BasisFunctions: src, dest, matrix, matrix!, apply!, apply_inplace!, numtype
 
-import BasisFunctions: index_dim, grid, left, right, stepsize, sample
+import BasisFunctions: grid, left, right, stepsize, sample
 
-import BasisFunctions: operator, coefficients, set, is_basis, is_frame,
-    transform_normalization_operator, evaluation_operator, interpolation_operator,
+import BasisFunctions: operator, coefficients, set, is_basis, is_frame, is_diagonal, is_inplace,
+    transform_pre_operator, transform_post_operator, evaluation_operator, interpolation_operator,
     differentiation_operator, antidifferentiation_operator, approximation_operator,
-    extend, extension_size, extension_operator, default_approximation_operator
+    extend, extension_size, extension_operator, restriction_operator,
+    default_approximation_operator, has_extension
 
 import BasisFunctions: call_set, call_set!, call_expansion_with_set,
 call_expansion_with_set!, call_expansion, call_expansion!, call_element, name
@@ -67,6 +68,9 @@ export DomainFrame, basis, call_set, call_set!
 
 # from fractal.jl
 export Mandelbrot, JuliaSet
+
+# from DiffEquation.jl
+export BoundaryCondition, DiffEquation, solve
 
 # from plots.jl
 #export plot, plot_error, plot_samples, plot_domain, plot_image

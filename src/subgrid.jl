@@ -11,9 +11,9 @@ A MaskedGrid is a subgrid of another grid that is defined by a mask.
 The mask is true or false for each point in the supergrid. The set of points
 for which it is true make up the MaskedGrid.
 """
-immutable MaskedGrid{G,ID,N,T} <: AbstractSubGrid{N,T}
+immutable MaskedGrid{G,M,N,T} <: AbstractSubGrid{N,T}
     grid	::	G
-    mask	::	Array{Bool,ID}
+    mask	::	M
     indices ::  Vector{Vec{N,Int}}
     M		::	Int				# Total number of points in the mask
 
@@ -25,7 +25,7 @@ end
 function MaskedGrid{N,T}(grid::AbstractGrid{N,T}, mask, indices)
 	@assert size(grid) == size(mask)
 
-	MaskedGrid{typeof(grid),index_dim(grid),N,T}(grid, mask, indices)
+	MaskedGrid{typeof(grid),typeof(mask),N,T}(grid, mask, indices)
 end
 
 # TODO: make this more elegant and general
@@ -64,7 +64,7 @@ getindex(g::MaskedGrid, idx::Int) = getindex(g.grid, g.indices[idx]...)
 function apply!{G <: MaskedGrid}(op::Extension, dest, src::DiscreteGridSpace{G}, coef_dest, coef_src)
     @assert length(coef_src) == length(src)
     @assert length(coef_dest) == length(dest)
-    @assert grid(dest) == grid(grid(src))
+    # @assert grid(dest) == grid(grid(src))
 
     grid1 = grid(src)
     fill!(coef_dest, 0)
@@ -84,7 +84,8 @@ end
 function apply!{G <: MaskedGrid}(op::Restriction, dest::DiscreteGridSpace{G}, src, coef_dest, coef_src)
     @assert length(coef_src) == length(src)
     @assert length(coef_dest) == length(dest)
-    @assert grid(src) == grid(grid(dest))
+    # This line below seems to allocate memory...
+    # @assert grid(src) == grid(grid(dest))
 
     grid1 = grid(dest)
 
@@ -218,7 +219,7 @@ function boundary{TG,T}(g::TensorProductGrid{TG,1,T},dom::AbstractDomain{1})
     println("This method being called means there is a 1D tensorproductgrid.")
 end
 
-function boundary{G,ID}(g::MaskedGrid{G,ID,1},dom::AbstractDomain{1})
+function boundary{G,M}(g::MaskedGrid{G,M,1},dom::AbstractDomain{1})
     boundary(grid(g),dom)
 end
 
@@ -258,14 +259,14 @@ end
 
 
 function boundary{T}(g::AbstractGrid{1,T},dom::AbstractDomain{1})
-    midpoints = Vec{1,T}[]
+    midpoints = T[]
     # for each element
     for i in eachindex(g)
         # check if any are on the other side of the boundary
         try
             if in(g[i],dom) != in(g[i+1],dom)
                 # add the midpoint to the grid
-                push!(midpoints, Vec{1,T}(midpoint(g[i],g[i+1],dom)))
+                push!(midpoints, midpoint(g[i],g[i+1],dom))
             end
         catch y
             isa(y,BoundsError) || rethrow(y)
@@ -275,7 +276,7 @@ function boundary{T}(g::AbstractGrid{1,T},dom::AbstractDomain{1})
 end
 
 
-function boundary{G,ID,N}(g::MaskedGrid{G,ID,N},dom::AbstractDomain{N})
+function boundary{G,M,N}(g::MaskedGrid{G,M,N},dom::AbstractDomain{N})
     boundary(grid(g),dom)
 end
 
@@ -283,3 +284,5 @@ function evaluation_operator{G <: AbstractSubGrid}(s::FunctionSet, d::DiscreteGr
     d2 = DiscreteGridSpace(grid(grid(d)), eltype(s))
     restriction_operator(d2, d) * evaluation_operator(s, d2)
 end
+
+has_extension{G <: AbstractSubGrid}(dg::DiscreteGridSpace{G}) = true

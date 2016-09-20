@@ -198,6 +198,7 @@ end
 
 
     delimit("Algorithm Implementation and Accuracy")
+    # FFTW.set_num_threads(Sys.CPU_CORES)
 
     if include_1d_tests
         test_1d_cases()

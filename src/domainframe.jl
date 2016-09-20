@@ -4,7 +4,7 @@
 A DomainFrame is the restriction of a basis to a subset of its domain. This results
 in a frame.
 """
-immutable DomainFrame{N,T} <: AbstractFrame{N,T}
+immutable DomainFrame{N,T} <: FunctionSet{N,T}
     domain      ::  AbstractDomain{N}
     basis       ::  FunctionSet{N,T}
 
@@ -17,6 +17,8 @@ end
 
 DomainFrame{N,T}(domain::AbstractDomain{N}, basis::FunctionSet{N,T}) =
     DomainFrame{N,T}(domain, basis)
+
+is_frame(f::DomainFrame) = true
 
 basis(f::DomainFrame) = f.basis
 
@@ -47,7 +49,7 @@ for op in (:extension_operator,)
     @eval function $op(f1::DomainFrame, f2::DomainFrame)
         @assert is_compatible(f1,f2)
         op = $op(basis(f1),basis(f2))
-        WrappedOperator(f1,f2,op)
+        wrap_operator(f1, f2, op)
     end
 end
 
