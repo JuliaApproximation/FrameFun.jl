@@ -105,8 +105,8 @@ end
 
 function test_differential_equations_2d()
     @testset "diff 2D" for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
-        B = FourierBasis(31,-1,1)⊗FourierBasis(31,-1,1)
-        Dom = Disk(0.8)-Disk(0.1)
+        B = FourierBasis(11,-1,1)⊗FourierBasis(11,-1,1)
+        Dom = Disk(0.8)
         # Set up Boundary conditions
         diff = IdentityOperator(B)
         df(x,y) = x-y;
@@ -118,9 +118,9 @@ function test_differential_equations_2d()
         # Actually solve the differential equation
         F = solve(DE, solver=solver)
         error = abserror(df,F)
-        @test (error < 0.03)
+        @test (error < 0.3)
         error = abserror(f,∂x(∂x(F))+∂y(∂y(F)))
-        @test (error < 0.03)
+        @test (error < 0.3)
     end
 end
 
