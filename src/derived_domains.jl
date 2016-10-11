@@ -194,8 +194,7 @@ RotatedDomain{T,D}(d::D, phi::T, theta::T, psi::T) = RotatedDomain{3,T,D}(d, [ph
 rotate{T}(d::AbstractDomain{2}, theta::T) = RotatedDomain(d, theta)
 rotate{T}(d::AbstractDomain{3}, phi::T, theta::T, psi::T) = RotatedDomain(d, phi, theta, psi)
 
-in(x::Vec, d::RotatedDomain) = in(d.rotationmatrix*x, d.d
-)
+in(x::Vec, d::RotatedDomain) = in(d.rotationmatrix*x, d.d)
 (==)(d1::RotatedDomain, d2::RotatedDomain) = (d1.d == d2.d) && (d1.angle == d2.angle) #&& (d1.rotationmatrix == d2.rotationmatrix)
 
 # very crude bounding box (doesn't work!!!)
@@ -219,9 +218,9 @@ end
 
 ScaledDomain{N,T}(domain::AbstractDomain{N}, scalefactor::T) = ScaledDomain{typeof(domain),T,N}(domain, scalefactor)
 
-domain(s::ScaledDomain) = d.domain
+domain(s::ScaledDomain) = s.domain
 
-scalefactor(s::ScaledDomain) = d.scalefactor
+scalefactor(s::ScaledDomain) = s.scalefactor
 
 function in(x::Vec, d::ScaledDomain)
     in(x/d.scalefactor, d.domain)
