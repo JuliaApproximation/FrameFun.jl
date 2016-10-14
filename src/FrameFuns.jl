@@ -4,9 +4,7 @@ module FrameFuns
 
 using StaticArrays
 using BasisFunctions
-#using PyPlot
 using RecipesBase
-using Compat
 
 using Base.Cartesian
 

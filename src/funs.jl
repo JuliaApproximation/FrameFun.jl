@@ -64,7 +64,7 @@ function (*)(op::AbstractOperator, fun::FrameFun)
 end
 
 # Delegate all calling to the underlying expansion.
-@compat (fun::FrameFun)(x...) = expansion(fun)(x...)
+(fun::FrameFun)(x...) = expansion(fun)(x...)
 
 
 show(io::IO, fun::FrameFun) = show(io, fun, set(fun))
