@@ -1,7 +1,10 @@
 language:
   julia
 julia:
-  - nightly
+  - 0.5
+
+env:
+  - PLOTS_DEFAULT_BACKEND="plotly"
 notifications:
   email: false
 
@@ -11,6 +14,7 @@ before_install:
 script:
   - julia -e 'Pkg.init()'
   - julia -e 'Pkg.clone("https://github.com/daanhb/BasisFunctions.jl")'
+  - julia -e 'Pkg.add("Plotly")'
   - julia -e 'Pkg.clone(pwd())'
   - julia --code-coverage=user --inline=no test/runtests.jl
 after_success:

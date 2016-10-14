@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/daanhb/FrameFuns.jl.svg?branch=master)](https://travis-ci.org/daanhb/FrameFuns.jl)
+[![Coverage Status](https://coveralls.io/repos/github/daanhb/FrameFuns.jl/badge.svg)](https://coveralls.io/github/daanhb/FrameFuns.jl)
 
 FrameFuns
 =========

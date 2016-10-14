@@ -61,7 +61,7 @@ function test_arithmetics()
     f3(x) = 1im*cos(x)
     @testset "Basis = $(name(instantiate(Basis,10))), D=$D" for Basis in (FourierBasis, ChebyshevBasis), D in [Interval(), Interval(-1.5,0.7), Interval(-1.5,-0.5)+Interval(0.5,1.5)]
         for n in [FE.default_frame_n(D, Basis) 99]
-            for n2 in (n-10, n, n+11)
+            for n2 in (n-1, n, n+1)
                 # There is some symmetry around T=2, test smaller and larger values
                 for T in [1.7 FE.default_frame_T(D, Basis) 2.3]
                     B = Basis(n, -T, T)
@@ -69,7 +69,7 @@ function test_arithmetics()
                     F2 = Fun(f2, B, D)
                     F3 = Fun(f3, B, D)
                     # Test Arithmetic
-                    tol=sqrt(eps(numtype(B)))*10
+                    tol=sqrt(eps(numtype(B)))*100
                     @test  abserror(x-> f1(x)+f2(x), F1+F2) < tol
                     @test  abserror(x-> f2(x)+f3(x), F2+F3) < tol
                     @test  abserror(x-> f1(x)*f2(x), F1*F2) < tol
@@ -105,8 +105,8 @@ end
 
 function test_differential_equations_2d()
     @testset "diff 2D" for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
-        B = FourierBasis(31,-1,1)⊗FourierBasis(31,-1,1)
-        Dom = Disk(0.8)-Disk(0.1)
+        B = FourierBasis(11,-1,1)⊗FourierBasis(11,-1,1)
+        Dom = Disk(0.8)
         # Set up Boundary conditions
         diff = IdentityOperator(B)
         df(x,y) = x-y;
@@ -118,9 +118,9 @@ function test_differential_equations_2d()
         # Actually solve the differential equation
         F = solve(DE, solver=solver)
         error = abserror(df,F)
-        @test (error < 0.03)
+        @test (error < 0.3)
         error = abserror(f,∂x(∂x(F))+∂y(∂y(F)))
-        @test (error < 0.03)
+        @test (error < 0.3)
     end
 end
 

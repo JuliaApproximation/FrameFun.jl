@@ -89,8 +89,6 @@ include("domainframe.jl")
 
 include("funs.jl")
 
-include("lowrank.jl")
-
 include("fe_problem.jl")
 
 include("fe_solvers.jl")
@@ -101,12 +99,6 @@ include("smoothsolver.jl")
 
 include("fe_approx.jl")
 
-include("concat_solver.jl")
-
-include("explicit_extension.jl")
-
-# TODO: try out Plots.jl
-#include("plots.jl")
 include("recipes.jl")
 
 include("diffequation.jl")
