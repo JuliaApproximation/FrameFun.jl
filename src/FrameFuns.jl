@@ -2,7 +2,7 @@
 
 module FrameFuns
 
-using FixedSizeArrays
+using StaticArrays
 using BasisFunctions
 #using PyPlot
 using RecipesBase
@@ -75,9 +75,6 @@ export BoundaryCondition, DiffEquation, solve
 # from plots.jl
 #export plot, plot_error, plot_samples, plot_domain, plot_image
 # from recipes.jl
-
-# We support both vectors (AbstractVector) and FixedSizeArray's (Vec)
-typealias AnyVector Union{AbstractVector,Vec}
 
 
 include("box.jl")

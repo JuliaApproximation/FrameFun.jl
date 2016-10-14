@@ -22,10 +22,10 @@ right(d::AbstractDomain, i::Int) = right(boundingbox(d), i)
 
 # Domains are evaluated using vectors to specify the points, except in 1D
 # Provide fallback routine for users not using vectors in 1d
-in(x::Number, d::AbstractDomain1d) = in(Vec(x), d)
+in(x::Number, d::AbstractDomain1d) = in(SVector(x), d)
 
-# Convert a point given as an array into a Vec point
-in{N}(x::AbstractVector, d::AbstractDomain{N}) = in(Vec{N,eltype(x)}(x...), d)
+# Convert a point given as an array into a Vector point
+in{N}(x::AbstractVector, d::AbstractDomain{N}) = in(SVector{N}(x), d)
 
 # Check whether a value is in an interval, up to 10 times machine precision
 in{T <: AbstractFloat}(x::Number, a::T, b::T) = (a-10eps(T) <= x <= b+10eps(T))
@@ -47,16 +47,16 @@ function evalgrid!{N}(result, g::AbstractGrid{N}, d::AbstractDomain{N})
     result
 end
 
-show{N}(io::IO, v::Vec{N}) = print(io, Vector(v))
+show{N}(io::IO, v::SVector{N}) = print(io, Vector(v))
 
 
 ## Arithmetics
 
 # Make suredomains only need to implement addition/multiplication with numbers to the right
 (+)(x::Number, d::AbstractDomain) = d + x
-(+)(x::AnyVector, d::AbstractDomain) = d + x
+(+)(x::AbstractVector, d::AbstractDomain) = d + x
 
-(+)(d::AbstractDomain, x::Vector) = d + Vec(x...)
+(+){N}(d::AbstractDomain{N}, x::Vector) = d + SVector{N}(x)
 
 (*)(x::Number, d::AbstractDomain) = d * x
 

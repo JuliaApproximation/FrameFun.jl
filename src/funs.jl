@@ -14,7 +14,7 @@ end
 
 FrameFun(e::SetExpansion, args...) = FrameFun{ndims(e),eltype(e)}(e, args...)
 
-FrameFun{N,T}(frame::FunctionSet{N,T}, coefficients = zeros(eltype(frame), size(frame)), args...) =
+FrameFun{N,T}(frame::FunctionSet{N,T}, coefficients = zeros(frame), args...) =
     FrameFun{N,T}(SetExpansion(frame, coefficients), args...)
 
 FrameFun(domain::AbstractDomain, basis::FunctionSet, args...) = FrameFun(DomainFrame(domain, basis), args...)
@@ -75,14 +75,24 @@ function show(io::IO, fun::FrameFun, set::DomainFrame)
     println(io, "Domain: ", domain(set))
 end
 
-getindex(fun::FrameFun, x...) = getindex(fun, set(fun), x...)
+getindex(expansion::SetExpansion, domain::AbstractDomain) = restrict(expansion, domain)
 
-function getindex(fun::FrameFun, set::DomainFrame, domain1::AbstractDomain)
-    @assert ndims(fun) == ndims(domain1)
+getindex(fun::FrameFun, domain::AbstractDomain) = restrict(expansion(fun), domain)
 
-    domain2 = domain(fun)
+restrict(expansion::SetExpansion, domain::AbstractDomain) = _restrict(expansion, set(expansion), domain)
+
+function _restrict(expansion::SetExpansion, set::DomainFrame, domain1::AbstractDomain)
+    @assert ndims(set) == ndims(domain1)
+
+    domain2 = domain(set)
     newdomain = domain1 ∩ domain2
-    FrameFun(newdomain, basis(fun), coefficients(fun))
+    FrameFun(newdomain, basis(set), coefficients(expansion))
+end
+
+function _restrict(expansion::SetExpansion, set::FunctionSet, domain::AbstractDomain)
+    @assert ndims(set) == ndims(domain)
+    # We should check here whether the given domain lies in the support of the set
+    FrameFun(domain, set, coefficients(expansion))
 end
 
 # Get the mean approximation in random interior points.
@@ -97,7 +107,7 @@ function abserror{N}(f::Function,F::FrameFun{N};vals::Int=200)
         for j in 1:N
             point[j]=left(box)[j]+(right(box)[j]-left(box)[j])*rand(1)[1]
         end
-        N == 1 ? vpoint = point[1] : vpoint = Vec(point...)
+        N == 1 ? vpoint = point[1] : vpoint = SVector{N}(point)
         if in(vpoint,domain(F))
             elements+=1
             error+=abs(f(vpoint...)-F(vpoint...))

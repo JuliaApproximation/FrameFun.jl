@@ -34,46 +34,46 @@ tensorproduct(d::AbstractDomain...) =
     TensorProductDomain(flatten(TensorProductDomain, d...)...)
 
 
-in{TD,N}(x::Vec{N}, t::TensorProductDomain{TD,N}) = in(x, elements(t)...)
+in{TD,N}(x::SVector{N}, t::TensorProductDomain{TD,N}) = in(x, elements(t)...)
 
-in(x::Vec{2}, d1::AbstractDomain{1}, d2::AbstractDomain{1}) =
+in(x::SVector{2}, d1::AbstractDomain{1}, d2::AbstractDomain{1}) =
 	in(x[1], d1) && in(x[2], d2)
 
-in(x::Vec{3}, d1::AbstractDomain{1}, d2::AbstractDomain{1}, d3::AbstractDomain{1}) =
+in(x::SVector{3}, d1::AbstractDomain{1}, d2::AbstractDomain{1}, d3::AbstractDomain{1}) =
 	in(x[1], d1) && in(x[2], d2) && in(x[3], d3)
 
-in(x::Vec{4}, d1::AbstractDomain{1}, d2::AbstractDomain{1}, d3::AbstractDomain{1}, d4::AbstractDomain{1}) =
+in(x::SVector{4}, d1::AbstractDomain{1}, d2::AbstractDomain{1}, d3::AbstractDomain{1}, d4::AbstractDomain{1}) =
 	in(x[1], d1) && in(x[2], d2) && in(x[3], d3) && in(x[4], d4)
 
-in(x::Vec{3}, d1::AbstractDomain{1}, d2::AbstractDomain{2}) =
-	in(x[1], d1) && in(Vec(x[2],x[3]), d2)
+in(x::SVector{3}, d1::AbstractDomain{1}, d2::AbstractDomain{2}) =
+	in(x[1], d1) && in(SVector(x[2],x[3]), d2)
 
-in(x::Vec{3}, d1::AbstractDomain{2}, d2::AbstractDomain{1}) =
-	in(Vec(x[1],x[2]), d1) && in(x[3], d2)
+in(x::SVector{3}, d1::AbstractDomain{2}, d2::AbstractDomain{1}) =
+	in(SVector(x[1],x[2]), d1) && in(x[3], d2)
 
-in(x::Vec{4}, d1::AbstractDomain{2}, d2::AbstractDomain{2}) =
-	in(Vec(x[1],x[2]), d1) && in(Vec(x[3],x[4]), d2)
+in(x::SVector{4}, d1::AbstractDomain{2}, d2::AbstractDomain{2}) =
+	in(SVector(x[1],x[2]), d1) && in(SVector(x[3],x[4]), d2)
 
-in(x::Vec{4}, d1::AbstractDomain{1}, d2::AbstractDomain{3}) =
-	in(x[1], d1) && in(Vec(x[2],x[3],x[4]), d2)
+in(x::SVector{4}, d1::AbstractDomain{1}, d2::AbstractDomain{3}) =
+	in(x[1], d1) && in(SVector(x[2],x[3],x[4]), d2)
 
-in(x::Vec{4}, d1::AbstractDomain{3}, d2::AbstractDomain{1}) =
-	in(Vec(x[1],x[2],x[3]), d1) && in(x[1], d2)
+in(x::SVector{4}, d1::AbstractDomain{3}, d2::AbstractDomain{1}) =
+	in(SVector(x[1],x[2],x[3]), d1) && in(x[1], d2)
 
-in(x::Vec{4}, d1::AbstractDomain{1}, d2::AbstractDomain{1}, d3::AbstractDomain{2}) =
-	in(x[1], d1) && in(x[2], d2) && in(Vec(x[3],x[4]), d3)
+in(x::SVector{4}, d1::AbstractDomain{1}, d2::AbstractDomain{1}, d3::AbstractDomain{2}) =
+	in(x[1], d1) && in(x[2], d2) && in(SVector(x[3],x[4]), d3)
 
-in(x::Vec{4}, d1::AbstractDomain{1}, d2::AbstractDomain{2}, d3::AbstractDomain{1}) =
-	in(x[1], d1) && in(Vec(x[2],x[3]), d2) && in(x[4], d3)
+in(x::SVector{4}, d1::AbstractDomain{1}, d2::AbstractDomain{2}, d3::AbstractDomain{1}) =
+	in(x[1], d1) && in(SVector(x[2],x[3]), d2) && in(x[4], d3)
 
-in(x::Vec{4}, d1::AbstractDomain{2}, d2::AbstractDomain{1}, d3::AbstractDomain{1}) =
-	in(Vec(x[1],x[2]), d1) && in(x[3], d2) && in(x[4], d3)
+in(x::SVector{4}, d1::AbstractDomain{2}, d2::AbstractDomain{1}, d3::AbstractDomain{1}) =
+	in(SVector(x[1],x[2]), d1) && in(x[3], d2) && in(x[4], d3)
 
 # # TODO: make this code for in more general!
 # # The problem is you can't slice a Vec, so the implementation below for AbstractArray does not work
 # # for FixedSizeArray's.
 # # All implementations below allocate memory (arrays) except the first one.
-# function in{TD,DN,N}(x::Vec{N}, t::TensorProductDomain{TD,DN,N,N})
+# function in{TD,DN,N}(x::SVector{N}, t::TensorProductDomain{TD,DN,N,N})
 #     z1 = true
 #     for i = 1:N
 #         z1 = z1 & in(x[i], t.domains[i])
@@ -81,33 +81,33 @@ in(x::Vec{4}, d1::AbstractDomain{2}, d2::AbstractDomain{1}, d3::AbstractDomain{1
 #     z1
 # end
 #
-# function in{TD,DN,T}(x::Vec{3,T}, t::TensorProductDomain{TD,DN,2,3})
+# function in{TD,DN,T}(x::SVector{3,T}, t::TensorProductDomain{TD,DN,2,3})
 #     N1 = DN[1]
 #     N2 = DN[2]
 #     d1 = element(t, 1)
 #     d2 = element(t, 2)
-#     x1 = Vec{N1,T}([x[j] for j=1:N1])
-#     x2 = Vec{N2,T}([x[j] for j=N1+1:N1+N2])
+#     x1 = SVector{N1,T}([x[j] for j=1:N1])
+#     x2 = SVector{N2,T}([x[j] for j=N1+1:N1+N2])
 #     in(x1, d1) && in(x2, d2)
 # end
 #
-# function in{TD,DN,T}(x::Vec{4,T}, t::TensorProductDomain{TD,DN,2,4})
+# function in{TD,DN,T}(x::SVector{4,T}, t::TensorProductDomain{TD,DN,2,4})
 #     N1 = DN[1]
 #     N2 = DN[2]
 #     d1 = element(t, 1)
 #     d2 = element(t, 2)
-#     x1 = Vec{N1,T}([x[j] for j=1:N1])
-#     x2 = Vec{N2,T}([x[j] for j=N1+1:N1+N2])
+#     x1 = SVector{N1,T}([x[j] for j=1:N1])
+#     x2 = SVector{N2,T}([x[j] for j=N1+1:N1+N2])
 #     in(x1, d1) && in(x2, d2)
 # end
 #
-# function in{TD,DN,T}(x::Vec{4,T}, t::TensorProductDomain{TD,DN,3,4})
+# function in{TD,DN,T}(x::SVector{4,T}, t::TensorProductDomain{TD,DN,3,4})
 #     d1 = element(t, 1)
 #     d2 = element(t, 2)
 #     d3 = element(t, 3)
-#     x1 = Vec{N1,T}([x[j] for j=1:N1])
-#     x2 = Vec{N2,T}([x[j] for j=N1+1:N1+N2])
-#     x3 = Vec{N3,T}([x[j] for j=N1+N2+1:N1+N2+N3])
+#     x1 = SVector{N1,T}([x[j] for j=1:N1])
+#     x2 = SVector{N2,T}([x[j] for j=N1+1:N1+N2])
+#     x3 = SVector{N3,T}([x[j] for j=N1+N2+1:N1+N2+N3])
 #     in(x1, d1) && in(x2, d2) && in(x3, d3)
 # end
 

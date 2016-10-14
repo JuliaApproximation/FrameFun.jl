@@ -10,7 +10,7 @@ end
 EmptyDomain{N}(::Type{Val{N}} = Val{1}) = EmptyDomain{N}()
 EmptyDomain(n::Int) = EmptyDomain(Val{n})
 
-in(x::Vec, d::EmptyDomain) = false
+in{N}(x::SVector{N}, d::EmptyDomain{N}) = false
 
 # Arithmetic operations
 
@@ -32,7 +32,7 @@ end
 RnDomain{N}(::Type{Val{N}} = Val{1}) = RnDomain{N}()
 RnDomain(n::Int) = RnDomain(Val{n})
 
-in(x::Vec, d::RnDomain) = true
+in{N}(x::SVector{N}, d::RnDomain{N}) = true
 
 # Arithmetic operations
 
@@ -45,9 +45,9 @@ show(io::IO, e::RnDomain) = print(io, "the ", ndims(e), "-dimensional Euclidean 
 
 
 
-###############################################################################################
+################################################################################
 ### An interval
-###############################################################################################
+################################################################################
 
 immutable Interval{T} <: AbstractDomain{1}
     a     ::  T
@@ -62,7 +62,7 @@ Interval{T <: Number}(a::T, b::T) = Interval{T}(a, b)
 Interval{S <: Number, T <: Number}(a::S, b::T) = Interval(promote(a,b)...)
 
 
-in(x::Vec, d::Interval) = in(x[1], d.a, d.b)
+in(x::SVector{1}, d::Interval) = in(x[1], d.a, d.b)
 
 left(d::Interval) = d.a
 right(d::Interval) = d.b
@@ -115,23 +115,23 @@ end
 
 immutable Disk{S,T} <: AbstractDomain{2}
     radius    ::  S
-    center    ::  Vec{2,T}
+    center    ::  SVector{2,T}
 
-    Disk(radius = one(S), center = Vec(0,0)) = new(radius, center)
+    Disk(radius = one(S), center = SVector(0,0)) = new(radius, center)
 end
 
 Disk() = Disk{Int,Float64}()
 Disk{T}(::Type{T}) = Disk{T,T}()
 
 Disk{T}(radius::T) = Disk{T,T}(radius)
-Disk{S,T}(radius::S, center::Vec{2,T}) = Disk{S,T}(radius, center)
-Disk(radius, center::AbstractVector) = Disk(radius, Vec(center...))
+Disk{S,T}(radius::S, center::SVector{2,T}) = Disk{S,T}(radius, center)
+Disk(radius, center::AbstractVector) = Disk(radius, SVector{2}(center))
 
-in(x::Vec, c::Disk) = (x[1]-c.center[1])^2 + (x[2]-c.center[2])^2 <= c.radius^2
+in(x::SVector{2}, c::Disk) = (x[1]-c.center[1])^2 + (x[2]-c.center[2])^2 <= c.radius^2
 
 ## Arithmetic operations
 
-(+)(c::Disk, x::Vec{2}) = Disk(c.radius, c.center+x)
+(+)(c::Disk, x::SVector{2}) = Disk(c.radius, c.center+x)
 
 (*)(c::Disk, x::Number) = Disk(c.radius*x, c.center*x)
 
@@ -150,24 +150,24 @@ const unitdisk = Disk()
 
 immutable Ball{S,T} <: AbstractDomain{3}
     radius    ::  S
-    center    ::  Vec{3,T}
+    center    ::  SVector{3,T}
 
-    Ball(radius = one(S), center = Vec{3,T}(0, 0, 0)) = new(radius, center)
+    Ball(radius = one(S), center = zeros(SVector{3,T})) = new(radius, center)
 end
 
 Ball() = Ball{Int,Float64}()
 Ball{T}(::Type{T}) = Ball{T,T}()
 
 Ball{T}(radius::T) = Ball{T,T}(radius)
-Ball{S,T}(radius::S, center::Vec{3,T}) = Ball{S,T}(radius, center)
-Ball(radius, center::AbstractVector) = Ball(radius, Vec(center...))
+Ball{S,T}(radius::S, center::SVector{3,T}) = Ball{S,T}(radius, center)
+Ball(radius, center::AbstractVector) = Ball(radius, SVector{3}(center))
 
 
-in(x::Vec, s::Ball) = (x[1]-s.center[1])^2 + (x[2]-s.center[2])^2 + (x[3]-s.center[3])^2 <= s.radius^2
+in(x::SVector{3}, s::Ball) = (x[1]-s.center[1])^2 + (x[2]-s.center[2])^2 + (x[3]-s.center[3])^2 <= s.radius^2
 
 ## Arithmetic operations
 
-(+)(s::Ball, x::Vec) = Ball(s.radius, s.center+x)
+(+)(s::Ball, x::SVector{3}) = Ball(s.radius, s.center+x)
 
 (*)(s::Ball, x::Number) = Ball(s.radius * x, s.center * x)
 

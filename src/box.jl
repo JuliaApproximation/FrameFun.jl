@@ -2,8 +2,8 @@
 
 "A BBox is an N-dimensional box specified by its bottom-left and top-right vertices."
 immutable BBox{N,T}
-    left        ::  Vec{N,T}
-    right       ::  Vec{N,T}
+    left        ::  SVector{N,T}
+    right       ::  SVector{N,T}
 end
 
 ndims{N,T}(::Type{BBox{N,T}}) = N
@@ -27,24 +27,24 @@ typealias BBox3{T} BBox{3,T}
 typealias BBox4{T} BBox{4,T}
 
 # Dimension-specific constructors
-BBox(a::Number, b::Number) = BBox( Vec(a), Vec(b) )
-BBox(a, b, c, d) = BBox( Vec(a,c), Vec(b,d) )
-BBox(a, b, c, d, e, f) = BBox( Vec(a,c,e), Vec(b,d,f) )
-BBox(a, b, c, d, e, f, g, h) = BBox( Vec(a,c,e,g), Vec(b,d,f,h) )
+BBox(a::Number, b::Number) = BBox( SVector(a), SVector(b) )
+BBox(a, b, c, d) = BBox( SVector(a,c), SVector(b,d) )
+BBox(a, b, c, d, e, f) = BBox( SVector(a,c,e), SVector(b,d,f) )
+BBox(a, b, c, d, e, f, g, h) = BBox( SVector(a,c,e,g), SVector(b,d,f,h) )
 
-BBox(left, right) = BBox(Vec(left...), Vec(right...))
+BBox(left, right) = BBox(SVector{length(left)}(left), SVector{length(right)}(right))
 
 tensorproduct(b::BBox) = b
 tensorproduct(b::BBox, n::Int) = tensorproduct([b for i=1:n]...)
 tensorproduct(b1::BBox, b2::BBox, boxes::BBox...) =
-    tensorproduct(BBox(Vec(b1.left..., b2.left...), Vec(b1.right..., b2.right...)), boxes...)
+    tensorproduct(BBox(SVector(b1.left..., b2.left...), SVector(b1.right..., b2.right...)), boxes...)
 
 # ⊗{N1,N2,T,S}(b1::BBox{N1,T}, b2::BBox{N2,S}) =
 #     BBox(promote_type(T,S)[left(b1)..., left(b2)...], promote_type(T,S)[right(b1)..., right(b2)...])
 
 left(b::BBox) = b.left
 left(b::BBox, dim) = b.left[dim]
-# In 1D we return a scalar rather than a Vec{1}
+# In 1D we return a scalar rather than a SVector{1}
 left(b::BBox1) = b.left[1]
 
 right(b::BBox) = b.right
@@ -67,8 +67,8 @@ equispaced_grid{N}(box::BBox{N}, n::Int) = equispaced_grid(box, ntuple(x->n, Val
 equispaced_aspect_grid{N}(box::BBox{N}, n::Int) = equispaced_grid(box, ntuple(i->round(Int,n*(left(box)[i]-right(box)[i])/(left(box)[1]-right(box)[1])), Val{N}))
 
 # Extend a box by a factor of t[i] in each dimension
-function extend{N,T}(b::BBox{N,T}, t::Vec{N,T})
-    r = Vec{N,T}( [ t[i]*size(b,i) for i in 1:N ] )
+function extend{N,T}(b::BBox{N,T}, t::SVector{N,T})
+    r = SVector{N,T}( [ t[i]*size(b,i) for i in 1:N ] )
     BBox(left(b), left(b) + r)
 end
 
@@ -86,8 +86,8 @@ within(a, b) = (a[1] >= b[1]) && (a[2] <= b[2])
 (*)(a::Number,b::BBox) = BBox(a*b.left, a*b.right)
 (*)(b::BBox, a::Number) = a*b
 (/)(b::BBox, a::Number) = BBox(b.left/a, b.right/a)
-(+)(b::BBox, a::AnyVector) = BBox(b.left+a, b.right+a)
-(+)(a::AnyVector, b::BBox) = b+a
+(+)(b::BBox, a::AbstractVector) = BBox(b.left+a, b.right+a)
+(+)(a::AbstractVector, b::BBox) = b+a
 (-)(b::BBox, a::Vector) = BBox(b.left-a, b.right-a)
 
 # Operations on boxes: union and intersection
@@ -102,10 +102,10 @@ volume(box::BBox) = prod(right(box)-left(box))
 
 # There has to be a neater way...
 # The implementation of isapprox for Vec is for use in the definition of isapprox for BBox
-isapprox(v1::Vec{1}, v2::Vec{1}) = (v1[1] ≈ v2[1])
-isapprox(v1::Vec{2}, v2::Vec{2}) = (v1[1] ≈ v2[1]) && (v1[2] ≈ v2[2])
-isapprox(v1::Vec{3}, v2::Vec{3}) = (v1[1] ≈ v2[1]) && (v1[2] ≈ v2[2]) && (v1[3] ≈ v2[3])
-isapprox(v1::Vec{4}, v2::Vec{4}) = (v1[1] ≈ v2[1]) && (v1[2] ≈ v2[2]) && (v1[3] ≈ v2[3]) && (v1[4] ≈ v2[4])
+isapprox(v1::SVector{1}, v2::SVector{1}) = (v1[1] ≈ v2[1])
+isapprox(v1::SVector{2}, v2::SVector{2}) = (v1[1] ≈ v2[1]) && (v1[2] ≈ v2[2])
+isapprox(v1::SVector{3}, v2::SVector{3}) = (v1[1] ≈ v2[1]) && (v1[2] ≈ v2[2]) && (v1[3] ≈ v2[3])
+isapprox(v1::SVector{4}, v2::SVector{4}) = (v1[1] ≈ v2[1]) && (v1[2] ≈ v2[2]) && (v1[3] ≈ v2[3]) && (v1[4] ≈ v2[4])
 
 isapprox(b1::BBox, b2::BBox) = (b1.left ≈ b2.left) && (b1.right ≈ b2.right)
 

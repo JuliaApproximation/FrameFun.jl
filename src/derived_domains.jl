@@ -11,7 +11,7 @@ immutable Characteristic{N,T} <: AbstractDomain{N}
 end
 
 
-in(x::Vec, c::Characteristic) = c.char(x)
+in{N}(x::SVector{N}, c::Characteristic{N}) = c.char(x)
 
 boundingbox(c::Characteristic) = c.box
 
@@ -37,7 +37,7 @@ union(d1::AbstractDomain, d2::AbstractDomain) = (d1 == d2 ? d1 : DomainUnion(d1,
 
 
 # The union of two domains corresponds to a logical OR of their characteristic functions
-in(x::Vec, d::DomainUnion) = in(x, d.d1) || in(x, d.d2)
+in(x::SVector, d::DomainUnion) = in(x, d.d1) || in(x, d.d2)
 
 function in(g::AbstractGrid, d::DomainUnion)
     z1 = in(g, d.d1)
@@ -72,7 +72,7 @@ end
 DomainIntersection{N}(d1::AbstractDomain{N},d2::AbstractDomain{N}) = DomainIntersection{typeof(d1),typeof(d2),N}(d1, d2)
 
 # The intersection of two domains corresponds to a logical AND of their characteristic functions
-in(x::Vec, d::DomainIntersection) = in(x, d.d1) && in(x, d.d2)
+in(x::SVector, d::DomainIntersection) = in(x, d.d1) && in(x, d.d2)
 
 function in(g::AbstractGrid, d::DomainIntersection)
     z1 = in(g, d.d1)
@@ -120,7 +120,7 @@ DomainDifference{N}(d1::AbstractDomain{N}, d2::AbstractDomain{N}) = DomainDiffer
 setdiff(d1::AbstractDomain, d2::AbstractDomain) = DomainDifference(d1, d2)
 
 # The difference between two domains corresponds to a logical AND NOT of their characteristic functions
-in(x::Vec, d::DomainDifference) = in(x, d.d1) && (~in(x, d.d2))
+in(x::SVector, d::DomainDifference) = in(x, d.d1) && (~in(x, d.d2))
 
 function in(g::AbstractGrid, d::DomainDifference)
     z1 = in(g, d.d1)
@@ -151,7 +151,7 @@ end
 
 revolve(d::AbstractDomain{2}) = RevolvedDomain(d)
 
-function in(x::Vec, d::RevolvedDomain)
+function in(x::SVector{3}, d::RevolvedDomain)
     r = sqrt(x[2]^2+x[3])
     phi = atan2(x[2]/x[1])
     theta = acos(x[3]/r)
@@ -170,22 +170,22 @@ end
 ### A rotated domain
 ###############################################################################################
 
-immutable RotatedDomain{D,T,N} <: AbstractDomain{N}
+immutable RotatedDomain{D,T,N,L} <: AbstractDomain{N}
    d                 ::  D
    angle             ::  Vector{T}
-   rotationmatrix    ::  Mat{N,N,T}
+   rotationmatrix    ::  SMatrix{N,N,T,L}
 
     RotatedDomain(d,angle,rotationmatrix) = new(d, angle, rotationmatrix)
 end
 
 # Rotation in positive direction
-rotationmatrix(theta) = Mat{2,2,typeof(theta)}([cos(theta) -sin(theta); sin(theta) cos(theta)])
+rotationmatrix(theta) = SMatrit{2,2}([cos(theta) -sin(theta); sin(theta) cos(theta)])
 # Rotation about X-axis (phi), Y-axis (theta) and Z-axis (psi)
 rotationmatrix(phi,theta,psi) =
-   Mat{3,3,typeof(phi)}([cos(theta)*cos(psi) cos(phi)*sin(psi)+sin(phi)*sin(theta)*cos(psi) sin(phi)*sin(psi)-cos(phi)*sin(theta)*cos(psi); -cos(theta)*sin(psi) cos(phi)*cos(psi)-sin(phi)*sin(theta)*sin(psi) sin(phi)*cos(psi)+cos(phi)*sin(theta)*sin(psi); sin(theta) -sin(phi)*cos(theta) cos(phi)*cos(theta)])
+   SMatrix{3,3}([cos(theta)*cos(psi) cos(phi)*sin(psi)+sin(phi)*sin(theta)*cos(psi) sin(phi)*sin(psi)-cos(phi)*sin(theta)*cos(psi); -cos(theta)*sin(psi) cos(phi)*cos(psi)-sin(phi)*sin(theta)*sin(psi) sin(phi)*cos(psi)+cos(phi)*sin(theta)*sin(psi); sin(theta) -sin(phi)*cos(theta) cos(phi)*cos(theta)])
 
-RotatedDomain{N,T}(d::AbstractDomain{N}, angle::Vector{T}, m::Mat{N,N,T} = rotationmatrix(theta)) =
-   RotatedDomain{typeof(d),T,N}(d, angle, m)
+RotatedDomain{N,T}(d::AbstractDomain{N}, angle::Vector{T}, m::SMatrix{N,N,T} = rotationmatrix(theta)) =
+   RotatedDomain{typeof(d),T,N,N*N}(d, angle, m)
 
 RotatedDomain(d::AbstractDomain{2}, theta::Number) = RotatedDomain{2,typeof(theta),typeof(d)}(d, [theta], rotationmatrix(theta))
 # types annotated to remove ambiguity
@@ -194,8 +194,7 @@ RotatedDomain{T,D}(d::D, phi::T, theta::T, psi::T) = RotatedDomain{3,T,D}(d, [ph
 rotate{T}(d::AbstractDomain{2}, theta::T) = RotatedDomain(d, theta)
 rotate{T}(d::AbstractDomain{3}, phi::T, theta::T, psi::T) = RotatedDomain(d, phi, theta, psi)
 
-in(x::Vec, d::RotatedDomain) = in(d.rotationmatrix*x, d.d
-)
+in(x::SVector, d::RotatedDomain) = in(d.rotationmatrix*x, d.d)
 (==)(d1::RotatedDomain, d2::RotatedDomain) = (d1.d == d2.d) && (d1.angle == d2.angle) #&& (d1.rotationmatrix == d2.rotationmatrix)
 
 # very crude bounding box (doesn't work!!!)
@@ -219,13 +218,11 @@ end
 
 ScaledDomain{N,T}(domain::AbstractDomain{N}, scalefactor::T) = ScaledDomain{typeof(domain),T,N}(domain, scalefactor)
 
-domain(s::ScaledDomain) = d.domain
+domain(d::ScaledDomain) = d.domain
 
-scalefactor(s::ScaledDomain) = d.scalefactor
+scalefactor(d::ScaledDomain) = d.scalefactor
 
-function in(x::Vec, d::ScaledDomain)
-    in(x/d.scalefactor, d.domain)
-end
+in(x::SVector, d::ScaledDomain) = in(x/d.scalefactor, d.domain)
 
 (*)(d::AbstractDomain, x::Number) = ScaledDomain(d, x)
 (*)(d::ScaledDomain, x::Number) = ScaledDomain(domain(d), x*scalefactor(d))
@@ -240,23 +237,23 @@ boundingbox(s::ScaledDomain) = scalefactor(s) * boundingbox(s.domain)
 
 immutable TranslatedDomain{D,T,N} <: AbstractDomain{N}
     domain  ::  D
-    trans   ::  Vec{N,T}
+    trans   ::  SVector{N,T}
 
     TranslatedDomain(domain::AbstractDomain{N}, trans) = new(domain, trans)
 end
 
-TranslatedDomain{N}(domain::AbstractDomain{N}, trans::Vec{N}) = TranslatedDomain{typeof(domain),eltype(trans),N}(domain, trans)
+TranslatedDomain{N}(domain::AbstractDomain{N}, trans::SVector{N}) = TranslatedDomain{typeof(domain),eltype(trans),N}(domain, trans)
 
 domain(d::TranslatedDomain) = d.domain
 
 translationvector(d::TranslatedDomain) = d.trans
 
-function in(x::Vec, d::TranslatedDomain)
+function in{D,T,N}(x::SVector{N}, d::TranslatedDomain{D,T,N})
     in(x-d.trans, d.domain)
 end
 
-(+)(d::AbstractDomain, trans::Vec) = TranslatedDomain(d, trans)
-(+)(d::TranslatedDomain, trans::Vec) = TranslatedDomain(domain(d), trans+translationvector(d))
+(+)(d::AbstractDomain, trans::SVector) = TranslatedDomain(d, trans)
+(+)(d::TranslatedDomain, trans::SVector) = TranslatedDomain(domain(d), trans+translationvector(d))
 
 boundingbox(d::TranslatedDomain) = boundingbox(domain(d)) + translationvector(d)
 
@@ -284,7 +281,7 @@ next(d::DomainCollection, state) = next(d.list, state)
 
 done(d::DomainCollection, state) = done(d.list, state)
 
-function in(x::Vec, dc::DomainCollection)
+function in{N}(x::SVector{N}, dc::DomainCollection{N})
     z = false
     for d in dc
         z = z || in(x, d)

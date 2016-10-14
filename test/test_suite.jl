@@ -3,7 +3,7 @@ module test_suite
 
 using BasisFunctions
 using FrameFuns
-using FixedSizeArrays
+using StaticArrays
 using Base.Test
 FE = FrameFuns
 BA = BasisFunctions
