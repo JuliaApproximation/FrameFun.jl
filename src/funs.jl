@@ -107,7 +107,7 @@ function abserror{N}(f::Function,F::FrameFun{N};vals::Int=200)
         for j in 1:N
             point[j]=left(box)[j]+(right(box)[j]-left(box)[j])*rand(1)[1]
         end
-        N == 1 ? vpoint = point[1] : vpoint = SVector{N}(point)
+        vpoint = SVector{N}(point)
         if in(vpoint,domain(F))
             elements+=1
             error+=abs(f(vpoint...)-F(vpoint...))

@@ -46,7 +46,7 @@ function computemandelbrotgrid(g::AbstractGrid{2}, maxiter, threshold)
     mask
 end
 
-function in(g::AbstractGrid{2}, m::Mandelbrot)
+function indomain(g::AbstractGrid{2}, m::Mandelbrot)
     if (left(g) ≈ left(m.box)) && (right(g) ≈ right(m.box))
         if haskey(m.maskcache, size(g,1))
             mask = m.maskcache[size(g,1)]
@@ -68,7 +68,7 @@ function isapprox{T}(v::SVector{2,T}, t::Tuple{T,T})
 end
 boundingbox(m::Mandelbrot) = m.box
 
-in(x::SVector{2}, m::Mandelbrot) = mandelbrotiteration(x, m.maxiter, m.threshold)
+indomain(x::SVector{2}, m::Mandelbrot) = mandelbrotiteration(x, m.maxiter, m.threshold)
 
 show(io::IO, m::Mandelbrot) = print(io, "The Mandelbrot set")
 
@@ -117,7 +117,7 @@ function computejuliasetgrid(g::AbstractGrid{2}, c, maxiter)
     mask
 end
 
-function in(g::AbstractGrid{2}, js::JuliaSet)
+function indomain(g::AbstractGrid{2}, js::JuliaSet)
     if isequal(left(g),left(js.box)) && isequal(right(g),right(js.box))
         if haskey(js.maskcache, size(g,1))
             mask = js.maskcache[size(g,1)]
@@ -131,7 +131,7 @@ function in(g::AbstractGrid{2}, js::JuliaSet)
     mask
 end
 
-in(x::SVector{2}, js::JuliaSet) = juliasetiteration(x, js.c, js.maxiter)
+indomain(x::SVector{2}, js::JuliaSet) = juliasetiteration(x, js.c, js.maxiter)
 
 show(io::IO, js::JuliaSet) = print(io, "A particular Julia Set also known as the Douady rabbit")
 

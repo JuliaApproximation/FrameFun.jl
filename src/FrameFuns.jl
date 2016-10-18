@@ -12,7 +12,7 @@ import Base: +, *, /, ==, |, &, -, \
 
 import Base: intersect, union, isapprox, setdiff
 
-import Base: length, eltype, size, push!, ctranspose, similar
+import Base: length, eltype, size, push!, ctranspose, inv, similar
 
 import Base: eachindex, start, next, done, getindex, in
 
@@ -20,8 +20,8 @@ import Base: show, showcompact, call, convert
 
 import Base: ndims
 
-# import PyPlot: plot
 
+# Imports from BasisFunctions follow
 import BasisFunctions: composite_length, ⊗, tensorproduct, flatten,
     compose, elements, element
 
@@ -70,8 +70,6 @@ export Mandelbrot, JuliaSet
 # from DiffEquation.jl
 export BoundaryCondition, DiffEquation, solve
 
-# from plots.jl
-#export plot, plot_error, plot_samples, plot_domain, plot_image
 # from recipes.jl
 
 

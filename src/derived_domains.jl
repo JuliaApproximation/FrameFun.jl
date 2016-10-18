@@ -1,9 +1,9 @@
 # derived_domains.jl
 
 
-###############################################################################################
+################################################################################
 ### A domain described by a characteristic function
-###############################################################################################
+################################################################################
 
 immutable Characteristic{N,T} <: AbstractDomain{N}
     char    ::  Function
@@ -11,7 +11,7 @@ immutable Characteristic{N,T} <: AbstractDomain{N}
 end
 
 
-in{N}(x::SVector{N}, c::Characteristic{N}) = c.char(x)
+indomain(x, c::Characteristic) = c.char(x)
 
 boundingbox(c::Characteristic) = c.box
 
@@ -20,9 +20,9 @@ show(io::IO, c::Characteristic) = print(io, "a domain described by a characteris
 
 
 
-###############################################################################################
+################################################################################
 ### The union of two domains
-###############################################################################################
+################################################################################
 
 immutable DomainUnion{D1,D2,N} <: AbstractDomain{N}
     d1    ::  D1
@@ -37,11 +37,11 @@ union(d1::AbstractDomain, d2::AbstractDomain) = (d1 == d2 ? d1 : DomainUnion(d1,
 
 
 # The union of two domains corresponds to a logical OR of their characteristic functions
-in(x::SVector, d::DomainUnion) = in(x, d.d1) || in(x, d.d2)
+indomain(x, d::DomainUnion) = in(x, d.d1) || in(x, d.d2)
 
-function in(g::AbstractGrid, d::DomainUnion)
-    z1 = in(g, d.d1)
-    z2 = in(g, d.d2)
+function indomain_grid(g::AbstractGrid, d::DomainUnion)
+    z1 = indomain_grid(g, d.d1)
+    z2 = indomain_grid(g, d.d2)
     z1 | z2
 end
 
@@ -58,9 +58,9 @@ function show(io::IO, d::DomainUnion)
 end
 
 
-###############################################################################################
+################################################################################
 ### The intersection of two domains
-###############################################################################################
+################################################################################
 
 immutable DomainIntersection{D1,D2,N} <: AbstractDomain{N}
     d1    ::  D1
@@ -72,11 +72,11 @@ end
 DomainIntersection{N}(d1::AbstractDomain{N},d2::AbstractDomain{N}) = DomainIntersection{typeof(d1),typeof(d2),N}(d1, d2)
 
 # The intersection of two domains corresponds to a logical AND of their characteristic functions
-in(x::SVector, d::DomainIntersection) = in(x, d.d1) && in(x, d.d2)
+indomain(x, d::DomainIntersection) = in(x, d.d1) && in(x, d.d2)
 
-function in(g::AbstractGrid, d::DomainIntersection)
-    z1 = in(g, d.d1)
-    z2 = in(g, d.d2)
+function indomain_grid(g::AbstractGrid, d::DomainIntersection)
+    z1 = indomain_grid(g, d.d1)
+    z2 = indomain_grid(g, d.d2)
     z1 & z2
 end
 
@@ -104,9 +104,9 @@ function show(io::IO, d::DomainIntersection)
 end
 
 
-###############################################################################################
+################################################################################
 ### The difference between two domains
-###############################################################################################
+################################################################################
 
 immutable DomainDifference{D1,D2,N} <: AbstractDomain{N}
     d1    ::  D1
@@ -120,11 +120,11 @@ DomainDifference{N}(d1::AbstractDomain{N}, d2::AbstractDomain{N}) = DomainDiffer
 setdiff(d1::AbstractDomain, d2::AbstractDomain) = DomainDifference(d1, d2)
 
 # The difference between two domains corresponds to a logical AND NOT of their characteristic functions
-in(x::SVector, d::DomainDifference) = in(x, d.d1) && (~in(x, d.d2))
+indomain(x, d::DomainDifference) = indomain(x, d.d1) && (~indomain(x, d.d2))
 
-function in(g::AbstractGrid, d::DomainDifference)
-    z1 = in(g, d.d1)
-    z2 = in(g, d.d2)
+function indomain_grid(g::AbstractGrid, d::DomainDifference)
+    z1 = indomain_grid(g, d.d1)
+    z2 = indomain_grid(g, d.d2)
     z1 & (~z2)
 end
 
@@ -141,9 +141,9 @@ function show(io::IO, d::DomainDifference)
 end
 
 
-###############################################################################################
+################################################################################
 ### A revolved domain is a 2D-domain rotated about the X-axis
-###############################################################################################
+################################################################################
 
 immutable RevolvedDomain{D} <: AbstractDomain{3}
     d     ::  D
@@ -151,11 +151,11 @@ end
 
 revolve(d::AbstractDomain{2}) = RevolvedDomain(d)
 
-function in(x::SVector{3}, d::RevolvedDomain)
+function indomain(x, d::RevolvedDomain)
     r = sqrt(x[2]^2+x[3])
     phi = atan2(x[2]/x[1])
     theta = acos(x[3]/r)
-    in((x[1],r), d.d)
+    indomain((x[1],r), d.d)
 end
 
 
@@ -166,9 +166,9 @@ function show(io::IO, r::RevolvedDomain)
 end
 
 
-###############################################################################################
+################################################################################
 ### A rotated domain
-###############################################################################################
+################################################################################
 
 immutable RotatedDomain{D,T,N,L} <: AbstractDomain{N}
    d                 ::  D
@@ -179,7 +179,7 @@ immutable RotatedDomain{D,T,N,L} <: AbstractDomain{N}
 end
 
 # Rotation in positive direction
-rotationmatrix(theta) = SMatrit{2,2}([cos(theta) -sin(theta); sin(theta) cos(theta)])
+rotationmatrix(theta) = SMatrix{2,2}([cos(theta) -sin(theta); sin(theta) cos(theta)])
 # Rotation about X-axis (phi), Y-axis (theta) and Z-axis (psi)
 rotationmatrix(phi,theta,psi) =
    SMatrix{3,3}([cos(theta)*cos(psi) cos(phi)*sin(psi)+sin(phi)*sin(theta)*cos(psi) sin(phi)*sin(psi)-cos(phi)*sin(theta)*cos(psi); -cos(theta)*sin(psi) cos(phi)*cos(psi)-sin(phi)*sin(theta)*sin(psi) sin(phi)*cos(psi)+cos(phi)*sin(theta)*sin(psi); sin(theta) -sin(phi)*cos(theta) cos(phi)*cos(theta)])
@@ -194,7 +194,7 @@ RotatedDomain{T,D}(d::D, phi::T, theta::T, psi::T) = RotatedDomain{3,T,D}(d, [ph
 rotate{T}(d::AbstractDomain{2}, theta::T) = RotatedDomain(d, theta)
 rotate{T}(d::AbstractDomain{3}, phi::T, theta::T, psi::T) = RotatedDomain(d, phi, theta, psi)
 
-in(x::SVector, d::RotatedDomain) = in(d.rotationmatrix*x, d.d)
+indomain(x, d::RotatedDomain) = indomain(d.rotationmatrix*x, d.d)
 
 (==)(d1::RotatedDomain, d2::RotatedDomain) = (d1.d == d2.d) && (d1.angle == d2.angle) #&& (d1.rotationmatrix == d2.rotationmatrix)
 
@@ -203,38 +203,10 @@ boundingbox(r::RotatedDomain)= sqrt(2)*boundingbox(r.d)
 
 
 
-###############################################################################################
-### A scaled domain
-###############################################################################################
 
-# Note that the Euclidean plane is scaled, not just the domain itself.
-# Hence, the location of the origin matters. Two times a circle of radius 1 at a distance d of the origin
-# becomes a circle of radius 2 at a distance 2d of the origin.
-immutable ScaledDomain{D,T,N} <: AbstractDomain{N}
-    domain      ::  D
-    scalefactor ::  T
-
-    ScaledDomain(domain::AbstractDomain{N}, scalefactor) = new(domain, scalefactor)
-end
-
-ScaledDomain{N,T}(domain::AbstractDomain{N}, scalefactor::T) = ScaledDomain{typeof(domain),T,N}(domain, scalefactor)
-
-domain(d::ScaledDomain) = d.domain
-
-scalefactor(d::ScaledDomain) = d.scalefactor
-
-in(x::SVector, d::ScaledDomain) = in(x/d.scalefactor, d.domain)
-
-(*)(d::AbstractDomain, x::Number) = ScaledDomain(d, x)
-(*)(d::ScaledDomain, x::Number) = ScaledDomain(domain(d), x*scalefactor(d))
-
-boundingbox(s::ScaledDomain) = scalefactor(s) * boundingbox(s.domain)
-
-
-
-###############################################################################################
+################################################################################
 ### A translated domain
-###############################################################################################
+################################################################################
 
 immutable TranslatedDomain{D,T,N} <: AbstractDomain{N}
     domain  ::  D
@@ -249,8 +221,8 @@ domain(d::TranslatedDomain) = d.domain
 
 translationvector(d::TranslatedDomain) = d.trans
 
-function in{D,T,N}(x::SVector{N}, d::TranslatedDomain{D,T,N})
-    in(x-d.trans, d.domain)
+function indomain(x, d::TranslatedDomain)
+    indomain(x-d.trans, d.domain)
 end
 
 (+)(d::AbstractDomain, trans::SVector) = TranslatedDomain(d, trans)
@@ -260,9 +232,9 @@ boundingbox(d::TranslatedDomain) = boundingbox(domain(d)) + translationvector(d)
 
 
 
-###############################################################################################
+################################################################################
 ### A collection of domains
-###############################################################################################
+################################################################################
 
 type DomainCollection{N} <: AbstractDomain{N}
     list    ::  Vector{AbstractDomain{N}}
@@ -282,17 +254,17 @@ next(d::DomainCollection, state) = next(d.list, state)
 
 done(d::DomainCollection, state) = done(d.list, state)
 
-function in{N}(x::SVector{N}, dc::DomainCollection{N})
+function indomain(x, dc::DomainCollection)
     z = false
     for d in dc
-        z = z || in(x, d)
+        z = z || indomain(x, d)
     end
     z
 end
 
-function evalgrid!(z, g::AbstractGrid, dc::DomainCollection)
+function indomain_grid!(z, g::AbstractGrid, dc::DomainCollection)
     for d in dc
-        evalgrid!(z, g, d)
+        indomain_grid!(z, g, d)
     end
     z
 end
@@ -313,15 +285,69 @@ end
 show(io::IO, d::DomainCollection) = print(io, "a collection of ", length(d.list), " domains")
 
 
+#######################
+# Mapped domains
+#######################
 
-## An affinely mapped domain
+"""
+A MappedDomain consists of a domain and a bidirectional map. The forward map
+maps the domain onto the mapped domain, and the inverse map maps it back.
+A point lies in the mapped domain, if the inverse map of that point lies in the
+original domain.
+"""
+# TODO: experiment with leaving out the type parameters and implement fast indomain_grid
+immutable MappedDomain{DOMAIN <: AbstractDomain,FMAP,IMAP,N} <: AbstractDomain{N}
+    domain  ::  DOMAIN
+    fmap    ::  FMAP
+    imap    ::  IMAP
 
-# Find the map that maps a and b to c and d
-# function affinemap(a, b, c, d)
+    # With this inner constructor we enforce that N is the dimension of the domain
+    MappedDomain(domain::AbstractDomain{N}, fmap, imap) = new(domain, fmap, imap)
+end
 
-# end
+MappedDomain{N}(domain::AbstractDomain{N}, fmap, imap = inv(fmap)) =
+    MappedDomain{typeof(domain),typeof(fmap),typeof(imap),N}(domain, fmap, imap)
 
-# type AffineMapDomain{N,T} <: AbstractDomain{N,T}
-#     A
-#     box
-# end
+domain(d::MappedDomain) = d.domain
+
+forward_map(d::MappedDomain) = d.fmap
+inverse_map(d::MappedDomain) = d.imap
+
+indomain(x, d::MappedDomain) = indomain(d.imap*x, d.domain)
+
+# Now here is a problem: how do we compute a bounding box, without extra knowledge
+# of the map? We can only do this for some maps.
+boundingbox(d::MappedDomain) = mapped_boundingbox(boundingbox(domain(d)), forward_map(d))
+
+function mapped_boundingbox(box::BBox1, fmap)
+    l,r = box[1]
+    ml = fmap*l
+    mr = fmap*r
+    BBox(min(ml,mr), max(ml,mr))
+end
+
+# In general, we can at least map all the corners of the bounding box of the
+# underlying domain, and compute a bounding box for those points. This will be
+# correct for affine maps.
+function mapped_boundingbox{N}(box::BBox{N}, fmap)
+    crn = corners(box)
+    mapped_corners = [fmap*c for c in crn]
+    left = [minimum([mapped_corners[i][j] for i in 1:length(mapped_corners)]) for j in 1:N]
+    right = [maximum([mapped_corners[i][j] for i in 1:length(mapped_corners)]) for j in 1:N]
+    BBox(left, right)
+end
+
+# We can do better for diagonal maps, since the problem simplifies: each dimension
+# is mapped independently.
+mapped_boundingbox{N}(box::BBox{N}, fmap::DiagonalMap) =
+    tensorproduct([mapped_boundingbox(element(box,i), element(fmap,i)) for i in 1:N]...)
+
+
+(*)(map::AbstractMap, domain::AbstractDomain) = MappedDomain(domain, map)
+
+(*)(map::AbstractMap, d::MappedDomain) = MappedDomain(domain(d), map*forward_map(d), inverse_map(d)*inv(map))
+
+(*){N,T}(domain::AbstractDomain{N}, a::T) = scaling_map(a*ones(SVector{N,T})...) * domain
+
+(+){N,T}(d::AbstractDomain{N}, x::SVector{N,T}) = AffineMap(eye(SMatrix{N,N,T}),x) * d
+(+){N}(d::AbstractDomain{N}, x::AbstractVector) = d + SVector{N}(x)

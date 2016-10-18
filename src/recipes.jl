@@ -17,7 +17,7 @@ end
     seriestype --> :heatmap
     B = boundingbox(dom)
     grid = equispaced_aspect_grid(B,n)
-    Z = evalgrid(grid, dom)
+    Z = indomain_grid(grid, dom)
     grid, 1./Z
 end
 
@@ -31,9 +31,8 @@ function postprocess(B::DomainFrame, grid, vals)
     end
     vals
 end
-        
+
 # Plotgrids are determined by the underlying set
 plotgrid(B::DomainFrame, n) = plotgrid(basis(B),n)
 
 # Plot a domain
-

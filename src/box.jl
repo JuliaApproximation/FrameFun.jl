@@ -13,6 +13,7 @@ eltype{N,T}(::Type{BBox{N,T}}) = T
 
 # Generic functions for composite types:
 element(b::BBox, j::Int) = BBox(b.left[j], b.right[j])
+element(b::BBox, range::Range) = BBox(b.left[range], b.right[range])
 elements(b::BBox) = tuple([element(b,j) for j in 1:ndims(b)]...)
 elements(b::BBox{1}) = (element(b,1),)
 elements(b::BBox{2}) = (element(b,1),element(b,2))
@@ -73,7 +74,7 @@ function extend{N,T}(b::BBox{N,T}, t::SVector{N,T})
 end
 
 in{N,T}(x, b::BBox{N,T}, dim) = (x[dim] >= left(b,dim)-10eps(T)) && (x[dim] <= right(b,dim)+10eps(T))
-in(x, b::BBox) = reduce(&, [in(x,b,i) for i = 1:ndims(b)])
+in(x, b::BBox) = reduce(&, in(x,b,i) for i = 1:ndims(b))
 
 within(a, b) = (a[1] >= b[1]) && (a[2] <= b[2])
 ⊂(b1::BBox{1}, b2::BBox{1}) = within(b1[1], b2[1])
@@ -108,6 +109,18 @@ isapprox(v1::SVector{3}, v2::SVector{3}) = (v1[1] ≈ v2[1]) && (v1[2] ≈ v2[2]
 isapprox(v1::SVector{4}, v2::SVector{4}) = (v1[1] ≈ v2[1]) && (v1[2] ≈ v2[2]) && (v1[3] ≈ v2[3]) && (v1[4] ≈ v2[4])
 
 isapprox(b1::BBox, b2::BBox) = (b1.left ≈ b2.left) && (b1.right ≈ b2.right)
+
+corners(b::BBox{1}) = [b.left[1], b.right[1]]
+
+corners(b::BBox{2}) = [SVector(b.left[1], b.left[2]), SVector(b.left[1], b.right[2]),
+    SVector(b.right[1], b.left[2]), SVector(b.right[1], b.right[2])]
+
+function corners{N}(b::BBox{N})
+    c1 = corners(element(b,1:N-1))
+    c2left = [SVector(c..., b.left[N]) for c in c1]
+    c2right = [SVector(c..., b.right[N]) for c in c1]
+    vcat(c2left, c2right)
+end
 
 
 show(io::IO, c::BBox{1}) = print(io, "the interval [", left(c, 1), ",", right(c, 1), "]")

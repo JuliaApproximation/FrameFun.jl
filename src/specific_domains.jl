@@ -1,16 +1,17 @@
 # specific_domains.jl
 
-###############################################################################################
+################################################################################
 ### An empty domain
-###############################################################################################
+################################################################################
 
 immutable EmptyDomain{N} <: AbstractDomain{N}
 end
 
-EmptyDomain{N}(::Type{Val{N}} = Val{1}) = EmptyDomain{N}()
-EmptyDomain(n::Int) = EmptyDomain(Val{n})
+EmptyDomain() = EmptyDomain{1}()
+EmptyDomain(n::Int) = EmptyDomain{n}()
+# The typesafe constructor is EmptyDomain{N}()
 
-in{N}(x::SVector{N}, d::EmptyDomain{N}) = false
+indomain(x, d::EmptyDomain) = false
 
 # Arithmetic operations
 
@@ -22,17 +23,18 @@ in{N}(x::SVector{N}, d::EmptyDomain{N}) = false
 show(io::IO, d::EmptyDomain) = print(io, "an empty domain")
 
 
-###############################################################################################
+################################################################################
 ### The space R^n
-###############################################################################################
+################################################################################
 
 immutable RnDomain{N} <: AbstractDomain{N}
 end
 
-RnDomain{N}(::Type{Val{N}} = Val{1}) = RnDomain{N}()
-RnDomain(n::Int) = RnDomain(Val{n})
+RnDomain() = RnDomain{1}()
+RnDomain(n::Int) = RnDomain{n}()
+# The typesafe constructor is RnDomain{N}()
 
-in{N}(x::SVector{N}, d::RnDomain{N}) = true
+indomain(x, d::RnDomain) = true
 
 # Arithmetic operations
 
@@ -52,17 +54,19 @@ show(io::IO, e::RnDomain) = print(io, "the ", ndims(e), "-dimensional Euclidean 
 immutable Interval{T} <: AbstractDomain{1}
     a     ::  T
     b     ::  T
+
+    Interval(a = -1, b = 1) = new(a,b)
 end
 
-Interval() = Interval(-1, 1)
+Interval() = Interval{Int}()
 
-Interval{T}(::Type{T}) = Interval{T}(-1, 1)
+Interval{T}(::Type{T}) = Interval{T}()
 
 Interval{T <: Number}(a::T, b::T) = Interval{T}(a, b)
 Interval{S <: Number, T <: Number}(a::S, b::T) = Interval(promote(a,b)...)
 
 
-in(x::SVector{1}, d::Interval) = in(x[1], d.a, d.b)
+indomain(x, d::Interval) = in(x, d.a, d.b)
 
 left(d::Interval) = d.a
 right(d::Interval) = d.b
@@ -71,7 +75,8 @@ right(d::Interval) = d.b
 
 (+)(d::Interval, x::Number) = Interval(d.a+x, d.b+x)
 
-(*)(d::Interval, x::Number) = Interval(x*d.a, x*d.b)
+(*)(a::Number, d::Interval) = Interval(a*d.a, a*d.b)
+(*)(d::Interval, a::Number) = a * d
 
 
 boundingbox(d::Interval) = BBox(left(d), right(d))
@@ -100,53 +105,70 @@ function intersect(d1::Interval, d2::Interval)
     d = right(d2)
 
     if (b < c) || (a > d)
-        EmptyDomain(Val{1})
+        EmptyDomain(Val{1}())
     else
         Interval(max(a, c), min(b, d))
     end
 end
 
 
+################################################################################
+### The unit ball in N dimensions
+################################################################################
 
-
-###############################################################################################
-### A disk
-###############################################################################################
-
-immutable Disk{S,T} <: AbstractDomain{2}
-    radius    ::  S
-    center    ::  SVector{2,T}
-
-    Disk(radius = one(S), center = SVector(0,0)) = new(radius, center)
+immutable UnitBall{N} <: AbstractDomain{N}
 end
 
-Disk() = Disk{Int,Float64}()
-Disk{T}(::Type{T}) = Disk{T,T}()
+indomain(x, ::UnitBall{1}) = -1 <= x <= 1
+indomain(x, ::UnitBall{2}) = x[1]^2+x[2]^2 <= 1
+indomain(x, ::UnitBall{3}) = x[1]^2+x[2]^2+x[3]^2 <= 1
 
-Disk{T}(radius::T) = Disk{T,T}(radius)
-Disk{S,T}(radius::S, center::SVector{2,T}) = Disk{S,T}(radius, center)
-Disk(radius, center::AbstractVector) = Disk(radius, SVector{2}(center))
+indomain{N}(x, ::UnitBall{N}) = sum(map(t->t^2, x)) <= 1
 
-in(x::SVector{2}, c::Disk) = (x[1]-c.center[1])^2 + (x[2]-c.center[2])^2 <= c.radius^2
+boundingbox{N}(::UnitBall{N}) = BBox{N,Int}(-ones(SVector{N,Int}), ones(SVector{N,Int}))
 
-## Arithmetic operations
+Disk() = UnitBall{2}()
+Disk(radius) = radius * Disk()
+Disk(radius, center) = radius * Disk() + center
 
-(+)(c::Disk, x::SVector{2}) = Disk(c.radius, c.center+x)
-
-(*)(c::Disk, x::Number) = Disk(c.radius*x, c.center*x)
-
-
-boundingbox(c::Disk) = BBox((c.center[1]-c.radius,c.center[2]-c.radius),(c.center[1]+c.radius,c.center[2]+c.radius))
-
-show(io::IO, c::Disk) = print(io, "a disk of radius ", c.radius, " centered at ", c.center)
+# ################################################################################
+# ### A disk
+# ################################################################################
+#
+# immutable Disk{S,T} <: AbstractDomain{2}
+#     radius    ::  S
+#     center    ::  SVector{2,T}
+#
+#     Disk(radius = one(S), center = SVector(0,0)) = new(radius, center)
+# end
+#
+# Disk() = Disk{Int,Float64}()
+# Disk{T}(::Type{T}) = Disk{T,T}()
+#
+# Disk{T}(radius::T) = Disk{T,T}(radius)
+# Disk{S,T}(radius::S, center::SVector{2,T}) = Disk{S,T}(radius, center)
+# Disk(radius, center::AbstractVector) = Disk(radius, SVector{2}(center))
+#
+# indomain(x, c::Disk) = (x[1]-c.center[1])^2 + (x[2]-c.center[2])^2 <= c.radius^2
+#
+# ## Arithmetic operations
+#
+# (+)(c::Disk, x::SVector{2}) = Disk(c.radius, c.center+x)
+#
+# (*)(c::Disk, x::Number) = Disk(c.radius*x, c.center*x)
+#
+#
+# boundingbox(c::Disk) = BBox((c.center[1]-c.radius,c.center[2]-c.radius),(c.center[1]+c.radius,c.center[2]+c.radius))
+#
+# show(io::IO, c::Disk) = print(io, "a disk of radius ", c.radius, " centered at ", c.center)
 
 const unitdisk = Disk()
 
 
 
-###############################################################################################
+################################################################################
 ### A 3D ball
-###############################################################################################
+################################################################################
 
 immutable Ball{S,T} <: AbstractDomain{3}
     radius    ::  S
@@ -163,7 +185,7 @@ Ball{S,T}(radius::S, center::SVector{3,T}) = Ball{S,T}(radius, center)
 Ball(radius, center::AbstractVector) = Ball(radius, SVector{3}(center))
 
 
-in(x::SVector{3}, s::Ball) = (x[1]-s.center[1])^2 + (x[2]-s.center[2])^2 + (x[3]-s.center[3])^2 <= s.radius^2
+indomain(x, s::Ball) = (x[1]-s.center[1])^2 + (x[2]-s.center[2])^2 + (x[3]-s.center[3])^2 <= s.radius^2
 
 ## Arithmetic operations
 
@@ -182,9 +204,9 @@ const unitball = Ball()
 
 
 
-###############################################################################################
+################################################################################
 ### An n-dimensional cube
-###############################################################################################
+################################################################################
 
 Cube() = Cube(Val{1})
 
@@ -205,9 +227,9 @@ const unitcube = Cube(Val{3})
 
 
 
-###############################################################################################
+################################################################################
 ### A cylinder
-###############################################################################################
+################################################################################
 
 
 cylinder(radius = 1, length = 1) = Disk(radius) ⊗ Interval(0,length)
