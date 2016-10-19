@@ -10,6 +10,7 @@ immutable Characteristic{N,T} <: AbstractDomain{N}
     box    ::  BBox{N,T}
 end
 
+Characteristic{N}(char::Function, dom::AbstractDomain{N}) = Characteristic(char,boundingbox(dom))
 
 in(x::Vec, c::Characteristic) = c.char(x)
 
@@ -37,6 +38,7 @@ union(d1::AbstractDomain, d2::AbstractDomain) = (d1 == d2 ? d1 : DomainUnion(d1,
 
 
 # The union of two domains corresponds to a logical OR of their characteristic functions
+
 in(x::Vec, d::DomainUnion) = in(x, d.d1) || in(x, d.d2)
 
 function in(g::AbstractGrid, d::DomainUnion)

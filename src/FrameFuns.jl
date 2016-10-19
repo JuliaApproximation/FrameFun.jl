@@ -58,6 +58,8 @@ export ⊂
 export Interval, Disk, Square, Cube, Ball, Cylinder, atomium, boundingbox
 export ⊗, ∩, composite_length, element, elements
 
+# from derived_domains.jl
+export Characteristic
 export numtype
 
 # from funs.jl
