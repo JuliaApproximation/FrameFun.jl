@@ -35,8 +35,8 @@ import BasisFunctions: operator, coefficients, set, is_basis, is_frame, is_diago
     extend, extension_size, extension_operator, restriction_operator,
     default_approximation_operator, has_extension
 
-import BasisFunctions: call_set, call_set!, call_expansion_with_set,
-call_expansion_with_set!, call_expansion, call_expansion!, call_element, name
+import BasisFunctions: call_set, call_set!, call_setexpansion,
+    call_setexpansion!, call_expansion, call_expansion!, call_element, name
 
 import BasisFunctions: differentiate, ∂x, ∂y, ∂z, ∫∂x, ∫∂y, ∫∂z, ∫, is_compatible
 
