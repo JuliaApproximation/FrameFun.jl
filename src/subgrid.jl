@@ -28,6 +28,7 @@ function MaskedGrid{N,T}(grid::AbstractGrid{N,T}, mask, indices)
 	MaskedGrid{typeof(grid),typeof(mask),N,T}(grid, mask, indices)
 end
 
+# These are for the assignment to indices in the function below.
 @generated convert{N}(::Type{NTuple{N,Int}},i::CartesianIndex{N}) = :(@ntuple $N k->i[k])
 
 function MaskedGrid{N}(grid::AbstractGrid{N}, domain::AbstractDomain{N})
