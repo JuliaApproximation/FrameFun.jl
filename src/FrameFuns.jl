@@ -35,8 +35,8 @@ import BasisFunctions: operator, coefficients, set, is_basis, is_frame, is_diago
     extend, extension_size, extension_operator, restriction_operator,
     default_approximation_operator, has_extension
 
-import BasisFunctions: call_set, call_set!, call_setexpansion,
-    call_setexpansion!, call_expansion, call_expansion!, call_element, name
+import BasisFunctions: eval_set_element, eval_element, eval_expansion,
+    call_set_expansion, name
 
 import BasisFunctions: differentiate, ∂x, ∂y, ∂z, ∫∂x, ∫∂y, ∫∂z, ∫, is_compatible
 
@@ -62,7 +62,7 @@ export numtype
 export ExpFun, ChebyFun, Fun, FrameFun, sampling_grid, domain, abserror
 
 # from domainframe.jl
-export DomainFrame, basis, call_set, call_set!
+export DomainFrame, basis
 
 # from fractal.jl
 export Mandelbrot, JuliaSet
