@@ -74,6 +74,8 @@ export Mandelbrot, JuliaSet
 # from DiffEquation.jl
 export BoundaryCondition, DiffEquation, solve
 
+export Fun
+
 # from plots.jl
 #export plot, plot_error, plot_samples, plot_domain, plot_image
 # from recipes.jl
@@ -107,5 +109,7 @@ include("fe_approx.jl")
 include("recipes.jl")
 
 include("diffequation.jl")
+
+include("constructors.jl")
 
 end # module

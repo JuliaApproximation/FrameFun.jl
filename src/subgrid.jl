@@ -29,7 +29,7 @@ function MaskedGrid{N,T}(grid::AbstractGrid{N,T}, mask, indices)
 end
 
 # These are for the assignment to indices in the function below.
-@generated convert{N}(::Type{NTuple{N,Int}},i::CartesianIndex{N}) = :(@ntuple $N k->i[k])
+convert{N}(::Type{NTuple{N,Int}},i::CartesianIndex{N}) = ntuple(k->i[k],N)
 
 function MaskedGrid{N}(grid::AbstractGrid{N}, domain::AbstractDomain{N})
     mask = in(grid, domain)
@@ -229,7 +229,7 @@ function boundary{TG,N,T}(g::TensorProductGrid{TG,N,T},dom::AbstractDomain{N})
             neighbours[j-1,i]=(floor(Int,(j-1)/(2^(i-1))) % 2)
         end
     end
-    CartesianNeighbours = Array(CartesianIndex{N},2^N)
+    CartesianNeighbours = Array(CartesianIndex{N},2^N-1)
     for j=1:2^N-1
         CartesianNeighbours[j]=CartesianIndex{N}(neighbours[j,:]...)
     end
