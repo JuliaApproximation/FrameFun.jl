@@ -28,7 +28,7 @@ function AFun(f::Function, set::FunctionSet, domain::AbstractDomain; no_checkpoi
   # tol = default_cutoff(FE_DiscreteProblem(domain, set, 2; options...))
   tol = 10*10^(4/5*log10(eps(numtype(set))))
   rgrid=random_grid_in_domain(domain,numtype(set);vals=no_checkpoints)
-
+  error = Inf
   random_f=sample(rgrid, f, eltype(f(rgrid[1]...)))
   random_F=zeros(ELT,no_checkpoints)
   for logn = 6:max_logn_coefs
@@ -40,7 +40,7 @@ function AFun(f::Function, set::FunctionSet, domain::AbstractDomain; no_checkpoi
       return F
     end
   end
-  warn("Maximum number of coefficients exceeded")
+  warn("Maximum number of coefficients exceeded, error is $(error)")
   set=resize(set,2^(max_logn_coefs+1))
   F=Fun(f, set, domain; options...)
 end
@@ -55,7 +55,7 @@ for f in (:cos, :sin, :tan, :sinh, :cosh, :tanh,
   :asin, :acos, :atan,
   :sqrt, :cbrt, :exp, :log)
     @eval begin
-        Base.$f(F::FrameFun) = AFun(x->Base.$f(F(x)),basis(F),domain(F))
+        Base.$f(F::FrameFun; options...) = AFun(x->Base.$f(F(x)), basis(F), domain(F); options...)
     end
 end
 
@@ -70,8 +70,8 @@ FunConstructor{N,T}(space::FunctionSpace{N,T}, domain::AbstractDomain{N}) = FunC
 
 domain(constructor::FunConstructor) = constructor.domain
 space(constructor::FunConstructor) = constructor.space
-# will not work for multiple set
-@compat (constructor::FunConstructor)(f::Function; options...) = AFun(f, FunctionSet(space(constructor),0),
+
+(constructor::FunConstructor)(f::Function; options...) = AFun(f, FunctionSet(space(constructor),0),
     domain(constructor); options...)
 
 construct(constructor::FunConstructor, f::Function; options...) = AFun(f, FunctionSet(space(constructor),0),
