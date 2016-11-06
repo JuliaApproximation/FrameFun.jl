@@ -24,7 +24,7 @@ import Base: ndims
 
 # import PyPlot: plot
 
-import BasisFunctions: composite_length, ⊗, tensorproduct, flatten,
+import BasisFunctions: composite_length, ⊗, ⊕, tensorproduct, flatten,
     compose, elements, element
 
 import BasisFunctions: src, dest, matrix, matrix!, apply!, apply_inplace!, numtype
@@ -35,7 +35,7 @@ import BasisFunctions: operator, coefficients, set, is_basis, is_frame, is_diago
     transform_pre_operator, transform_post_operator, evaluation_operator, interpolation_operator,
     differentiation_operator, antidifferentiation_operator, approximation_operator,
     extend, extension_size, extension_operator, restriction_operator,
-    default_approximation_operator, has_extension
+    default_approximation_operator, has_extension, has_transform
 
 import BasisFunctions: call_set, call_set!, call_expansion_with_set,
 call_expansion_with_set!, call_expansion, call_expansion!, call_element, name
@@ -74,7 +74,11 @@ export Mandelbrot, JuliaSet
 # from DiffEquation.jl
 export BoundaryCondition, DiffEquation, solve
 
-export Fun
+# from FunConstructor.jl
+export FunConstructor
+
+# from space.jl
+export FourierSpace, ChebyshevSpace, ⊕, add, construct
 
 # from plots.jl
 #export plot, plot_error, plot_samples, plot_domain, plot_image
@@ -109,6 +113,8 @@ include("fe_approx.jl")
 include("recipes.jl")
 
 include("diffequation.jl")
+
+include("space.jl")
 
 include("constructors.jl")
 
