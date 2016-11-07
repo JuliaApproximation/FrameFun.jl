@@ -24,7 +24,7 @@ immutable FE_DirectSolver{ELT} <: FE_Solver{ELT}
     QR      ::  Factorization
 
     function FE_DirectSolver(problem::FE_Problem)
-        new(problem, qrfact(matrix(operator(problem))))
+        new(problem, qrfact(matrix(operator(problem)),Val{true}))
     end
 end
 
