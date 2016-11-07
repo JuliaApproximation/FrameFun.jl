@@ -18,13 +18,15 @@ import Base: length, eltype, size, push!, ctranspose, similar
 
 import Base: eachindex, start, next, done, getindex, in
 
-import Base: show, showcompact, call, convert
+import Base: show, showcompact, call
+
+import Base: promote, promote_rule, convert, promote_eltype
 
 import Base: ndims
 
 # import PyPlot: plot
 
-import BasisFunctions: composite_length, ⊗, ⊕, tensorproduct, flatten,
+import BasisFunctions: composite_length, ⊗, tensorproduct, flatten,
     compose, elements, element
 
 import BasisFunctions: src, dest, matrix, matrix!, apply!, apply_inplace!, numtype
@@ -35,7 +37,7 @@ import BasisFunctions: operator, coefficients, set, is_basis, is_frame, is_diago
     transform_pre_operator, transform_post_operator, evaluation_operator, interpolation_operator,
     differentiation_operator, antidifferentiation_operator, approximation_operator,
     extend, extension_size, extension_operator, restriction_operator,
-    default_approximation_operator, has_extension, has_transform
+    default_approximation_operator, has_extension
 
 import BasisFunctions: call_set, call_set!, call_expansion_with_set,
 call_expansion_with_set!, call_expansion, call_expansion!, call_element, name

@@ -8,23 +8,23 @@ eltype{N,T}(::Type{AbstractSpace{N,T}}) = T
 eltype{B <: AbstractSpace}(::Type{B}) = eltype(supertype(B))
 FunctionSet{N,T}(space::AbstractSpace{N,T},n) = resize(basis(space),n)
 
-immutable FunctionSpace{N,T,RT} <: AbstractSpace{N,T}
+immutable FunctionSpace{N,T} <: AbstractSpace{N,T}
   basis   ::    FunctionSet{N,T}
-  bbox    ::    BBox{N,RT}
+  # bbox    ::    BBox{N,RT}
 
-  FunctionSpace(basis::FunctionSet) = new(basis,boundingbox(basis))
-  FunctionSpace(basis::FunctionSet, bbox::BBox) = new(rescale(basis,left(bbox),right(bbox)),bbox)
+  FunctionSpace(basis::FunctionSet) = new(basis)
+  FunctionSpace(basis::FunctionSet, bbox::BBox) = new(rescale(basis,left(bbox),right(bbox)))
 end
 
-FunctionSpace{N,T}(basis::FunctionSet{N,T}) = FunctionSpace{N,T,real(T)}(basis)
-FunctionSpace{N,T}(basis::FunctionSet{N,T}, bbox::BBox) = FunctionSpace{N,T,real(T)}(basis,bbox)
+FunctionSpace{N,T}(basis::FunctionSet{N,T}) = FunctionSpace{N,T}(basis)
+FunctionSpace{N,T}(basis::FunctionSet{N,T}, bbox::BBox) = FunctionSpace{N,T}(basis,bbox)
 # place somewhere else?
 FourierSpace(left=0,right=1) = FunctionSpace(FourierBasis(0),BBox(left,right))
 ChebyshevSpace(left=-1,right=1) = FunctionSpace(ChebyshevBasis(0),BBox(left,right))
 # place somewhere else?
 boundingbox{N,T}(f::FunctionSet{N,T}) = BBox{N,real(T)}(left(f),right(f))
 
-boundingbox(space::FunctionSpace) = space.bbox
+boundingbox(space::FunctionSpace) = boundingbox(basis)
 
 "Tensorproduct of function space"
 tensorproduct(space::FunctionSpace) = space
