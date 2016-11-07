@@ -24,7 +24,7 @@ ChebyshevSpace(left=-1,right=1) = FunctionSpace(ChebyshevBasis(0),BBox(left,righ
 # place somewhere else?
 boundingbox{N,T}(f::FunctionSet{N,T}) = BBox{N,real(T)}(left(f),right(f))
 
-boundingbox(space::FunctionSpace) = boundingbox(basis)
+boundingbox(space::FunctionSpace) = boundingbox(space.basis)
 
 "Tensorproduct of function space"
 tensorproduct(space::FunctionSpace) = space

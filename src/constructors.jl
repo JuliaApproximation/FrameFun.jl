@@ -22,27 +22,29 @@ function random_grid_in_domain{T}(domain::AbstractDomain,::Type{T}=Float64;vals:
     return ScatteredGrid(points)
 end
 
-function AFun(f::Function, set::FunctionSet, domain::AbstractDomain; no_checkpoints=200, max_logn_coefs=8, options...)
+function AFun(f::Function, set::FunctionSet, domain::AbstractDomain;
+    no_checkpoints=200, max_logn_coefs=8, tol=NaN, options...)
   ELT = eltype(f, set)
+  F = nothing
   # TODO Decide which is best
   # tol = default_cutoff(FE_DiscreteProblem(domain, set, 2; options...))
-  tol = 10*10^(4/5*log10(eps(numtype(set))))
+  isequal(tol,NaN) && (tol = 10*10^(4/5*log10(eps(numtype(set)))))
   rgrid=random_grid_in_domain(domain,numtype(set);vals=no_checkpoints)
   error = Inf
   random_f=sample(rgrid, f, eltype(f(rgrid[1]...)))
   random_F=zeros(ELT,no_checkpoints)
-  for logn = 6:max_logn_coefs
+  for logn = 4:max_logn_coefs
     set=resize(set,2^logn)
     F=Fun(f, set, domain; options...)
     random_F=F(rgrid)
     error = reduce(max,abs(random_F-random_f))
+    @printf "Error with %d coefficients is %1.3e\n" (2^(logn*ndims(set))) error
     if error<tol
       return F
     end
   end
   warn("Maximum number of coefficients exceeded, error is $(error)")
-  set=resize(set,2^(max_logn_coefs+1))
-  F=Fun(f, set, domain; options...)
+  F
 end
 
 # function AFun{S<:FunctionSet}(f::Function, ::Type{S}, domain::AbstractDomain,
