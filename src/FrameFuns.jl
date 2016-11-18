@@ -27,7 +27,7 @@ import Base: ndims
 # import PyPlot: plot
 
 import BasisFunctions: composite_length, ⊗, tensorproduct, flatten,
-    compose, elements, element
+    compose, elements, element, ⊕
 
 import BasisFunctions: src, dest, matrix, matrix!, apply!, apply_inplace!, numtype
 
@@ -76,7 +76,7 @@ export Mandelbrot, JuliaSet
 # from DiffEquation.jl
 export BoundaryCondition, DiffEquation, solve
 
-# from FunConstructor.jl
+# from constructors.jl
 export FunConstructor
 
 # from space.jl
