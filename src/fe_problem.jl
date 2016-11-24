@@ -93,8 +93,8 @@ function FE_DiscreteProblem(domain::AbstractDomain, fbasis1, fbasis2, tbasis1, t
     transform2 = transform_operator(tbasis2, fbasis2; options...)
     itransform2 = transform_operator(fbasis2, tbasis2; options...)
 
-    # TODO: we also need to incorporate the transform_pre_operator somewhere
-    normalization = f_restriction * transform_post_operator(tbasis2, fbasis2; options...) * f_extension
+    # TODO: we also need to incorporate the transform_operator_pre somewhere
+    normalization = f_restriction * transform_operator_post(tbasis2, fbasis2; options...) * f_extension
 
     op  = t_restriction * itransform2 * f_extension
     opt = f_restriction * transform2 * t_extension
