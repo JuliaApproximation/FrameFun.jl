@@ -48,12 +48,12 @@ domain(fun::FrameFun, set::DomainFrame) = domain(set)
 basis(fun::FrameFun, set::DomainFrame) = basis(set)
 
 function matrix(fun::FrameFun)
-    problem = fe_problem(domain(fun), basis(fun), eltype(fun))[1]
+    problem = FE_DiscreteProblem(domain(fun), basis(fun), 2)
     matrix(operator(problem))
 end
 
 function sampling_grid(fun::FrameFun)
-    problem = fe_problem(domain(fun), basis(fun), eltype(fun))[1]
+    problem = FE_DiscreteProblem(domain(fun), basis(fun), 2)
     grid(time_basis_restricted(problem))
 end
 
