@@ -28,9 +28,10 @@ end
 
   The number of points is chosen adaptively.
 """
-function AFunSimple(f::Function, set::FunctionSet, domain::AbstractDomain;
+function fun_simple(f::Function, set::FunctionSet, domain::AbstractDomain;
     no_checkpoints=200, max_logn_coefs=8, tol=NaN, options...)
   ELT = eltype(f, set)
+  N = ndims(set)
   F = nothing
   # TODO Decide which is best
   # tol = default_cutoff(FE_DiscreteProblem(domain, set, 2; options...))
@@ -39,12 +40,14 @@ function AFunSimple(f::Function, set::FunctionSet, domain::AbstractDomain;
   error = Inf
   random_f=sample(rgrid, f, eltype(f(rgrid[1]...)))
   random_F=zeros(ELT,no_checkpoints)
-  for logn = 4:max_logn_coefs
-    set=resize(set,2^logn)
+  n = 8
+  set = resize(set,n)
+  while length(set) <= 2^(max_logn_coefs)
+    set=resize(set,extension_size(set))
     F=Fun(f, set, domain; options...)
     random_F=F(rgrid)
     error = maximum(abs(random_F-random_f))
-    @printf "Error with %d coefficients is %1.3e\n" (2^(logn*ndims(set))) error
+    @printf "Error with %d coefficients is %1.3e\n" (length(set)) error
     if error<tol
       return F
     end
@@ -52,15 +55,16 @@ function AFunSimple(f::Function, set::FunctionSet, domain::AbstractDomain;
   warn("Maximum number of coefficients exceeded, error is $(error)")
   F
 end
-
+Base.isnan(::Tuple) = false
 """
   Create approximation to function with with a function set in a domain.
 
   The number of points is chosen adaptively.
 """
-function AFun(f::Function, set::FunctionSet, domain::AbstractDomain;
+function fun_optimal_N(f::Function, set::FunctionSet, domain::AbstractDomain;
     no_checkpoints=200, max_logn_coefs=9, tol=NaN, options...)
   ELT = eltype(f, set)
+  N = ndims(set)
   F = nothing
   # TODO Decide which is best
   # tol = default_cutoff(FE_DiscreteProblem(domain, set, 2; options...))
@@ -70,28 +74,34 @@ function AFun(f::Function, set::FunctionSet, domain::AbstractDomain;
   random_f=sample(rgrid, f, eltype(f(rgrid[1]...)))
   random_F=zeros(ELT,no_checkpoints)
   N0 = NaN; Nmax = NaN; emax = NaN; Nmin = 1; emin = NaN
-  logn = 4
-  while logn <= max_logn_coefs
-    if isnan(Nmax)
-      n = 2^logn
-      logn += 1
-    else
-      n = round(Int,(log(emin)*Nmin + log(emax)*Nmax)/(log(emin) + log(emax)))
-    end
+  n = 8
+  set=resize(set, n)
+  while length(set) <= 2^max_logn_coefs
     # println(n, ": ", Nmin, " ", emin, " ", Nmax, " ", emax)
-    set=resize(set, n)
+
     F=Fun(f, set, domain; options...)
     random_F=F(rgrid)
     error = maximum(abs(random_F-random_f))
-    @printf "Error with %d coefficients is %1.3e (%1.3e)\n" (n^ndims(F)) error tol
+    @printf "Error with %d coefficients is %1.3e (%1.3e)\n" (length(set)) error tol
     if (error<1e-2) && isnan(N0)
       N0 = n
     end
     error < tol ? (Nmax=n; emax=error) : (Nmin=n; emin=error)
-    if Nmax-Nmin <= 1
+    if !isnan(Nmax) && !isnan(Nmin) && sum(abs(collect(Nmax)-collect(Nmin))) <= N
       set=resize(set, Nmax)
       return Fun(f, set, domain; options...)
     end
+    # Decide on new n
+    if isnan(Nmax)
+      n = extension_size(set)
+    else
+      if N==1
+        n = round(Int,(log(emin)*Nmin + log(emax)*Nmax)/(log(emin) + log(emax)))
+      else
+        n = round(Int,(log(emin)*collect(Nmin) + log(emax)*collect(Nmin))/(log(emin) + log(emax)))
+      end
+    end
+    set=resize(set, n)
   end
   warn("Maximum number of coefficients exceeded, error is $(error)")
   F
@@ -106,30 +116,82 @@ end
   Approximation f-(p_1+p_2) using phi_3,
   ...
 """
-function GreedyFun(f::Function, set::FunctionSet, domain::AbstractDomain;
-    maxn = 20, options...)
+function fun_greedy(f::Function, set::FunctionSet1d, domain::AbstractDomain;
+    maxn = 200, tol = NaN, options...)
   ELT = eltype(f, set)
+  isequal(tol,NaN) && (tol = sqrt(eps(real(ELT))))
+  set = promote_eltype(set, ELT)
   coeffs = zeros(ELT,maxn)
-  GreedyFun(f, promote_eltype(set, ELT), domain, coeffs; options...)
-end
-
-# TODO assumes grid of set exists
-function GreedyFun(f::Function, set::FunctionSet, domain::AbstractDomain, coeffs;
-    tol=NaN, options...)
-  maxn = length(coeffs)
+  c = zeros(ELT,maxn)
   frame = FrameFuns.domainframe(domain, set)
   frame = resize(frame, maxn)
-  fcoeffs = sample(grid(frame), f)
-  println(ctranspose(fcoeffs))
-  for n in 1:maxn
-    phi = BasisFunctions.evaluation_matrix(frame[n], BasisFunctions.grid(frame))[:]
-    coeffs[n] = (phi\fcoeffs)[1]
-    p = coeffs[n]*phi
-    fcoeffs -= p
-  end
-  FrameFun(domain, resize(set, length(coeffs)), coeffs)
+  g = EquispacedGrid(maxn, left(domain), right(domain))
+  fcoeffs = sample(g, f)
+  fcoeffs = reshape(fcoeffs,(length(fcoeffs),1))
+  n = evaluate_coeffs!(fcoeffs, coeffs, c, set, frame, g, tol; options...)
+
+  F = FrameFun(domain, resize(set, n), coeffs[1:n])
+  @printf "Error with %d coefficients is %1.3e (%1.3e)\n" n abserror(f,F) tol
+  F
 end
 
+function evaluate_coeffs!(fcoeffs::Array, coeffs::Array, c::Array,
+    set::FunctionSet1d, frame::DomainFrame, g::AbstractGrid, tol; options...)
+  maxn = length(coeffs)
+  for n in 1:maxn
+    phis = BasisFunctions.evaluation_matrix(resize(frame,n), g)
+    c[1:n] = (phis[:,1:n]\fcoeffs)
+    coeffs[1:n] += c[1:n]
+    fcoeffs -= phis[:,1:n]*c[1:n]
+    if minimum(abs(coeffs[1:n]))<tol
+      return n
+    end
+
+    if n < maxn
+        set1 = resize(set,n)
+        set2 = resize(set,n+1)
+        e = extension_operator(set1,set2)
+        c[1:n+1] = apply(extension_operator(set1,set2), coeffs[1:n])
+        coeffs[1:n+1] = c[1:n+1]
+    end
+  end
+  return maxn
+end
+
+function evaluate_coeffs!(fcoeffs::Array, coeffs::Array, c::Array,
+    set::ChebyshevBasis, frame::DomainFrame, g::AbstractGrid, tol; options...)
+  maxn = length(coeffs)
+  phis = BasisFunctions.evaluation_matrix(frame, g)
+  for n in 1:maxn
+    c[1:n] = (phis[:,1:n]\fcoeffs)
+    coeffs[1:n] += c[1:n]
+    fcoeffs -= phis[:,1:n]*c[1:n]
+    if norm(coeffs[n])<tol
+      return n
+    end
+  end
+  return maxn
+end
+
+function evaluate_coeffs!(fcoeffs::Array, coeffs::Array, c::Array,
+    set::FourierBasis, frame::DomainFrame, g::AbstractGrid, tol; options...)
+  maxn = length(coeffs)
+  phis = BasisFunctions.evaluation_matrix(frame, g)
+  for n in 1:maxn
+    if iseven(n)
+      nothing
+    else
+      I = vcat(maxn-(n>>1)+1:maxn,1:(n>>1)+1)
+      c = (phis[:,I]\fcoeffs)
+      coeffs[I] += c
+      fcoeffs -= phis[:,I]*c
+    end
+    if norm(coeffs[n])<tol
+      return n
+    end
+  end
+  return maxn
+end
 
 # Allows following notation
 # f2 = cos(f1) with f1 a FrameFun.
@@ -137,7 +199,7 @@ for f in (:cos, :sin, :tan, :sinh, :cosh, :tanh,
   :asin, :acos, :atan,
   :sqrt, :cbrt, :exp, :log)
     @eval begin
-        Base.$f(F::FrameFun; options...) = AFun(x->Base.$f(F(x)), basis(F), domain(F); options...)
+        Base.$f(F::FrameFun, ; afun = fun_optimal_N, options...) = afun(x->Base.$f(F(x)), basis(F), domain(F); options...)
     end
 end
 
@@ -155,8 +217,7 @@ domain(constructor::FunConstructor) = constructor.domain
 space(constructor::FunConstructor) = constructor.space
 
 # Allows the notation F = FunCSTR(f) with F the approximation and f the function
-(constructor::FunConstructor)(f::Function; options...) = AFun(f, FunctionSet(space(constructor),0),
-    domain(constructor); options...)
+(constructor::FunConstructor)(f::Function; options...) = construct(constructor, f; options...)
 
-construct(constructor::FunConstructor, f::Function; options...) = AFun(f, FunctionSet(space(constructor),0),
+construct(constructor::FunConstructor, f::Function; afun = fun_optimal_N, options...) = afun(f, FunctionSet(space(constructor),0),
     domain(constructor); options...)
