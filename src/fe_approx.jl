@@ -5,6 +5,7 @@
 ## ExpFun(f::Function; n=n, T=T, args...) = Fun(FourierBasis, f ; args...)
 ## # one of three things should be provided: n(tuple), domain or basis
 ## # only n
+
 ## ExpFun(f::Function, n::Int)
 ## ExpFun{N}(f::Function, n::Ntuple{N}) = Fun(FourierBasis, f, domain; args...)
 
@@ -21,11 +22,12 @@ function Fun(f::Function, basis::FunctionSet, domain::AbstractDomain; options...
     FrameFun(domain, dest(A), coef)
 end
 
-
+# We assume f as a function is type stable.
 function eltype(f::Function, basis)
     ELT = eltype(basis)
-    RT = Base.return_types(f, fill(ELT, ndims(basis)) )
-    if (length(RT) > 0) && (RT[1] <: Complex)
+    # We only test for the return type in zero
+    RT = typeof(f(fill(zero(ELT),ndims(basis))...))
+    if (RT <: Complex)
         complexify(ELT)
     else
         ELT

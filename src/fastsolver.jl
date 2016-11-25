@@ -26,7 +26,7 @@ immutable FE_ProjectionSolver{ELT} <: FE_Solver{ELT}
         Wdest = src(operator(problem))
         W = MatrixOperator(Wsrc, Wdest, random_matrix)
         
-        USV = LAPACK.gesvd!('S','S',matrix(plunge_op * operator(problem) * W))
+        USV = LAPACK.gesdd!('S',matrix(plunge_op * operator(problem) * W))
         S = USV[2]
 
         maxind = findlast(S.>cutoff)
