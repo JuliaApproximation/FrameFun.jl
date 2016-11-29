@@ -10,7 +10,7 @@ using Compat
 
 using Base.Cartesian
 
-import Base: +, *, /, ==, |, &, -, \
+import Base: +, *, /, ==, |, &, -, \, <, <=, >, >=
 
 import Base: intersect, union, isapprox, setdiff
 
@@ -93,6 +93,8 @@ include("subgrid.jl")
 include("domainframe.jl")
 
 include("funs.jl")
+
+include("fourierdomains.jl")
 
 include("fe_problem.jl")
 

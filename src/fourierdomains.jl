@@ -1,7 +1,5 @@
 # fourierdomains.jl
 
-# Warning: currently not functional. TODO: update
-
 
 """
 A FourierDomain is a domain that is implicitly defined by a Fourier series.
@@ -9,29 +7,29 @@ Example: if relop is x -> x-2 > 0, then the Fourier domain is the domain where t
 Fourier series is greater than 2.
 """
 immutable FourierDomain{N,T} <: AbstractDomain{N}
-    f       ::  ExpFun{N,T}
+    f       ::  FrameFun{N,T}
     relop	::	Function
-    box     ::  FBox{N,T}
 end
 
-FourierDomain{N,T}(f::ExpFun{N,T}, relop::Function) = FourierDomain{N,T}(f, relop, dbox(f))
+FourierDomain{N,T}(f::FrameFun{N,T}, relop::Function) = FourierDomain{N,T}(f, relop)
 
-function in(x::AbstractVector, d::FourierDomain)
+function in(x::Vec, d::FourierDomain)
 	z = d.f(x)
-	d.relop(z)
+	in(x,domain(d.f)) && d.relop(z)
 end
 
-function in(g::Grid, d::FourierDomain)
+# TODO: add postprocessing so that x outside domain -> NaN
+function in(g::AbstractGrid, d::FourierDomain)
 	z = d.f(g)[1]
 	map(d.relop, z)
 end
 
-(<){T <: Number}(f::ExpFun, a::T) = FourierDomain(f, x-> x < a)
-(<=){T <: Number}(f::ExpFun, a::T) = FourierDomain(f, x-> x <= a)
-(>){T <: Number}(f::ExpFun, a::T) = FourierDomain(f, x-> x > a)
-(>=){T <: Number}(f::ExpFun, a::T) = FourierDomain(f, x-> x >= a)
+(<){T <: Number}(f::FrameFun, a::T) = FourierDomain(f, x-> x < a)
+(<=){T <: Number}(f::FrameFun, a::T) = FourierDomain(f, x-> x <= a)
+(>){T <: Number}(f::FrameFun, a::T) = FourierDomain(f, x-> x > a)
+(>=){T <: Number}(f::FrameFun, a::T) = FourierDomain(f, x-> x >= a)
 
-
+boundingbox(d::FourierDomain) = boundingbox(domain(d.f))
 
 """
 A ComparisonDomain is a domain that is implicitly defined by two Fourier series.
@@ -39,28 +37,29 @@ Example: if binop is (x,y) -> x > y, then the Fourier domain is the domain where
 Fourier series is greater than the second.
 """
 immutable ComparisonDomain{N,T} <: AbstractDomain{N}
-    f       ::  ExpFun{N,T}
-    g		::	ExpFun{N,T}
+    f       ::  FrameFun{N,T}
+    g		::	FrameFun{N,T}
     binop	::	Function
-    box     ::  FBox{N,T}
 end
 
-# TODO: We don't do any bound checking here. We should. Are the domains compatible?
-ComparisonDomain{N,T}(f::ExpFun{N,T}, g::ExpFun{N,T}, binop::Function) = FourierDomain{N,T}(f, g, binop, dbox(f))
+ComparisonDomain{N,T}(f::FrameFun{N,T}, g::FrameFun{N,T}, binop::Function) = ComparisonDomain{N,T}(f, g, binop)
 
-function in(x::AbstractVector, d::ComparisonDomain)
+function in(x::Vec, d::ComparisonDomain)
 	z1 = d.f(x)
 	z2 = d.g(x)
-	d.binop(z1, z2)
+	in(x,domain(d.f)) && in(x,domain(d.g)) && d.binop(z1, z2)
 end
 
-function in(g::Grid, d::ComparisonDomain)
+# TODO: add postprocessing so that x outside domain -> NaN
+function in(g::AbstractGrid, d::ComparisonDomain)
 	z1 = d.f(g)
 	z2 = d.g(g)
 	map(d.binop, z1, z2)
 end
 
-(<)(f::ExpFun, g::ExpFun) = ComparisonDomain(f, g, (x,y)-> x < y)
-(<=)(f::ExpFun, g::ExpFun) = ComparisonDomain(f, g, (x,y)-> x <= y)
-(>)(f::ExpFun, g::ExpFun) = ComparisonDomain(f, g, (x,y)-> x > y)
-(>=)(f::ExpFun, g::ExpFun) = ComparisonDomain(f, g, (x,y)-> x >= y)
+(<)(f::FrameFun, g::FrameFun) = ComparisonDomain(f, g, (x,y)-> x < y)
+(<=)(f::FrameFun, g::FrameFun) = ComparisonDomain(f, g, (x,y)-> x <= y)
+(>)(f::FrameFun, g::FrameFun) = ComparisonDomain(f, g, (x,y)-> x > y)
+(>=)(f::FrameFun, g::FrameFun) = ComparisonDomain(f, g, (x,y)-> x >= y)
+
+boundingbox(d::ComparisonDomain) = boundingbox(domain(d.f))+boundingbox(domain(d.g))

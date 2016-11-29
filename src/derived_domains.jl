@@ -131,7 +131,7 @@ function in(g::AbstractGrid, d::DomainDifference)
 end
 
 (-)(d1::AbstractDomain, d2::AbstractDomain) = setdiff(d1, d2)
-(\)(d1::AbstractDomain, d2::AbstractDomain) = setdiff(d1, d2)
+(\ )(d1::AbstractDomain, d2::AbstractDomain) = setdiff(d1, d2)
 
 
 boundingbox(d::DomainDifference) = boundingbox(d.d1)
