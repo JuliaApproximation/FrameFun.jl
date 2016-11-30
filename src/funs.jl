@@ -77,6 +77,11 @@ end
 
 show(io::IO, fun::FrameFun) = show(io, fun, set(fun))
 
+function show(io::IO, fun::FrameFun, set::FunctionSet)
+  println(io, "A ", ndims(fun), "-dimensional FrameFun with ", length(coefficients(fun)), " degrees of freedom.")
+  println(io, "Basis: ", name(set))
+end
+
 function show(io::IO, fun::FrameFun, set::DomainFrame)
     println(io, "A ", ndims(fun), "-dimensional FrameFun with ", length(coefficients(fun)), " degrees of freedom.")
     println(io, "Basis: ", name(basis(set)))

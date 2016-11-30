@@ -23,6 +23,20 @@ function random_grid_in_domain{T}(domain::AbstractDomain,::Type{T}=Float64;vals:
     end
     return ScatteredGrid(points)
 end
+
+"""
+  The residual of a FrameFun approximation of a Function
+"""
+function residual(f::Function, F1::FrameFun)
+    F2 = extension_operator(basis(F1))*F1
+    gbasis = BasisFunctions.grid(basis(F2))
+    mask = in(gbasis, domain(F2))
+    Ax = real(full_transform_operator(basis(F2)) * coefficients(F2))[mask]
+    b = sample(gbasis,f)[mask]
+    norm(Ax-b)
+end
+residual(F::FrameFun, f::Function) = norm(f,F)
+
 """
   Create approximation to function with with a function set in a domain.
 
@@ -56,6 +70,7 @@ function fun_simple(f::Function, set::FunctionSet, domain::AbstractDomain;
   F
 end
 Base.isnan(::Tuple) = false
+
 """
   Create approximation to function with with a function set in a domain.
 
@@ -112,85 +127,27 @@ end
 
   Let phi_i i=1..N basisfunctions.
   Take a LS of f with only phi_1, call the approximation p_1
-  Take a LS of f-p_1, using only phi_2, and call the approximation p_2
-  Approximation f-(p_1+p_2) using phi_3,
+  Take a LS of f-p_1, using only {phi_1,phi_2}, and call the approximation p_2
+  Approximation f-(p_1+p_2) using {phi_k}_{k=1}^3,
   ...
+  Stop the iteration when the residu of the approximation is smaller than the tolerance
+  or at the maximum number of iterations.
 """
-function fun_greedy(f::Function, set::FunctionSet1d, domain::AbstractDomain;
-    maxn = 200, tol = NaN, options...)
-  ELT = eltype(f, set)
-  isequal(tol,NaN) && (tol = sqrt(eps(real(ELT))))
-  set = promote_eltype(set, ELT)
-  coeffs = zeros(ELT,maxn)
-  c = zeros(ELT,maxn)
-  frame = FrameFuns.domainframe(domain, set)
-  frame = resize(frame, maxn)
-  g = EquispacedGrid(maxn, left(domain), right(domain))
-  fcoeffs = sample(g, f)
-  fcoeffs = reshape(fcoeffs,(length(fcoeffs),1))
-  n = evaluate_coeffs!(fcoeffs, coeffs, c, set, frame, g, tol; options...)
-
-  F = FrameFun(domain, resize(set, n), coeffs[1:n])
-  @printf "Error with %d coefficients is %1.3e (%1.3e)\n" n abserror(f,F) tol
-  F
-end
-
-function evaluate_coeffs!(fcoeffs::Array, coeffs::Array, c::Array,
-    set::FunctionSet1d, frame::DomainFrame, g::AbstractGrid, tol; options...)
-  maxn = length(coeffs)
-  for n in 1:maxn
-    phis = BasisFunctions.evaluation_matrix(resize(frame,n), g)
-    c[1:n] = (phis[:,1:n]\fcoeffs)
-    coeffs[1:n] += c[1:n]
-    fcoeffs -= phis[:,1:n]*c[1:n]
-    if minimum(abs(coeffs[1:n]))<tol
-      return n
+function fun_greedy(f::Function, set::FunctionSet, domain::FrameFuns.AbstractDomain;
+    maxn = 100, tol = NaN, options...)
+    isequal(tol,NaN) && (tol = 10*10^(4/5*log10(eps(numtype(set)))))
+    init_n = 4
+    set = resize(set,init_n)
+    F = Fun(x->0, set, domain; options...)
+    for n in init_n:maxn
+        set = resize(set,n)
+        p_i = Fun(x->(f(x)-F(x)), set, domain; options...)
+        F = F + p_i
+        if residual(f, F) < tol
+            return F
+        end
     end
-
-    if n < maxn
-        set1 = resize(set,n)
-        set2 = resize(set,n+1)
-        e = extension_operator(set1,set2)
-        c[1:n+1] = apply(extension_operator(set1,set2), coeffs[1:n])
-        coeffs[1:n+1] = c[1:n+1]
-    end
-  end
-  return maxn
-end
-
-function evaluate_coeffs!(fcoeffs::Array, coeffs::Array, c::Array,
-    set::ChebyshevBasis, frame::DomainFrame, g::AbstractGrid, tol; options...)
-  maxn = length(coeffs)
-  phis = BasisFunctions.evaluation_matrix(frame, g)
-  for n in 1:maxn
-    c[1:n] = (phis[:,1:n]\fcoeffs)
-    coeffs[1:n] += c[1:n]
-    fcoeffs -= phis[:,1:n]*c[1:n]
-    if norm(coeffs[n])<tol
-      return n
-    end
-  end
-  return maxn
-end
-
-function evaluate_coeffs!(fcoeffs::Array, coeffs::Array, c::Array,
-    set::FourierBasis, frame::DomainFrame, g::AbstractGrid, tol; options...)
-  maxn = length(coeffs)
-  phis = BasisFunctions.evaluation_matrix(frame, g)
-  for n in 1:maxn
-    if iseven(n)
-      nothing
-    else
-      I = vcat(maxn-(n>>1)+1:maxn,1:(n>>1)+1)
-      c = (phis[:,I]\fcoeffs)
-      coeffs[I] += c
-      fcoeffs -= phis[:,I]*c
-    end
-    if norm(coeffs[n])<tol
-      return n
-    end
-  end
-  return maxn
+    F
 end
 
 # Allows following notation
