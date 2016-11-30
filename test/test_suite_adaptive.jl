@@ -7,17 +7,23 @@ using Base.Test
 FE = FrameFuns
 BA = BasisFunctions
 
+function delimit(s::AbstractString)
+    println()
+    println("############")
+    println("# ",s)
+    println("############")
+end
+
 function test_function_space()
-  set = FourierBasis(121,-1,1)
   bboxes = (Interval(), Interval(),
       Interval(0,1), Interval(), Interval(),
       Interval(0,1)⊗Interval(),
       Interval(-2,1))
-  bases = (set, set,
+  bases = (FourierBasis(121,-1,1), FourierBasis(121,-1,1),
       FourierBasis(121), FourierBasis(121,-1,1), ChebyshevBasis(121),
       FourierBasis(121)⊗ChebyshevBasis(121), FourierBasis(121,-2.,1.)⊕rescale(ChebyshevBasis(121),-2.,1.))
   @testset "Space = $(name(space)) " for (i,space) in enumerate([
-      FE.FunctionSpace(set),FE. FunctionSpace(set, FE.BBox(-1,1)),
+      FE.FunctionSpace(FourierBasis(121,-1,1)),FE. FunctionSpace(FourierBasis(121,-1,1), FE.BBox(-1,1)),
       FourierSpace(), FourierSpace(-1,1), ChebyshevSpace(),
       FourierSpace()⊗ChebyshevSpace(), FourierSpace(-2,0)⊕ChebyshevSpace()])
     @test left(bboxes[i])==left(boundingbox(space))
@@ -73,10 +79,7 @@ function test_extra_functionality()
   end
 end
 
-println()
-println("############")
-println("# Adaptivity")
-println("############")
+delimit("Adaptivity")
 test_function_space()
 test_residual()
 test_funs()
