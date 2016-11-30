@@ -1,4 +1,5 @@
-module test_suite_adaptive
+module test_suite
+
 
 using BasisFunctions
 using FrameFuns
@@ -71,6 +72,7 @@ function test_extra_functionality()
     @test(FE.maxerror(f5,F5) < 10*tol)
   end
 end
+
 println()
 println("############")
 println("# Adaptivity")
