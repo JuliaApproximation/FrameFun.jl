@@ -19,9 +19,9 @@ const verbose = true
 total_mv_allocs = 0
 total_mv_time = 0.0
 
-const include_1d_tests = true
-const include_2d_tests = true
-const include_3d_tests = true
+const include_1d_tests = false
+const include_2d_tests = false
+const include_3d_tests = false
 const include_bigfloat_tests = false
 
 ########
