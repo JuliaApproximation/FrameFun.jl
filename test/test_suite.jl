@@ -19,9 +19,9 @@ const verbose = true
 total_mv_allocs = 0
 total_mv_time = 0.0
 
-const include_1d_tests = false
-const include_2d_tests = false
-const include_3d_tests = false
+const include_1d_tests = true
+const include_2d_tests = true
+const include_3d_tests = true
 const include_bigfloat_tests = false
 
 ########
@@ -196,24 +196,6 @@ function test_3d_cases()
     end
 end
 
-function test_function_space()
-  bboxes = (Interval(), Interval(),
-      Interval(0,1), Interval(), Interval(),
-      Interval(0,1)⊗Interval(),
-      Interval(-2,1))
-  bases = (FourierBasis(121,-1,1), FourierBasis(121,-1,1),
-      FourierBasis(121), FourierBasis(121,-1,1), ChebyshevBasis(121),
-      FourierBasis(121)⊗ChebyshevBasis(121), FourierBasis(121,-2.,1.)⊕rescale(ChebyshevBasis(121),-2.,1.))
-  @testset "Space = $(name(space)) " for (i,space) in enumerate([
-      FE.FunctionSpace(FourierBasis(121,-1,1)),FE. FunctionSpace(FourierBasis(121,-1,1), FE.BBox(-1,1)),
-      FourierSpace(), FourierSpace(-1,1), ChebyshevSpace(),
-      FourierSpace()⊗ChebyshevSpace(), FourierSpace(-2,0)⊕ChebyshevSpace()])
-    @test left(bboxes[i])==left(boundingbox(space))
-    @test right(bboxes[i])==right(boundingbox(space))
-    @test FunctionSet(space, 121) == bases[i]
-  end
-end
-
 
     delimit("Algorithm Implementation and Accuracy")
     # FFTW.set_num_threads(Sys.CPU_CORES)
@@ -241,8 +223,6 @@ end
     f(x,y) = cos(20*x+22*y)
     @time F = Fun(f,b,dom)
     show_timings(F)
-
-test_function_space()
 
 if show_mv_times
     println("Total bytes in MV products:\t$total_mv_allocs")
