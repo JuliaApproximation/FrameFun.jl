@@ -10,7 +10,6 @@ FunctionSet{N,T}(space::AbstractSpace{N,T},n) = resize(basis(space),n)
 
 immutable FunctionSpace{N,T} <: AbstractSpace{N,T}
   basis   ::    FunctionSet{N,T}
-  # bbox    ::    BBox{N,RT}
 
   FunctionSpace(basis::FunctionSet) = new(basis)
   FunctionSpace(basis::FunctionSet, bbox::BBox) = new(rescale(basis,left(bbox),right(bbox)))
@@ -26,6 +25,7 @@ boundingbox{N,T}(f::FunctionSet{N,T}) = BBox{N,real(T)}(left(f),right(f))
 
 boundingbox(space::FunctionSpace) = boundingbox(space.basis)
 
+name(space::AbstractSpace) = "Space of "*name(FunctionSet(space,0))
 "Tensorproduct of function space"
 tensorproduct(space::FunctionSpace) = space
 tensorproduct(space::FunctionSpace, n::Int) = tensorproduct([space for i=1:n]...)
@@ -64,24 +64,3 @@ end
 #     $op(f::FunctionSpace) = $op(basis(f))
 #   end
 # end
-
-function test_contructor()
-  println("test 1")
-  f = FourierBasis(121)⊗FourierBasis(121)
-  fs = FunctionSpace(f)
-  @assert left(fs)==Vector([0,0])
-  @assert right(fs)==Vector([1,1])
-
-  println("test 2")
-  f = FourierBasis(121)
-  fs = FunctionSpace(f)
-  @assert left(fs)==0
-  @assert right(fs)==1
-
-  println("test 3")
-  f = FourierBasis(121)⊗FourierBasis(121)
-  b = BBox(-2.,0,-1,1)
-  fs = FunctionSpace(f,b)
-  @assert left(fs)==Vector([-2.,-1])
-  @assert right(fs)==Vector([0,1])
-end

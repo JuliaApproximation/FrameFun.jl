@@ -35,7 +35,7 @@ function residual(f::Function, F1::FrameFun)
     b = sample(gbasis,f)[mask]
     norm(Ax-b)
 end
-residual(F::FrameFun, f::Function) = norm(f,F)
+residual(F::FrameFun, f::Function) = residual(f,F)
 
 """
   Create approximation to function with with a function set in a domain.
@@ -43,7 +43,7 @@ residual(F::FrameFun, f::Function) = norm(f,F)
   The number of points is chosen adaptively.
 """
 function fun_simple(f::Function, set::FunctionSet, domain::AbstractDomain;
-    no_checkpoints=200, max_logn_coefs=8, tol=NaN, options...)
+    no_checkpoints=200, max_logn_coefs=8, tol=NaN, print_error=false, options...)
   ELT = eltype(f, set)
   N = ndims(set)
   F = nothing
@@ -61,7 +61,7 @@ function fun_simple(f::Function, set::FunctionSet, domain::AbstractDomain;
     F=Fun(f, set, domain; options...)
     random_F=F(rgrid)
     error = maximum(abs(random_F-random_f))
-    @printf "Error with %d coefficients is %1.3e\n" (length(set)) error
+    print_error && (@printf "Error with %d coefficients is %1.3e\n" (length(set)) error)
     if error<tol
       return F
     end
@@ -77,7 +77,7 @@ Base.isnan(::Tuple) = false
   The number of points is chosen adaptively.
 """
 function fun_optimal_N(f::Function, set::FunctionSet, domain::AbstractDomain;
-    no_checkpoints=200, max_logn_coefs=9, tol=NaN, options...)
+    no_checkpoints=200, max_logn_coefs=9, tol=NaN, print_error=false, options...)
   ELT = eltype(f, set)
   N = ndims(set)
   F = nothing
@@ -92,12 +92,11 @@ function fun_optimal_N(f::Function, set::FunctionSet, domain::AbstractDomain;
   n = 8
   set=resize(set, n)
   while length(set) <= 2^max_logn_coefs
-    # println(n, ": ", Nmin, " ", emin, " ", Nmax, " ", emax)
-
+    #println(n, ": ", Nmin, " ", emin, " ", Nmax, " ", emax)
     F=Fun(f, set, domain; options...)
     random_F=F(rgrid)
     error = maximum(abs(random_F-random_f))
-    @printf "Error with %d coefficients is %1.3e (%1.3e)\n" (length(set)) error tol
+    print_error && (@printf "Error with %d coefficients is %1.3e (%1.3e)\n" (length(set)) error tol)
     if (error<1e-2) && isnan(N0)
       N0 = n
     end
@@ -110,10 +109,14 @@ function fun_optimal_N(f::Function, set::FunctionSet, domain::AbstractDomain;
     if isnan(Nmax)
       n = extension_size(set)
     else
-      if N==1
-        n = round(Int,(log(emin)*Nmin + log(emax)*Nmax)/(log(emin) + log(emax)))
+      if isnan(emin)
+        return F
       else
-        n = round(Int,(log(emin)*collect(Nmin) + log(emax)*collect(Nmin))/(log(emin) + log(emax)))
+        if N==1
+          n = round(Int,(log(emin)*Nmin + log(emax)*Nmax)/(log(emin) + log(emax)))
+        else
+          n = round(Int,(log(emin)*collect(Nmin) + log(emax)*collect(Nmin))/(log(emin) + log(emax)))
+        end
       end
     end
     set=resize(set, n)
