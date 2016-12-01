@@ -76,7 +76,7 @@ Base.isnan(::Tuple) = false
 
   The number of points is chosen adaptively.
 """
-function fun_optimal_N(f::Function, set::FunctionSet, domain::AbstractDomain;
+function fun_optimal_N(f::Function, set::FunctionSet, domain::FrameFuns.AbstractDomain;
     no_checkpoints=200, max_logn_coefs=9, tol=NaN, print_error=false, options...)
   ELT = eltype(f, set)
   N = ndims(set)
@@ -84,7 +84,7 @@ function fun_optimal_N(f::Function, set::FunctionSet, domain::AbstractDomain;
   # TODO Decide which is best
   # tol = default_cutoff(FE_DiscreteProblem(domain, set, 2; options...))
   isequal(tol,NaN) && (tol = 10*10^(4/5*log10(eps(numtype(set)))))
-  rgrid=random_grid_in_domain(domain,numtype(set);vals=no_checkpoints)
+  rgrid=FrameFuns.random_grid_in_domain(domain,numtype(set);vals=no_checkpoints)
   error = Inf
   random_f=sample(rgrid, f, eltype(f(rgrid[1]...)))
   random_F=zeros(ELT,no_checkpoints)
@@ -92,16 +92,16 @@ function fun_optimal_N(f::Function, set::FunctionSet, domain::AbstractDomain;
   n = 8
   set=resize(set, n)
   while length(set) <= 2^max_logn_coefs
-    #println(n, ": ", Nmin, " ", emin, " ", Nmax, " ", emax)
+    # println(n, ": ", Nmin, " ", emin, " ", Nmax, " ", emax)
     F=Fun(f, set, domain; options...)
     random_F=F(rgrid)
     error = maximum(abs(random_F-random_f))
     print_error && (@printf "Error with %d coefficients is %1.3e (%1.3e)\n" (length(set)) error tol)
     if (error<1e-2) && isnan(N0)
-      N0 = n
+            N0 = n
     end
     error < tol ? (Nmax=n; emax=error) : (Nmin=n; emin=error)
-    if !isnan(Nmax) && !isnan(Nmin) && sum(abs(collect(Nmax)-collect(Nmin))) <= N
+    if !isnan(Nmax) && !isnan(Nmin) && (sum(abs(collect(Nmax)-collect(Nmin))) <= N)
       set=resize(set, Nmax)
       return Fun(f, set, domain; options...)
     end
@@ -115,7 +115,7 @@ function fun_optimal_N(f::Function, set::FunctionSet, domain::AbstractDomain;
         if N==1
           n = round(Int,(log(emin)*Nmin + log(emax)*Nmax)/(log(emin) + log(emax)))
         else
-          n = round(Int,(log(emin)*collect(Nmin) + log(emax)*collect(Nmin))/(log(emin) + log(emax)))
+          n = (round(Int,(log(emin)*collect(Nmin) + log(emax)*collect(Nmax))/(log(emin) + log(emax)))...)
         end
       end
     end
@@ -137,12 +137,12 @@ end
   or at the maximum number of iterations.
 """
 function fun_greedy(f::Function, set::FunctionSet, domain::FrameFuns.AbstractDomain;
-    maxn = 100, tol = NaN, options...)
+    max_logn_coefs = 7, tol = NaN, options...)
     isequal(tol,NaN) && (tol = 10*10^(4/5*log10(eps(numtype(set)))))
     init_n = 4
     set = resize(set,init_n)
     F = Fun(x->0, set, domain; options...)
-    for n in init_n:maxn
+    for n in init_n:2^max_logn_coefs
         set = resize(set,n)
         p_i = Fun(x->(f(x)-F(x)), set, domain; options...)
         F = F + p_i

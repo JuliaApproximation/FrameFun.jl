@@ -2,6 +2,7 @@ abstract AbstractSpace{N,T}
 
 basis(space::AbstractSpace) = space.basis
 ndims{N,T}(::Type{AbstractSpace{N,T}}) = N
+ndims{S <: AbstractSpace}(::Type{S}) = ndims(supertype(S))
 ndims{N,T}(::AbstractSpace{N,T}) = N
 numtype(s::AbstractSpace) = real(eltype(s))
 eltype{N,T}(::Type{AbstractSpace{N,T}}) = T
@@ -45,9 +46,10 @@ add(space1::FunctionSpace, space2::FunctionSpace, spaces::FunctionSpace...) =
   add(FunctionSpace(basis(space1)⊕basis(space2),union(boundingbox(space1),boundingbox(space2))), spaces...)
 ⊕(args::FunctionSpace...) = add(args...)
 
-promote_eltype{N,T}(space::AbstractSpace{N,T}, ::Type{T}) = s
-promote{N,T}(space1::AbstractSpace{N,T},space2::AbstractSpace{N,T}) = (space1,space2)
-function promote{N,T1,T2}(set1::FunctionSpace{N,T1}, set2::FunctionSpace{N,T2})
+Base.promote_eltype{N,T}(space::AbstractSpace{N,T}, ::Type{T}) = space
+Base.promote_eltype{N,T1, T2}(space::AbstractSpace{N,T1}, ::Type{T2}) = FunctionSpace(promote_eltype(basis(space), T2))
+Base.promote{N,T}(space1::AbstractSpace{N,T},space2::AbstractSpace{N,T}) = (space1,space2)
+function Base.promote{N,T1,T2}(space1::FunctionSpace{N,T1}, space2::FunctionSpace{N,T2})
   T = promote_type(T1,T2)
   (promote_eltype(space1,T), promote_eltype(space2,T))
 end
