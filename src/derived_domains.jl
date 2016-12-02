@@ -268,7 +268,7 @@ boundingbox(d::TranslatedDomain) = boundingbox(domain(d)) + translationvector(d)
 ###############################################################################################
 
 type DomainCollection{N} <: AbstractDomain{N}
-    list    ::  Vector{AbstractDomain{N}}
+    list    ::  Array{AbstractDomain{N},1}
 end
 
 DomainCollection(d::AbstractDomain) = DomainCollection([d])

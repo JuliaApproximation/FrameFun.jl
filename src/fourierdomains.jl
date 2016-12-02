@@ -54,7 +54,7 @@ end
 function in(g::AbstractGrid, d::ComparisonDomain)
 	z1 = d.f(g)
 	z2 = d.g(g)
-	map(d.binop, z1, z2)
+	in(g,domain(d.f)) & in(g,domain(d.g)) & map(d.binop, z1, z2)
 end
 
 (<)(f::FrameFun, g::FrameFun) = ComparisonDomain(f, g, (x,y)-> x < y)

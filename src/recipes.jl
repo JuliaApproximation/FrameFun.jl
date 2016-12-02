@@ -22,18 +22,29 @@ end
 end
 
 # Postprocessing when the set is a frame: set values outside the domain to NaN
-function postprocess(B::DomainFrame, grid, vals)
-    mgrid = subgrid(grid, domain(B))
+function postprocess(D::AbstractDomain, grid, vals, value=NaN)
+    mgrid = subgrid(grid, D)
     for i in eachindex(grid)
         if ~in(i, mgrid)
-            vals[i] = NaN
+            vals[i] = value
         end
     end
     vals
 end
+
+postprocess(B::DomainFrame, args...) = postprocess(domain(B), args...)
         
 # Plotgrids are determined by the underlying set
 plotgrid(B::DomainFrame, n) = plotgrid(basis(B),n)
 
-# Plot a domain
+# Plot a layered fun
+@recipe function f(l::LayeredFun;n=200)
+    grid = plotgrid(set(expansion(l.funs[1])),n)
+    vals1 = l.funs[1](grid)
+    vals1 = postprocess(domain(l.funs[1]),grid,vals1,0)
+    vals2 = l.funs[2](grid)
+    vals2 = postprocess(domain(l.funs[2]),grid,vals2,0)
+    vals = postprocess(domain(l),grid,vals1+vals2)
+    grid, vals
+end
 
