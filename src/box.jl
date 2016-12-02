@@ -31,8 +31,12 @@ BBox(a::Number, b::Number) = BBox( Vec(a), Vec(b) )
 BBox(a, b, c, d) = BBox( Vec(a,c), Vec(b,d) )
 BBox(a, b, c, d, e, f) = BBox( Vec(a,c,e), Vec(b,d,f) )
 BBox(a, b, c, d, e, f, g, h) = BBox( Vec(a,c,e,g), Vec(b,d,f,h) )
+BBox{N,T1,T2}(left::Vec{N,T1},right::Vec{N,T2}) = BBox(Vec{N,promote_type(T1,T2)}(left),Vec{N,promote_type(T1,T2)}(right))
 
 BBox(left, right) = BBox(Vec(left...), Vec(right...))
+
+convert{T,N}(::Type{BBox{N,T}}, bbox::BBox{N,T}) = bbox
+convert{S,T,N}(::Type{BBox{N,S}}, bbox::BBox{N,T}) = BBox{N,S}(Vec{N,S}(left(bbox)),Vec{N,S}(right(bbox)))
 
 tensorproduct(b::BBox) = b
 tensorproduct(b::BBox, n::Int) = tensorproduct([b for i=1:n]...)
