@@ -41,6 +41,14 @@ for op in (:+, :-, :*)
     @eval $op(fun1::FrameFun,fun2::FrameFun) = FrameFun($op(fun1.expansion,fun2.expansion))
 end
 
+for op in (:+, :-, :*)
+    @eval $op(a::Number,fun::FrameFun) = FrameFun($op(a,fun.expansion))
+end
+
+for op in (:+, :-, :*)
+    @eval $op(fun::FrameFun,a::Number) = $op(a,fun)
+end
+
 domainframe(fun::FrameFun, set::DomainFrame) = set
 
 domain(fun::FrameFun, set::DomainFrame) = domain(set)
@@ -68,6 +76,11 @@ end
 
 
 show(io::IO, fun::FrameFun) = show(io, fun, set(fun))
+
+function show(io::IO, fun::FrameFun, set::FunctionSet)
+  println(io, "A ", ndims(fun), "-dimensional FrameFun with ", length(coefficients(fun)), " degrees of freedom.")
+  println(io, "Basis: ", name(set))
+end
 
 function show(io::IO, fun::FrameFun, set::DomainFrame)
     println(io, "A ", ndims(fun), "-dimensional FrameFun with ", length(coefficients(fun)), " degrees of freedom.")
