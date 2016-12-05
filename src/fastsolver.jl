@@ -19,25 +19,49 @@ immutable FE_ProjectionSolver{ELT} <: FE_Solver{ELT}
     x2
     x1
 
-    function FE_ProjectionSolver(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), R = estimate_plunge_rank(problem), options...)
+    function FE_ProjectionSolver(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), R = 5, verbose = false, options...)
         plunge_op = plunge_operator(problem)
-        random_matrix = map(ELT, rand(param_N(problem), R))
-        Wsrc = ELT <: Complex ? Cn{ELT}(size(random_matrix,2)) : Rn{ELT}(size(random_matrix,2))
-        Wdest = src(operator(problem))
-        W = MatrixOperator(Wsrc, Wdest, random_matrix)
+        finished=false
+        USV = ()
+        sold = 0.6
+        snew = 0.6
+        Rold = 1
+        while R<=param_N(problem)
+            random_matrix = map(ELT, rand(param_N(problem), R))
+            Wsrc = ELT <: Complex ? Cn{ELT}(size(random_matrix,2)) : Rn{ELT}(size(random_matrix,2))
+            Wdest = src(operator(problem))
+            W = MatrixOperator(Wsrc, Wdest, random_matrix)
         
-        USV = LAPACK.gesdd!('S',matrix(plunge_op * operator(problem) * W))
-        S = USV[2]
-
-        maxind = findlast(S.>cutoff)
-        Sinv = 1./S[1:maxind]
-        b = zeros(ELT, dest(plunge_op))
-        blinear = zeros(ELT, length(dest(plunge_op)))
-        y = zeros(ELT, size(USV[3],1))
-        x1 = zeros(ELT, src(operator(problem)))
-        x2 = zeros(ELT, src(operator(problem)))
-        sy = zeros(ELT, maxind)
-        new(problem, plunge_op, W, USV[1][:,1:maxind]',USV[3][1:maxind,:]'*diagm(Sinv[:]),b,blinear,y,sy,x1,x2)
+            USV = LAPACK.gesdd!('S',matrix(plunge_op * operator(problem) * W))
+            verbose && println("minimal singular value: ",minimum(USV[2])," cutoff : ",cutoff)
+            verbose && println("R/Rest/Rmax: ",R,"/",estimate_plunge_rank(problem),"/",param_N(problem))
+            if minimum(USV[2])<cutoff || R==param_N(problem)
+                S = USV[2]
+                maxind = findlast(S.>cutoff)
+                Sinv = 1./S[1:maxind]
+                b = zeros(ELT, dest(plunge_op))
+                blinear = zeros(ELT, length(dest(plunge_op)))
+                y = zeros(ELT, size(USV[3],1))
+                x1 = zeros(ELT, src(operator(problem)))
+                x2 = zeros(ELT, src(operator(problem)))
+                sy = zeros(ELT, maxind)
+                return new(problem, plunge_op, W, USV[1][:,1:maxind]',USV[3][1:maxind,:]'*diagm(Sinv[:]),b,blinear,y,sy,x1,x2)
+            else
+                # Assuming exponential decay, take the optimal step
+                snew = minimum(USV[2])
+                alpha = (log(snew)-log(sold))/(R-Rold)
+                step = (log(cutoff)-log(snew))/alpha
+                sold = snew
+                Rold = R
+                if (sold<10.0^(-3))
+                    #started converging
+                    R = min(round(Int,R+step),param_N(problem))
+                else
+                    #double
+                    R = min(round(Int,2*R),param_N(problem))
+                end
+            end
+        end
     end
 end
 
