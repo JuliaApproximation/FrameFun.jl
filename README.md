@@ -16,7 +16,7 @@ D = Interval(-0.5,0.5)
 f(x) = x
 F = Fun(f,B,D)
 
-plot_expansion(F); plot_error(F,f)
+plot(F,plot_ext=true); plot(F,f,plot_ext=true)
 ```
 
 ![](images/lowprecision.png)
@@ -27,7 +27,7 @@ The bases support any AbstractFloat subtype, so high precision approximations ar
 B = FourierBasis(61,BigFloat)
 F = Fun(f,B,D)
 
-plot_expansion(F); plot_error(F,f)
+plot(F,plot_ext=true); plot(F,f,plot_ext=true)
 ```
 
 ![](images/highprecision.png)
@@ -41,7 +41,7 @@ B = FourierBasis(31,-1.3,1.3) ⊗ FourierBasis(31,-1.3,1.3)
 f(x,y) = exp(x+y)
 F = Fun(f,B,C)
 
-plot_image(F); plot_error(F,f)
+heatmap(F,plot_ext=true); plot(F,f,plot_ext=true)
 ```
 
 ![](images/deathstar.png)
@@ -54,7 +54,7 @@ B = FourierBasis(31) ⊗ ChebyshevBasis(31)
 f(x,y) = cos(20*x+22*y)
 F = Fun(f,B,dom)
 
-plot_image(F), plot_error(F,f)
+heatmap(F,plot_ext=true), plot(F,f,plot_ext=true)
 ```
 
 ![](images/circles.png)
@@ -66,7 +66,7 @@ B = FourierBasis(31,-1.0,0.35) ⊗ FourierBasis(31,-0.65,0.65)
 f(x,y) = cos(10*x*y)
 F = Fun(f, B, Mandelbrot())
 
-plot_image(F), plot_error(F,f)
+heatmap(F,plot_ext=true), plot(F,f,ext=true)
 ```
 
 ![](images/mandelbrot.png)
