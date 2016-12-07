@@ -55,13 +55,13 @@ domain(fun::FrameFun, set::DomainFrame) = domain(set)
 
 basis(fun::FrameFun, set::DomainFrame) = basis(set)
 
-function matrix(fun::FrameFun)
-    problem = FE_DiscreteProblem(domain(fun), basis(fun), 2)
+function matrix(fun::FrameFun; sampling_factor=2)
+    problem = FE_DiscreteProblem(domain(fun), basis(fun), sampling_factor)
     matrix(operator(problem))
 end
 
-function sampling_grid(fun::FrameFun)
-    problem = FE_DiscreteProblem(domain(fun), basis(fun), 2)
+function sampling_grid(fun::FrameFun; sampling_factor=2)
+    problem = FE_DiscreteProblem(domain(fun), basis(fun), sampling_factor)
     grid(time_basis_restricted(problem))
 end
 
@@ -138,4 +138,12 @@ function maxerror{N}(f::Function,F::FrameFun{N};vals::Int=200)
         end
     end
     return error
+end
+
+function residual(f::Function, F::FrameFun ; sampling_factor=2, options...)
+    problem = FE_DiscreteProblem(domain(F), basis(F), sampling_factor; options...)
+    op = operator(problem)
+    rhs = sample(grid(dest(op)), f, eltype(src(op)))
+    op = full_transform_operator(src(op),dest(op))
+    norm(op*coefficients(F)-rhs)
 end

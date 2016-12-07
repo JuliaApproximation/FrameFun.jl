@@ -11,8 +11,6 @@ immutable FourierDomain{N,T} <: AbstractDomain{N}
     relop	::	Function
 end
 
-FourierDomain{N,T}(f::FrameFun{N,T}, relop::Function) = FourierDomain{N,T}(f, relop)
-
 function in(x::Vec, d::FourierDomain)
 	z = d.f(x)
 	in(x,domain(d.f)) && d.relop(z)
@@ -41,8 +39,6 @@ immutable ComparisonDomain{N,T} <: AbstractDomain{N}
     g		::	FrameFun{N,T}
     binop	::	Function
 end
-
-ComparisonDomain{N,T}(f::FrameFun{N,T}, g::FrameFun{N,T}, binop::Function) = ComparisonDomain{N,T}(f, g, binop)
 
 function in(x::Vec, d::ComparisonDomain)
 	z1 = d.f(x)
