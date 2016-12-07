@@ -10,6 +10,7 @@ immutable Characteristic{N,T} <: AbstractDomain{N}
     box    ::  BBox{N,T}
 end
 
+Characteristic{N}(char::Function, dom::AbstractDomain{N}) = Characteristic(char,boundingbox(dom))
 
 indomain(x, c::Characteristic) = c.char(x)
 
@@ -129,7 +130,7 @@ function indomain_grid(g::AbstractGrid, d::DomainDifference)
 end
 
 (-)(d1::AbstractDomain, d2::AbstractDomain) = setdiff(d1, d2)
-(\)(d1::AbstractDomain, d2::AbstractDomain) = setdiff(d1, d2)
+(\ )(d1::AbstractDomain, d2::AbstractDomain) = setdiff(d1, d2)
 
 
 boundingbox(d::DomainDifference) = boundingbox(d.d1)
@@ -237,7 +238,7 @@ boundingbox(d::TranslatedDomain) = boundingbox(domain(d)) + translationvector(d)
 ################################################################################
 
 type DomainCollection{N} <: AbstractDomain{N}
-    list    ::  Vector{AbstractDomain{N}}
+    list    ::  Array{AbstractDomain{N},1}
 end
 
 DomainCollection(d::AbstractDomain) = DomainCollection([d])

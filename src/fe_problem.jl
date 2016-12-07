@@ -51,17 +51,47 @@ oversampled_grid(set::DomainFrame, args...) =
     oversampled_grid(domain(set), basis(set), args...)
 
 
-function oversampled_grid(domain::AbstractDomain, basis::FunctionSet, sampling_factor)
+function oversampled_grid(domain, basis::BasisFunctions.FunctionSet, sampling_factor)
     N = ndims(basis)
     n_goal = length(basis) * sampling_factor^N
-    grid1 = grid(basis)
-    grid2 = subgrid(grid1, domain)
+    grid1 = BasisFunctions.grid(basis)
+    grid2 = FrameFuns.subgrid(grid1, domain)
     ratio = length(grid2) / length(grid1)
-    # This could be way off if the original size was small.
-    n = approx_length(basis, ceil(Int, n_goal/ratio))
+    # Initial guess : This could be way off if the original size was small.
+    newsize = ceil(Int,n_goal/ratio)
+    n = BasisFunctions.approx_length(basis, newsize)
     large_basis = resize(basis, n)
-    grid3 = grid(large_basis)
-    grid4 = subgrid(grid3, domain)
+    grid3 = BasisFunctions.grid(large_basis)
+    grid4 = FrameFuns.subgrid(grid3, domain)
+    # If the number of sampling points is correct, return
+    if length(grid4)==n_goal
+        return grid4, large_basis
+    end
+    maxN = newsize
+    # 
+    while length(grid4)<n_goal
+        newsize = 2*newsize
+        n = BasisFunctions.approx_length(basis, newsize)
+        large_basis = resize(basis, n)
+        grid3 = BasisFunctions.grid(large_basis)
+        grid4 = FrameFuns.subgrid(grid3, domain)
+        maxN = newsize
+    end
+    minN = newsize>>>1
+    its = 0
+    while (maxN-minN) >1 && its < 40
+        midpoint = (minN+maxN) >>> 1
+        n = BasisFunctions.approx_length(basis,  midpoint)
+        large_basis = resize(basis, n)
+        grid3 = BasisFunctions.grid(large_basis)
+        grid4 = FrameFuns.subgrid(grid3, domain)
+        length(grid4)<n_goal ? minN=midpoint : maxN=midpoint
+        its += 1
+    end
+    n = BasisFunctions.approx_length(basis,  maxN)
+    large_basis = resize(basis, n)
+    grid3 = BasisFunctions.grid(large_basis)
+    grid4 = FrameFuns.subgrid(grid3, domain) 
     grid4, large_basis
 end
 

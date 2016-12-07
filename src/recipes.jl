@@ -22,17 +22,20 @@ end
 end
 
 # Postprocessing when the set is a frame: set values outside the domain to NaN
-function postprocess(B::DomainFrame, grid, vals)
-    mgrid = subgrid(grid, domain(B))
+function postprocess(D::AbstractDomain, grid, vals, value=NaN)
+    mgrid = subgrid(grid, D)
     for i in eachindex(grid)
         if ~in(i, mgrid)
-            vals[i] = NaN
+            vals[i] = value
         end
     end
     vals
 end
 
+postprocess(B::DomainFrame, args...) = postprocess(domain(B), args...)
+        
 # Plotgrids are determined by the underlying set
 plotgrid(B::DomainFrame, n) = plotgrid(basis(B),n)
 
 # Plot a domain
+

@@ -41,19 +41,27 @@ for op in (:+, :-, :*)
     @eval $op(fun1::FrameFun,fun2::FrameFun) = FrameFun($op(fun1.expansion,fun2.expansion))
 end
 
+for op in (:+, :-, :*)
+    @eval $op(a::Number,fun::FrameFun) = FrameFun($op(a,fun.expansion))
+end
+
+for op in (:+, :-, :*)
+    @eval $op(fun::FrameFun,a::Number) = $op(a,fun)
+end
+
 domainframe(fun::FrameFun, set::DomainFrame) = set
 
 domain(fun::FrameFun, set::DomainFrame) = domain(set)
 
 basis(fun::FrameFun, set::DomainFrame) = basis(set)
 
-function matrix(fun::FrameFun)
-    problem = fe_problem(domain(fun), basis(fun), eltype(fun))[1]
+function matrix(fun::FrameFun; sampling_factor=2)
+    problem = FE_DiscreteProblem(domain(fun), basis(fun), sampling_factor)
     matrix(operator(problem))
 end
 
-function sampling_grid(fun::FrameFun)
-    problem = fe_problem(domain(fun), basis(fun), eltype(fun))[1]
+function sampling_grid(fun::FrameFun; sampling_factor=2)
+    problem = FE_DiscreteProblem(domain(fun), basis(fun), sampling_factor)
     grid(time_basis_restricted(problem))
 end
 
@@ -68,6 +76,11 @@ end
 
 
 show(io::IO, fun::FrameFun) = show(io, fun, set(fun))
+
+function show(io::IO, fun::FrameFun, set::FunctionSet)
+  println(io, "A ", ndims(fun), "-dimensional FrameFun with ", length(coefficients(fun)), " degrees of freedom.")
+  println(io, "Basis: ", name(set))
+end
 
 function show(io::IO, fun::FrameFun, set::DomainFrame)
     println(io, "A ", ndims(fun), "-dimensional FrameFun with ", length(coefficients(fun)), " degrees of freedom.")
@@ -95,9 +108,9 @@ function _restrict(expansion::SetExpansion, set::FunctionSet, domain::AbstractDo
     FrameFun(domain, set, coefficients(expansion))
 end
 
-# Get the mean approximation in random interior points.
+# Get the mean approximation error in random interior points.
 function abserror{N}(f::Function,F::FrameFun{N};vals::Int=200)
-    # Find the closest bounding grid around the domain
+    # Use the bounding box around the domain
     box = boundingbox(domain(F))
     point=Array{numtype(F)}(N)
     elements=0
@@ -114,4 +127,33 @@ function abserror{N}(f::Function,F::FrameFun{N};vals::Int=200)
         end
     end
     return error/elements
+end
+
+# Get the max approximation error in random interior points
+function maxerror{N}(f::Function,F::FrameFun{N};vals::Int=200)
+    # Use the bounding box around the domain
+    box = boundingbox(domain(F))
+    point=Array{numtype(F)}(N)
+    elements=0
+    error=0
+    # Generate some points inside the domain, and compare with the target function
+    while elements < vals
+        for j in 1:N
+            point[j]=left(box)[j]+(right(box)[j]-left(box)[j])*rand(1)[1]
+        end
+        N == 1 ? vpoint = point[1] : vpoint = Vec(point...)
+        if in(vpoint,domain(F))
+            elements+=1
+            error=max(error,abs(f(vpoint...)-F(vpoint...)))
+        end
+    end
+    return error
+end
+
+function residual(f::Function, F::FrameFun ; sampling_factor=2, options...)
+    problem = FE_DiscreteProblem(domain(F), basis(F), sampling_factor; options...)
+    op = operator(problem)
+    rhs = sample(grid(dest(op)), f, eltype(src(op)))
+    op = full_transform_operator(src(op),dest(op))
+    norm(op*coefficients(F)-rhs)
 end

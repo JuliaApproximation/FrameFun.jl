@@ -28,12 +28,8 @@ function MaskedGrid{N,T}(grid::AbstractGrid{N,T}, mask, indices)
 	MaskedGrid{typeof(grid),typeof(mask),N,T}(grid, mask, indices)
 end
 
-# TODO: make this more elegant and general
 # These are for the assignment to indices in the function below.
-convert(::Type{Tuple{Int}}, i::CartesianIndex{1}) = (i[1],)
-convert(::Type{Tuple{Int,Int}}, i::CartesianIndex{2}) = (i[1],i[2])
-convert(::Type{Tuple{Int,Int,Int}}, i::CartesianIndex{3}) = (i[1],i[2],i[3])
-convert(::Type{Tuple{Int,Int,Int,Int}}, i::CartesianIndex{4}) = (i[1],i[2],i[3],i[4])
+convert{N}(::Type{NTuple{N,Int}},i::CartesianIndex{N}) = ntuple(k->i[k],N)
 
 function MaskedGrid{N}(grid::AbstractGrid{N}, domain::AbstractDomain{N})
     mask = in(grid, domain)
@@ -196,7 +192,7 @@ end
 
 
 # Duck typing, v1 and v2 have to implement addition/substraction and scalar multiplication
-function midpoint(v1, v2, dom::AbstractDomain)
+function midpoint(v1, v2, dom::AbstractDomain, tol)
     # There has to be a midpoint
     @assert in(v2,dom) != in(v1,dom)
     if in(v2,dom)
@@ -207,7 +203,7 @@ function midpoint(v1, v2, dom::AbstractDomain)
         max=v1
     end
     mid = NaN
-    while norm(max-min) > 10.0^-12
+    while norm(max-min) > tol
         step = (max-min)/2
         mid = min+step
         in(mid,dom) ? max=mid : min=mid
@@ -223,7 +219,7 @@ function boundary{G,M}(g::MaskedGrid{G,M,1},dom::AbstractDomain{1})
     boundary(grid(g),dom)
 end
 
-function boundary{TG,N,T}(g::TensorProductGrid{TG,N,T},dom::AbstractDomain{N})
+function boundary{TG,N,T}(g::TensorProductGrid{TG,N,T},dom::AbstractDomain{N},tol=1e-12)
     # Initialize neighbours
     neighbours=Array(Int64,2^N-1,N)
     # adjust columns
@@ -233,7 +229,7 @@ function boundary{TG,N,T}(g::TensorProductGrid{TG,N,T},dom::AbstractDomain{N})
             neighbours[j-1,i]=(floor(Int,(j-1)/(2^(i-1))) % 2)
         end
     end
-    CartesianNeighbours = Array(CartesianIndex{N},2^N)
+    CartesianNeighbours = Array(CartesianIndex{N},2^N-1)
     for j=1:2^N-1
         CartesianNeighbours[j]=CartesianIndex{N}(neighbours[j,:]...)
     end
@@ -247,7 +243,7 @@ function boundary{TG,N,T}(g::TensorProductGrid{TG,N,T},dom::AbstractDomain{N})
             try
                 if in(g[i],dom) != in(g[neighbour],dom)
                     # add the midpoint to the grid
-                    push!(midpoints, midpoint(g[i],g[neighbour],dom))
+                    push!(midpoints, midpoint(g[i],g[neighbour],dom,tol))
                 end
             catch y
                 isa(y,BoundsError) || rethrow(y)
@@ -258,7 +254,7 @@ function boundary{TG,N,T}(g::TensorProductGrid{TG,N,T},dom::AbstractDomain{N})
 end
 
 
-function boundary{T}(g::AbstractGrid{1,T},dom::AbstractDomain{1})
+function boundary{T}(g::AbstractGrid{1,T},dom::AbstractDomain{1},tol=1e-12)
     midpoints = T[]
     # for each element
     for i in eachindex(g)
@@ -266,7 +262,7 @@ function boundary{T}(g::AbstractGrid{1,T},dom::AbstractDomain{1})
         try
             if in(g[i],dom) != in(g[i+1],dom)
                 # add the midpoint to the grid
-                push!(midpoints, midpoint(g[i],g[i+1],dom))
+                push!(midpoints, midpoint(g[i],g[i+1],dom,tol))
             end
         catch y
             isa(y,BoundsError) || rethrow(y)

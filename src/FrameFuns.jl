@@ -8,7 +8,7 @@ using RecipesBase
 
 using Base.Cartesian
 
-import Base: +, *, /, ==, |, &, -, \
+import Base: +, *, /, ==, |, &, -, \, <, <=, >, >=
 
 import Base: intersect, union, isapprox, setdiff
 
@@ -16,14 +16,16 @@ import Base: length, eltype, size, push!, ctranspose, inv, similar
 
 import Base: eachindex, start, next, done, getindex, in
 
-import Base: show, showcompact, call, convert
+import Base: show, showcompact, call
+
+import Base: promote, promote_rule, convert, promote_eltype
 
 import Base: ndims
 
 
 # Imports from BasisFunctions follow
 import BasisFunctions: composite_length, ⊗, tensorproduct, flatten,
-    compose, elements, element
+    compose, elements, element, ⊕
 
 import BasisFunctions: src, dest, matrix, matrix!, apply!, apply_inplace!, numtype
 
@@ -33,7 +35,7 @@ import BasisFunctions: operator, coefficients, set, is_basis, is_frame, is_diago
     transform_operator_pre, transform_operator_post, evaluation_operator, interpolation_operator,
     differentiation_operator, antidifferentiation_operator, approximation_operator,
     extend, extension_size, extension_operator, restriction_operator,
-    default_approximation_operator, has_extension
+    default_approximation_operator, has_extension, wrap_operator
 
 import BasisFunctions: eval_set_element, eval_element, eval_expansion,
     call_set_expansion, name
@@ -56,6 +58,8 @@ export ⊂
 export Interval, Disk, Square, Cube, Ball, Cylinder, atomium, boundingbox
 export ⊗, ∩, composite_length, element, elements
 
+# from derived_domains.jl
+export Characteristic
 export numtype
 
 # from funs.jl
@@ -70,6 +74,11 @@ export Mandelbrot, JuliaSet
 # from DiffEquation.jl
 export BoundaryCondition, DiffEquation, solve
 
+# from constructors.jl
+export FunConstructor
+
+# from space.jl
+export FourierSpace, ChebyshevSpace, ⊕, add, construct
 # from recipes.jl
 
 
@@ -85,6 +94,8 @@ include("domainframe.jl")
 
 include("funs.jl")
 
+include("fourierdomains.jl")
+
 include("fe_problem.jl")
 
 include("fe_solvers.jl")
@@ -98,5 +109,9 @@ include("fe_approx.jl")
 include("recipes.jl")
 
 include("diffequation.jl")
+
+include("space.jl")
+
+include("constructors.jl")
 
 end # module
