@@ -11,7 +11,7 @@ immutable FourierDomain{N,T} <: AbstractDomain{N}
     relop	::	Function
 end
 
-function in(x::Vec, d::FourierDomain)
+function indomain(x, d::FourierDomain)
 	z = d.f(x)
 	in(x,domain(d.f)) && d.relop(z)
 end
@@ -40,7 +40,7 @@ immutable ComparisonDomain{N,T} <: AbstractDomain{N}
     binop	::	Function
 end
 
-function in(x::Vec, d::ComparisonDomain)
+function indomain(x, d::ComparisonDomain)
 	z1 = d.f(x)
 	z2 = d.g(x)
 	in(x,domain(d.f)) && in(x,domain(d.g)) && d.binop(z1, z2)

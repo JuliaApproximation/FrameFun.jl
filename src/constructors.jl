@@ -8,14 +8,14 @@ function random_grid_in_domain{T}(domain::AbstractDomain,::Type{T}=Float64;vals:
     box = boundingbox(domain)
     N=ndims(domain)
     point=Array{T}(N)
-    N == 1 ? points=Array{T}(vals) : points=Array{Vec{N,T}}(vals)
+    N == 1 ? points=Array{T}(vals) : points=Array{SVector{N,T}}(vals)
     elements=0
     # Generate some points inside the domain
     while elements < vals
         for j in 1:N
             point[j]=left(box)[j]+(right(box)[j]-left(box)[j])*rand(1)[1]
         end
-        N == 1 ? vpoint = point[1] : vpoint = Vec(point...)
+        N == 1 ? vpoint = point[1] : vpoint = SVector(point...)
         if in(vpoint,domain)
             elements+=1
             points[elements]=vpoint

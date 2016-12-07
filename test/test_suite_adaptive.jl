@@ -26,11 +26,13 @@ function test_function_space()
   @testset "Space = $(name(space)) " for (i,space) in enumerate([
       FE.FunctionSpace(FourierBasis(121,-1,1)),FE. FunctionSpace(FourierBasis(121,-1,1), FE.BBox(-1,1)),
       FourierSpace(), FourierSpace(-1,1), ChebyshevSpace(),
-      FourierSpace()⊗ChebyshevSpace(), FourierSpace(-2,0)⊕ChebyshevSpace(),
-      FE.tensorproduct(FourierSpace(),3), FE.add(FourierSpace(),3)])
-    @test left(bboxes[i])==left(boundingbox(space))
-    @test right(bboxes[i])==right(boundingbox(space))
-    @test FunctionSet(space, 121) == bases[i]
+      FourierSpace()⊗ChebyshevSpace(),FourierSpace(-2,1)⊕ChebyshevSpace(-2,1),FE.tensorproduct(FourierSpace(),3), FE.add(FourierSpace(),3)])
+      @test left(bboxes[i])==left(boundingbox(space))
+      println("ok")
+      @test right(bboxes[i])==right(boundingbox(space))
+      println("ok")
+      @test FunctionSet(space, 121) == bases[i]
+      println("ok")
   end
   @testset "Util functions" begin
     for n in 1:4
