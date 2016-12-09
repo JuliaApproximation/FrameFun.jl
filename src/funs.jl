@@ -153,7 +153,9 @@ end
 function residual(f::Function, F::FrameFun ; sampling_factor=2, options...)
     problem = FE_DiscreteProblem(domain(F), basis(F), sampling_factor; options...)
     op = operator(problem)
-    rhs = sample(grid(dest(op)), f, eltype(src(op)))
-    op = full_transform_operator(src(op),dest(op))
-    norm(op*coefficients(F)-rhs)
+    rhs = sample(BasisFunctions.grid(dest(op)), f, eltype(src(op)))
+    # There should be an easier way of getting the inverse of the normalization
+    Norm = FrameFuns.normalization(problem)
+    invnorm = DiagonalOperator(src(op),diagonal(Norm).^(-1))
+    norm(op*invnorm*coefficients(F)-rhs)
 end

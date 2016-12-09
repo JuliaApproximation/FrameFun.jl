@@ -24,18 +24,18 @@ function random_grid_in_domain{T}(domain::AbstractDomain,::Type{T}=Float64;vals:
     return ScatteredGrid(points)
 end
 
-"""
-  The residual of a FrameFun approximation of a Function
-"""
-function residual(f::Function, F1::FrameFun)
-    F2 = extension_operator(basis(F1))*F1
-    gbasis = BasisFunctions.grid(basis(F2))
-    mask = in(gbasis, domain(F2))
-    Ax = real(full_transform_operator(basis(F2)) * coefficients(F2))[mask]
-    b = sample(gbasis,f)[mask]
-    norm(Ax-b)
-end
-residual(F::FrameFun, f::Function) = residual(f,F)
+## """
+##   The residual of a FrameFun approximation of a Function
+## """
+## function residual(f::Function, F1::FrameFun)
+##     F2 = extension_operator(basis(F1))*F1
+##     gbasis = BasisFunctions.grid(basis(F2))
+##     mask = in(gbasis, domain(F2))
+##     Ax = real(full_transform_operator(basis(F2)) * coefficients(F2))[mask]
+##     b = sample(gbasis,f)[mask]
+##     norm(Ax-b)
+## end
+## residual(F::FrameFun, f::Function) = residual(f,F)
 
 """
   Create approximation to function with with a function set in a domain.

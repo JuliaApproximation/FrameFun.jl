@@ -352,3 +352,5 @@ mapped_boundingbox{N}(box::BBox{N}, fmap::DiagonalMap) =
 
 (+){N,T}(d::AbstractDomain{N}, x::SVector{N,T}) = AffineMap(eye(SMatrix{N,N,T}),x) * d
 (+){N}(d::AbstractDomain{N}, x::AbstractVector) = d + SVector{N}(x)
+
+show(io::IO, d::MappedDomain) =  print(io, "A mapped domain based on ", domain(d))

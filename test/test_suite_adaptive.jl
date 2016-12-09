@@ -28,11 +28,8 @@ function test_function_space()
       FourierSpace(), FourierSpace(-1,1), ChebyshevSpace(),
       FourierSpace()⊗ChebyshevSpace(),FourierSpace(-2,1)⊕ChebyshevSpace(-2,1),FE.tensorproduct(FourierSpace(),3), FE.add(FourierSpace(),3)])
       @test left(bboxes[i])==left(boundingbox(space))
-      println("ok")
       @test right(bboxes[i])==right(boundingbox(space))
-      println("ok")
       @test FunctionSet(space, 121) == bases[i]
-      println("ok")
   end
   @testset "Util functions" begin
     for n in 1:4
@@ -58,7 +55,7 @@ function test_residual()
     for n in 2.^(3:6)
         S = rescale(instantiate(basis,n), -1,1)
         F = Fun(f, S, D)
-        resnew = FE.residual(F,f)
+        resnew = FE.residual(f,F)
         @test  resnew < res
         res = resnew
     end
