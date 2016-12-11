@@ -13,7 +13,7 @@ After choosing a suitable Basis and Domain, any function can be approximated in 
 using BasisFunctions
 using Plots
 using FrameFun
-B = FourierBasis(61)
+B = FourierBasis(61, -1, 1)
 D = Interval(-0.5,0.5)
 f(x) = x
 F = Fun(f,B,D)

@@ -88,9 +88,9 @@ include("domains/domains.jl")
 
 include("subgrid.jl")
 
-include("domainframe.jl")
+include("frames/domainframe.jl")
 
-include("funs.jl")
+include("fun/funs.jl")
 
 include("approximation/fe_problem.jl")
 
