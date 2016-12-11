@@ -26,7 +26,7 @@ plot(F,plot_ext=true); plot(F,f,plot_ext=true)
 The bases support any AbstractFloat subtype, so high precision approximations are straightforward:
 
 ```julia
-B = FourierBasis(61,BigFloat)
+B = FourierBasis(61, -1, 1, BigFloat)
 F = Fun(f,B,D)
 
 plot(F,plot_ext=true); plot(F,f,plot_ext=true)
