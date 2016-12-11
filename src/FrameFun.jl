@@ -84,9 +84,7 @@ export FourierSpace, ChebyshevSpace, ⊕, add, construct
 
 include("box.jl")
 
-include("domains.jl")
-
-include("fractals.jl")
+include("domains/domains.jl")
 
 include("subgrid.jl")
 
@@ -94,24 +92,27 @@ include("domainframe.jl")
 
 include("funs.jl")
 
-include("fourierdomains.jl")
+include("approximation/fe_problem.jl")
 
-include("fe_problem.jl")
+include("approximation/fe_solvers.jl")
 
-include("fe_solvers.jl")
+include("approximation/fastsolver.jl")
 
-include("fastsolver.jl")
+include("approximation/smoothsolver.jl")
 
-include("smoothsolver.jl")
-
-include("fe_approx.jl")
+include("approximation/fe_approx.jl")
 
 include("recipes.jl")
 
 include("diffequation.jl")
 
-include("space.jl")
+include("approximation/space.jl")
 
-include("constructors.jl")
+include("approximation/constructors.jl")
+
+include("domains/fourierdomains.jl")
+
+include("domains/fractals.jl")
+
 
 end # module
