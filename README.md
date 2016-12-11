@@ -1,8 +1,8 @@
-[![Build Status](https://travis-ci.org/daanhb/FrameFuns.jl.svg?branch=master)](https://travis-ci.org/daanhb/FrameFuns.jl)
-[![Coverage Status](https://coveralls.io/repos/github/daanhb/FrameFuns.jl/badge.svg)](https://coveralls.io/github/daanhb/FrameFuns.jl)
+[![Build Status](https://travis-ci.org/daanhb/FrameFun.jl.svg?branch=master)](https://travis-ci.org/daanhb/FrameFun.jl)
+[![Coverage Status](https://coveralls.io/repos/github/daanhb/FrameFun.jl/badge.svg)](https://coveralls.io/github/daanhb/FrameFun.jl)
 
-FrameFuns
-=========
+FrameFun
+========
 
 Exploring practical possibilities of approximating functions with frames rather than with a basis. The package is heavily inspired by the Chebfun project and the Julia package ApproxFun.
 
@@ -10,7 +10,9 @@ Exploring practical possibilities of approximating functions with frames rather 
 
 After choosing a suitable Basis and Domain, any function can be approximated in the resulting frame:
 ```julia
-using FrameFuns
+using BasisFunctions
+using Plots
+using FrameFun
 B = FourierBasis(61)
 D = Interval(-0.5,0.5)
 f(x) = x

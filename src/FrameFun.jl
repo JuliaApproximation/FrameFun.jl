@@ -1,6 +1,6 @@
-# FrameFuns.jl
+# FrameFun.jl
 
-module FrameFuns
+module FrameFun
 
 using StaticArrays
 using BasisFunctions
@@ -63,7 +63,7 @@ export Characteristic
 export numtype
 
 # from funs.jl
-export ExpFun, ChebyFun, Fun, FrameFun, sampling_grid, domain, abserror
+export ExpFun, ChebyFun, Fun, SetFun, sampling_grid, domain, abserror
 
 # from domainframe.jl
 export DomainFrame, basis

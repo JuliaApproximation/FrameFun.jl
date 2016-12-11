@@ -2,9 +2,9 @@ module test_suite_applications
 
 
 using BasisFunctions
-using FrameFuns
+using FrameFun
 using Base.Test
-FE = FrameFuns
+FE = FrameFun
 BA = BasisFunctions
 
 ## Settings
@@ -131,8 +131,8 @@ function test_smoothing_1d()
         D = Interval(-0.5,0.5)
         f(x) = exp(x)
         fscale(i) = 10.0^-4+abs(i)+abs(i)^2+abs(i)^3
-        F = Fun(f,B,D;solver=FrameFuns.FE_SmoothProjectionSolver,scale=fscale)
-        F = Fun(f,B,D;solver=FrameFuns.FE_ProjectionSolver)
+        F = Fun(f,B,D;solver=FrameFun.FE_SmoothProjectionSolver,scale=fscale)
+        F = Fun(f,B,D;solver=FrameFun.FE_ProjectionSolver)
         @test (abserror(f,F) < 100*sqrt(eps(numtype(B))))
     end
 end
@@ -143,7 +143,7 @@ function test_smoothing_2d()
         D = Disk(0.5)
         f(x,y) = exp(x*y)
         fscale(i,j) = 10.0^-4+100*abs((i)^2+abs(j^2))
-        F = Fun(f,B,D;solver=FrameFuns.FE_SmoothProjectionSolver,scale=fscale)
+        F = Fun(f,B,D;solver=FrameFun.FE_SmoothProjectionSolver,scale=fscale)
         @test (abserror(f,F) < 100*sqrt(sqrt(eps(numtype(B)))))
     end
 end

@@ -2,9 +2,9 @@ module test_suite
 
 
 using BasisFunctions
-using FrameFuns
+using FrameFun
 using Base.Test
-FE = FrameFuns
+FE = FrameFun
 BA = BasisFunctions
 
 function delimit(s::AbstractString)

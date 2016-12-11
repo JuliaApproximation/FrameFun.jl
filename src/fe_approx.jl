@@ -1,7 +1,7 @@
 # fe_fourier.jl
 
 
-## "An ExpFun is a FrameFun based on Fourier series."
+## "An ExpFun is a SetFun based on Fourier series."
 ## ExpFun(f::Function; n=n, T=T, args...) = Fun(FourierBasis, f ; args...)
 ## # one of three things should be provided: n(tuple), domain or basis
 ## # only n
@@ -9,7 +9,7 @@
 ## ExpFun(f::Function, n::Int)
 ## ExpFun{N}(f::Function, n::Ntuple{N}) = Fun(FourierBasis, f, domain; args...)
 
-## "A ChebyFun is a FrameFun based on Chebyshev polynomials."
+## "A ChebyFun is a SetFun based on Chebyshev polynomials."
 ## ChebyFun(f::Function; args...) = Fun(ChebyshevBasis, f; args...)
 ## ChebyFun(f::Function, domain; args...) = Fun(ChebyshevBasis, f, domain; args...)
 
@@ -19,7 +19,7 @@ function Fun(f::Function, basis::FunctionSet, domain::AbstractDomain; options...
     frame = domainframe(domain, promote_eltype(basis, ELT))
     A = approximation_operator(frame; options...)
     coef = A * f
-    FrameFun(domain, dest(A), coef)
+    SetFun(domain, dest(A), coef)
 end
 
 # We assume f as a function is type stable.
