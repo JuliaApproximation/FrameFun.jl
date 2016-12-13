@@ -34,7 +34,7 @@ function test_subgrids()
     n = 20
     grid1 = EquispacedGrid(n, -1.0, 1.0)
     subgrid1 = FE.MaskedGrid(grid1, Interval(-0.5, 0.7))
-    subgrid2 = FE.IndexSubGrid(grid1, 4, 12)
+    subgrid2 = FE.IndexSubGrid(grid1, 4:12)
 
     G1 = EquispacedGrid(n, -1.0, 1.0)
     G2 = EquispacedGrid(n, -1.0, 1.0)
@@ -46,8 +46,8 @@ function test_subgrids()
 
         @test (length(circle_grid)/length(TensorG)-pi*0.25) < 0.01
 
-        G1s = FE.IndexSubGrid(G1,2,4)
-        G2s = FE.IndexSubGrid(G2,3,5)
+        G1s = FE.IndexSubGrid(G1,2:4)
+        G2s = FE.IndexSubGrid(G2,3:5)
         TensorGs = G1s ⊗ G2s
         @test G1s[1] == G1[2]
         @test G2s[1] == G2[3]
@@ -61,7 +61,7 @@ function test_subgrids()
         # Count the number of elements in the subgrid
         cnt = 0
         for i in 1:length(grid)
-            if i ∈ subgrid
+            if is_subindex(i, subgrid)
                 cnt += 1
             end
         end

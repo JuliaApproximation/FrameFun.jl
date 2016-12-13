@@ -50,6 +50,10 @@ import BasisFunctions: show_setexpansion
 
 import BasisFunctions: postprocess, plotgrid
 
+# about subgrids
+import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
+    similar_subgrid
+
 # from box.jl
 export BBox, BBox1, BBox2, left, right
 export ⊂

@@ -22,6 +22,16 @@ function Fun(f::Function, basis::FunctionSet, domain::AbstractDomain; options...
     SetFun(domain, dest(A), coef)
 end
 
+function fe_problem(basis, domain, sampling_factor = 2; options...)
+    frame = domainframe(domain, basis)
+    FE_DiscreteProblem(domain, basis, sampling_factor; options...)
+end
+
+function fe_solver(basis, domain; options...)
+    frame = domainframe(domain, basis)
+    approximation_operator(frame; options...)
+end
+
 # We assume f as a function is type stable.
 function eltype(f::Function, basis)
     ELT = eltype(basis)
