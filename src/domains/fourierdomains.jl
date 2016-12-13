@@ -7,7 +7,7 @@ Example: if relop is x -> x-2 > 0, then the Fourier domain is the domain where t
 Fourier series is greater than 2.
 """
 immutable FourierDomain{N,T} <: AbstractDomain{N}
-    f       ::  FrameFun{N,T}
+    f       ::  SetFun{N,T}
     relop	::	Function
 end
 
@@ -22,10 +22,10 @@ function in(g::AbstractGrid, d::FourierDomain)
 	map(d.relop, z)
 end
 
-(<){T <: Number}(f::FrameFun, a::T) = FourierDomain(f, x-> x < a)
-(<=){T <: Number}(f::FrameFun, a::T) = FourierDomain(f, x-> x <= a)
-(>){T <: Number}(f::FrameFun, a::T) = FourierDomain(f, x-> x > a)
-(>=){T <: Number}(f::FrameFun, a::T) = FourierDomain(f, x-> x >= a)
+(<){T <: Number}(f::SetFun, a::T) = FourierDomain(f, x-> x < a)
+(<=){T <: Number}(f::SetFun, a::T) = FourierDomain(f, x-> x <= a)
+(>){T <: Number}(f::SetFun, a::T) = FourierDomain(f, x-> x > a)
+(>=){T <: Number}(f::SetFun, a::T) = FourierDomain(f, x-> x >= a)
 
 boundingbox(d::FourierDomain) = boundingbox(domain(d.f))
 
@@ -35,8 +35,8 @@ Example: if binop is (x,y) -> x > y, then the Fourier domain is the domain where
 Fourier series is greater than the second.
 """
 immutable ComparisonDomain{N,T} <: AbstractDomain{N}
-    f       ::  FrameFun{N,T}
-    g		::	FrameFun{N,T}
+    f       ::  SetFun{N,T}
+    g		::	SetFun{N,T}
     binop	::	Function
 end
 
@@ -53,9 +53,9 @@ function in(g::AbstractGrid, d::ComparisonDomain)
 	in(g,domain(d.f)) & in(g,domain(d.g)) & map(d.binop, z1, z2)
 end
 
-(<)(f::FrameFun, g::FrameFun) = ComparisonDomain(f, g, (x,y)-> x < y)
-(<=)(f::FrameFun, g::FrameFun) = ComparisonDomain(f, g, (x,y)-> x <= y)
-(>)(f::FrameFun, g::FrameFun) = ComparisonDomain(f, g, (x,y)-> x > y)
-(>=)(f::FrameFun, g::FrameFun) = ComparisonDomain(f, g, (x,y)-> x >= y)
+(<)(f::SetFun, g::SetFun) = ComparisonDomain(f, g, (x,y)-> x < y)
+(<=)(f::SetFun, g::SetFun) = ComparisonDomain(f, g, (x,y)-> x <= y)
+(>)(f::SetFun, g::SetFun) = ComparisonDomain(f, g, (x,y)-> x > y)
+(>=)(f::SetFun, g::SetFun) = ComparisonDomain(f, g, (x,y)-> x >= y)
 
 boundingbox(d::ComparisonDomain) = boundingbox(domain(d.f))+boundingbox(domain(d.g))

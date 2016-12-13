@@ -3,94 +3,94 @@
 abstract AbstractFun
 
 """
-A FrameFun corresponds to an expansion in a function set, but it adds a simple user
+A SetFun corresponds to an expansion in a function set, but it adds a simple user
 interface for computing with functions.
 """
-immutable FrameFun{N,T} <: AbstractFun
+immutable SetFun{N,T} <: AbstractFun
     expansion   ::  SetExpansion
 
-    FrameFun(e::SetExpansion) = new(e)
+    SetFun(e::SetExpansion) = new(e)
 end
 
-FrameFun(e::SetExpansion, args...) = FrameFun{ndims(e),eltype(e)}(e, args...)
+SetFun(e::SetExpansion, args...) = SetFun{ndims(e),eltype(e)}(e, args...)
 
-FrameFun{N,T}(frame::FunctionSet{N,T}, coefficients = zeros(frame), args...) =
-    FrameFun{N,T}(SetExpansion(frame, coefficients), args...)
+SetFun{N,T}(frame::FunctionSet{N,T}, coefficients = zeros(frame), args...) =
+    SetFun{N,T}(SetExpansion(frame, coefficients), args...)
 
-FrameFun(domain::AbstractDomain, basis::FunctionSet, args...) = FrameFun(DomainFrame(domain, basis), args...)
+SetFun(domain::AbstractDomain, basis::FunctionSet, args...) = SetFun(DomainFrame(domain, basis), args...)
 
-typealias FrameFun1d{T} FrameFun{1,T}
-typealias FrameFun2d{T} FrameFun{2,T}
-typealias FrameFun3d{T} FrameFun{3,T}
+typealias SetFun1d{T} SetFun{1,T}
+typealias SetFun2d{T} SetFun{2,T}
+typealias SetFun3d{T} SetFun{3,T}
 
-expansion(fun::FrameFun) = fun.expansion
+expansion(fun::SetFun) = fun.expansion
 
 for op in (:set, :ndims, :coefficients, :eltype, :numtype)
-    @eval $op(fun::FrameFun) = $op(fun.expansion)
+    @eval $op(fun::SetFun) = $op(fun.expansion)
 end
 
 for op in (:ctranspose, :∫, :∂x, :∂y, :∂z, :∫∂x, :∫∂y, :∫∂z, :differentiate, :antidifferentiate)
-    @eval $op{N,T}(fun::FrameFun{N,T}, args...) = FrameFun{N,T}($op(fun.expansion, args...))
+    @eval $op{N,T}(fun::SetFun{N,T}, args...) = SetFun{N,T}($op(fun.expansion, args...))
 end
 
 for op in (:domainframe, :domain, :basis)
-    @eval $op(fun::FrameFun) = $op(fun, set(fun))
+    @eval $op(fun::SetFun) = $op(fun, set(fun))
 end
 
 for op in (:+, :-, :*)
-    @eval $op(fun1::FrameFun,fun2::FrameFun) = FrameFun($op(fun1.expansion,fun2.expansion))
+    @eval $op(fun1::SetFun,fun2::SetFun) = SetFun($op(fun1.expansion,fun2.expansion))
 end
 
 for op in (:+, :-, :*)
-    @eval $op(a::Number,fun::FrameFun) = FrameFun($op(a,fun.expansion))
+    @eval $op(a::Number,fun::SetFun) = SetFun($op(a,fun.expansion))
 end
 
 for op in (:+, :-, :*)
-    @eval $op(fun::FrameFun,a::Number) = $op(a,fun)
+    @eval $op(fun::SetFun,a::Number) = $op(a,fun)
 end
 
-domainframe(fun::FrameFun, set::DomainFrame) = set
+domainframe(fun::SetFun, set::DomainFrame) = set
 
-domain(fun::FrameFun, set::DomainFrame) = domain(set)
+domain(fun::SetFun, set::DomainFrame) = domain(set)
 
-basis(fun::FrameFun, set::DomainFrame) = basis(set)
+basis(fun::SetFun, set::DomainFrame) = basis(set)
 
-function matrix(fun::FrameFun; sampling_factor=2)
+function matrix(fun::SetFun; sampling_factor=2)
     problem = FE_DiscreteProblem(domain(fun), basis(fun), sampling_factor)
     matrix(operator(problem))
 end
 
-function sampling_grid(fun::FrameFun; sampling_factor=2)
+function sampling_grid(fun::SetFun; sampling_factor=2)
     problem = FE_DiscreteProblem(domain(fun), basis(fun), sampling_factor)
     grid(time_basis_restricted(problem))
 end
 
 # Delegate operator applications to the underlying expansion
-function (*)(op::AbstractOperator, fun::FrameFun)
+function (*)(op::AbstractOperator, fun::SetFun)
     @assert src(op) == basis(set(fun))
-    FrameFun(domain(fun),dest(op),op*coefficients(fun))
+    SetFun(domain(fun),dest(op),op*coefficients(fun))
 end
 
 # Delegate all calling to the underlying expansion.
-(fun::FrameFun)(x...) = expansion(fun)(x...)
+(fun::SetFun)(x...) = expansion(fun)(x...)
 
 
-show(io::IO, fun::FrameFun) = show(io, fun, set(fun))
+show(io::IO, fun::SetFun) = show(io, fun, set(fun))
 
-function show(io::IO, fun::FrameFun, set::FunctionSet)
-  println(io, "A ", ndims(fun), "-dimensional FrameFun with ", length(coefficients(fun)), " degrees of freedom.")
+function show(io::IO, fun::SetFun, set::FunctionSet)
+  println(io, "A ", ndims(fun), "-dimensional SetFun with ", length(coefficients(fun)), " degrees of freedom.")
   println(io, "Basis: ", name(set))
 end
 
-function show(io::IO, fun::FrameFun, set::DomainFrame)
-    println(io, "A ", ndims(fun), "-dimensional FrameFun with ", length(coefficients(fun)), " degrees of freedom.")
+function show(io::IO, fun::SetFun, set::DomainFrame)
+    println(io, "A ", ndims(fun), "-dimensional SetFun with ", length(coefficients(fun)), " degrees of freedom.")
     println(io, "Basis: ", name(basis(set)))
     println(io, "Domain: ", domain(set))
 end
 
 getindex(expansion::SetExpansion, domain::AbstractDomain) = restrict(expansion, domain)
 
-getindex(fun::FrameFun, domain::AbstractDomain) = restrict(expansion(fun), domain)
+getindex(fun::SetFun, domain::AbstractDomain) = restrict(expansion(fun), domain)
 
 restrict(expansion::SetExpansion, domain::AbstractDomain) = _restrict(expansion, set(expansion), domain)
 
@@ -99,17 +99,17 @@ function _restrict(expansion::SetExpansion, set::DomainFrame, domain1::AbstractD
 
     domain2 = domain(set)
     newdomain = domain1 ∩ domain2
-    FrameFun(newdomain, basis(set), coefficients(expansion))
+    SetFun(newdomain, basis(set), coefficients(expansion))
 end
 
 function _restrict(expansion::SetExpansion, set::FunctionSet, domain::AbstractDomain)
     @assert ndims(set) == ndims(domain)
     # We should check here whether the given domain lies in the support of the set
-    FrameFun(domain, set, coefficients(expansion))
+    SetFun(domain, set, coefficients(expansion))
 end
 
 # Get the mean approximation error in random interior points.
-function abserror{N}(f::Function,F::FrameFun{N};vals::Int=200)
+function abserror{N}(f::Function,F::SetFun{N};vals::Int=200)
     # Use the bounding box around the domain
     box = boundingbox(domain(F))
     point=Array{numtype(F)}(N)
@@ -130,7 +130,7 @@ function abserror{N}(f::Function,F::FrameFun{N};vals::Int=200)
 end
 
 # Get the max approximation error in random interior points
-function maxerror{N}(f::Function,F::FrameFun{N};vals::Int=200)
+function maxerror{N}(f::Function,F::SetFun{N};vals::Int=200)
     # Use the bounding box around the domain
     box = boundingbox(domain(F))
     point=Array{numtype(F)}(N)
@@ -150,12 +150,12 @@ function maxerror{N}(f::Function,F::FrameFun{N};vals::Int=200)
     return error
 end
 
-function residual(f::Function, F::FrameFun ; sampling_factor=2, options...)
+function residual(f::Function, F::SetFun ; sampling_factor=2, options...)
     problem = FE_DiscreteProblem(domain(F), basis(F), sampling_factor; options...)
     op = operator(problem)
     rhs = sample(BasisFunctions.grid(dest(op)), f, eltype(src(op)))
     # There should be an easier way of getting the inverse of the normalization
-    Norm = FrameFuns.normalization(problem)
+    Norm = FrameFun.normalization(problem)
     invnorm = DiagonalOperator(src(op),diagonal(Norm).^(-1))
     norm(op*invnorm*coefficients(F)-rhs)
 end

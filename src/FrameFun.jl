@@ -1,6 +1,6 @@
-# FrameFuns.jl
+# FrameFun.jl
 
-module FrameFuns
+module FrameFun
 
 using StaticArrays
 using BasisFunctions
@@ -63,7 +63,7 @@ export Characteristic
 export numtype
 
 # from funs.jl
-export ExpFun, ChebyFun, Fun, FrameFun, sampling_grid, domain, abserror
+export ExpFun, ChebyFun, Fun, SetFun, sampling_grid, domain, abserror
 
 # from domainframe.jl
 export DomainFrame, basis
@@ -84,34 +84,35 @@ export FourierSpace, ChebyshevSpace, ⊕, add, construct
 
 include("box.jl")
 
-include("domains.jl")
-
-include("fractals.jl")
+include("domains/domains.jl")
 
 include("subgrid.jl")
 
-include("domainframe.jl")
+include("frames/domainframe.jl")
 
-include("funs.jl")
+include("fun/funs.jl")
 
-include("fourierdomains.jl")
+include("approximation/fe_problem.jl")
 
-include("fe_problem.jl")
+include("approximation/fe_solvers.jl")
 
-include("fe_solvers.jl")
+include("approximation/fastsolver.jl")
 
-include("fastsolver.jl")
+include("approximation/smoothsolver.jl")
 
-include("smoothsolver.jl")
-
-include("fe_approx.jl")
+include("approximation/fe_approx.jl")
 
 include("recipes.jl")
 
 include("diffequation.jl")
 
-include("space.jl")
+include("approximation/space.jl")
 
-include("constructors.jl")
+include("approximation/constructors.jl")
+
+include("domains/fourierdomains.jl")
+
+include("domains/fractals.jl")
+
 
 end # module

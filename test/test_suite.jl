@@ -2,10 +2,10 @@ module test_suite
 
 
 using BasisFunctions
-using FrameFuns
+using FrameFun
 using StaticArrays
 using Base.Test
-FE = FrameFuns
+FE = FrameFun
 BA = BasisFunctions
 
 ## Settings

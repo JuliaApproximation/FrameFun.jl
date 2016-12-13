@@ -3,7 +3,7 @@
 """ 
 A DiffEquation describes a differential equation, with or without boundary conditions.
 Parameters:
-- Fun is the FrameFun that will describe the result
+- Fun is the SetFun that will describe the result
 
 When the equation is solved the equations:
 -Diff(Fun) = DRhs on the domain
@@ -72,7 +72,7 @@ function solve(D::DiffEquation, solver=FE_ProjectionSolver; options...)
     DEproblem = problem(D)
     A = solver(DEproblem; options...)
     coef  = A * b
-    FrameFun(D.D, dest(A), Adiff*coef)
+    SetFun(D.D, dest(A), Adiff*coef)
 end
 
 function problem(D::DiffEquation)
