@@ -83,11 +83,15 @@ function test_1d_cases()
     delimit("1D")
 
     # Complex and real functions / Float64
-    f(x) = cos(x.^2-0.5)-1
-    g(x) = 1im*cos(x.^2-0.5)-1
+    f(x) = cos(x^2-1//2)-1
+    g(x) = 1im*cos(x^2-1//2)-1
     # Chebyshev and Fourier Bases
 
-    @testset "result" for ELT in (Float32,Float64), Basis in (FourierBasis, ChebyshevBasis), D in [Interval(), Interval(-1.5,0.7), Interval(-1.5,-0.5)+Interval(0.5,1.5)], solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
+    @testset "result" for ELT in (Float32,Float64),
+            Basis in (FourierBasis, ChebyshevBasis),
+            D in [Interval(), Interval(-1.5,0.7), Interval(-1.5,-0.5)+Interval(0.5,1.5)],
+            solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
+
         println()
         println("Testing \t solver = $solver, \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = $ELT ")
         verbose && println("N\t T\t Complex?\t abserror\t time\t\t \memory   ")

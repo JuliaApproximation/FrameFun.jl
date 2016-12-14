@@ -78,9 +78,12 @@ function test_subgrids()
         cnt = 0
         diff = 0.0
         for i in 1:length(grid)
-            if i ∈ subgrid
+            if is_subindex(i, subgrid)
                 cnt += 1
                 diff += abs(e[cnt] - e_ext[i])
+            else
+                # all other entries should be zero
+                diff += abs(e_ext[i])
             end
         end
         @test diff < 1e-6

@@ -53,7 +53,7 @@ similar_subgrid(g::MaskedGrid, g2::AbstractGrid) = MaskedGrid(g2, g.mask, g.indi
 # Check whether element grid[i] (of the underlying grid) is in the masked grid.
 is_subindex(i, g::MaskedGrid) = g.mask[i]
 
-getindex(g::MaskedGrid, idx::Int) = getindex(g.supergrid, g.indices[idx]...)
+unsafe_getindex(g::MaskedGrid, idx) = unsafe_getindex(g.supergrid, g.indices[idx]...)
 
 
 # Efficient extension operator

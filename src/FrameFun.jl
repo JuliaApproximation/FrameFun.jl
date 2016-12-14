@@ -14,13 +14,14 @@ import Base: intersect, union, isapprox, setdiff
 
 import Base: length, eltype, size, push!, ctranspose, inv, similar
 
-import Base: eachindex, start, next, done, getindex, in
+import Base: eachindex, start, next, done, getindex, in, unsafe_getindex,
+    checkbounds
 
 import Base: show, showcompact, call
 
 import Base: promote, promote_rule, convert, promote_eltype
 
-import Base: ndims
+import Base: ndims, unsafe_getindex
 
 
 # Imports from BasisFunctions follow
