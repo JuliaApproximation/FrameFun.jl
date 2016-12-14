@@ -32,9 +32,9 @@ function postprocess(D::AbstractDomain, grid, vals, value=NaN)
     vals
 end
 
-postprocess(B::DomainFrame, args...) = postprocess(domain(B), args...)
+postprocess(B::ExtensionFrame, args...) = postprocess(domain(B), args...)
 
 # Plotgrids are determined by the underlying set
-plotgrid(B::DomainFrame, n) = plotgrid(basis(B),n)
+plotgrid(B::ExtensionFrame, n) = plotgrid(basis(B),n)
 
 # Plot a domain

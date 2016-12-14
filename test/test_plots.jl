@@ -33,7 +33,7 @@ plot(G)
 
 B = FourierBasis(21,-1,1)⊗FourierBasis(21,-1,1)⊗FourierBasis(21,-1,1)
 D = Ball()-FrameFun.cube(-0.5,0.5,-0.5,0.5,-2,2)
-Df = DomainFrame(D,B)
+Df = ExtensionFrame(D,B)
 G = BasisFunctions.grid(Df)
 plot(G,size=(400,400))
 

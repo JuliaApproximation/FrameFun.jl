@@ -32,14 +32,19 @@ import BasisFunctions: src, dest, matrix, matrix!, apply!, apply_inplace!, numty
 
 import BasisFunctions: grid, left, right, stepsize, sample
 
-import BasisFunctions: operator, coefficients, set, is_basis, is_frame, is_diagonal, is_inplace,
+import BasisFunctions: is_basis, is_frame, has_transform, has_grid, has_derivative,
+    has_antiderivative, has_extension, has_grid_transform
+
+import BasisFunctions: operator, coefficients, set, superset, is_diagonal, is_inplace,
     transform_operator_pre, transform_operator_post, evaluation_operator, interpolation_operator,
     differentiation_operator, antidifferentiation_operator, approximation_operator,
     extend, extension_size, extension_operator, restriction_operator,
     default_approximation_operator, has_extension, wrap_operator
 
+import BasisFunctions: set_promote_eltype
+
 import BasisFunctions: eval_set_element, eval_element, eval_expansion,
-    call_set_expansion, name
+    call_set_expansion, name, in_support
 
 import BasisFunctions: differentiate, ∂x, ∂y, ∂z, ∫∂x, ∫∂y, ∫∂z, ∫, is_compatible
 
@@ -70,10 +75,13 @@ export numtype
 # from funs.jl
 export ExpFun, ChebyFun, Fun, SetFun, sampling_grid, domain, abserror
 
-# from domainframe.jl
-export DomainFrame, basis
+# from frames/extensionframe.jl
+export ExtensionFrame, basis, domain
 
-# from fractal.jl
+# from frames/sumframe.jl
+export WeightedSumFrame, sumframe
+
+# from domains/fractal.jl
 export Mandelbrot, JuliaSet
 
 # from DiffEquation.jl
@@ -93,7 +101,9 @@ include("domains/domains.jl")
 
 include("subgrid.jl")
 
-include("frames/domainframe.jl")
+include("frames/extensionframe.jl")
+
+include("fun/basisdomains.jl")
 
 include("fun/funs.jl")
 

@@ -16,19 +16,19 @@
 
 function Fun(f::Function, basis::FunctionSet, domain::AbstractDomain; options...)
     ELT = eltype(f, basis)
-    frame = domainframe(domain, promote_eltype(basis, ELT))
+    frame = ExtensionFrame(domain, promote_eltype(basis, ELT))
     A = approximation_operator(frame; options...)
     coef = A * f
     SetFun(domain, dest(A), coef)
 end
 
 function fe_problem(basis, domain, sampling_factor = 2; options...)
-    frame = domainframe(domain, basis)
+    frame = ExtensionFrame(domain, basis)
     FE_DiscreteProblem(domain, basis, sampling_factor; options...)
 end
 
 function fe_solver(basis, domain; options...)
-    frame = domainframe(domain, basis)
+    frame = ExtensionFrame(domain, basis)
     approximation_operator(frame; options...)
 end
 
@@ -46,7 +46,7 @@ end
 
 
 
-function approximation_operator(set::DomainFrame;
+function approximation_operator(set::ExtensionFrame;
     sampling_factor = 2, solver = default_frame_solver(domain(set), basis(set)), options... )
 
     problem = FE_DiscreteProblem(domain(set), basis(set), sampling_factor; options...)

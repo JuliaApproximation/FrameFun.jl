@@ -17,7 +17,7 @@ SetFun(e::SetExpansion, args...) = SetFun{ndims(e),eltype(e)}(e, args...)
 SetFun{N,T}(frame::FunctionSet{N,T}, coefficients = zeros(frame), args...) =
     SetFun{N,T}(SetExpansion(frame, coefficients), args...)
 
-SetFun(domain::AbstractDomain, basis::FunctionSet, args...) = SetFun(DomainFrame(domain, basis), args...)
+SetFun(domain::AbstractDomain, basis::FunctionSet, args...) = SetFun(ExtensionFrame(domain, basis), args...)
 
 typealias SetFun1d{T} SetFun{1,T}
 typealias SetFun2d{T} SetFun{2,T}
@@ -33,9 +33,11 @@ for op in (:ctranspose, :∫, :∂x, :∂y, :∂z, :∫∂x, :∫∂y, :∫∂z,
     @eval $op{N,T}(fun::SetFun{N,T}, args...) = SetFun{N,T}($op(fun.expansion, args...))
 end
 
-for op in (:domainframe, :domain, :basis)
+for op in (:ExtensionFrame, :basis)
     @eval $op(fun::SetFun) = $op(fun, set(fun))
 end
+
+domain(fun::SetFun) = domain(set(fun))
 
 for op in (:+, :-, :*)
     @eval $op(fun1::SetFun,fun2::SetFun) = SetFun($op(fun1.expansion,fun2.expansion))
@@ -49,11 +51,11 @@ for op in (:+, :-, :*)
     @eval $op(fun::SetFun,a::Number) = $op(a,fun)
 end
 
-domainframe(fun::SetFun, set::DomainFrame) = set
+ExtensionFrame(fun::SetFun, set::ExtensionFrame) = set
 
-domain(fun::SetFun, set::DomainFrame) = domain(set)
+domain(fun::SetFun, set::ExtensionFrame) = domain(set)
 
-basis(fun::SetFun, set::DomainFrame) = basis(set)
+basis(fun::SetFun, set::ExtensionFrame) = basis(set)
 
 function matrix(fun::SetFun; sampling_factor=2)
     problem = FE_DiscreteProblem(domain(fun), basis(fun), sampling_factor)
@@ -82,7 +84,7 @@ function show(io::IO, fun::SetFun, set::FunctionSet)
   println(io, "Basis: ", name(set))
 end
 
-function show(io::IO, fun::SetFun, set::DomainFrame)
+function show(io::IO, fun::SetFun, set::ExtensionFrame)
     println(io, "A ", ndims(fun), "-dimensional SetFun with ", length(coefficients(fun)), " degrees of freedom.")
     println(io, "Basis: ", name(basis(set)))
     println(io, "Domain: ", domain(set))
@@ -94,7 +96,7 @@ getindex(fun::SetFun, domain::AbstractDomain) = restrict(expansion(fun), domain)
 
 restrict(expansion::SetExpansion, domain::AbstractDomain) = _restrict(expansion, set(expansion), domain)
 
-function _restrict(expansion::SetExpansion, set::DomainFrame, domain1::AbstractDomain)
+function _restrict(expansion::SetExpansion, set::ExtensionFrame, domain1::AbstractDomain)
     @assert ndims(set) == ndims(domain1)
 
     domain2 = domain(set)

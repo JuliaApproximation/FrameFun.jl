@@ -47,7 +47,7 @@ Compute a grid of a larger basis, but restricted to the given domain, using over
 (approximately) in each dimension.
 The result is the tuple (oversampled_grid, larger_basis)
 """
-oversampled_grid(set::DomainFrame, args...) =
+oversampled_grid(set::ExtensionFrame, args...) =
     oversampled_grid(domain(set), basis(set), args...)
 
 
@@ -68,7 +68,7 @@ function oversampled_grid(domain, basis::BasisFunctions.FunctionSet, sampling_fa
         return grid4, large_basis
     end
     maxN = newsize
-    # 
+    #
     while length(grid4)<n_goal
         newsize = 2*newsize
         n = BasisFunctions.approx_length(basis, newsize)
@@ -91,7 +91,7 @@ function oversampled_grid(domain, basis::BasisFunctions.FunctionSet, sampling_fa
     n = BasisFunctions.approx_length(basis,  maxN)
     large_basis = resize(basis, n)
     grid3 = BasisFunctions.grid(large_basis)
-    grid4 = FrameFun.subgrid(grid3, domain) 
+    grid4 = FrameFun.subgrid(grid3, domain)
     grid4, large_basis
 end
 
