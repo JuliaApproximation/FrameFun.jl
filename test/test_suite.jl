@@ -2,10 +2,10 @@ module test_suite
 
 
 using BasisFunctions
-using FrameFuns
-using FixedSizeArrays
+using FrameFun
+using StaticArrays
 using Base.Test
-FE = FrameFuns
+FE = FrameFun
 BA = BasisFunctions
 
 ## Settings
@@ -181,10 +181,10 @@ function test_3d_cases()
 
         n = FE.default_frame_n(D, Basis)
 
-        for T in ((1.7,1.7,1.7), FE.default_frame_T(D, Basis))
+        for T in ((2.3,2.4,1.7), FE.default_frame_T(D, Basis))
             B = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2]) ⊗ Basis(n[3],-T[3],T[3])
-            F = @timed( Fun(f, B, D; solver=solver, cutoff=10.0^(3/4*log10(eps(numtype(B))))))
-            error = abserror(f, F[1])
+            F = @timed( Fun(f, B, D; solver=solver, cutoff=10.0^(3/4*log10(eps(numtype(B)))),sampling_factor=1.5))
+            error = FrameFun.residual(f, F[1])/length(B)
             if verbose
                 print("$n \t $T \t\t")
                 print("N\t")

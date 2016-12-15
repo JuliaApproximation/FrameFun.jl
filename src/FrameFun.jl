@@ -1,12 +1,10 @@
-# FrameFuns.jl
+# FrameFun.jl
 
-module FrameFuns
+module FrameFun
 
-using FixedSizeArrays
+using StaticArrays
 using BasisFunctions
-#using PyPlot
 using RecipesBase
-using Compat
 
 using Base.Cartesian
 
@@ -14,7 +12,7 @@ import Base: +, *, /, ==, |, &, -, \, <, <=, >, >=
 
 import Base: intersect, union, isapprox, setdiff
 
-import Base: length, eltype, size, push!, ctranspose, similar
+import Base: length, eltype, size, push!, ctranspose, inv, similar
 
 import Base: eachindex, start, next, done, getindex, in
 
@@ -24,8 +22,8 @@ import Base: promote, promote_rule, convert, promote_eltype
 
 import Base: ndims
 
-# import PyPlot: plot
 
+# Imports from BasisFunctions follow
 import BasisFunctions: composite_length, ⊗, tensorproduct, flatten,
     compose, elements, element, ⊕
 
@@ -34,13 +32,13 @@ import BasisFunctions: src, dest, matrix, matrix!, apply!, apply_inplace!, numty
 import BasisFunctions: grid, left, right, stepsize, sample
 
 import BasisFunctions: operator, coefficients, set, is_basis, is_frame, is_diagonal, is_inplace,
-    transform_pre_operator, transform_post_operator, evaluation_operator, interpolation_operator,
+    transform_operator_pre, transform_operator_post, evaluation_operator, interpolation_operator,
     differentiation_operator, antidifferentiation_operator, approximation_operator,
     extend, extension_size, extension_operator, restriction_operator,
     default_approximation_operator, has_extension, wrap_operator
 
-import BasisFunctions: call_set, call_set!, call_expansion_with_set,
-call_expansion_with_set!, call_expansion, call_expansion!, call_element, name
+import BasisFunctions: eval_set_element, eval_element, eval_expansion,
+    call_set_expansion, name
 
 import BasisFunctions: differentiate, ∂x, ∂y, ∂z, ∫∂x, ∫∂y, ∫∂z, ∫, is_compatible
 
@@ -65,10 +63,10 @@ export Characteristic
 export numtype
 
 # from funs.jl
-export ExpFun, ChebyFun, Fun, FrameFun, sampling_grid, domain, abserror
+export ExpFun, ChebyFun, Fun, SetFun, sampling_grid, domain, abserror
 
 # from domainframe.jl
-export DomainFrame, basis, call_set, call_set!
+export DomainFrame, basis
 
 # from fractal.jl
 export Mandelbrot, JuliaSet
@@ -81,45 +79,40 @@ export FunConstructor
 
 # from space.jl
 export FourierSpace, ChebyshevSpace, ⊕, add, construct
-
-# from plots.jl
-#export plot, plot_error, plot_samples, plot_domain, plot_image
 # from recipes.jl
-
-# We support both vectors (AbstractVector) and FixedSizeArray's (Vec)
-typealias AnyVector Union{AbstractVector,Vec}
 
 
 include("box.jl")
 
-include("domains.jl")
-
-include("fractals.jl")
+include("domains/domains.jl")
 
 include("subgrid.jl")
 
-include("domainframe.jl")
+include("frames/domainframe.jl")
 
-include("funs.jl")
+include("fun/funs.jl")
 
-include("fourierdomains.jl")
+include("approximation/fe_problem.jl")
 
-include("fe_problem.jl")
+include("approximation/fe_solvers.jl")
 
-include("fe_solvers.jl")
+include("approximation/fastsolver.jl")
 
-include("fastsolver.jl")
+include("approximation/smoothsolver.jl")
 
-include("smoothsolver.jl")
-
-include("fe_approx.jl")
+include("approximation/fe_approx.jl")
 
 include("recipes.jl")
 
 include("diffequation.jl")
 
-include("space.jl")
+include("approximation/space.jl")
 
-include("constructors.jl")
+include("approximation/constructors.jl")
+
+include("domains/fourierdomains.jl")
+
+include("domains/fractals.jl")
+
 
 end # module

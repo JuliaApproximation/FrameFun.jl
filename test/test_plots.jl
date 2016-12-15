@@ -2,11 +2,11 @@ module test_suite_applications
 
 
 using BasisFunctions
-using FrameFuns
+using FrameFun
 # Plots loads the default backend (PyPlot unless otherwise specified)
 using Plots
 using Base.Test
-FE = FrameFuns
+FE = FrameFun
 BA = BasisFunctions
 
 # test plotting functionsets
@@ -28,11 +28,11 @@ G = BasisFunctions.grid(ChebyshevBasis(51))
 plot(G)
 
 G = BasisFunctions.grid(ChebyshevBasis(51,-1,0.3)⊗ChebyshevBasis(51,-0.5,0.5))
-G = FrameFuns.subgrid(G,Mandelbrot())
+G = FrameFun.subgrid(G,Mandelbrot())
 plot(G)
 
 B = FourierBasis(21,-1,1)⊗FourierBasis(21,-1,1)⊗FourierBasis(21,-1,1)
-D = Ball()-FrameFuns.cube(-0.5,0.5,-0.5,0.5,-2,2)
+D = Ball()-FrameFun.cube(-0.5,0.5,-0.5,0.5,-2,2)
 Df = DomainFrame(D,B)
 G = BasisFunctions.grid(Df)
 plot(G,size=(400,400))
@@ -51,7 +51,7 @@ df(x) = -sin(3*x^2)*6*x
 plot!(F',df,label="derivative",legend=true)
 
 B = FourierBasis(21,-1,1)⊗FourierBasis(21,-1,1)
-D = Disk(0.8)-Mandelbrot()
+D = Disk(0.8)-Disk(0.4)
 f(x,y) = cos(7*x-2*y^2)
 F = Fun(f,B,D)
 

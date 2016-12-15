@@ -8,14 +8,14 @@ function random_grid_in_domain{T}(domain::AbstractDomain,::Type{T}=Float64;vals:
     box = boundingbox(domain)
     N=ndims(domain)
     point=Array{T}(N)
-    N == 1 ? points=Array{T}(vals) : points=Array{Vec{N,T}}(vals)
+    N == 1 ? points=Array{T}(vals) : points=Array{SVector{N,T}}(vals)
     elements=0
     # Generate some points inside the domain
     while elements < vals
         for j in 1:N
             point[j]=left(box)[j]+(right(box)[j]-left(box)[j])*rand(1)[1]
         end
-        N == 1 ? vpoint = point[1] : vpoint = Vec(point...)
+        N == 1 ? vpoint = point[1] : vpoint = SVector(point...)
         if in(vpoint,domain)
             elements+=1
             points[elements]=vpoint
@@ -24,18 +24,18 @@ function random_grid_in_domain{T}(domain::AbstractDomain,::Type{T}=Float64;vals:
     return ScatteredGrid(points)
 end
 
-"""
-  The residual of a FrameFun approximation of a Function
-"""
-function residual(f::Function, F1::FrameFun)
-    F2 = extension_operator(basis(F1))*F1
-    gbasis = BasisFunctions.grid(basis(F2))
-    mask = in(gbasis, domain(F2))
-    Ax = real(full_transform_operator(basis(F2)) * coefficients(F2))[mask]
-    b = sample(gbasis,f)[mask]
-    norm(Ax-b)
-end
-residual(F::FrameFun, f::Function) = residual(f,F)
+## """
+##   The residual of a SetFun approximation of a Function
+## """
+## function residual(f::Function, F1::SetFun)
+##     F2 = extension_operator(basis(F1))*F1
+##     gbasis = BasisFunctions.grid(basis(F2))
+##     mask = in(gbasis, domain(F2))
+##     Ax = real(full_transform_operator(basis(F2)) * coefficients(F2))[mask]
+##     b = sample(gbasis,f)[mask]
+##     norm(Ax-b)
+## end
+## residual(F::SetFun, f::Function) = residual(f,F)
 
 """
   Create approximation to function with with a function set in a domain.
@@ -76,7 +76,7 @@ Base.isnan(::Tuple) = false
 
   The number of points is chosen adaptively.
 """
-function fun_optimal_N(f::Function, set::FunctionSet, domain::FrameFuns.AbstractDomain;
+function fun_optimal_N(f::Function, set::FunctionSet, domain::FrameFun.AbstractDomain;
     no_checkpoints=200, max_logn_coefs=9, tol=NaN, print_error=false, options...)
   ELT = eltype(f, set)
   N = ndims(set)
@@ -84,7 +84,7 @@ function fun_optimal_N(f::Function, set::FunctionSet, domain::FrameFuns.Abstract
   # TODO Decide which is best
   # tol = default_cutoff(FE_DiscreteProblem(domain, set, 2; options...))
   isequal(tol,NaN) && (tol = 10*10^(4/5*log10(eps(numtype(set)))))
-  rgrid=FrameFuns.random_grid_in_domain(domain,numtype(set);vals=no_checkpoints)
+  rgrid=FrameFun.random_grid_in_domain(domain,numtype(set);vals=no_checkpoints)
   error = Inf
   random_f=sample(rgrid, f, eltype(f(rgrid[1]...)))
   random_F=zeros(ELT,no_checkpoints)
@@ -136,7 +136,7 @@ end
   Stop the iteration when the residu of the approximation is smaller than the tolerance
   or at the maximum number of iterations.
 """
-function fun_greedy(f::Function, set::FunctionSet, domain::FrameFuns.AbstractDomain;
+function fun_greedy(f::Function, set::FunctionSet, domain::FrameFun.AbstractDomain;
     max_logn_coefs = 7, tol = NaN, options...)
     isequal(tol,NaN) && (tol = 10*10^(4/5*log10(eps(numtype(set)))))
     init_n = 4
@@ -154,12 +154,12 @@ function fun_greedy(f::Function, set::FunctionSet, domain::FrameFuns.AbstractDom
 end
 
 # Allows following notation
-# f2 = cos(f1) with f1 a FrameFun.
+# f2 = cos(f1) with f1 a SetFun.
 for f in (:cos, :sin, :tan, :sinh, :cosh, :tanh,
   :asin, :acos, :atan,
   :sqrt, :cbrt, :exp, :log)
     @eval begin
-        Base.$f(F::FrameFun, ; afun = fun_optimal_N, options...) = afun(x->Base.$f(F(x)), basis(F), domain(F); options...)
+        Base.$f(F::SetFun, ; afun = fun_optimal_N, options...) = afun(x->Base.$f(F(x)), basis(F), domain(F); options...)
     end
 end
 

@@ -2,9 +2,9 @@ module test_suite
 
 
 using BasisFunctions
-using FrameFuns
+using FrameFun
 using Base.Test
-FE = FrameFuns
+FE = FrameFun
 BA = BasisFunctions
 
 function delimit(s::AbstractString)
@@ -26,11 +26,10 @@ function test_function_space()
   @testset "Space = $(name(space)) " for (i,space) in enumerate([
       FE.FunctionSpace(FourierBasis(121,-1,1)),FE. FunctionSpace(FourierBasis(121,-1,1), FE.BBox(-1,1)),
       FourierSpace(), FourierSpace(-1,1), ChebyshevSpace(),
-      FourierSpace()⊗ChebyshevSpace(), FourierSpace(-2,0)⊕ChebyshevSpace(),
-      FE.tensorproduct(FourierSpace(),3), FE.add(FourierSpace(),3)])
-    @test left(bboxes[i])==left(boundingbox(space))
-    @test right(bboxes[i])==right(boundingbox(space))
-    @test FunctionSet(space, 121) == bases[i]
+      FourierSpace()⊗ChebyshevSpace(),FourierSpace(-2,1)⊕ChebyshevSpace(-2,1),FE.tensorproduct(FourierSpace(),3), FE.add(FourierSpace(),3)])
+      @test left(bboxes[i])==left(boundingbox(space))
+      @test right(bboxes[i])==right(boundingbox(space))
+      @test FunctionSet(space, 121) == bases[i]
   end
   @testset "Util functions" begin
     for n in 1:4
@@ -56,7 +55,7 @@ function test_residual()
     for n in 2.^(3:6)
         S = rescale(instantiate(basis,n), -1,1)
         F = Fun(f, S, D)
-        resnew = FE.residual(F,f)
+        resnew = FE.residual(f,F)
         @test  resnew < res
         res = resnew
     end

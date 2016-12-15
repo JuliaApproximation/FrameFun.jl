@@ -1,4 +1,3 @@
 BasisFunctions
-FixedSizeArrays
-Compat
+StaticArrays
 Plots

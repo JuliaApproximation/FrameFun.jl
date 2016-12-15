@@ -14,7 +14,7 @@ for which it is true make up the MaskedGrid.
 immutable MaskedGrid{G,M,N,T} <: AbstractSubGrid{N,T}
     grid	::	G
     mask	::	M
-    indices ::  Vector{Vec{N,Int}}
+    indices ::  Vector{SVector{N,Int}}
     M		::	Int				# Total number of points in the mask
 
     MaskedGrid(grid::AbstractGrid{N,T},  mask, indices) = new(grid, mask, indices, sum(mask))
@@ -33,7 +33,7 @@ convert{N}(::Type{NTuple{N,Int}},i::CartesianIndex{N}) = ntuple(k->i[k],N)
 
 function MaskedGrid{N}(grid::AbstractGrid{N}, domain::AbstractDomain{N})
     mask = in(grid, domain)
-    indices = Array(Vec{N,Int}, sum(mask))
+    indices = Array(SVector{N,Int}, sum(mask))
     i = 1
     for m in eachindex(grid)
         if mask[m]
@@ -233,7 +233,7 @@ function boundary{TG,N,T}(g::TensorProductGrid{TG,N,T},dom::AbstractDomain{N},to
     for j=1:2^N-1
         CartesianNeighbours[j]=CartesianIndex{N}(neighbours[j,:]...)
     end
-    midpoints = Vec{N,T}[]
+    midpoints = SVector{N,T}[]
     # for each element
     for i in eachindex(g)
         # for all neighbours

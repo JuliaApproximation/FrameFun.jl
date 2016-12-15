@@ -7,13 +7,11 @@ Example: if relop is x -> x-2 > 0, then the Fourier domain is the domain where t
 Fourier series is greater than 2.
 """
 immutable FourierDomain{N,T} <: AbstractDomain{N}
-    f       ::  FrameFun{N,T}
+    f       ::  SetFun{N,T}
     relop	::	Function
 end
 
-FourierDomain{N,T}(f::FrameFun{N,T}, relop::Function) = FourierDomain{N,T}(f, relop)
-
-function in(x::Vec, d::FourierDomain)
+function indomain(x, d::FourierDomain)
 	z = d.f(x)
 	in(x,domain(d.f)) && d.relop(z)
 end
@@ -24,10 +22,10 @@ function in(g::AbstractGrid, d::FourierDomain)
 	map(d.relop, z)
 end
 
-(<){T <: Number}(f::FrameFun, a::T) = FourierDomain(f, x-> x < a)
-(<=){T <: Number}(f::FrameFun, a::T) = FourierDomain(f, x-> x <= a)
-(>){T <: Number}(f::FrameFun, a::T) = FourierDomain(f, x-> x > a)
-(>=){T <: Number}(f::FrameFun, a::T) = FourierDomain(f, x-> x >= a)
+(<){T <: Number}(f::SetFun, a::T) = FourierDomain(f, x-> x < a)
+(<=){T <: Number}(f::SetFun, a::T) = FourierDomain(f, x-> x <= a)
+(>){T <: Number}(f::SetFun, a::T) = FourierDomain(f, x-> x > a)
+(>=){T <: Number}(f::SetFun, a::T) = FourierDomain(f, x-> x >= a)
 
 boundingbox(d::FourierDomain) = boundingbox(domain(d.f))
 
@@ -37,14 +35,12 @@ Example: if binop is (x,y) -> x > y, then the Fourier domain is the domain where
 Fourier series is greater than the second.
 """
 immutable ComparisonDomain{N,T} <: AbstractDomain{N}
-    f       ::  FrameFun{N,T}
-    g		::	FrameFun{N,T}
+    f       ::  SetFun{N,T}
+    g		::	SetFun{N,T}
     binop	::	Function
 end
 
-ComparisonDomain{N,T}(f::FrameFun{N,T}, g::FrameFun{N,T}, binop::Function) = ComparisonDomain{N,T}(f, g, binop)
-
-function in(x::Vec, d::ComparisonDomain)
+function indomain(x, d::ComparisonDomain)
 	z1 = d.f(x)
 	z2 = d.g(x)
 	in(x,domain(d.f)) && in(x,domain(d.g)) && d.binop(z1, z2)
@@ -57,9 +53,9 @@ function in(g::AbstractGrid, d::ComparisonDomain)
 	in(g,domain(d.f)) & in(g,domain(d.g)) & map(d.binop, z1, z2)
 end
 
-(<)(f::FrameFun, g::FrameFun) = ComparisonDomain(f, g, (x,y)-> x < y)
-(<=)(f::FrameFun, g::FrameFun) = ComparisonDomain(f, g, (x,y)-> x <= y)
-(>)(f::FrameFun, g::FrameFun) = ComparisonDomain(f, g, (x,y)-> x > y)
-(>=)(f::FrameFun, g::FrameFun) = ComparisonDomain(f, g, (x,y)-> x >= y)
+(<)(f::SetFun, g::SetFun) = ComparisonDomain(f, g, (x,y)-> x < y)
+(<=)(f::SetFun, g::SetFun) = ComparisonDomain(f, g, (x,y)-> x <= y)
+(>)(f::SetFun, g::SetFun) = ComparisonDomain(f, g, (x,y)-> x > y)
+(>=)(f::SetFun, g::SetFun) = ComparisonDomain(f, g, (x,y)-> x >= y)
 
 boundingbox(d::ComparisonDomain) = boundingbox(domain(d.f))+boundingbox(domain(d.g))

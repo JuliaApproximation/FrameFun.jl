@@ -3,9 +3,9 @@ module test_suite_support
 
 
 using BasisFunctions
-using FrameFuns
+using FrameFun
 using Base.Test
-FE = FrameFuns
+FE = FrameFun
 BA = BasisFunctions
 
 ## Settings

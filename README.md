@@ -1,8 +1,8 @@
-[![Build Status](https://travis-ci.org/daanhb/FrameFuns.jl.svg?branch=master)](https://travis-ci.org/daanhb/FrameFuns.jl)
-[![Coverage Status](https://coveralls.io/repos/github/daanhb/FrameFuns.jl/badge.svg)](https://coveralls.io/github/daanhb/FrameFuns.jl)
+[![Build Status](https://travis-ci.org/daanhb/FrameFun.jl.svg?branch=master)](https://travis-ci.org/daanhb/FrameFun.jl)
+[![Coverage Status](https://coveralls.io/repos/github/daanhb/FrameFun.jl/badge.svg)](https://coveralls.io/github/daanhb/FrameFun.jl)
 
-FrameFuns
-=========
+FrameFun
+========
 
 Exploring practical possibilities of approximating functions with frames rather than with a basis. The package is heavily inspired by the Chebfun project and the Julia package ApproxFun.
 
@@ -10,13 +10,15 @@ Exploring practical possibilities of approximating functions with frames rather 
 
 After choosing a suitable Basis and Domain, any function can be approximated in the resulting frame:
 ```julia
-using FrameFuns
-B = FourierBasis(61)
+using BasisFunctions
+using Plots
+using FrameFun
+B = FourierBasis(61, -1, 1)
 D = Interval(-0.5,0.5)
 f(x) = x
 F = Fun(f,B,D)
 
-plot_expansion(F); plot_error(F,f)
+plot(F,plot_ext=true); plot(F,f,plot_ext=true)
 ```
 
 ![](images/lowprecision.png)
@@ -24,10 +26,10 @@ plot_expansion(F); plot_error(F,f)
 The bases support any AbstractFloat subtype, so high precision approximations are straightforward:
 
 ```julia
-B = FourierBasis(61,BigFloat)
+B = FourierBasis(61, -1, 1, BigFloat)
 F = Fun(f,B,D)
 
-plot_expansion(F); plot_error(F,f)
+plot(F,plot_ext=true); plot(F,f,plot_ext=true)
 ```
 
 ![](images/highprecision.png)
@@ -41,7 +43,7 @@ B = FourierBasis(31,-1.3,1.3) ⊗ FourierBasis(31,-1.3,1.3)
 f(x,y) = exp(x+y)
 F = Fun(f,B,C)
 
-plot_image(F); plot_error(F,f)
+heatmap(F,plot_ext=true); plot(F,f,plot_ext=true)
 ```
 
 ![](images/deathstar.png)
@@ -54,7 +56,7 @@ B = FourierBasis(31) ⊗ ChebyshevBasis(31)
 f(x,y) = cos(20*x+22*y)
 F = Fun(f,B,dom)
 
-plot_image(F), plot_error(F,f)
+heatmap(F,plot_ext=true), plot(F,f,plot_ext=true)
 ```
 
 ![](images/circles.png)
@@ -66,7 +68,7 @@ B = FourierBasis(31,-1.0,0.35) ⊗ FourierBasis(31,-0.65,0.65)
 f(x,y) = cos(10*x*y)
 F = Fun(f, B, Mandelbrot())
 
-plot_image(F), plot_error(F,f)
+heatmap(F,plot_ext=true), plot(F,f,ext=true)
 ```
 
 ![](images/mandelbrot.png)

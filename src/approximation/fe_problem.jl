@@ -40,6 +40,7 @@ immutable FE_DiscreteProblem{N,T} <: FE_Problem{N,T}
     itransform2         # from fbasis2 to tbasis2
 
     normalization       # transform normalization operator
+    invnormalization       # inverse of the transform normalization operator
 end
 
 """
@@ -51,17 +52,47 @@ oversampled_grid(set::DomainFrame, args...) =
     oversampled_grid(domain(set), basis(set), args...)
 
 
-function oversampled_grid(domain::AbstractDomain, basis::FunctionSet, sampling_factor)
+function oversampled_grid(domain, basis::BasisFunctions.FunctionSet, sampling_factor)
     N = ndims(basis)
     n_goal = length(basis) * sampling_factor^N
-    grid1 = grid(basis)
-    grid2 = subgrid(grid1, domain)
+    grid1 = BasisFunctions.grid(basis)
+    grid2 = FrameFun.subgrid(grid1, domain)
     ratio = length(grid2) / length(grid1)
-    # This could be way off if the original size was small.
-    n = approx_length(basis, ceil(Int, n_goal/ratio))
+    # Initial guess : This could be way off if the original size was small.
+    newsize = ceil(Int,n_goal/ratio)
+    n = BasisFunctions.approx_length(basis, newsize)
     large_basis = resize(basis, n)
-    grid3 = grid(large_basis)
-    grid4 = subgrid(grid3, domain)
+    grid3 = BasisFunctions.grid(large_basis)
+    grid4 = FrameFun.subgrid(grid3, domain)
+    # If the number of sampling points is correct, return
+    if length(grid4)==n_goal
+        return grid4, large_basis
+    end
+    maxN = newsize
+    # 
+    while length(grid4)<n_goal
+        newsize = 2*newsize
+        n = BasisFunctions.approx_length(basis, newsize)
+        large_basis = resize(basis, n)
+        grid3 = BasisFunctions.grid(large_basis)
+        grid4 = FrameFun.subgrid(grid3, domain)
+        maxN = newsize
+    end
+    minN = newsize>>>1
+    its = 0
+    while (maxN-minN) >1 && its < 40
+        midpoint = (minN+maxN) >>> 1
+        n = BasisFunctions.approx_length(basis,  midpoint)
+        large_basis = resize(basis, n)
+        grid3 = BasisFunctions.grid(large_basis)
+        grid4 = FrameFun.subgrid(grid3, domain)
+        length(grid4)<n_goal ? minN=midpoint : maxN=midpoint
+        its += 1
+    end
+    n = BasisFunctions.approx_length(basis,  maxN)
+    large_basis = resize(basis, n)
+    grid3 = BasisFunctions.grid(large_basis)
+    grid4 = FrameFun.subgrid(grid3, domain) 
     grid4, large_basis
 end
 
@@ -93,15 +124,16 @@ function FE_DiscreteProblem(domain::AbstractDomain, fbasis1, fbasis2, tbasis1, t
     transform2 = transform_operator(tbasis2, fbasis2; options...)
     itransform2 = transform_operator(fbasis2, tbasis2; options...)
 
-    # TODO: we also need to incorporate the transform_pre_operator somewhere
-    normalization = f_restriction * transform_post_operator(tbasis2, fbasis2; options...) * f_extension
-
+    # TODO: we also need to incorporate the transform_operator_pre somewhere
+    normalization = f_restriction * transform_operator_post(tbasis2, fbasis2; options...) * f_extension
+    invnormalization = f_restriction * inv(transform_operator_post(tbasis2, fbasis2; options...)) * f_extension
+    
     op  = t_restriction * itransform2 * f_extension
     opt = f_restriction * transform2 * t_extension
 
     FE_DiscreteProblem(domain, op, opt, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted,
         f_extension, f_restriction, t_extension, t_restriction,
-        transform1, itransform1, transform2, itransform2, normalization)
+        transform1, itransform1, transform2, itransform2, normalization, invnormalization)
 end
 
 
@@ -113,6 +145,7 @@ operator(p::FE_DiscreteProblem) = p.op
 operator_transpose(p::FE_DiscreteProblem) = p.opt
 
 normalization(p::FE_DiscreteProblem) = p.normalization
+invnormalization(p::FE_DiscreteProblem) = p.invnormalization
 
 frequency_basis(p::FE_DiscreteProblem) = p.fbasis1
 frequency_basis_ext(p::FE_DiscreteProblem) = p.fbasis2

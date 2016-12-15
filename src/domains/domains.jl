@@ -20,44 +20,42 @@ right(d::AbstractDomain) = right(boundingbox(d))
 left(d::AbstractDomain, i::Int) = left(boundingbox(d), i)
 right(d::AbstractDomain, i::Int) = right(boundingbox(d), i)
 
-# Domains are evaluated using vectors to specify the points, except in 1D
-# Provide fallback routine for users not using vectors in 1d
-in(x::Number, d::AbstractDomain1d) = in(Vec(x), d)
+# Redirect calls to 'in' to 'indomain', because the latter has fewer
+# methods than the standard function 'in' and that makes it easier to do
+# duck typing.
+in{N}(x::SVector{N}, d::AbstractDomain{N}) = indomain(x, d)
+in(x::Number, d::AbstractDomain1d) = indomain(x, d)
+in(x::SVector{1}, d::AbstractDomain1d) = indomain(x[1], d)
 
-# Convert a point given as an array into a Vec point
-in{N}(x::AbstractVector, d::AbstractDomain{N}) = in(Vec{N,eltype(x)}(x...), d)
+# Convert a point given as any other vector into a SVector
+in{N}(x::AbstractVector, d::AbstractDomain{N}) = in(SVector{N}(x), d)
 
 # Check whether a value is in an interval, up to 10 times machine precision
 in{T <: AbstractFloat}(x::Number, a::T, b::T) = (a-10eps(T) <= x <= b+10eps(T))
 in{T <: Number}(x::Number, a::T, b::T) = a <= x <= b
 
-# Evaluation on a grid should be implemented by evalgrid for each domain
-in{N}(g::AbstractGrid{N}, d::AbstractDomain{N}) = evalgrid(g, d)
+# Evaluation on a grid should be implemented by indomain_grid for each domain
+in{N}(g::AbstractGrid{N}, d::AbstractDomain{N}) = indomain_grid(g, d)
 
 # Default methods for evaluation on a grid: the default is to call eval on the domain with
 # points as arguments. Domains that have faster grid evaluation routines may define their own version.
-evalgrid(g::AbstractGrid, d::AbstractDomain) = evalgrid!(zeros(Bool, size(g)), g, d)
+indomain_grid(g::AbstractGrid, d::AbstractDomain) = indomain_grid!(zeros(Bool, size(g)), g, d)
 
-# Note that evalgrid! only updates the result - it should be initialized to all false!
-# The idea is that you can chain different calls to evalgrid (as used in DomainCollection below)
-function evalgrid!{N}(result, g::AbstractGrid{N}, d::AbstractDomain{N})
-    for i in eachindex(g)
-        result[i] |= in(g[i], d)
+# Note that indomain_grid! only updates the result - it should be initialized to all false!
+# The idea is that you can chain different calls to indomain_grid (as used in DomainCollection below)
+function indomain_grid!{N}(result, grid::AbstractGrid{N}, domain::AbstractDomain{N})
+    for (i,x) in enumerate(grid)
+        result[i] |= indomain(x, domain)
     end
     result
 end
 
-show{N}(io::IO, v::Vec{N}) = print(io, Vector(v))
-
 
 ## Arithmetics
 
-# Make suredomains only need to implement addition/multiplication with numbers to the right
+# Make sure domains only need to implement addition/multiplication with numbers to the right
 (+)(x::Number, d::AbstractDomain) = d + x
-(+)(x::AnyVector, d::AbstractDomain) = d + x
-
-(+)(d::AbstractDomain, x::Vector) = d + Vec(x...)
-
+(+)(x::AbstractVector, d::AbstractDomain) = d + x
 (*)(x::Number, d::AbstractDomain) = d * x
 
 (/)(d::AbstractDomain, x::Number) = d * (1/x)
