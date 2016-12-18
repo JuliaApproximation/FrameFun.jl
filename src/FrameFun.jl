@@ -35,13 +35,15 @@ import BasisFunctions: grid, left, right, stepsize, sample
 import BasisFunctions: is_basis, is_frame, has_transform, has_grid, has_derivative,
     has_antiderivative, has_extension, has_grid_transform
 
-import BasisFunctions: operator, coefficients, set, superset, is_diagonal, is_inplace,
+import BasisFunctions: operator, matrix, is_diagonal, is_inplace
+
+import BasisFunctions: coefficients, set,
     transform_operator_pre, transform_operator_post, evaluation_operator, interpolation_operator,
     differentiation_operator, antidifferentiation_operator, approximation_operator,
     extend, extension_size, extension_operator, restriction_operator,
     default_approximation_operator, has_extension, wrap_operator
 
-import BasisFunctions: set_promote_eltype
+import BasisFunctions: set_promote_eltype, superset
 
 import BasisFunctions: eval_set_element, eval_element, eval_expansion,
     call_set_expansion, name, in_support
@@ -102,6 +104,8 @@ include("domains/domains.jl")
 include("subgrid.jl")
 
 include("frames/extensionframe.jl")
+
+include("frames/sumframe.jl")
 
 include("fun/basisdomains.jl")
 
