@@ -297,28 +297,27 @@ A point lies in the mapped domain, if the inverse map of that point lies in the
 original domain.
 """
 # TODO: experiment with leaving out the type parameters and implement fast indomain_grid
-immutable MappedDomain{DOMAIN <: AbstractDomain,FMAP,IMAP,N} <: AbstractDomain{N}
+immutable MappedDomain{DOMAIN <: AbstractDomain,MAP,N} <: AbstractDomain{N}
     domain  ::  DOMAIN
-    fmap    ::  FMAP
-    imap    ::  IMAP
+    # The forward map, from the underlying domain to the mapped domain
+    fmap    ::  MAP
 
     # With this inner constructor we enforce that N is the dimension of the domain
-    MappedDomain(domain::AbstractDomain{N}, fmap, imap) = new(domain, fmap, imap)
+    MappedDomain(domain::AbstractDomain{N}, fmap) = new(domain, fmap)
 end
 
-MappedDomain{N}(domain::AbstractDomain{N}, fmap, imap = inv(fmap)) =
-    MappedDomain{typeof(domain),typeof(fmap),typeof(imap),N}(domain, fmap, imap)
+MappedDomain{N}(domain::AbstractDomain{N}, fmap) =
+    MappedDomain{typeof(domain),typeof(fmap),N}(domain, fmap)
 
 domain(d::MappedDomain) = d.domain
 
-forward_map(d::MappedDomain) = d.fmap
-inverse_map(d::MappedDomain) = d.imap
+mapping(d::MappedDomain) = d.fmap
 
-indomain(x, d::MappedDomain) = indomain(d.imap*x, d.domain)
+indomain(x, d::MappedDomain) = indomain(inverse_map(mapping(d), x), domain(d))
 
 # Now here is a problem: how do we compute a bounding box, without extra knowledge
 # of the map? We can only do this for some maps.
-boundingbox(d::MappedDomain) = mapped_boundingbox(boundingbox(domain(d)), forward_map(d))
+boundingbox(d::MappedDomain) = mapped_boundingbox(boundingbox(domain(d)), mapping(d))
 
 function mapped_boundingbox(box::BBox1, fmap)
     l,r = box[1]
@@ -343,10 +342,11 @@ end
 mapped_boundingbox{N}(box::BBox{N}, fmap::DiagonalMap) =
     tensorproduct([mapped_boundingbox(element(box,i), element(fmap,i)) for i in 1:N]...)
 
+apply_map(domain::AbstractDomain, map::AbstractMap) = MappedDomain(domain, map)
 
-(*)(map::AbstractMap, domain::AbstractDomain) = MappedDomain(domain, map)
+apply_map(d::MappedDomain, map::AbstractMap) = MappedDomain(domain(d), map*mapping(d))
 
-(*)(map::AbstractMap, d::MappedDomain) = MappedDomain(domain(d), map*forward_map(d), inverse_map(d)*inv(map))
+(*)(map::AbstractMap, domain::AbstractDomain) = apply_map(domain, map)
 
 (*){N,T}(domain::AbstractDomain{N}, a::T) = scaling_map(a*ones(SVector{N,T})...) * domain
 

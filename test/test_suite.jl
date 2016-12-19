@@ -180,7 +180,7 @@ function test_3d_cases()
     @testset "result" for Basis in (FourierBasis, ChebyshevBasis), D in (Cube((-1.2,-1.0,-0.9),(1.0,0.9,1.2)),FE.tensorproduct(Interval(-1.0,1.0),Disk(1.05)), FE.Ball(1.2,[-0.3,0.25,0.1])), solver in (FE.FE_ProjectionSolver, )
                 show(solver); println()
         println()
-        println("Testing \t solver = $solver \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10)⊗instantiate(Basis,10))),\n\t\t ELT = Float64 ")
+        println("Testing \t solver = $solver \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10)⊗instantiate(Basis,10)⊗instantiate(Basis,10))),\n\t\t ELT = Float64 ")
         verbose && println("N\t\t T\t\t Complex?\t abserror\t time\t\t \memory   ")
 
         n = FE.default_frame_n(D, Basis)

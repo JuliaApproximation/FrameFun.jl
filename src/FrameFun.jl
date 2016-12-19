@@ -43,7 +43,7 @@ import BasisFunctions: coefficients, set,
     extend, extension_size, extension_operator, restriction_operator,
     default_approximation_operator, has_extension, wrap_operator
 
-import BasisFunctions: set_promote_eltype, superset
+import BasisFunctions: set_promote_eltype, superset, similar_set, mapping
 
 import BasisFunctions: eval_set_element, eval_element, eval_expansion,
     call_set_expansion, name, in_support
@@ -68,7 +68,7 @@ export ⊂
 
 # from domains.jl
 export Interval, Disk, Square, Cube, Ball, Cylinder, atomium, boundingbox
-export ⊗, ∩, composite_length, element, elements
+export ⊗, ∩, composite_length, element, elements, is_composite
 
 # from derived_domains.jl
 export Characteristic

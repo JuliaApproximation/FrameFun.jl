@@ -29,6 +29,7 @@ sumframe(sets::FunctionSet...) = WeightedSumFrame(multiset(sets...))
 
 name(f::WeightedSumFrame) = "A weighted sum frame"
 
+
 """
 Solver to approximate functions of the form f(x) = p(x) + w(x) q(x), where w is a given
 weight function, and p and q are well approximated by set1 and set2 respectively.
