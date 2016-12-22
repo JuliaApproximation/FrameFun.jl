@@ -21,16 +21,18 @@ immutable FE_ProjectionSolver{ELT} <: FE_Solver{ELT}
 
     function FE_ProjectionSolver(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), R = estimate_plunge_rank(problem), options...)
         plunge_op = plunge_operator(problem)
+        # Random matrix
         random_matrix = map(ELT, rand(param_N(problem), R))
         Wsrc = ELT <: Complex ? Cn{ELT}(size(random_matrix,2)) : Rn{ELT}(size(random_matrix,2))
         Wdest = src(operator(problem))
         W = MatrixOperator(Wsrc, Wdest, random_matrix)
-        
+        # Randomized svd, cost = O(NR^2)
         USV = LAPACK.gesdd!('S',matrix(plunge_op * operator(problem) * W))
         S = USV[2]
-
+        # Truncating at cutoff
         maxind = findlast(S.>cutoff)
         Sinv = 1./S[1:maxind]
+        # Pre-allocation
         b = zeros(ELT, dest(plunge_op))
         blinear = zeros(ELT, length(dest(plunge_op)))
         y = zeros(ELT, size(USV[3],1))
@@ -62,16 +64,20 @@ apply!(s::FE_ProjectionSolver, dest, src, coef_dest, coef_src) =
     apply!(s, dest, src, coef_dest, coef_src, operator(s), operator_transpose(s), s.plunge_op, s.W, s.x1, s.x2)
 
 function apply!(s::FE_ProjectionSolver, destset, srcset, coef_dest, coef_src, A, At, P, W, x1, x2)
+    # Applying plunge to the right hand side
     apply!(P, s.b, coef_src)
     BasisFunctions.linearize_coefficients!(dest(A), s.blinear, s.b)
+    # Applying the truncated SVD to P*Rhs
     A_mul_B!(s.sy, s.Ut, s.blinear)
     A_mul_B!(s.y, s.VS, s.sy)
     apply!(W, s.x2, s.y)
-    #x2 = reshape(s.W * y,size(src(A)))
+    # x2 solves the middle guys
     apply!(A, s.b, x2)
     apply!(At, x1, coef_src-s.b)
+    # x1 solves the remainder through one application of the operator
     for i in eachindex(x1)
         x1[i] += x2[i]
     end
+    # normalization
     apply!(normalization(problem(s)), coef_dest, x1)
 end

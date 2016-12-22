@@ -22,36 +22,42 @@ immutable FE_SmoothProjectionSolver{ELT} <: FE_Solver{ELT}
         Q          ::  Array{ELT,2}
         D           ::  AbstractOperator
 
-        function FE_SmoothProjectionSolver(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), cutoffv=sqrt(cutoff), R = estimate_plunge_rank(problem), options...)
-            plunge_op = plunge_operator(problem)
-            random_matrixU = map(ELT, rand(param_N(problem), R))
-            random_matrixV = map(ELT, rand(param_M(problem), R))
-            Usrc = ELT <: Complex ? Cn{ELT}(size(random_matrixU,2)) : Rn{ELT}(size(random_matrixU,2))
-            Vsrc = ELT <: Complex ? Cn{ELT}(size(random_matrixV,2)) : Rn{ELT}(size(random_matrixV,2))
-            Udest = src(operator(problem))
-            Vdest = dest(operator(problem))
-            WU = MatrixOperator(Usrc, Udest, random_matrixU)
-            WV = MatrixOperator(Vsrc, Vdest, random_matrixV)
-                USVU = LAPACK.gesvd!('S','S',matrix(plunge_op * operator(problem) * WU))
-                USVV = LAPACK.gesvd!('S','S',matrix(operator_transpose(problem) * plunge_op * WV))
-                SU = USVU[2]
-                maxind = findlast(SU.>cutoff)
-                Sinv = 1./SU[1:maxind]
-                D = IdxnScalingOperator(frequency_basis(problem); options...)
-                AD = inv(D)
-                maxindv = findlast(USVV[2].>cutoffv)
-                ADV = (USVV[1][:,1:maxindv]).*diagonal(AD)
-                Q, R = qr(ADV)
-                b = zeros(size(dest(plunge_op)))
-                blinear = zeros(ELT, length(dest(plunge_op)))
-                y = zeros(size(USVU[3],1))
-                x1 = zeros(size(src(operator(problem))))
-                x2 = zeros(size(src(operator(problem))))
-                x3 = zeros(size(src(operator(problem))))
-                sy = zeros(maxind,)
-                syv = zeros(maxindv,)
-                new(problem, plunge_op, WU, USVU[1][:,1:maxind]',USVU[3][1:maxind,:]'*diagm(Sinv[:]),b,blinear,y,sy,syv,x1,x2,x3,Q, D)
-        end
+    function FE_SmoothProjectionSolver(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), cutoffv=sqrt(cutoff), R = estimate_plunge_rank(problem), options...)
+        # Create Random matrices
+        plunge_op = plunge_operator(problem)
+        random_matrixU = map(ELT, rand(param_N(problem), R))
+        random_matrixV = map(ELT, rand(param_M(problem), R))
+        Usrc = ELT <: Complex ? Cn{ELT}(size(random_matrixU,2)) : Rn{ELT}(size(random_matrixU,2))
+        Vsrc = ELT <: Complex ? Cn{ELT}(size(random_matrixV,2)) : Rn{ELT}(size(random_matrixV,2))
+        Udest = src(operator(problem))
+        Vdest = dest(operator(problem))
+        WU = MatrixOperator(Usrc, Udest, random_matrixU)
+        WV = MatrixOperator(Vsrc, Vdest, random_matrixV)
+        # Randomized SVD matrices are low-rank, cost is O(NR^2)
+        USVU = LAPACK.gesvd!('S','S',matrix(plunge_op * operator(problem) * WU))
+        USVV = LAPACK.gesvd!('S','S',matrix(operator_transpose(problem) * plunge_op * WV))
+        SU = USVU[2]
+        # Truncate at cutoff
+        maxind = findlast(SU.>cutoff)
+        Sinv = 1./SU[1:maxind]
+        # D = Sobolev operator
+        D = IdxnScalingOperator(frequency_basis(problem); options...)
+        AD = inv(D)
+        maxindv = findlast(USVV[2].>cutoffv)
+        ADV = (USVV[1][:,1:maxindv]).*diagonal(AD)
+        # Orthogonal basis for D^(-1)V_mid
+        Q, R = qr(ADV)
+        # Pre-allocation
+        b = zeros(size(dest(plunge_op)))
+        blinear = zeros(ELT, length(dest(plunge_op)))
+        y = zeros(size(USVU[3],1))
+        x1 = zeros(size(src(operator(problem))))
+        x2 = zeros(size(src(operator(problem))))
+        x3 = zeros(size(src(operator(problem))))
+        sy = zeros(maxind,)
+        syv = zeros(maxindv,)
+        new(problem, plunge_op, WU, USVU[1][:,1:maxind]',USVU[3][1:maxind,:]'*diagm(Sinv[:]),b,blinear,y,sy,syv,x1,x2,x3,Q, D)
+    end
 end
 
 
@@ -59,36 +65,40 @@ FE_SmoothProjectionSolver(problem::FE_DiscreteProblem; options...) =
         FE_SmoothProjectionSolver{eltype(problem)}(problem; options...)
 
 function apply!(s::FE_SmoothProjectionSolver, destarg, src, coef_dest, coef_src)
-        A = operator(s)
-        At = operator_transpose(s)
-        P = s.plunge_op
-        apply!(P,s.b, coef_src)
-        BasisFunctions.linearize_coefficients!(dest(A), s.blinear, s.b)
-        A_mul_B!(s.sy, s.Ut, s.b)
-        A_mul_B!(s.y, s.VS, s.sy)
-        apply!(s.W, s.x2, s.y)
-        # smoothing x2 step
-        D = s.D
-        AD = inv(D)
-        apply!(D,s.x1,s.x2)
-        apply!(MatrixOperator(s.Q'),s.syv,s.x1)
-        apply!(MatrixOperator(s.Q),s.x3,s.syv)
-        for i = 1:length(s.x1)
-                s.x1[i] = s.x1[i]- s.x3[i]
-        end
-        apply!(AD,s.x3,s.x1)
-        for i = 1:length(s.x2)
-                s.x2[i] = s.x2[i] - s.x3[i]
-        end
+    A = operator(s)
+    At = operator_transpose(s)
+    P = s.plunge_op
+    # Apply plunge operator to right hand side
+    apply!(P,s.b, coef_src)
+    BasisFunctions.linearize_coefficients!(dest(A), s.blinear, s.b)
+    # x2 is solving for the middle singular values
+    A_mul_B!(s.sy, s.Ut, s.b)
+    A_mul_B!(s.y, s.VS, s.sy)
+    apply!(s.W, s.x2, s.y)
+    # smoothing x2 step
+    D = s.D
+    AD = inv(D)
+    # Project Dx2 onto the orthogonal complement of D^(-1)V_mid
+    apply!(D,s.x1,s.x2)
+    apply!(MatrixOperator(s.Q'),s.syv,s.x1)
+    apply!(MatrixOperator(s.Q),s.x3,s.syv)
+    for i = 1:length(s.x1)
+        s.x1[i] = s.x1[i]- s.x3[i]
+    end
+    apply!(AD,s.x3,s.x1)
+    for i = 1:length(s.x2)
+        s.x2[i] = s.x2[i] - s.x3[i]
+    end
 
-        # post smoothing step
-        apply!(A, s.b, s.x2)
-        apply!(At, s.x1, coef_src-s.b)
-        for i = 1:length(coef_dest)
-                coef_dest[i] = s.x1[i] + s.x2[i]
-        end
+    # post smoothing step
+    apply!(A, s.b, s.x2)
+    apply!(At, s.x1, coef_src-s.b)
+    for i = 1:length(coef_dest)
+        coef_dest[i] = s.x1[i] + s.x2[i]
+    end
 
-        apply!(normalization(problem(s)), coef_dest, coef_dest)
+    # Normalization
+    apply!(normalization(problem(s)), coef_dest, coef_dest)
 end
 
 # For FunctionSets that have a DC component

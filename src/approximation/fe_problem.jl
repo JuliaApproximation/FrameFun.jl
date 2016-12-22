@@ -40,6 +40,7 @@ immutable FE_DiscreteProblem{N,T} <: FE_Problem{N,T}
     itransform2         # from fbasis2 to tbasis2
 
     normalization       # transform normalization operator
+    invnormalization       # inverse of the transform normalization operator
 end
 
 """
@@ -125,13 +126,14 @@ function FE_DiscreteProblem(domain::AbstractDomain, fbasis1, fbasis2, tbasis1, t
 
     # TODO: we also need to incorporate the transform_operator_pre somewhere
     normalization = f_restriction * transform_operator_post(tbasis2, fbasis2; options...) * f_extension
-
+    invnormalization = f_restriction * inv(transform_operator_post(tbasis2, fbasis2; options...)) * f_extension
+    
     op  = t_restriction * itransform2 * f_extension
     opt = f_restriction * transform2 * t_extension
 
     FE_DiscreteProblem(domain, op, opt, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted,
         f_extension, f_restriction, t_extension, t_restriction,
-        transform1, itransform1, transform2, itransform2, normalization)
+        transform1, itransform1, transform2, itransform2, normalization, invnormalization)
 end
 
 
@@ -143,6 +145,7 @@ operator(p::FE_DiscreteProblem) = p.op
 operator_transpose(p::FE_DiscreteProblem) = p.opt
 
 normalization(p::FE_DiscreteProblem) = p.normalization
+invnormalization(p::FE_DiscreteProblem) = p.invnormalization
 
 frequency_basis(p::FE_DiscreteProblem) = p.fbasis1
 frequency_basis_ext(p::FE_DiscreteProblem) = p.fbasis2

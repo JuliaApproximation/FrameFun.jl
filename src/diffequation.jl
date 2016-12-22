@@ -88,7 +88,7 @@ function problem(D::DiffEquation)
     fr = f_restriction(problem)
     te = t_extension(problem)⊕IdentityOperator(element(dest(op),2:length(elements(dest(op)))))
     tr = t_restriction(problem)⊗IdentityOperator(element(dest(op),2:length(elements(dest(op)))))
-    DEproblem = FE_DiscreteProblem(domain(problem),op, opt, fb,fbe,tb,tbe,tbr,fe,fr,te,tr, transform1(problem), itransform1(problem), transform2(problem), itransform2(problem),normalization(problem))
+    DEproblem = FE_DiscreteProblem(domain(problem),op, opt, fb,fbe,tb,tbe,tbr,fe,fr,te,tr, transform1(problem), itransform1(problem), transform2(problem), itransform2(problem),normalization(problem),invnormalization(problem))
 end
 
 

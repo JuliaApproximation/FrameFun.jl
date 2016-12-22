@@ -157,7 +157,6 @@ function residual(f::Function, F::SetFun ; sampling_factor=2, options...)
     op = operator(problem)
     rhs = sample(BasisFunctions.grid(dest(op)), f, eltype(src(op)))
     # There should be an easier way of getting the inverse of the normalization
-    Norm = FrameFun.normalization(problem)
-    invnorm = DiagonalOperator(src(op),diagonal(Norm).^(-1))
-    norm(op*invnorm*coefficients(F)-rhs)
+    invnorm = invnormalization(problem)
+    norm(op*(invnorm*coefficients(F))-rhs)
 end
