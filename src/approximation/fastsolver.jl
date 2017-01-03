@@ -1,3 +1,4 @@
+
 # fastsolver.jl
 
 """
@@ -7,61 +8,22 @@ For more details, see the paper 'Fast algorithms for the computation of Fourier 
 http://arxiv.org/abs/1509.00206
 """
 immutable FE_ProjectionSolver{ELT} <: FE_Solver{ELT}
+    TS :: TruncatedSvdSolver
     problem     ::  FE_DiscreteProblem
     plunge_op   ::  AbstractOperator    # store the operator because it allocates memory
-    W           ::  MultiplicationOperator
-    Ut          ::  Array{ELT,2}
-    VS          ::  Array{ELT,2}
     b
     blinear     ::  Array{ELT,1}
-    y           ::  Array{ELT,1}
-    sy          ::  Array{ELT,1}
     x2
     x1
 
-    function FE_ProjectionSolver(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), R = 5, verbose = false, options...)
+    function FE_ProjectionSolver(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), options...)
+        TS = TruncatedSvdSolver(plunge_operator(problem)*operator(problem); cutoff=cutoff, options...)
         plunge_op = plunge_operator(problem)
-        finished=false
-        USV = ()
-        sold = 0.6
-        snew = 0.6
-        Rold = 1
-        while R<=param_N(problem)
-            random_matrix = map(ELT, rand(param_N(problem), R))
-            Wsrc = ELT <: Complex ? Cn{ELT}(size(random_matrix,2)) : Rn{ELT}(size(random_matrix,2))
-            Wdest = src(operator(problem))
-            W = MatrixOperator(Wsrc, Wdest, random_matrix)
-        
-            USV = LAPACK.gesdd!('S',matrix(plunge_op * operator(problem) * W))
-            verbose && println("minimal singular value: ",minimum(USV[2])," cutoff : ",cutoff)
-            verbose && println("R/Rest/Rmax: ",R,"/",estimate_plunge_rank(problem),"/",param_N(problem))
-            if minimum(USV[2])<cutoff || R==param_N(problem)
-                S = USV[2]
-                maxind = findlast(S.>cutoff)
-                Sinv = 1./S[1:maxind]
-                b = zeros(ELT, dest(plunge_op))
-                blinear = zeros(ELT, length(dest(plunge_op)))
-                y = zeros(ELT, size(USV[3],1))
-                x1 = zeros(ELT, src(operator(problem)))
-                x2 = zeros(ELT, src(operator(problem)))
-                sy = zeros(ELT, maxind)
-                return new(problem, plunge_op, W, USV[1][:,1:maxind]',USV[3][1:maxind,:]'*diagm(Sinv[:]),b,blinear,y,sy,x1,x2)
-            else
-                # Assuming exponential decay, take the optimal step
-                snew = minimum(USV[2])
-                alpha = (log(snew)-log(sold))/(R-Rold)
-                step = (log(cutoff)-log(snew))/alpha
-                sold = snew
-                Rold = R
-                if (sold<10.0^(-3))
-                    #started converging
-                    R = min(round(Int,R+step),param_N(problem))
-                else
-                    #double
-                    R = min(round(Int,2*R),param_N(problem))
-                end
-            end
-        end
+        b = zeros(ELT, dest(plunge_op))
+        blinear = zeros(ELT, length(dest(plunge_op)))
+        x1 = zeros(ELT, src(operator(problem)))
+        x2 = zeros(ELT, src(operator(problem)))
+        new(TS, problem, plunge_op, b,blinear,x1,x2)
     end
 end
 
@@ -83,16 +45,13 @@ estimate_plunge_rank{N}(problem::FE_DiscreteProblem{N}) = min(round(Int, 9*log(p
 estimate_plunge_rank(problem::FE_DiscreteProblem{1,BigFloat}) = round(Int, 28*log(param_N(problem)) + 5)
 
 apply!(s::FE_ProjectionSolver, dest, src, coef_dest, coef_src) =
-    apply!(s, dest, src, coef_dest, coef_src, operator(s), operator_transpose(s), s.plunge_op, s.W, s.x1, s.x2)
+    apply!(s, dest, src, coef_dest, coef_src, operator(s), operator_transpose(s), s.plunge_op, s.x1, s.x2)
 
-function apply!(s::FE_ProjectionSolver, destset, srcset, coef_dest, coef_src, A, At, P, W, x1, x2)
+function apply!(s::FE_ProjectionSolver, destset, srcset, coef_dest, coef_src, A, At, P, x1, x2)
     # Applying plunge to the right hand side
     apply!(P, s.b, coef_src)
     BasisFunctions.linearize_coefficients!(dest(A), s.blinear, s.b)
-    # Applying the truncated SVD to P*Rhs
-    A_mul_B!(s.sy, s.Ut, s.blinear)
-    A_mul_B!(s.y, s.VS, s.sy)
-    apply!(W, s.x2, s.y)
+    apply!(s.TS,x2,s.blinear)
     # x2 solves the middle guys
     apply!(A, s.b, x2)
     apply!(At, x1, coef_src-s.b)
