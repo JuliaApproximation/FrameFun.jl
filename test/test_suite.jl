@@ -95,7 +95,7 @@ function test_1d_cases()
         for n in [FE.default_frame_n(D, Basis)]
 
             # There is some symmetry around T=2, test smaller and larger values
-            for T in (1.7,)
+            for T in (1.9,)
                 for func in (f,g)
 
                     B = Basis(n, -T, T, ELT)
@@ -181,7 +181,7 @@ function test_3d_cases()
 
         n = FE.default_frame_n(D, Basis)
 
-        for T in ((1.7,2.3,2.4),)
+        for T in ((1.7,1.2,1.3),)
             B = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2]) ⊗ Basis(n[3],-T[3],T[3])
             F = @timed( Fun(f, B, D; solver=solver, cutoff=10.0^(3/4*log10(eps(numtype(B)))),sampling_factor=1.5))
             error = FrameFun.residual(f, F[1])/length(B)

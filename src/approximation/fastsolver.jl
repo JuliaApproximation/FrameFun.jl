@@ -17,7 +17,7 @@ immutable FE_ProjectionSolver{ELT} <: FE_Solver{ELT}
     x1
 
     function FE_ProjectionSolver(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), options...)
-        TS = TruncatedSvdSolver(plunge_operator(problem)*operator(problem); cutoff=cutoff, options...)
+        TS = TruncatedSvdSolver(plunge_operator(problem)*operator(problem); cutoff=cutoff, R = estimate_plunge_rank(problem), verbose=true, options...)
         plunge_op = plunge_operator(problem)
         b = zeros(ELT, dest(plunge_op))
         blinear = zeros(ELT, length(dest(plunge_op)))

@@ -18,27 +18,32 @@ immutable TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
     # For storing intermediate results when applying
     y           ::  Array{ELT,1}
     sy          ::  Array{ELT,1}
-    function TruncatedSvdSolver(op::AbstractOperator; cutoff = default_cutoff(problem), rank_estimate = 5, verbose = false, options...)
+    function TruncatedSvdSolver(op::AbstractOperator; cutoff = default_cutoff(problem), R = 5, verbose = false, options...)
         finished=false
         USV = ()
-        R = rank_estimate
+        random_matrix = map(ELT, rand(size(op,2), R))
+        C = apply_multiple(op, random_matrix)
         while R<=size(op,2)
-            random_matrix = map(ELT, rand(size(op,2), R))
-            Wsrc = ELT <: Complex ? Cn{ELT}(size(random_matrix,2)) : Rn{ELT}(size(random_matrix,2))
-            Wdest = src(op)
-            W = MatrixOperator(Wsrc, Wdest, random_matrix)
-        
-            USV = LAPACK.gesdd!('S',matrix(op * W))
-            verbose && println("minimal singular value: ",minimum(USV[2])," cutoff : ",cutoff)
-            if minimum(USV[2])<cutoff || R==size(op,2)
+            R0 = R
+            R = min(round(Int,sqrt(2)*R),size(op,2))
+            extra_random_matrix = map(ELT, rand(size(op,2), R-R0))
+            Cextra = apply_multiple(op, extra_random_matrix)
+            random_matrix = [random_matrix extra_random_matrix]
+            C = [C Cextra]
+            c = cond(C)
+            m = maximum(abs(C))
+            if (c>m/cutoff) || R==size(op,2)
+                USV = LAPACK.gesdd!('S',C)
                 S = USV[2]
                 maxind = findlast(S.>cutoff)
                 Sinv = 1./S[1:maxind]
                 y = zeros(ELT, size(USV[3],1))
                 sy = zeros(ELT, maxind)
+                Wsrc = ELT <: Complex ? Cn{ELT}(size(random_matrix,2)) : Rn{ELT}(size(random_matrix,2))
+                Wdest = src(op)
+                W = MatrixOperator(Wsrc, Wdest, random_matrix)            
+
                 return new(op, W, USV[1][:,1:maxind]',USV[3][1:maxind,:]'*diagm(Sinv[:]),y,sy)
-            else
-                R = min(round(Int,2*R),size(op,2))
             end
         end
     end
