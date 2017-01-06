@@ -83,6 +83,9 @@ export ExtensionFrame, basis, domain
 # from frames/sumframe.jl
 export WeightedSumFrame, sumframe
 
+# from frames/enrichedframe.jl
+export EnrichedFrame
+
 # from domains/fractal.jl
 export Mandelbrot, JuliaSet
 
@@ -106,6 +109,8 @@ include("subgrid.jl")
 include("frames/extensionframe.jl")
 
 include("frames/sumframe.jl")
+
+include("frames/enrichedframe.jl")
 
 include("fun/basisdomains.jl")
 
