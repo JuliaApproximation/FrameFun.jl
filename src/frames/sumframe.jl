@@ -57,7 +57,6 @@ end
 function ConcatSolver(concatset, set1, set2, weightfunction)
     ELT = eltype(concatset)
     extended_set = resize(set1, 2*(length(set1)+length(set2)))
-    ls_grid = grid(extended_set)
     dgs = DiscreteGridSpace(extended_set)
     T = transform_operator(extended_set, dgs)
     N = transform_operator_post(dgs, extended_set)
@@ -65,7 +64,7 @@ function ConcatSolver(concatset, set1, set2, weightfunction)
     E2 = extension_operator(set2, extended_set)
     R1 = restriction_operator(extended_set, set1)
     R2 = restriction_operator(extended_set, set2)
-    D = DiagonalOperator(dgs, ELT[weightfunction(x) for x in ls_grid])
+    D = weightfun_scaling_operator(dgs, weightfunction)
     A1 = T*E1
     A2 = T*E2
     P = IdentityOperator(dgs) - A1*A1'
