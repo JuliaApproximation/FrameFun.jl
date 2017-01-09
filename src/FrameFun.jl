@@ -69,6 +69,7 @@ export ⊂
 # from domains.jl
 export Interval, Disk, Square, Cube, Ball, Cylinder, atomium, boundingbox
 export ⊗, ∩, composite_length, element, elements, is_composite
+export randomcircles
 
 # from derived_domains.jl
 export Characteristic

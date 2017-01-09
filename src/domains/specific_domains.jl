@@ -131,7 +131,7 @@ Disk() = UnitBall{2}()
 Disk(radius) = radius * Disk()
 Disk(radius, center) = radius * Disk() + center
 
-show(io::IO, d::UnitBall) = print(io, "the $(ndims(d))-dimensinoal unit ball")
+show(io::IO, d::UnitBall) = print(io, "the $(ndims(d))-dimensional unit ball")
 
 
 # ################################################################################
