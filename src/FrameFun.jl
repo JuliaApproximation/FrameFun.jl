@@ -121,6 +121,8 @@ include("approximation/fe_problem.jl")
 
 include("approximation/fe_solvers.jl")
 
+include("approximation/lowranksolver.jl")
+
 include("approximation/fastsolver.jl")
 
 include("approximation/smoothsolver.jl")
