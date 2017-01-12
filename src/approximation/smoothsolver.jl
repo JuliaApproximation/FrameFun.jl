@@ -6,15 +6,11 @@ is isolated using a projection operator. This algorithm contains an extra smooth
 
 """
 immutable FE_SmoothProjectionSolver{ELT} <: FE_Solver{ELT}
+    TS :: TruncatedSvdSolver
         problem     ::  FE_DiscreteProblem
         plunge_op   ::  AbstractOperator    # store the operator because it allocates memory
-        W           ::  MultiplicationOperator
-        Ut          ::  Array{ELT,2}
-        VS          ::  Array{ELT,2}
         b     ::  Array{ELT,1}
         blinear     ::  Array{ELT,1}
-        y           ::  Array{ELT,1}
-        sy          ::  Array{ELT,1}
         syv         ::  Array{ELT,1}
         x2          ::  Array{ELT}
         x1          ::  Array{ELT}
@@ -23,40 +19,24 @@ immutable FE_SmoothProjectionSolver{ELT} <: FE_Solver{ELT}
         D           ::  AbstractOperator
 
     function FE_SmoothProjectionSolver(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), cutoffv=sqrt(cutoff), R = estimate_plunge_rank(problem), options...)
-        # Create Random matrices
         plunge_op = plunge_operator(problem)
-        random_matrixU = map(ELT, rand(param_N(problem), R))
-        random_matrixV = map(ELT, rand(param_M(problem), R))
-        Usrc = ELT <: Complex ? Cn{ELT}(size(random_matrixU,2)) : Rn{ELT}(size(random_matrixU,2))
-        Vsrc = ELT <: Complex ? Cn{ELT}(size(random_matrixV,2)) : Rn{ELT}(size(random_matrixV,2))
-        Udest = src(operator(problem))
-        Vdest = dest(operator(problem))
-        WU = MatrixOperator(Usrc, Udest, random_matrixU)
-        WV = MatrixOperator(Vsrc, Vdest, random_matrixV)
-        # Randomized SVD matrices are low-rank, cost is O(NR^2)
-        USVU = LAPACK.gesvd!('S','S',matrix(plunge_op * operator(problem) * WU))
-        USVV = LAPACK.gesvd!('S','S',matrix(operator_transpose(problem) * plunge_op * WV))
-        SU = USVU[2]
-        # Truncate at cutoff
-        maxind = findlast(SU.>cutoff)
-        Sinv = 1./SU[1:maxind]
+        # Create Random matrices
+        TS1 = TruncatedSvdSolver(plunge_operator(problem)*operator(problem); cutoff = cutoff, options...)
+        TS2 = TruncatedSvdSolver(operator_transpose(problem)*plunge_operator(problem); cutoff = cutoff, options...)
         # D = Sobolev operator
         D = IdxnScalingOperator(frequency_basis(problem); options...)
         AD = inv(D)
-        maxindv = findlast(USVV[2].>cutoffv)
-        ADV = (USVV[1][:,1:maxindv]).*diagonal(AD)
+        ADV = (TS2.Ut)'.*diagonal(AD)
         # Orthogonal basis for D^(-1)V_mid
         Q, R = qr(ADV)
         # Pre-allocation
         b = zeros(size(dest(plunge_op)))
         blinear = zeros(ELT, length(dest(plunge_op)))
-        y = zeros(size(USVU[3],1))
         x1 = zeros(size(src(operator(problem))))
         x2 = zeros(size(src(operator(problem))))
         x3 = zeros(size(src(operator(problem))))
-        sy = zeros(maxind,)
-        syv = zeros(maxindv,)
-        new(problem, plunge_op, WU, USVU[1][:,1:maxind]',USVU[3][1:maxind,:]'*diagm(Sinv[:]),b,blinear,y,sy,syv,x1,x2,x3,Q, D)
+        syv = zeros(size(TS2.Ut,1))
+        new(TS1,problem, plunge_op, b,blinear,syv,x1,x2,x3,Q, D)
     end
 end
 
@@ -72,9 +52,7 @@ function apply!(s::FE_SmoothProjectionSolver, destarg, src, coef_dest, coef_src)
     apply!(P,s.b, coef_src)
     BasisFunctions.linearize_coefficients!(dest(A), s.blinear, s.b)
     # x2 is solving for the middle singular values
-    A_mul_B!(s.sy, s.Ut, s.b)
-    A_mul_B!(s.y, s.VS, s.sy)
-    apply!(s.W, s.x2, s.y)
+    apply!(s.TS,s.x2,s.blinear)
     # smoothing x2 step
     D = s.D
     AD = inv(D)

@@ -87,19 +87,15 @@ function test_1d_cases()
     g(x) = 1im*cos(x^2-1//2)-1
     # Chebyshev and Fourier Bases
 
-    @testset "result" for ELT in (Float32,Float64),
-            Basis in (FourierBasis, ChebyshevBasis),
-            D in [Interval(), Interval(-1.5,0.7), Interval(-1.5,-0.5)+Interval(0.5,1.5)],
-            solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
-
+    @testset "result" for ELT in (Float32,Float64), Basis in (FourierBasis, ChebyshevBasis), D in [Interval(), Interval(-1.5,0.7), Interval(-1.5,-0.5)+Interval(0.5,1.5)], solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
         println()
         println("Testing \t solver = $solver, \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = $ELT ")
         verbose && println("N\t T\t Complex?\t abserror\t time\t\t \memory   ")
 
-        for n in [FE.default_frame_n(D, Basis) 99]
+        for n in [FE.default_frame_n(D, Basis)]
 
             # There is some symmetry around T=2, test smaller and larger values
-            for T in [1.7 FE.default_frame_T(D, Basis) 2.3]
+            for T in (1.9,)
                 for func in (f,g)
 
                     B = Basis(n, -T, T, ELT)
@@ -125,7 +121,7 @@ function test_bigfloat()
         println()
         println("Testing \t solver = FE.FE_DirectSolver{ELT}\n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = BigFloat ")
         verbose && println("N\t T\t Complex?\t abserror\t time\t\t \memory   ")
-        for T in [BigFloat(17//10) FE.default_frame_T(D, Basis) BigFloat(23//10)]
+        for T in (BigFloat(17//10),)
             for func in (f,g)
                 B = Basis(91, -T, T)
                 F = @timed( Fun(func, B, D; solver = FE.FE_DirectSolver) )
@@ -147,13 +143,13 @@ function test_2d_cases()
 
     f(x,y) = cos(0.5*x)+2*sin(0.2*y)-1.0*x*y
     g(x,y) = 1im*cos(0.5*x)+2*sin(0.2*y)-1.0im*x*y
-    @testset "result" for Basis in (FourierBasis, ChebyshevBasis), D in [Disk(), Disk(1.2,[-0.1,-0.2]), Cube((-1.0,-1.5),(0.5,0.7))], solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
+    @testset "result" for Basis in (FourierBasis, ChebyshevBasis), D in [Disk(1.2,[-0.1,-0.2]), Cube((-1.0,-1.5),(0.5,0.7))], solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
         println()
         println("Testing \t solver = $solver \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10)⊗instantiate(Basis,10))),\n\t\t ELT = Float64 ")
         verbose && println("N\t\t T\t\t Complex?\t abserror\t time\t\t \memory   ")
 
         for n in ((11,11),)
-            for T in (Extensive ? (FE.default_frame_T(D, Basis),) : ((1.7,1.7),FE.default_frame_T(D, Basis),(2.3,2.3)))
+            for T in ((1.7,2.3),)
 
                 B = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2])
                 for func in (f,g)
@@ -185,7 +181,7 @@ function test_3d_cases()
 
         n = FE.default_frame_n(D, Basis)
 
-        for T in ((2.3,2.4,1.7), FE.default_frame_T(D, Basis))
+        for T in ((1.7,1.2,1.3),)
             B = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2]) ⊗ Basis(n[3],-T[3],T[3])
             F = @timed( Fun(f, B, D; solver=solver, cutoff=10.0^(3/4*log10(eps(numtype(B)))),sampling_factor=1.5))
             error = FrameFun.residual(f, F[1])/length(B)

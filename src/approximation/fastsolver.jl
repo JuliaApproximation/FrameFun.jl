@@ -1,3 +1,4 @@
+
 # fastsolver.jl
 
 """
@@ -7,39 +8,22 @@ For more details, see the paper 'Fast algorithms for the computation of Fourier 
 http://arxiv.org/abs/1509.00206
 """
 immutable FE_ProjectionSolver{ELT} <: FE_Solver{ELT}
+    TS :: TruncatedSvdSolver
     problem     ::  FE_DiscreteProblem
     plunge_op   ::  AbstractOperator    # store the operator because it allocates memory
-    W           ::  MultiplicationOperator
-    Ut          ::  Array{ELT,2}
-    VS          ::  Array{ELT,2}
     b
     blinear     ::  Array{ELT,1}
-    y           ::  Array{ELT,1}
-    sy          ::  Array{ELT,1}
     x2
     x1
 
-    function FE_ProjectionSolver(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), R = estimate_plunge_rank(problem), options...)
+    function FE_ProjectionSolver(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), options...)
+        TS = TruncatedSvdSolver(plunge_operator(problem)*operator(problem); cutoff=cutoff, R = estimate_plunge_rank(problem), verbose=true, options...)
         plunge_op = plunge_operator(problem)
-        # Random matrix
-        random_matrix = map(ELT, rand(param_N(problem), R))
-        Wsrc = ELT <: Complex ? Cn{ELT}(size(random_matrix,2)) : Rn{ELT}(size(random_matrix,2))
-        Wdest = src(operator(problem))
-        W = MatrixOperator(Wsrc, Wdest, random_matrix)
-        # Randomized svd, cost = O(NR^2)
-        USV = LAPACK.gesdd!('S',matrix(plunge_op * operator(problem) * W))
-        S = USV[2]
-        # Truncating at cutoff
-        maxind = findlast(S.>cutoff)
-        Sinv = 1./S[1:maxind]
-        # Pre-allocation
         b = zeros(ELT, dest(plunge_op))
         blinear = zeros(ELT, length(dest(plunge_op)))
-        y = zeros(ELT, size(USV[3],1))
         x1 = zeros(ELT, src(operator(problem)))
         x2 = zeros(ELT, src(operator(problem)))
-        sy = zeros(ELT, maxind)
-        new(problem, plunge_op, W, USV[1][:,1:maxind]',USV[3][1:maxind,:]'*diagm(Sinv[:]),b,blinear,y,sy,x1,x2)
+        new(TS, problem, plunge_op, b,blinear,x1,x2)
     end
 end
 
@@ -61,16 +45,13 @@ estimate_plunge_rank{N}(problem::FE_DiscreteProblem{N}) = min(round(Int, 9*log(p
 estimate_plunge_rank(problem::FE_DiscreteProblem{1,BigFloat}) = round(Int, 28*log(param_N(problem)) + 5)
 
 apply!(s::FE_ProjectionSolver, dest, src, coef_dest, coef_src) =
-    apply!(s, dest, src, coef_dest, coef_src, operator(s), operator_transpose(s), s.plunge_op, s.W, s.x1, s.x2)
+    apply!(s, dest, src, coef_dest, coef_src, operator(s), operator_transpose(s), s.plunge_op, s.x1, s.x2)
 
-function apply!(s::FE_ProjectionSolver, destset, srcset, coef_dest, coef_src, A, At, P, W, x1, x2)
+function apply!(s::FE_ProjectionSolver, destset, srcset, coef_dest, coef_src, A, At, P, x1, x2)
     # Applying plunge to the right hand side
     apply!(P, s.b, coef_src)
     BasisFunctions.linearize_coefficients!(dest(A), s.blinear, s.b)
-    # Applying the truncated SVD to P*Rhs
-    A_mul_B!(s.sy, s.Ut, s.blinear)
-    A_mul_B!(s.y, s.VS, s.sy)
-    apply!(W, s.x2, s.y)
+    apply!(s.TS,x2,s.blinear)
     # x2 solves the middle guys
     apply!(A, s.b, x2)
     apply!(At, x1, coef_src-s.b)
