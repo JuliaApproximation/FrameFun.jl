@@ -57,7 +57,7 @@ function oversampled_grid(domain, basis::BasisFunctions.FunctionSet, sampling_fa
     n_goal = length(basis) * sampling_factor^N
     grid1 = BasisFunctions.grid(basis)
     grid2 = FrameFun.subgrid(grid1, domain)
-    ratio = length(grid2) / length(grid1)
+    ratio = max(1,length(grid2)) / length(grid1)
     # Initial guess : This could be way off if the original size was small.
     newsize = ceil(Int,n_goal/ratio)
     n = BasisFunctions.approx_length(basis, newsize)
