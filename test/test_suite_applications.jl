@@ -126,8 +126,6 @@ function test_smoothing_2d()
 end
 
 
-test_arithmetics()
-
 test_smoothing_1d()
 
 test_smoothing_2d()
