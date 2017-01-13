@@ -1,7 +1,5 @@
 #!/bin/bash
 set -ev
 if [[ $TRAVIS_BRANCH == 'development' ]]; then
-  cd BasisFunctions/
-  git checkout development
-  cd ..
+  julia -e Pkg.checkout("BasisFunctions","development")
 fi
