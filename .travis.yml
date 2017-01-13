@@ -10,13 +10,14 @@ notifications:
 
 before_install:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  
-script:
+
+before_script:
   - julia -e 'Pkg.init()'
   - julia -e 'Pkg.clone("https://github.com/daanhb/BasisFunctions.jl")'
-  - test $TRAVIS_BRANCH = "development" && cd BasisFunctions/ && git checkout development && cd ..
+  - if [[ "$TRAVIS_BRANCH" == "development" ]]; then cd BasisFunctions/ && git checkout development && cd .. ; fi
   - julia -e 'Pkg.add("Plotly")'
   - julia -e 'Pkg.clone(pwd())'
+script:
   - julia --code-coverage=user --inline=no test/runtests.jl
 after_success:
   - julia -e 'cd(Pkg.dir("FrameFun")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder()); Codecov.submit(process_folder())'
