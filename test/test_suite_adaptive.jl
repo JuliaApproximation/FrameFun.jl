@@ -19,17 +19,17 @@ function test_function_space()
       Interval(0,1), Interval(), Interval(),
       Interval(0,1)⊗Interval(),Interval(-2,1),
       Interval(0,1)⊗Interval(0,1)⊗Interval(0,1), Interval(0,1))
-  bases = (FourierBasis(121,-1,1), FourierBasis(121,-1,1),
-      FourierBasis(121), FourierBasis(121,-1,1), ChebyshevBasis(121),
-      FourierBasis(121)⊗ChebyshevBasis(121), FourierBasis(121,-2.,1.)⊕rescale(ChebyshevBasis(121),-2.,1.),
-      BA.tensorproduct(FourierBasis(121),3), BA.multiset(FourierBasis(121),FourierBasis(121),FourierBasis(121)))
+  bases = (FourierBasis(64,-1,1), FourierBasis(64,-1,1),
+      FourierBasis(64), FourierBasis(64,-1,1), ChebyshevBasis(64),
+      FourierBasis(8)⊗ChebyshevBasis(8), FourierBasis(32,-2.,1.)⊕rescale(ChebyshevBasis(32),-2.,1.),
+      BA.tensorproduct(FourierBasis(4),3), BA.multiset(FourierBasis(32),FourierBasis(32)))
   @testset "Space = $(name(space)) " for (i,space) in enumerate([
-      FE.FunctionSpace(FourierBasis(121,-1,1)),FE. FunctionSpace(FourierBasis(121,-1,1), FE.BBox(-1,1)),
+      FE.FunctionSpace(FourierBasis(64,-1,1)),FE. FunctionSpace(FourierBasis(64,-1,1), FE.BBox(-1,1)),
       FourierSpace(), FourierSpace(-1,1), ChebyshevSpace(),
-      FourierSpace()⊗ChebyshevSpace(),FourierSpace(-2,1)⊕ChebyshevSpace(-2,1),FE.tensorproduct(FourierSpace(),3), FE.add(FourierSpace(),3)])
+      FourierSpace()⊗ChebyshevSpace(),FourierSpace(-2,1)⊕ChebyshevSpace(-2,1),FE.tensorproduct(FourierSpace(),3), FE.add(FourierSpace(),2)])
       @test left(bboxes[i])==left(boundingbox(space))
       @test right(bboxes[i])==right(boundingbox(space))
-      @test FunctionSet(space, 121) == bases[i]
+      @test FunctionSet(space, 64) == bases[i]
   end
   @testset "Util functions" begin
     for n in 1:4

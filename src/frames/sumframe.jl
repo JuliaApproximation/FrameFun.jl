@@ -51,6 +51,7 @@ immutable ConcatSolver{T} <: AbstractOperator{T}
     normalization1
     normalization2
     lr
+    L
 end
 
 
@@ -68,24 +69,25 @@ function ConcatSolver(concatset, set1, set2, weightfunction)
     A1 = T*E1
     A2 = T*E2
     P = IdentityOperator(dgs) - A1*A1'
-    C = P*D*A2
+    L = evaluation_operator(set2, dgs)
+    C = P*L
     lr = lowrank_approximation(C)
-    normalization1 = matrix(R1*N*E1)
-    normalization2 = matrix(R2*N*E2)
+    normalization1 = R1*N*E1
+    normalization2 = R2*N*E2
     ConcatSolver{ELT}(dgs, concatset, set1, set2, weightfunction,
-        A1, A2, D, P, C, A1', A2', normalization1, normalization2, lr)
+        A1, A2, D, P, C, A1', A2', normalization1, normalization2, lr, L)
 end
 
 
 function apply!(op::ConcatSolver, coef_dest, coef_src)
     B = coef_src
     PB = op.P * B
-    x2 = lowranksolve(op.lr, PB)
-    B2 = B - op.D * (op.A2 * x2)
+    x2 = reshape(lowranksolve(op.lr, PB), size(op.set2))
+    B2 = B - op.L * x2
     x1 = op.A1prime * B2
     x1b = op.normalization1*x1
     x2b = op.normalization2*x2
-    coef_dest[:] = [x1b; x2b]
+    coef_dest[:] = [x1b[:]; x2b[:]]
 end
 
 function approximation_operator(set::WeightedSumFrame; options...)
@@ -141,3 +143,5 @@ function lowranksolve(lr, b)
     ut,vs,m = lr
     m * (vs * (ut * b))
 end
+
+lowranksolve{T}(lr, b::AbstractArray{T,2}) = lowranksolve(lr, reshape(b, length(b)))

@@ -38,7 +38,7 @@ name(f::EnrichedFrame) = "The basis " * name(element(f,1)) * " enriched with " *
 extension_size(f::EnrichedFrame) = extension_size(basis(f))
 
 resize(f::EnrichedFrame, n) =
-    similar_set(f, replace(superset(f), 1, resize(basis(f),n)))
+    similar_set(f, MultiSet([resize(basis(f), n); elements(f)[2:end]]))
 
 
 ############
