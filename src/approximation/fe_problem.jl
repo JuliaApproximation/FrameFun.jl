@@ -111,6 +111,20 @@ function FE_DiscreteProblem(domain, basis, sampling_factor; options...)
     FE_DiscreteProblem(domain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted; options...)
 end
 
+function FE_DiscreteProblem(domain, rgrid, basis, d::Array; options...)
+    fbasis1 = basis
+    fbasis2 = resize(fbasis1,size(supergrid(rgrid)))
+    grid1 = grid(fbasis1)
+    grid2 = grid(fbasis2)
+
+    ELT = eltype(fbasis1)
+    tbasis1 = DiscreteGridSpace(grid1, ELT)
+    tbasis2 = DiscreteGridSpace(grid2, ELT)
+    tbasis_restricted = DiscreteGridSpace(rgrid, ELT)
+
+    FE_DiscreteProblem(domain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted; options...)
+end
+
 
 
 function FE_DiscreteProblem(domain::AbstractDomain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted; options...)

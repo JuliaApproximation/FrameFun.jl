@@ -58,6 +58,8 @@ import BasisFunctions: show_setexpansion
 
 import BasisFunctions: postprocess, plotgrid
 
+import BasisFunctions: apply_map
+
 # about subgrids
 import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
     similar_subgrid

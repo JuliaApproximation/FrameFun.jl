@@ -57,7 +57,8 @@ eval_element(s::ExtensionFrame, idx::Int, x) = eval_element(basis(s), idx, x)
 
 grid(f::ExtensionFrame) = subgrid(grid(basis(f)),domain(f))
 
-
+# When applying a map, apply it to both domain and basis.
+apply_map(set::ExtensionFrame, map) = ExtensionFrame(apply_map(set.domain, map), apply_map(set.basis,map))
 """
 Make an ExtensionFrame, but match tensor product domains with tensor product sets
 in a suitable way.

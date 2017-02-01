@@ -22,6 +22,15 @@ function Fun(f::Function, basis::FunctionSet, domain::AbstractDomain; options...
     SetFun(domain, dest(A), coef)
 end
 
+function Fun(d::Array, basis::FunctionSet; outsidevalue = NaN, solver = FrameFun.FE_ProjectionSolver, options...)
+    mgrid = MaskedGrid(d,outsidevalue)
+    domain = EquispacedGridDomain(mgrid)
+    problem = FE_DiscreteProblem(domain, mgrid, basis, d)
+    A = solver(problem; options...)
+    coef = A*d[d.!=outsidevalue]
+    SetFun(domain, dest(A), coef)
+end
+
 function fe_problem(basis, domain, sampling_factor = 2; options...)
     frame = ExtensionFrame(domain, basis)
     FE_DiscreteProblem(domain, basis, sampling_factor; options...)

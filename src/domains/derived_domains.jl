@@ -19,6 +19,42 @@ boundingbox(c::Characteristic) = c.box
 show(io::IO, c::Characteristic) = print(io, "a domain described by a characteristic function")
 
 
+################################################################################
+### A domain described by a grid
+################################################################################
+
+# Implicit assumption: the supergrid of G is an equispaced 1d grid, or a tensorproduct of those grids.
+immutable EquispacedGridDomain{N,T} <: AbstractDomain{N} 
+    G    ::  AbstractGrid
+end
+
+EquispacedGridDomain{N,T}(g::AbstractGrid{N,T}) = EquispacedGridDomain{N,T}(g)
+
+# For indomain we assume the grid is tensorproduct if multidimensional (only to be used with function values from arrays)
+function indomain(x, gd::EquispacedGridDomain)
+    index = (x-left(supergrid(gd.G)))./(right(supergrid(gd.G))-left(supergrid(gd.G)))
+    N = ndims(gd)
+    neighbours=Array(Int64,N)
+    # Check the bounding rectangle
+    for j=1:2^N
+        for i=1:1
+            neighbours[i]=(floor(Int,(j-1)/(2^(i-1))) % 2)
+        end
+        mdindex = ceil(Int,index.*(SVector(size(supergrid(gd.G)))))+neighbours
+        # Check for bounding rectangle 
+        if (prod(mdindex.>0) && prod(mdindex.<=[size(supergrid(gd.G))...])) 
+            rindex = linear_index(supergrid(gd.G),Tuple(mdindex))
+            is_subindex(rindex,gd.G) && return true
+        end
+    end
+    # All bounding rectangle points contain data
+    return false
+end
+
+boundingbox(gd::EquispacedGridDomain) = BBox(left(supergrid(gd.G)),right(supergrid(gd.G)))
+
+show(io::IO, gd::EquispacedGridDomain) = print(io, "a domain described by a subgrid of some equispaced grid")
+
 
 
 ################################################################################

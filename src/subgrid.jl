@@ -31,6 +31,18 @@ convert{N}(::Type{NTuple{N,Int}},i::CartesianIndex{N}) = ntuple(k->i[k],N)
 
 function MaskedGrid{N}(supergrid::AbstractGrid{N}, domain::AbstractDomain{N})
     mask = in(supergrid, domain)
+    MaskedGrid(supergrid, mask)
+end
+
+function MaskedGrid{T,N}(d::Array{T,N}, outsidevalue)
+    # An array is interpreted as 'pixel' values, it makes sense to use a midpointgrid for this purpose,
+    # so the bounding box fully surrounds the original image.
+    G = tensorproduct([PeriodicEquispacedGrid(size(d,idx)) for idx = 1:N]...)
+    mask = d.!=outsidevalue
+    MaskedGrid(G,mask)
+end
+
+function MaskedGrid{N}(supergrid::AbstractGrid{N}, mask)
     indices = Array(SVector{N,Int}, sum(mask))
     i = 1
     for m in eachindex(supergrid)
@@ -41,6 +53,8 @@ function MaskedGrid{N}(supergrid::AbstractGrid{N}, domain::AbstractDomain{N})
     end
     MaskedGrid(supergrid, mask, indices)
 end
+
+    
 
 
 length(g::MaskedGrid) = g.M
