@@ -29,6 +29,7 @@ immutable TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
         c = cond(C)
         m = maximum(abs(C))
         while (c < m/cutoff) && (R<size(op,2))
+            verbose && println("Solver truncated at R = ", R, " dof out of ",size(op,2))
             R0 = R
             R = min(round(Int,growth_factor*R),size(op,2))
             extra_random_matrix = map(ELT, rand(size(op,2), R-R0))
@@ -72,6 +73,94 @@ end
 function apply!(s::TruncatedSvdSolver, coef_dest, coef_src)
     linearize_coefficients!(src(s), s.scratch_src, coef_src)
     A_mul_B!(s.sy, s.Ut, s.scratch_src)
+    A_mul_B!(s.y, s.VS, s.sy)
+    apply!(s.W, s.scratch_dest, s.y)
+    delinearize_coefficients!(dest(s), coef_dest, s.scratch_dest)
+end
+
+
+"""
+A Double Randomized Truncated SVD solver storing a decomposition of an operator A.
+If A is MxN, and of rank R, the cost of constructing this solver is MR^2.
+
+For tensor product operators it returns a decomposition of the linearized system
+"""
+immutable DoubleTruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
+    # Keep the original operator
+    op          ::  AbstractOperator
+    # Random matrix
+    W           ::  MultiplicationOperator
+    Wb          ::  MultiplicationOperator
+    # Decomposition
+    Ut          ::  Array{ELT,2}
+    VS          ::  Array{ELT,2}
+    # For storing intermediate results when applying
+    y           ::  Array{ELT,1}
+    sy          ::  Array{ELT,1}
+    scratch_src ::  Array{ELT,1}
+    scratch_dest::  Array{ELT,1}
+
+    function DoubleTruncatedSvdSolver(op::AbstractOperator; cutoff = default_cutoff(problem), R = 5, growth_factor = sqrt(2), verbose = false, options...)
+        finished=false
+        USV = ()
+        R = min(R, size(op,2))
+        random_matrix = map(ELT, rand(size(op,2), R))
+        random_matrixb = map(ELT, rand(R,size(op,1)))
+        C = apply_multiple(op, random_matrix)
+        D = random_matrixb * C
+        c = cond(C)
+        m = maximum(abs(C))
+        while (c < m/cutoff) && (R<size(op,2))
+            verbose && println("DoubleSolver truncated at R = ", R, " dof out of ",size(op,2))
+            R0 = R
+            R = min(round(Int,growth_factor*R),size(op,2))
+            extra_random_matrix = map(ELT, rand(size(op,2), R-R0))
+            random_matrixb = map(ELT, rand(R,size(op,1)))
+            Cextra = apply_multiple(op, extra_random_matrix)
+            random_matrix = [random_matrix extra_random_matrix]
+            C = [C Cextra]
+            D = random_matrixb * C
+            c = cond(D)
+            m = maximum(abs(D))
+        end
+        USV = LAPACK.gesdd!('S',D)
+        S = USV[2]
+        maxind = findlast(S.>cutoff)
+        Sinv = 1./S[1:maxind]
+        y = zeros(ELT, size(USV[3],1))
+        sy = zeros(ELT, maxind)
+        Wsrc = ELT <: Complex ? Cn{ELT}(size(random_matrix,2)) : Rn{ELT}(size(random_matrix,2))
+        Wdest = src(op)
+        W = MatrixOperator(Wsrc, Wdest, random_matrix)
+        Wsrcb = dest(op)
+        Wdestb = ELT <: Complex ? Cn{ELT}(size(random_matrixb,1)) : Rn{ELT}(size(random_matrixb,1))
+        Wb = MatrixOperator(Wsrcb, Wdestb, random_matrixb)
+        scratch_src = zeros(ELT, length(dest(op)))
+        scratch_dest = zeros(ELT, length(src(op)))
+        new(op, W, Wb, USV[1][:,1:maxind]',USV[3][1:maxind,:]'*diagm(Sinv[:]),y,sy, scratch_src, scratch_dest)
+    end
+end
+
+src(t::DoubleTruncatedSvdSolver) = dest(t.op)
+dest(t::DoubleTruncatedSvdSolver) = src(t.op)
+inv(t::DoubleTruncatedSvdSolver) = t.op
+
+DoubleTruncatedSvdSolver(op::AbstractOperator; options...) =
+    DoubleTruncatedSvdSolver{eltype(op)}(op::AbstractOperator; options...)
+
+# We don't need to (de)linearize coefficients when they are already vectors
+function apply!(s::DoubleTruncatedSvdSolver, coef_dest::Vector, coef_src::Vector)
+    # Applying the truncated SVD to P*Rhs
+    apply!(s.Wb, s.y, coef_src)
+    A_mul_B!(s.sy, s.Ut, s.y)
+    A_mul_B!(s.y, s.VS, s.sy)
+    apply!(s.W, coef_dest, s.y)
+end
+
+function apply!(s::DoubleTruncatedSvdSolver, coef_dest, coef_src)
+    linearize_coefficients!(src(s), s.scratch_src, coef_src)
+    apply!(s.Wb, s.y, s.scratch_src)
+    A_mul_B!(s.sy, s.Ut, s.y)
     A_mul_B!(s.y, s.VS, s.sy)
     apply!(s.W, s.scratch_dest, s.y)
     delinearize_coefficients!(dest(s), coef_dest, s.scratch_dest)
