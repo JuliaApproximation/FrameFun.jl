@@ -8,7 +8,7 @@ For more details, see the paper 'Fast algorithms for the computation of Fourier 
 http://arxiv.org/abs/1509.00206
 """
 immutable FE_ProjectionSolver{ELT} <: FE_Solver{ELT}
-    TS :: TruncatedSvdSolver
+    TS :: AbstractOperator
     problem     ::  FE_DiscreteProblem
     plunge_op   ::  AbstractOperator    # store the operator because it allocates memory
     b
@@ -16,8 +16,8 @@ immutable FE_ProjectionSolver{ELT} <: FE_Solver{ELT}
     x2
     x1
 
-    function FE_ProjectionSolver(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), options...)
-        TS = TruncatedSvdSolver(plunge_operator(problem)*operator(problem); cutoff=cutoff, R = estimate_plunge_rank(problem), verbose=true, options...)
+    function FE_ProjectionSolver(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), trunc = TruncatedSvdSolver, R = estimate_plunge_rank(problem), options...)
+        TS = trunc(plunge_operator(problem)*operator(problem); cutoff=cutoff, R=R, verbose=true, options...)
         plunge_op = plunge_operator(problem)
         b = zeros(ELT, dest(plunge_op))
         blinear = zeros(ELT, length(dest(plunge_op)))
