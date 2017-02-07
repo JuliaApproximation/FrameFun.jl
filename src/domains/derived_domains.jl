@@ -34,18 +34,16 @@ EquispacedGridDomain{N,T}(g::AbstractGrid{N,T}) = EquispacedGridDomain{N,T}(g)
 function indomain(x, gd::EquispacedGridDomain)
     index = (x-left(supergrid(gd.G)))./(right(supergrid(gd.G))-left(supergrid(gd.G)))
     N = ndims(gd)
-    neighbours=Array(Int64,N)
     # Check the bounding rectangle
-    for j=1:2^N
-        for i=1:1
-            neighbours[i]=(floor(Int,(j-1)/(2^(i-1))) % 2)
-        end
-        mdindex = ceil(Int,index.*(SVector(size(supergrid(gd.G)))))+neighbours
-        # Check for bounding rectangle 
-        if (prod(mdindex.>0) && prod(mdindex.<=[size(supergrid(gd.G))...])) 
+    mdindex = ceil(Int,index.*(SVector(size(supergrid(gd.G)))))
+    # Check for bounding rectangle 
+    if (prod(mdindex.>0) && prod(mdindex.<=[size(supergrid(gd.G))...]))
+        if N==1
+            rindex = linear_index(supergrid(gd.G),mdindex[1])
+        else
             rindex = linear_index(supergrid(gd.G),Tuple(mdindex))
-            is_subindex(rindex,gd.G) && return true
         end
+        is_subindex(rindex,gd.G) && return true
     end
     # All bounding rectangle points contain data
     return false

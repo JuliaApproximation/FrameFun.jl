@@ -39,6 +39,7 @@ immutable TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
             c = cond(C)
             m = maximum(abs(C))
         end
+        verbose && println("Solver truncated at R = ", R, " dof out of ",size(op,2))
         USV = LAPACK.gesdd!('S',C)
         S = USV[2]
         maxind = findlast(S.>cutoff)
