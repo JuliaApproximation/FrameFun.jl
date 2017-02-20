@@ -120,5 +120,4 @@ end
 innerproduct(b::FunctionSet1d, d::Interval, f::Function, idx::Int; options...) =
     innerproduct(b, f, idx, left(d), right(d); options...)
 
-import BasisFunctions: continuous_approximation_operator
 continuous_approximation_operator(frame::ExtensionFrame; solver = ContinuousDirectSolver, options...) = solver(frame; options...)

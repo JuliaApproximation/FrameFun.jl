@@ -60,6 +60,8 @@ import BasisFunctions: postprocess, plotgrid
 
 import BasisFunctions: Gram, DualGram, MixedGram
 
+import BasisFunctions: discrete_approximation_operator, continuous_approximation_operator
+
 # about subgrids
 import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
     similar_subgrid

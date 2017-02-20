@@ -46,7 +46,6 @@ end
 
 function discrete_approximation_operator(set::ExtensionFrame;
     sampling_factor = 2, solver = default_frame_solver(domain(set), basis(set)), options... )
-
     problem = FE_DiscreteProblem(domain(set), basis(set), sampling_factor; options...)
     solver(problem; options...)
 end
