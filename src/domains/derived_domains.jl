@@ -36,6 +36,8 @@ DomainUnion{N}(d1::AbstractDomain{N}, d2::AbstractDomain{N}) = DomainUnion{typeo
 
 union(d1::AbstractDomain, d2::AbstractDomain) = (d1 == d2 ? d1 : DomainUnion(d1,d2))
 
+firstelement(d::DomainUnion) = d.d1
+secondelement(d::DomainUnion) = d.d2
 
 # The union of two domains corresponds to a logical OR of their characteristic functions
 indomain(x, d::DomainUnion) = in(x, d.d1) || in(x, d.d2)
@@ -71,6 +73,9 @@ immutable DomainIntersection{D1,D2,N} <: AbstractDomain{N}
 end
 
 DomainIntersection{N}(d1::AbstractDomain{N},d2::AbstractDomain{N}) = DomainIntersection{typeof(d1),typeof(d2),N}(d1, d2)
+
+firstelement(d::DomainIntersection) = d.d1
+secondelement(d::DomainIntersection) = d.d2
 
 # The intersection of two domains corresponds to a logical AND of their characteristic functions
 indomain(x, d::DomainIntersection) = in(x, d.d1) && in(x, d.d2)

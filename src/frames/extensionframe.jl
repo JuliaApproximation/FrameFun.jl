@@ -81,3 +81,44 @@ extensionframe(domain, basis) = ExtensionFrame(domain, basis)
 
 left(d::ExtensionFrame, x...) = left(domain(d))
 right(d::ExtensionFrame, x...) = right(domain(d))
+
+# function Gram(f::ExtensionFrame; options...)
+#   A = zeros(eltype(f),length(f),length(f))
+#   grammatrix!(A,f; options...)
+#   MatrixOperator(A)
+# end
+
+#TODO DualGram executed is of functionset.jl but the is_biorthogonal trait is not correct
+
+MixedGram(f::ExtensionFrame; options...) = DualGram(basis(f))*Gram(f; options...)
+
+function grammatrix!(result, frame::ExtensionFrame; options...)
+  b = basis(frame)
+  for i in 1:size(result,1)
+    for j in i:size(result,2)
+      I = innerproduct(frame, x->b[i](x), j; options...)
+      result[i,j] = I
+      if i!= j
+        result[j,i] = I
+      end
+    end
+  end
+  result
+end
+
+import BasisFunctions: innerproduct
+innerproduct(frame::ExtensionFrame, f::Function, idx::Int; options...) =
+    innerproduct(basis(frame), domain(frame), f, idx; options...)
+
+# TODO now we assume that domainunion contains sections that do not overlap
+function innerproduct(b::FunctionSet, d::DomainUnion, f::Function, idx::Int; options...)
+  d1 = firstelement(domain)
+  d2 = firstelement(domain)
+  innerproduct(b, d1, f, idx; options...) + innerproduct(b, d2, f, idx; options...)
+end
+
+innerproduct(b::FunctionSet1d, d::Interval, f::Function, idx::Int; options...) =
+    innerproduct(b, f, idx, left(d), right(d); options...)
+
+import BasisFunctions: continuous_approximation_operator
+continuous_approximation_operator(frame::ExtensionFrame; solver = ContinuousDirectSolver, options...) = solver(frame; options...)

@@ -58,6 +58,8 @@ import BasisFunctions: show_setexpansion
 
 import BasisFunctions: postprocess, plotgrid
 
+import BasisFunctions: Gram, DualGram, MixedGram
+
 # about subgrids
 import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
     similar_subgrid
@@ -80,7 +82,7 @@ export ExpFun, ChebyFun, Fun, SetFun, sampling_grid, domain, abserror
 
 # from frames/extensionframe.jl
 export ExtensionFrame, basis, domain
-
+export Gram, DualGram, MixedGram
 # from frames/sumframe.jl
 export WeightedSumFrame, sumframe
 
