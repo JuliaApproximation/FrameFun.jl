@@ -32,7 +32,8 @@ import BasisFunctions: src, dest, matrix, matrix!, apply!, apply_inplace!, numty
 
 import BasisFunctions: grid, left, right, stepsize, sample
 
-import BasisFunctions: is_basis, is_frame, has_transform, has_grid, has_derivative,
+import BasisFunctions: is_basis, is_frame, is_orthogonal, is_orthonormal, is_biorthogonal,
+    has_transform, has_grid, has_derivative,
     has_antiderivative, has_extension, has_grid_transform
 
 import BasisFunctions: operator, matrix, is_diagonal, is_inplace
@@ -83,7 +84,7 @@ export numtype
 export ExpFun, ChebyFun, Fun, SetFun, sampling_grid, domain, abserror
 
 # from frames/extensionframe.jl
-export ExtensionFrame, basis, domain
+export ExtensionFrame, basis, domain, extensionframe
 export Gram, DualGram, MixedGram
 # from frames/sumframe.jl
 export WeightedSumFrame, sumframe

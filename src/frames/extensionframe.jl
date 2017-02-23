@@ -27,6 +27,9 @@ domain(f::ExtensionFrame) = f.domain
 similar_set(f::ExtensionFrame, set::FunctionSet) = ExtensionFrame(domain(f), set)
 
 is_frame(f::ExtensionFrame) = true
+is_biorthogonal(f::ExtensionFrame) = false
+is_orthogonal(f::ExtensionFrame) = false
+is_orthonormal(f::ExtensionFrame) = false
 
 # The following properties do not hold for extension frames
 # - there is no interpolation grid
@@ -77,7 +80,8 @@ function extensionframe(domain::TensorProductDomain, basis::TensorProductSet)
     tensorproduct(ExtensionFrames...)
 end
 
-extensionframe(domain, basis) = ExtensionFrame(domain, basis)
+extensionframe(domain::AbstractDomain, basis::FunctionSet) = ExtensionFrame(domain, basis)
+extensionframe(basis::FunctionSet, domain::AbstractDomain) = extensionframe(domain, basis)
 
 left(d::ExtensionFrame, x...) = left(domain(d))
 right(d::ExtensionFrame, x...) = right(domain(d))
@@ -90,7 +94,7 @@ right(d::ExtensionFrame, x...) = right(domain(d))
 
 #TODO DualGram executed is of functionset.jl but the is_biorthogonal trait is not correct
 
-MixedGram(f::ExtensionFrame; options...) = DualGram(basis(f))*Gram(f; options...)
+MixedGram(f::ExtensionFrame; options...) = DualGram(basis(f))*Gram(f ; options...)
 
 function grammatrix!(result, frame::ExtensionFrame; options...)
   b = basis(frame)

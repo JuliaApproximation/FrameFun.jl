@@ -15,6 +15,7 @@ before_script:
   - julia -e 'Pkg.init()'
   - julia -e 'Pkg.clone("https://github.com/daanhb/BasisFunctions.jl")'
   - if [[ "$TRAVIS_BRANCH" == "development" ]]; then cd BasisFunctions/ && git checkout development && cd .. ; fi
+  - if [[ "$TRAVIS_BRANCH" == "continuous" ]]; then cd BasisFunctions/ && git checkout continuous && cd .. ; fi
   - julia -e 'Pkg.add("Plotly")'
   - julia -e 'Pkg.clone(pwd())'
 script:
