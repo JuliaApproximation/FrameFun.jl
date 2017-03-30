@@ -13,14 +13,16 @@ immutable TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
     W           ::  MultiplicationOperator
     # Decomposition
     Ut          ::  Array{ELT,2}
-    VS          ::  Array{ELT,2}
+    Sinv        ::  Array{ELT,1}
+    V          ::  Array{ELT,2}
     # For storing intermediate results when applying
     y           ::  Array{ELT,1}
     sy          ::  Array{ELT,1}
     scratch_src ::  Array{ELT,1}
     scratch_dest::  Array{ELT,1}
+    smallcoefficients :: Bool
 
-    function TruncatedSvdSolver(op::AbstractOperator; cutoff = default_cutoff(problem), R = 5, growth_factor = sqrt(2), verbose = false, options...)
+    function TruncatedSvdSolver(op::AbstractOperator; cutoff = default_cutoff(problem), R = 5, growth_factor = sqrt(2), verbose = false, smallcoefficients=false,options...)
         finished=false
         USV = ()
         R = min(R, size(op,2))
@@ -51,7 +53,7 @@ immutable TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
 
         scratch_src = zeros(ELT, length(dest(op)))
         scratch_dest = zeros(ELT, length(src(op)))
-        new(op, W, USV[1][:,1:maxind]',USV[3][1:maxind,:]'*diagm(Sinv[:]),y,sy, scratch_src, scratch_dest)
+        new(op, W, USV[1][:,1:maxind]',Sinv,USV[3][1:maxind,:]',y,sy, scratch_src, scratch_dest,smallcoefficients)
     end
 end
 
@@ -66,7 +68,14 @@ TruncatedSvdSolver(op::AbstractOperator; options...) =
 function apply!(s::TruncatedSvdSolver, coef_dest::Vector, coef_src::Vector)
     # Applying the truncated SVD to P*Rhs
     A_mul_B!(s.sy, s.Ut, coef_src)
-    A_mul_B!(s.y, s.VS, s.sy)
+    for i =1:length(s.sy)
+        s.sy[i]=s.sy[i]*s.Sinv[i]
+    end
+    if s.smallcoefficients
+        s.sy[abs(s.sy).>100*maximum(abs(coef_src))]=0
+    end
+    A_mul_B!(s.y, s.V, s.sy)
+    
     apply!(s.W, coef_dest, s.y)
 end
 
