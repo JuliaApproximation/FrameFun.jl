@@ -82,7 +82,13 @@ end
 function apply!(s::TruncatedSvdSolver, coef_dest, coef_src)
     linearize_coefficients!(src(s), s.scratch_src, coef_src)
     A_mul_B!(s.sy, s.Ut, s.scratch_src)
-    A_mul_B!(s.y, s.VS, s.sy)
+    for i =1:length(s.sy)
+        s.sy[i]=s.sy[i]*s.Sinv[i]
+    end
+    if s.smallcoefficients
+        s.sy[abs(s.sy).>100*maximum(abs(coef_src))]=0
+    end
+    A_mul_B!(s.y, s.V, s.sy)
     apply!(s.W, s.scratch_dest, s.y)
     delinearize_coefficients!(dest(s), coef_dest, s.scratch_dest)
 end
