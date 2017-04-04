@@ -97,28 +97,26 @@ function oversampled_grid(domain, basis::BasisFunctions.FunctionSet, sampling_fa
 end
 
 
-function FE_DiscreteProblem(domain, basis, sampling_factor; options...)
-    fbasis1 = basis
-    rgrid, fbasis2 = oversampled_grid(domain, fbasis1, sampling_factor)
-    grid1 = grid(fbasis1)
-    grid2 = grid(fbasis2)
+function FE_Operator(domain, basis, sampling_factor; options...)
+    ELT = eltype(basis)
+    gridR, fbasisL = oversampled_grid(domain, basis, sampling_factor)
+    gridL = grid(fbasisL)
 
-    ELT = eltype(fbasis1)
-    tbasis1 = DiscreteGridSpace(grid1, ELT)
-    tbasis2 = DiscreteGridSpace(grid2, ELT)
-    tbasis_restricted = DiscreteGridSpace(rgrid, ELT)
-
-    FE_DiscreteProblem(domain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted; options...)
+    tbasisL = DiscreteGridSpace(gridL, ELT)
+    tbasis_restricted = DiscreteGridSpace(gridR, ELT)
+    t_restriction = restriction_operator(tbasisL, tbasis_restricted; options...)
+    f_restriction = restriction_operator(fbasisL, basis; options...)
+    f_extension = extension_operator(basis, fbasisL; options...)
+    itransform2 = transform_operator(fbasisL, tbasisL; options...)
+    op = t_restriction * itransform2 * f_extension
+    normalization = f_restriction * transform_operator_post(tbasisL, fbasisL; options...) * f_extension
+    op, normalization
 end
 
-
-
 function FE_DiscreteProblem(domain::AbstractDomain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted; options...)
-    f_extension = extension_operator(fbasis1, fbasis2; options...)
     f_restriction = restriction_operator(fbasis2, fbasis1; options...)
 
     t_extension = extension_operator(tbasis_restricted, tbasis2; options...)
-    t_restriction = restriction_operator(tbasis2, tbasis_restricted; options...)
     transform1 = transform_operator(tbasis1, fbasis1; options...)
     itransform1 = transform_operator(fbasis1, tbasis1; options...)
     transform2 = transform_operator(tbasis2, fbasis2; options...)

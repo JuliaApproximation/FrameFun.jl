@@ -49,25 +49,25 @@ end
 function approximation_operator(set::ExtensionFrame;
     sampling_factor = 2, solver = default_frame_solver(domain(set), basis(set)), options... )
 
-    problem = FE_DiscreteProblem(domain(set), basis(set), sampling_factor; options...)
-    solver(problem; options...)
+    op, normalization = FE_Operator(domain(set), basis(set), sampling_factor; options...)
+    normalization*solver(op; options...)
 end
 
 
 immutable FE_BestSolver
 end
 
-function FE_BestSolver(problem::FE_DiscreteProblem; options...)
-    if has_transform(frequency_basis(problem))
-        R = estimate_plunge_rank(problem)
-        if R < size(problem, 2)/2
-            FE_ProjectionSolver(problem; options...)
+function FE_BestSolver(op::AbstractOperator; options...)
+    if has_transform(src(op))
+        R = estimate_plunge_rank(op)
+        if R < size(op, 2)/2
+            FE_ProjectionSolver(op; options...)
         else
-            FE_DirectSolver(problem; options...)
+            FE_DirectSolver(op; options...)
         end
     else
         # Don't bother with a fast algorithm if there is no fast transform
-        FE_DirectSolver(problem; options...)
+        FE_DirectSolver(op; options...)
     end
 end
 

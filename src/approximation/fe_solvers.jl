@@ -3,19 +3,19 @@
 
 abstract FE_Solver{ELT} <: AbstractOperator{ELT}
 
-problem(s::FE_Solver) = s.problem
+op(s::FE_Solver) = s.op
 
-# Delegation methods
-for op in (:frequency_basis, :frequency_basis_ext, :time_basis, :time_basis_ext,
-    :time_basis_restricted, :operator, :operator_transpose, :domain)
-    @eval $op(s::FE_Solver) = $op(problem(s))
-end
+## # Delegation methods
+## for op in (:frequency_basis, :frequency_basis_ext, :time_basis, :time_basis_ext,
+##            :time_basis_restricted, :operator, :operator_transpose, :domain)
+##     @eval $op(s::FE_Solver) = $op(op(s))
+## end
 
-size(s::FE_Solver, j::Int) = size(problem(s), j)
+size(s::FE_Solver, j::Int) = size(transpose(op(s)), j)
 
-src(s::FE_Solver) = time_basis_restricted(s)
+src(s::FE_Solver) = dest(op(s))
 
-dest(s::FE_Solver) = frequency_basis(s)
+dest(s::FE_Solver) = src(op(s))
 
 
 

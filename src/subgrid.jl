@@ -112,11 +112,15 @@ end
 
 subgrid(grid::AbstractGrid, domain::AbstractDomain) = MaskedGrid(grid, domain)
 
+subgrid(grid::AbstractGrid, domain::DomainBoundary) = boundary(g, domain)
+
 function subgrid(grid::ScatteredGrid, domain::AbstractDomain)
     mask = in(grid, domain)
     points = grid.points[mask]
     ScatteredGrid(points)
 end
+
+subgrid(grid::ScatteredGrid, domain::DomainBoundary) = error("Trying to take the boundary within a ScatteredGrid")
 
 
 # Duck typing, v1 and v2 have to implement addition/substraction and scalar multiplication

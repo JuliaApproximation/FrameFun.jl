@@ -1,6 +1,25 @@
 # derived_domains.jl
 
+################################################################################
+### A domain boundary
+################################################################################
 
+immutable DomainBoundary{N} <: AbstractDomain{N}
+    dom   :: AbstractDomain
+    tol
+
+    DomainBoundary(dom, tol) = new(dom, tol)
+end
+
+DomainBoundary{N}(dom::AbstractDomain{N},tol) = DomainBoundary{N}(dom,tol)
+
+DomainBoundary(dom) = DomainBoundary(dom, 1e-12)
+
+boundingbox(d::DomainBoundary) = boundingbox(d.dom)
+
+show(io::IO, d::DomainBoundary) = print(io, "The boundary of ",d.dom)
+
+indomain(x, d::DomainBoundary) = error("This method should not be called")
 ################################################################################
 ### A domain described by a characteristic function
 ################################################################################
