@@ -49,8 +49,17 @@ end
 function approximation_operator(set::ExtensionFrame;
     sampling_factor = 2, solver = default_frame_solver(domain(set), basis(set)), options... )
 
-    op, normalization = FE_Operator(domain(set), basis(set), sampling_factor; options...)
-    normalization*solver(op; options...)
+    # Establish time domain grid
+    G, lB = oversampled_grid(domain(set),basis(set),sampling_factor)
+    
+    op = grid_evaluation_operator(basis(set),DiscreteGridSpace(G),G)
+    # Add boundary points if necessary
+    if boundary
+        BG = boundary(G, D)
+        op = [op grid_evaluation_operator(basis(set),DiscreteGridSpace(BG),BG)]
+    end
+        
+    solver(op; options...)
 end
 
 
