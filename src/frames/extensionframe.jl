@@ -86,42 +86,44 @@ extensionframe(basis::FunctionSet, domain::AbstractDomain) = extensionframe(doma
 left(d::ExtensionFrame, x...) = left(domain(d))
 right(d::ExtensionFrame, x...) = right(domain(d))
 
-# function Gram(f::ExtensionFrame; options...)
-#   A = zeros(eltype(f),length(f),length(f))
-#   grammatrix!(A,f; options...)
-#   MatrixOperator(A)
-# end
+DualGram(f::ExtensionFrame; options...) = DualGram(basis(f); options...)*Gram(f; options...)*DualGram(basis(f); options...)
 
-#TODO DualGram executed is of functionset.jl but the is_biorthogonal trait is not correct
+MixedGram(f::ExtensionFrame; options...) = DualGram(basis(f); options...)*Gram(f; options...)
 
-MixedGram(f::ExtensionFrame; options...) = DualGram(basis(f))*Gram(f ; options...)
+DiscreteDualGram(f::ExtensionFrame) = DiscreteDualGram(basis(f))*DiscreteGram(f)*DiscreteDualGram(basis(f))
+
+DiscreteMixedGram(f::ExtensionFrame) = DiscreteDualGram(basis(f))*DiscreteGram(f)
 
 function grammatrix!(result, frame::ExtensionFrame; options...)
-  b = basis(frame)
   for i in 1:size(result,1)
-    for j in i:size(result,2)
-      I = innerproduct(frame, x->b[i](x), j; options...)
-      result[i,j] = I
-      if i!= j
-        result[j,i] = I
-      end
+    for j in 1:size(result,2)
+      result[i,j] = dot(frame, i, j; options...)
     end
   end
   result
 end
 
-import BasisFunctions: innerproduct
-innerproduct(frame::ExtensionFrame, f::Function, idx::Int; options...) =
-    innerproduct(basis(frame), domain(frame), f, idx; options...)
+import BasisFunctions: dot
+import BasisFunctions: native_nodes
 
-# TODO now we assume that domainunion contains sections that do not overlap
-function innerproduct(b::FunctionSet, d::DomainUnion, f::Function, idx::Int; options...)
-  d1 = firstelement(domain)
-  d2 = firstelement(domain)
-  innerproduct(b, d1, f, idx; options...) + innerproduct(b, d2, f, idx; options...)
+function native_nodes(basis::FunctionSet, domain::Interval)
+  BasisFunctions.clip_and_cut(native_nodes(basis), left(domain), right(domain))
 end
 
-innerproduct(b::FunctionSet1d, d::Interval, f::Function, idx::Int; options...) =
-    innerproduct(b, f, idx, left(d), right(d); options...)
+dot(frame::ExtensionFrame, f1::Function, f2::Function; options...)  =
+    dot(basis(frame), domain(frame), f1::Function, f2::Function; options...)
+
+dot(frame::ExtensionFrame, f1::Int, f2::Function; options...) =
+    dot(frame, x->eval_element(basis(frame), f1, x), f2; options...)
+
+dot(frame::ExtensionFrame, f1::Int, f2::Int; options...) =
+    dot(frame, x->eval_element(basis(frame), f1, x),x->eval_element(basis(frame), f2, x); options...)
+
+dot(set::FunctionSet, domain::Interval, f1::Function, f2::Function; options...) =
+    dot(set, f1, f2, native_nodes(set, domain); options...)
+# TODO now we assume that domainunion contains sections that do not overlap
+dot(set::FunctionSet, domain::DomainUnion, f1::Function, f2::Function; options...) =
+    dot(set, firstelement(domain), f1, f2; options...) +
+    dot(set, secondelement(domain), f1, f2; options...)
 
 continuous_approximation_operator(frame::ExtensionFrame; solver = ContinuousDirectSolver, options...) = solver(frame; options...)

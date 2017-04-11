@@ -59,7 +59,7 @@ import BasisFunctions: show_setexpansion
 
 import BasisFunctions: postprocess, plotgrid
 
-import BasisFunctions: Gram, DualGram, MixedGram
+import BasisFunctions: Gram, DualGram, MixedGram, DiscreteGram, DiscreteDualGram, DiscreteMixedGram
 
 import BasisFunctions: discrete_approximation_operator, continuous_approximation_operator
 
