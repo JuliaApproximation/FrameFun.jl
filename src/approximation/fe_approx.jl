@@ -38,7 +38,7 @@ function eltype(f::Function, basis)
     # We only test for the return type in zero
     RT = typeof(f(fill(zero(ELT),ndims(basis))...))
     if (RT <: Complex)
-        complexify(ELT)
+        complex(ELT)
     else
         ELT
     end

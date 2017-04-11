@@ -190,10 +190,10 @@ rotationmatrix(theta) = SMatrix{2,2}([cos(theta) -sin(theta); sin(theta) cos(the
 rotationmatrix(phi,theta,psi) =
    SMatrix{3,3}([cos(theta)*cos(psi) cos(phi)*sin(psi)+sin(phi)*sin(theta)*cos(psi) sin(phi)*sin(psi)-cos(phi)*sin(theta)*cos(psi); -cos(theta)*sin(psi) cos(phi)*cos(psi)-sin(phi)*sin(theta)*sin(psi) sin(phi)*cos(psi)+cos(phi)*sin(theta)*sin(psi); sin(theta) -sin(phi)*cos(theta) cos(phi)*cos(theta)])
 
-RotatedDomain{N,T}(d::AbstractDomain{N}, angle::Vector{T}, m::SMatrix{N,N,T} = rotationmatrix(theta)) =
+RotatedDomain{N,T}(d::AbstractDomain{N}, angle::Vector{T}, m::SMatrix{N,N,T} = rotationmatrix(angle)) =
    RotatedDomain{typeof(d),T,N,N*N}(d, angle, m)
 
-RotatedDomain(d::AbstractDomain{2}, theta::Number) = RotatedDomain{2,typeof(theta),typeof(d)}(d, [theta], rotationmatrix(theta))
+RotatedDomain(d::AbstractDomain{2}, theta::Number) = RotatedDomain{typeof(d),typeof(theta),2,4}(d, [theta], rotationmatrix(theta))
 # types annotated to remove ambiguity
 RotatedDomain{T,D}(d::D, phi::T, theta::T, psi::T) = RotatedDomain{3,T,D}(d, [phi,theta,psi], rotationmatrix(phi,theta,psi))
 

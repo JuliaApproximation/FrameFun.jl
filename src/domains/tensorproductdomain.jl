@@ -33,6 +33,7 @@ tensorproduct(d::AbstractDomain, n::Int) = tensorproduct([d for i=1:n]...)
 tensorproduct(d::AbstractDomain...) =
     TensorProductDomain(flatten(TensorProductDomain, d...)...)
 
+^(d::AbstractDomain, n::Int) = tensorproduct(d, n)
 
 indomain(x, t::TensorProductDomain) = indomain(x, elements(t)...)
 
