@@ -8,7 +8,7 @@ using RecipesBase
 
 using Base.Cartesian
 
-import Base: +, *, /, ==, |, &, -, \, <, <=, >, >=
+import Base: +, *, /, ^, ==, |, &, -, \, <, <=, >, >=
 
 import Base: intersect, union, isapprox, setdiff
 
@@ -50,7 +50,7 @@ import BasisFunctions: eval_set_element, eval_element, eval_expansion,
 
 import BasisFunctions: differentiate, ∂x, ∂y, ∂z, ∫∂x, ∫∂y, ∫∂z, ∫, is_compatible
 
-import BasisFunctions: True, False, complexify, resize, promote_eltype
+import BasisFunctions: True, False, resize, promote_eltype
 
 import BasisFunctions: left, right
 
@@ -82,7 +82,7 @@ export ExpFun, ChebyFun, Fun, SetFun, sampling_grid, domain, abserror
 export ExtensionFrame, basis, domain
 
 # from frames/sumframe.jl
-export WeightedSumFrame, sumframe
+export SumFrame, sumframe
 
 # from frames/enrichedframe.jl
 export EnrichedFrame

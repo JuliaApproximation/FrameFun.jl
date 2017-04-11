@@ -201,7 +201,7 @@ end
 
 
 function boundary{G,M,N}(g::MaskedGrid{G,M,N},dom::AbstractDomain{N})
-    boundary(grid(g),dom)
+    boundary(supergrid(g),dom)
 end
 
 # function evaluation_operator{G <: AbstractSubGrid}(s::FunctionSet, d::DiscreteGridSpace{G})
