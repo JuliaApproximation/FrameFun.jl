@@ -42,14 +42,22 @@ end
 
 DiffEquation(S::FunctionSet, D::AbstractDomain, Diff::AbstractOperator, DRhs::Function, BC::BoundaryCondition) = DiffEquation(S,D,Diff,DRhs,(BC,))
 
-function operator(D::DiffEquation)
-    problem = FE_DiscreteProblem(D.D,D.S,2)
-    B = frequency_basis(problem)
+function operator(D::DiffEquation; options...)
+    #problem = FE_DiscreteProblem(D.D,D.S,2)
+    B = D.S
     ADiff = inv_diagonal(D.Diff)
     ops = Array{AbstractOperator}(length(D.BCs)+1,1)
-    ops[1] = operator(problem)*D.Diff*ADiff
+    G, lB = oversampled_grid(D.D,D.S,2)
+    
+    op = grid_evaluation_operator(D.S,DiscreteGridSpace(G),G)
+    # Add boundary points if necessary
+    if incboundary
+        BG = boundary(grid(lB), d,D)
+        op = [op; grid_evaluation_operator(d.S,DiscreteGridSpace(BG),BG)]
+    end
+    ops[1] = op*D.Diff*ADiff
     for i = 1:length(D.BCs)
-        Ac = evaluation_operator(D.S,D.BCs[i].DG)*(D.BCs[i].diff)*ADiff*normalization(problem)
+        Ac = evaluation_operator(D.S,D.BCs[i].DG)*(D.BCs[i].diff)*ADiff
         ops[i+1]=Ac
     end
     BlockOperator(ops)
@@ -70,7 +78,7 @@ function solve(D::DiffEquation, solver=FE_ProjectionSolver; options...)
     Adiff= inv_diagonal(D.Diff)
     b = rhs(D)
     DEproblem = problem(D)
-    A = solver(DEproblem; options...)
+    A = solver(operator(D); options...)
     coef  = A * b
     SetFun(D.D, dest(A), Adiff*coef)
 end

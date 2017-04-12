@@ -47,30 +47,34 @@ end
 
 
 function approximation_operator(set::ExtensionFrame;
-    sampling_factor = 2, solver = default_frame_solver(domain(set), basis(set)), options... )
-
+    sampling_factor = 2, solver = default_frame_solver(domain(set), basis(set)), incboundary=false,options... )
+    B = primarybasis(basis(set))
     # Establish time domain grid
-    G, lB = oversampled_grid(domain(set),basis(set),sampling_factor)
+    G, lB = oversampled_grid(domain(set),B,sampling_factor)
     
     op = grid_evaluation_operator(basis(set),DiscreteGridSpace(G),G)
     # Add boundary points if necessary
-    if boundary
-        BG = boundary(G, D)
-        op = [op grid_evaluation_operator(basis(set),DiscreteGridSpace(BG),BG)]
+    if incboundary
+        BG = boundary(grid(lB), domain(set))
+        op = [op; grid_evaluation_operator(basis(set),DiscreteGridSpace(BG),BG)]
     end
         
-    solver(op; options...)
+    solver(op, length(lB); options...)
 end
 
+primarybasis(set::FunctionSet) = set
+function primarybasis(set::MultiSet)
+    elements(set)[findmax(map(length,elements(set)))[2]]
+end
 
 immutable FE_BestSolver
 end
 
-function FE_BestSolver(op::AbstractOperator; options...)
+function FE_BestSolver(op::AbstractOperator, scaling; options...)
     if has_transform(src(op))
         R = estimate_plunge_rank(op)
         if R < size(op, 2)/2
-            FE_ProjectionSolver(op; options...)
+            FE_ProjectionSolver(op, scaling; options...)
         else
             FE_DirectSolver(op; options...)
         end
@@ -90,6 +94,7 @@ end
 # - n: number of degrees of freedom in the approximation
 # - T: the extension parameter (size of the extended domain vs the original domain)
 # - sampling: the (over)sampling factor
+
 # - domain_nd: the domain
 # - solver: the solver to use for solving the FE problem
 

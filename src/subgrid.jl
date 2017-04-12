@@ -148,7 +148,7 @@ function boundary{TG,T}(g::TensorProductGrid{TG,1,T},dom::AbstractDomain{1})
 end
 
 function boundary{G,M}(g::MaskedGrid{G,M,1},dom::AbstractDomain{1})
-    boundary(grid(g),dom)
+    boundary(supergrid(g),dom)
 end
 
 function boundary{TG,N,T}(g::TensorProductGrid{TG,N,T},dom::AbstractDomain{N},tol=1e-12)

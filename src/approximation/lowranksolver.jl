@@ -29,7 +29,7 @@ immutable TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
         random_matrix = map(ELT, rand(size(op,2), R))
         C = apply_multiple(op, random_matrix)
         c = cond(C)
-        m = maximum(abs(C))
+        m = norm(C)
         while (c < m/cutoff) && (R<size(op,2))
             verbose && println("Solver truncated at R = ", R, " dof out of ",size(op,2))
             R0 = R
