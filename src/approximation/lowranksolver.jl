@@ -26,20 +26,22 @@ immutable TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
         finished=false
         USV = ()
         R = min(R, size(op,2))
+        verbose && println("Solver truncated at R = ", R, " dof out of ",size(op,2))
         random_matrix = map(ELT, rand(size(op,2), R))
         C = apply_multiple(op, random_matrix)
         c = cond(C)
         m = norm(C)
-        while (c < m/cutoff) && (R<size(op,2))
-            verbose && println("Solver truncated at R = ", R, " dof out of ",size(op,2))
+        while (c < 1/cutoff) && (R<size(op,2))
             R0 = R
             R = min(round(Int,growth_factor*R),size(op,2))
+            verbose && println("Solver truncated at R = ", R, " dof out of ",size(op,2))
+            verbose && println(c," ",m," ",cutoff)            
             extra_random_matrix = map(ELT, rand(size(op,2), R-R0))
             Cextra = apply_multiple(op, extra_random_matrix)
             random_matrix = [random_matrix extra_random_matrix]
             C = [C Cextra]
             c = cond(C)
-            m = maximum(abs(C))
+            m = norm(C)
         end
         USV = LAPACK.gesdd!('S',C)
         S = USV[2]

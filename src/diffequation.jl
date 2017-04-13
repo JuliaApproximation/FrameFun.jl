@@ -35,39 +35,48 @@ immutable DiffEquation
     Diff  :: AbstractOperator
     DRhs   :: Function
     BCs    :: Tuple
-    function DiffEquation(S::FunctionSet, D::AbstractDomain,Diff::AbstractOperator, DRhs:: Function, BCs::Tuple)
-        new(S,D,Diff,DRhs,BCs)
+    sampling_factor
+    function DiffEquation(S::FunctionSet, D::AbstractDomain,Diff::AbstractOperator, DRhs:: Function, BCs::Tuple, sampling_factor=2)
+        new(S,D,Diff,DRhs,BCs, sampling_factor)
     end
 end
 
-DiffEquation(S::FunctionSet, D::AbstractDomain, Diff::AbstractOperator, DRhs::Function, BC::BoundaryCondition) = DiffEquation(S,D,Diff,DRhs,(BC,))
+DiffEquation(S::FunctionSet, D::AbstractDomain, Diff::AbstractOperator, DRhs::Function, BC::BoundaryCondition, sampling_factor=2) = DiffEquation(S,D,Diff,DRhs,(BC,), sampling_factor)
 
-function operator(D::DiffEquation; options...)
+function operator(D::DiffEquation; incboundary=false, options...)
     #problem = FE_DiscreteProblem(D.D,D.S,2)
     B = D.S
     ADiff = inv_diagonal(D.Diff)
-    ops = Array{AbstractOperator}(length(D.BCs)+1,1)
-    G, lB = oversampled_grid(D.D,D.S,2)
+    ops = incboundary ? Array{AbstractOperator}(length(D.BCs)+2,1) : Array{AbstractOperator}(length(D.BCs)+1,1)
+    G, lB = oversampled_grid(D.D,D.S,D.sampling_factor)
     
-    op = grid_evaluation_operator(D.S,DiscreteGridSpace(G),G)
-    # Add boundary points if necessary
+    op = grid_evaluation_operator(D.S,DiscreteGridSpace(G,eltype(D.S)),G)
+    
+    cnt=1
+    ops[cnt] = op*D.Diff*ADiff
     if incboundary
-        BG = boundary(grid(lB), d,D)
-        op = [op; grid_evaluation_operator(d.S,DiscreteGridSpace(BG),BG)]
+        BG = boundary(grid(lB), D.D)
+        cnt=cnt+1
+        ops[cnt] = grid_evaluation_operator(D.S,DiscreteGridSpace(BG,eltype(D.S)),BG)
     end
-    ops[1] = op*D.Diff*ADiff
     for i = 1:length(D.BCs)
         Ac = evaluation_operator(D.S,D.BCs[i].DG)*(D.BCs[i].diff)*ADiff
-        ops[i+1]=Ac
+        ops[i+cnt]=Ac
     end
     BlockOperator(ops)
 end
 
-function rhs(D::DiffEquation)
-    problem = FE_DiscreteProblem(D.D,D.S,2)
-    op = operator(problem)
+function rhs(D::DiffEquation; incboundary = false, options...)
+    op = operator(D; incboundary=incboundary, options...)
     rhs = Array(Array{eltype(src(op)),1},0)
-    push!(rhs,sample(grid(time_basis_restricted(problem)),D.DRhs, eltype(src(op))))
+    G, lB = oversampled_grid(D.D,D.S,D.sampling_factor)
+    
+    op = grid_evaluation_operator(D.S,DiscreteGridSpace(G,eltype(D.S)),G)
+    push!(rhs,sample(G,D.DRhs, eltype(src(op))))
+    if incboundary
+        BG = boundary(grid(lB), D.D)
+        push!(rhs,sample(BG,D.DRhs, eltype(src(op))))
+    end
     for BC in D.BCs
         push!(rhs,sample(BC.DG,BC.dRhs, eltype(src(op))))
     end
@@ -75,29 +84,11 @@ function rhs(D::DiffEquation)
 end
 
 function solve(D::DiffEquation, solver=FE_ProjectionSolver; options...)
+    G, lB = oversampled_grid(D.D,D.S,D.sampling_factor)
     Adiff= inv_diagonal(D.Diff)
-    b = rhs(D)
-    DEproblem = problem(D)
-    A = solver(operator(D); options...)
+    b = rhs(D; options...)
+    OP = operator(D; options...)
+    A = solver(OP, length(lB); options...)
     coef  = A * b
     SetFun(D.D, dest(A), Adiff*coef)
 end
-
-function problem(D::DiffEquation)
-    problem = FE_DiscreteProblem(D.D,D.S,2)
-    op = operator(D)
-    opt = ctranspose(op)
-    fb = frequency_basis(problem)
-    fbe = frequency_basis_ext(problem)
-    tb = MultiSet([time_basis(problem); elements(dest(op))[2:end]])
-    tbe = MultiSet([time_basis_ext(problem); elements(dest(op))[2:end]])
-    tbr = MultiSet([time_basis_restricted(problem); elements(dest(op))[2:end]])
-    fe = f_extension(problem)
-    fr = f_restriction(problem)
-    te = t_extension(problem)⊕IdentityOperator(element(dest(op),2:length(elements(dest(op)))))
-    tr = t_restriction(problem)⊗IdentityOperator(element(dest(op),2:length(elements(dest(op)))))
-    DEproblem = FE_DiscreteProblem(domain(problem),op, opt, fb,fbe,tb,tbe,tbr,fe,fr,te,tr, transform1(problem), itransform1(problem), transform2(problem), itransform2(problem),normalization(problem),invnormalization(problem))
-end
-
-
-
