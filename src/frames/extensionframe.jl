@@ -90,18 +90,13 @@ DualGram(f::ExtensionFrame; options...) = DualGram(basis(f); options...)*Gram(f;
 
 MixedGram(f::ExtensionFrame; options...) = DualGram(basis(f); options...)*Gram(f; options...)
 
-DiscreteDualGram(f::ExtensionFrame) = DiscreteDualGram(basis(f))*DiscreteGram(f)*DiscreteDualGram(basis(f))
+DiscreteDualGram(f::ExtensionFrame; oversampling=1) = DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))*DiscreteGram(f; oversampling=oversampling)*DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))
 
-DiscreteMixedGram(f::ExtensionFrame) = DiscreteDualGram(basis(f))*DiscreteGram(f)
+DiscreteMixedGram(f::ExtensionFrame; oversampling=1) = DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))*DiscreteGram(f; oversampling=oversampling)
 
-function grammatrix!(result, frame::ExtensionFrame; options...)
-  for i in 1:size(result,1)
-    for j in 1:size(result,2)
-      result[i,j] = dot(frame, i, j; options...)
-    end
-  end
-  result
-end
+BasisFunctions.discrete_dual_evaluation_operator(set::ExtensionFrame; oversampling=1, options...) =
+    BasisFunctions.grid_evaluation_operator(set, gridspace(set, BasisFunctions.oversampled_grid(set, oversampling)), BasisFunctions.oversampled_grid(set, oversampling); options...)*DiscreteDualGram(basis(set); oversampling=BasisFunctions.basis_oversampling(set, oversampling))
+
 
 import BasisFunctions: dot
 import BasisFunctions: native_nodes
@@ -117,13 +112,13 @@ dot(frame::ExtensionFrame, f1::Int, f2::Function; options...) =
     dot(frame, x->eval_element(basis(frame), f1, x), f2; options...)
 
 dot(frame::ExtensionFrame, f1::Int, f2::Int; options...) =
-    dot(frame, x->eval_element(basis(frame), f1, x),x->eval_element(basis(frame), f2, x); options...)
+    dot(frame, f1 ,x->eval_element(basis(frame), f2, x); options...)
 
 dot(set::FunctionSet, domain::Interval, f1::Function, f2::Function; options...) =
     dot(set, f1, f2, native_nodes(set, domain); options...)
-# TODO now we assume that domainunion contains sections that do not overlap
-dot(set::FunctionSet, domain::DomainUnion, f1::Function, f2::Function; options...) =
-    dot(set, firstelement(domain), f1, f2; options...) +
-    dot(set, secondelement(domain), f1, f2; options...)
+# # TODO now we assume that domainunion contains sections that do not overlap
+# dot(set::FunctionSet, domain::DomainUnion, f1::Function, f2::Function; options...) =
+#     dot(set, firstelement(domain), f1, f2; options...) +
+#     dot(set, secondelement(domain), f1, f2; options...)
 
 continuous_approximation_operator(frame::ExtensionFrame; solver = ContinuousDirectSolver, options...) = solver(frame; options...)

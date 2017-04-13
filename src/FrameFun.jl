@@ -134,6 +134,8 @@ include("approximation/smoothsolver.jl")
 
 include("approximation/fe_approx.jl")
 
+include("approximation/oversampling.jl")
+
 include("recipes.jl")
 
 include("diffequation.jl")
