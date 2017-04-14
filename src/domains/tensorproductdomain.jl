@@ -87,3 +87,10 @@ end
 
 
 (*)(d::TensorProductDomain, x::Number) = tensorproduct([domain*x for domain in elements(d)]...)
+
+dist(x, t::TensorProductDomain) = minimum(map(dist,x,elements(t)))
+
+function normal(x, t::TensorProductDomain)
+    index = findmin(map(dist,x,elements(t)))[2]
+    [(i==index)*normal(x[i],element(t,i)) for i =1:composite_length(t)]
+end

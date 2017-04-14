@@ -20,22 +20,50 @@ boundingbox(d::DomainBoundary) = boundingbox(d.dom)
 show(io::IO, d::DomainBoundary) = print(io, "The boundary of ",d.dom)
 
 indomain(x, d::DomainBoundary) = error("This method should not be called")
+
 ################################################################################
 ### A domain described by a characteristic function
 ################################################################################
 
 immutable Characteristic{N,T} <: AbstractDomain{N}
-    char    ::  Function
+    char
     box    ::  BBox{N,T}
 end
 
-Characteristic{N}(char::Function, dom::AbstractDomain{N}) = Characteristic(char,boundingbox(dom))
+Characteristic{N}(char, dom::AbstractDomain{N}) = Characteristic(char,boundingbox(dom))
 
 indomain(x, c::Characteristic) = c.char(x)
 
 boundingbox(c::Characteristic) = c.box
 
 show(io::IO, c::Characteristic) = print(io, "a domain described by a characteristic function")
+
+
+################################################################################
+### A polar domain described by a single variable function
+################################################################################
+
+immutable PolarDomain{T} <: AbstractDomain{2}
+    charFun
+    box     ::  BBox{2,T}
+end
+
+PolarDomain(char, dom::AbstractDomain{2}) = PolarDomain(Fun(char,FourierBasis(100,-pi,pi),Interval(-pi,pi)),boundingbox(dom))
+
+indomain(x, c::PolarDomain) = sqrt(x[1]^2+x[2]^2) < real(c.charFun(atan2(x[2],x[1])))
+
+boundingbox(c::PolarDomain) = c.box
+
+show(io::IO, c::PolarDomain) = print(io, "a domain in polar coordinates")
+
+dist(x, c::PolarDomain) = real(c.charFun(atan2(x[2],x[1])))-norm(x)
+function normal(x, c::PolarDomain)
+    phi=atan2(x[2],x[1])
+    y=c.charFun'(phi)*sin(phi)+c.charFun(phi)*cos(phi)
+    x=c.charFun'(phi)*cos(phi)-c.charFun(phi)*sin(phi)
+    return [-real(y/(norm([x;y]))),real(x/(norm([x;y])))]
+end
+
 
 
 
@@ -76,6 +104,9 @@ function show(io::IO, d::DomainUnion)
     print(io, "    First domain: ", d.d1, "\n")
     print(io, "    Second domain: ", d.d2, "\n")
 end
+dist(x,d::DomainUnion) = min(dist(x,d.d1),dist(x,d.d2))
+
+normal(x,d::DomainUnion) = abs(dist(x,d.d1))<abs(dist(x,d.d2)) ? normal(x,d.d1) : normal(x,d.d2)
 
 
 ################################################################################
@@ -122,6 +153,9 @@ function show(io::IO, d::DomainIntersection)
     print(io, "    First domain: ", d.d1, "\n")
     print(io, "    Second domain: ", d.d1, "\n")
 end
+dist(x,d::DomainIntersection) = min(dist(x,d.d1),dist(x,d.d2))
+
+normal(x,d::DomainIntersection) = dist(x,d.d1)<dist(x,d.d2) ? normal(x,d.d1) : normal(x,d.d2)
 
 
 ################################################################################
@@ -160,6 +194,10 @@ function show(io::IO, d::DomainDifference)
     print(io, "    Second domain: ", d.d2, "\n")
 end
 
+dist(x,d::DomainDifference) = min(dist(x,d.d1),dist(x,d.d2))
+
+normal(x,d::DomainDifference) = dist(x,d.d1)<dist(x,d.d2) ? normal(x,d.d1) : -1*normal(x,d.d2)
+
 
 ################################################################################
 ### A revolved domain is a 2D-domain rotated about the X-axis
@@ -184,72 +222,6 @@ boundingbox(d::RevolvedDomain) = BBox((left(d.d)[1],left(d.d)...),(right(d.d)[1]
 function show(io::IO, r::RevolvedDomain)
     print(io, "the revolution of: ", r.d1)
 end
-
-
-################################################################################
-### A rotated domain
-################################################################################
-
-immutable RotatedDomain{D,T,N,L} <: AbstractDomain{N}
-   d                 ::  D
-   angle             ::  Vector{T}
-   rotationmatrix    ::  SMatrix{N,N,T,L}
-
-    RotatedDomain(d,angle,rotationmatrix) = new(d, angle, rotationmatrix)
-end
-
-# Rotation in positive direction
-rotationmatrix(theta) = SMatrix{2,2}([cos(theta) -sin(theta); sin(theta) cos(theta)])
-# Rotation about X-axis (phi), Y-axis (theta) and Z-axis (psi)
-rotationmatrix(phi,theta,psi) =
-   SMatrix{3,3}([cos(theta)*cos(psi) cos(phi)*sin(psi)+sin(phi)*sin(theta)*cos(psi) sin(phi)*sin(psi)-cos(phi)*sin(theta)*cos(psi); -cos(theta)*sin(psi) cos(phi)*cos(psi)-sin(phi)*sin(theta)*sin(psi) sin(phi)*cos(psi)+cos(phi)*sin(theta)*sin(psi); sin(theta) -sin(phi)*cos(theta) cos(phi)*cos(theta)])
-
-RotatedDomain{N,T}(d::AbstractDomain{N}, angle::Vector{T}, m::SMatrix{N,N,T} = rotationmatrix(angle)) =
-   RotatedDomain{typeof(d),T,N,N*N}(d, angle, m)
-
-RotatedDomain(d::AbstractDomain{2}, theta::Number) = RotatedDomain{typeof(d),typeof(theta),2,4}(d, [theta], rotationmatrix(theta))
-# types annotated to remove ambiguity
-RotatedDomain{T,D}(d::D, phi::T, theta::T, psi::T) = RotatedDomain{3,T,D}(d, [phi,theta,psi], rotationmatrix(phi,theta,psi))
-
-rotate{T}(d::AbstractDomain{2}, theta::T) = RotatedDomain(d, theta)
-rotate{T}(d::AbstractDomain{3}, phi::T, theta::T, psi::T) = RotatedDomain(d, phi, theta, psi)
-
-indomain(x, d::RotatedDomain) = indomain(d.rotationmatrix*x, d.d)
-
-(==)(d1::RotatedDomain, d2::RotatedDomain) = (d1.d == d2.d) && (d1.angle == d2.angle) #&& (d1.rotationmatrix == d2.rotationmatrix)
-
-# very crude bounding box (doesn't work!!!)
-boundingbox(r::RotatedDomain)= sqrt(2)*boundingbox(r.d)
-
-
-
-
-################################################################################
-### A translated domain
-################################################################################
-
-immutable TranslatedDomain{D,T,N} <: AbstractDomain{N}
-    domain  ::  D
-    trans   ::  SVector{N,T}
-
-    TranslatedDomain(domain::AbstractDomain{N}, trans) = new(domain, trans)
-end
-
-TranslatedDomain{N}(domain::AbstractDomain{N}, trans::SVector{N}) = TranslatedDomain{typeof(domain),eltype(trans),N}(domain, trans)
-
-domain(d::TranslatedDomain) = d.domain
-
-translationvector(d::TranslatedDomain) = d.trans
-
-function indomain(x, d::TranslatedDomain)
-    indomain(x-d.trans, d.domain)
-end
-
-(+)(d::AbstractDomain, trans::SVector) = TranslatedDomain(d, trans)
-(+)(d::TranslatedDomain, trans::SVector) = TranslatedDomain(domain(d), trans+translationvector(d))
-
-boundingbox(d::TranslatedDomain) = boundingbox(domain(d)) + translationvector(d)
-
 
 
 ################################################################################
@@ -372,4 +344,18 @@ apply_map(d::MappedDomain, map::AbstractMap) = MappedDomain(domain(d), map*mappi
 (+){N,T}(d::AbstractDomain{N}, x::SVector{N,T}) = AffineMap(eye(SMatrix{N,N,T}),x) * d
 (+){N}(d::AbstractDomain{N}, x::AbstractVector) = d + SVector{N}(x)
 
+rotate{T}(d::AbstractDomain{2}, theta::T) = MappedDomain(d, rotation(theta))
+rotate{T}(d::AbstractDomain{3}, phi::T, theta::T, psi::T) = MappedDomain(d, rotation(phi,theta,psi))
+
+∠(d::AbstractDomain{2}, theta) = rotate(d, theta)
+
+
 show(io::IO, d::MappedDomain) =  print(io, "A mapped domain based on ", domain(d))
+
+dist(x, d::MappedDomain) = dist(inverse_map(mapping(d),x),domain(d))
+
+function normal(x, d::MappedDomain)
+    x = forward_map(mapping(d),normal(inverse_map(mapping(d),x),domain(d)))
+    x0 = forward_map(mapping(d),zeros(size(x)))
+    (x-x0)/norm(x-x0)
+end

@@ -11,23 +11,42 @@ When the equation is solved the equations:
 will hold.
 """
 
-immutable BoundaryCondition
-    S      :: FunctionSet
-    diff   :: AbstractOperator
-    DG      :: AbstractGrid
+
+immutable DirichletBC
     dRhs   :: Function
-    function BoundaryCondition(S :: FunctionSet, diff :: AbstractOperator, DG :: AbstractGrid, dRhs :: Function)
-        new(S,diff,DG,dRhs)
+    function DiricheltBC(dRhs=defalut_boundary_condition :: Function)
+        new(dRhs)
     end
 end
 
-BoundaryCondition(S :: FunctionSet, D::AbstractDomain) = BoundaryCondition(S,IdentityOperator(S),boundary(grid(S),D),default_boundary_condition)
-BoundaryCondition(S :: FunctionSet, diff::AbstractOperator, D::AbstractDomain) = BoundaryCondition(S,diff,boundary(grid(S),D),default_boundary_condition)
-BoundaryCondition(S :: FunctionSet, diff::AbstractOperator, D::AbstractDomain, dRhs::Function) = BoundaryCondition(S,diff,boundary(grid(S),D),dRhs)
+immutable NeumannBC
+    dRhs   :: Function
+    function NeumannBC(dRhs=defalut_boundary_condition :: Function)
+        new(dRhs)
+    end
+end
+
 default_boundary_condition(x) = 0
 default_boundary_condition(x,y) = 0
 default_boundary_condition(x,y,z) = 0
     
+function operator(BC :: DirichletBC, S::FunctionSet, G::AbstractGrid, D::AbstractDomain)
+    grid_evaluation_operator(S,G)
+end
+
+function operator(BC :: NeumannBC, S::FunctionSet, G::AbstractGrid, D::AbstractDomain)
+    GE = grid_evaluation_operator(S,G)
+    dx = []
+    dy = []
+    for i=1:length(G)
+        push!(dx, normal(G[i],D)[1])
+        push!(dy, normal(G[i],D)[2])
+    end
+    X = DiagonalOperator(dest(GE), dx)*GE*DifferentiationOperator(S,(1,0))
+    Y = DiagonalOperator(dest(GE), dy)*GE*DifferentiationOperator(S,(0,1))
+    X + Y
+end
+
 
 immutable DiffEquation
     S     :: FunctionSet
@@ -41,7 +60,12 @@ immutable DiffEquation
     end
 end
 
-DiffEquation(S::FunctionSet, D::AbstractDomain, Diff::AbstractOperator, DRhs::Function, BC::BoundaryCondition, sampling_factor=2) = DiffEquation(S,D,Diff,DRhs,(BC,), sampling_factor)
+DiffEquation(S::FunctionSet, D::AbstractDomain, Diff::AbstractOperator, DRhs::Function, BC, sampling_factor=2) = DiffEquation(S,D,Diff,DRhs,(BC,), sampling_factor)
+
+function boundarygrid(D::DiffEquation)
+    G, lB = oversampled_grid(D.D,D.S,D.sampling_factor)
+    boundary(grid(lB),D.D)
+end
 
 function operator(D::DiffEquation; incboundary=false, options...)
     #problem = FE_DiscreteProblem(D.D,D.S,2)
@@ -54,13 +78,13 @@ function operator(D::DiffEquation; incboundary=false, options...)
     
     cnt=1
     ops[cnt] = op*D.Diff*ADiff
+    BG = boundarygrid(D)
     if incboundary
-        BG = boundary(grid(lB), D.D)
         cnt=cnt+1
         ops[cnt] = grid_evaluation_operator(D.S,DiscreteGridSpace(BG,eltype(D.S)),BG)
     end
     for i = 1:length(D.BCs)
-        Ac = evaluation_operator(D.S,D.BCs[i].DG)*(D.BCs[i].diff)*ADiff
+        Ac = operator(D.BCs[i],D.S,BG,D.D)*ADiff
         ops[i+cnt]=Ac
     end
     BlockOperator(ops)
@@ -73,12 +97,13 @@ function rhs(D::DiffEquation; incboundary = false, options...)
     
     op = grid_evaluation_operator(D.S,DiscreteGridSpace(G,eltype(D.S)),G)
     push!(rhs,sample(G,D.DRhs, eltype(src(op))))
+    BG = boundarygrid(D)
+
     if incboundary
-        BG = boundary(grid(lB), D.D)
         push!(rhs,sample(BG,D.DRhs, eltype(src(op))))
     end
     for BC in D.BCs
-        push!(rhs,sample(BC.DG,BC.dRhs, eltype(src(op))))
+        push!(rhs,sample(BG,BC.dRhs, eltype(src(op))))
     end
     MultiArray(rhs)
 end

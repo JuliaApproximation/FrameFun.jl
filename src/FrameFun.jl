@@ -74,6 +74,7 @@ export randomcircles
 # from derived_domains.jl
 export Characteristic
 export numtype
+export ∠
 
 # from funs.jl
 export ExpFun, ChebyFun, Fun, SetFun, sampling_grid, domain, abserror

@@ -111,7 +111,9 @@ function intersect(d1::Interval, d2::Interval)
     end
 end
 
+dist(x, d::Interval) = min(right(d)-x,x-left(d))
 
+normal(x, d::Interval) = abs(left(d)-x) < abs(right(d)-x) ? 1 : -1
 ################################################################################
 ### The unit ball in N dimensions
 ################################################################################
@@ -133,6 +135,9 @@ Disk(radius, center) = radius * Disk() + center
 
 show(io::IO, d::UnitBall) = print(io, "the $(ndims(d))-dimensional unit ball")
 
+dist(x, d::UnitBall) = norm(x)-1
+
+normal(x, d::UnitBall) = -x/norm(x)
 
 # ################################################################################
 # ### A disk
@@ -227,7 +232,6 @@ cube(a, b, c, d, e, f) = Interval(a,b) ⊗ Interval(c,d) ⊗ Interval(e,f)
 
 const unitsquare = Cube(Val{2})
 const unitcube = Cube(Val{3})
-
 
 
 ################################################################################
