@@ -17,9 +17,9 @@ immutable FE_ProjectionSolver{ELT} <: FE_Solver{ELT}
     x1
     scaling 
 
-    function FE_ProjectionSolver(op::AbstractOperator, scaling; cutoff = default_cutoff(op), trunc = TruncatedSvdSolver, R = estimate_plunge_rank(op), options...)
+    function FE_ProjectionSolver(op::AbstractOperator, scaling; cutoff = default_cutoff(op), trunc = TruncatedSvdSolver, R = estimate_plunge_rank(op), verbose=false,options...)
         plunge_op = plunge_operator(op, scaling)
-        TS = trunc(plunge_op*op; cutoff=cutoff, R=R, verbose=true, options...)
+        TS = trunc(plunge_op*op; cutoff=cutoff, R=R, verbose=verbose, options...)
         b = zeros(ELT, dest(plunge_op))
         blinear = zeros(ELT, length(dest(plunge_op)))
         x1 = zeros(ELT, src(op))

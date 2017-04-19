@@ -39,6 +39,7 @@ immutable TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
             extra_random_matrix = map(ELT, rand(size(op,2), R-R0))
             Cextra = apply_multiple(op, extra_random_matrix)
             random_matrix = [random_matrix extra_random_matrix]
+            
             C = [C Cextra]
             c = cond(C)
             m = norm(C)

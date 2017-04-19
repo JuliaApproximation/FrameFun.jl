@@ -35,15 +35,15 @@ function operator(BC :: DirichletBC, S::FunctionSet, G::AbstractGrid, D::Abstrac
 end
 
 function operator(BC :: NeumannBC, S::FunctionSet, G::AbstractGrid, D::AbstractDomain)
-    GE = grid_evaluation_operator(S,G)
-    dx = []
-    dy = []
+    GE = grid_evaluation_operator(S,DiscreteGridSpace(G,eltype(S)),G)
+    dx = Float64[]
+    dy = Float64[]
     for i=1:length(G)
         push!(dx, normal(G[i],D)[1])
         push!(dy, normal(G[i],D)[2])
     end
-    X = DiagonalOperator(dest(GE), dx)*GE*DifferentiationOperator(S,(1,0))
-    Y = DiagonalOperator(dest(GE), dy)*GE*DifferentiationOperator(S,(0,1))
+    X = DiagonalOperator(dest(GE), dx)*GE*differentiation_operator(S,(1,0))
+    Y = DiagonalOperator(dest(GE), dy)*GE*differentiation_operator(S,(0,1))
     X + Y
 end
 
@@ -54,6 +54,8 @@ immutable DiffEquation
     Diff  :: AbstractOperator
     DRhs   :: Function
     BCs    :: Tuple
+
+    
     sampling_factor
     function DiffEquation(S::FunctionSet, D::AbstractDomain,Diff::AbstractOperator, DRhs:: Function, BCs::Tuple, sampling_factor=2)
         new(S,D,Diff,DRhs,BCs, sampling_factor)
