@@ -14,27 +14,32 @@ will hold.
 
 immutable DirichletBC
     dRhs   :: Function
-    function DiricheltBC(dRhs=defalut_boundary_condition :: Function)
-        new(dRhs)
+    D      :: AbstractDomain
+    function DirichletBC(dRhs=default_boundary_condition :: Function, D=RnDomain())
+        new(dRhs,D)
     end
 end
 
 immutable NeumannBC
     dRhs   :: Function
-    function NeumannBC(dRhs=defalut_boundary_condition :: Function)
-        new(dRhs)
+    D      :: AbstractDomain
+    function NeumannBC(dRhs=default_boundary_condition :: Function, D=RnDomain())
+        new(dRhs,D)
     end
 end
 
 default_boundary_condition(x) = 0
 default_boundary_condition(x,y) = 0
 default_boundary_condition(x,y,z) = 0
-    
+
+
 function operator(BC :: DirichletBC, S::FunctionSet, G::AbstractGrid, D::AbstractDomain)
-    grid_evaluation_operator(S,G)
+    G = subgrid(G,BC.D)
+    grid_evaluation_operator(S,DiscreteGridSpace(G,eltype(S)),G)
 end
 
-function operator(BC :: NeumannBC, S::FunctionSet, G::AbstractGrid, D::AbstractDomain)
+function operator(BC :: NeumannBC, S::FunctionSet{2}, G::AbstractGrid{2}, D::AbstractDomain{2})
+    G = subgrid(G,BC.D)
     GE = grid_evaluation_operator(S,DiscreteGridSpace(G,eltype(S)),G)
     dx = Float64[]
     dy = Float64[]
@@ -45,6 +50,15 @@ function operator(BC :: NeumannBC, S::FunctionSet, G::AbstractGrid, D::AbstractD
     X = DiagonalOperator(dest(GE), dx)*GE*differentiation_operator(S,(1,0))
     Y = DiagonalOperator(dest(GE), dy)*GE*differentiation_operator(S,(0,1))
     X + Y
+end
+
+function operator(BC :: NeumannBC, S::FunctionSet{1}, G::AbstractGrid{1}, D::AbstractDomain{1})
+    GE = grid_evaluation_operator(S,DiscreteGridSpace(G,eltype(S)),G)
+    dx = Float64[]
+    for i=1:length(G)
+        push!(dx, normal(G[i],D)[1])
+    end
+    DiagonalOperator(dest(GE), dx)*GE*differentiation_operator(S,1)
 end
 
 
@@ -105,7 +119,7 @@ function rhs(D::DiffEquation; incboundary = false, options...)
         push!(rhs,sample(BG,D.DRhs, eltype(src(op))))
     end
     for BC in D.BCs
-        push!(rhs,sample(BG,BC.dRhs, eltype(src(op))))
+        push!(rhs,sample(subgrid(BG,BC.D),BC.dRhs, eltype(src(op))))
     end
     MultiArray(rhs)
 end
