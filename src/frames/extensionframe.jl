@@ -60,6 +60,8 @@ eval_element(s::ExtensionFrame, idx::Int, x) = eval_element(basis(s), idx, x)
 
 grid(f::ExtensionFrame) = subgrid(grid(basis(f)),domain(f))
 
+BasisFunctions.default_oversampling(f::ExtensionFrame) = length(subgrid(BasisFunctions.oversampled_grid(basis(f), BasisFunctions.default_oversampling(basis(f))), domain(f)))/length(basis(f))
+
 
 """
 Make an ExtensionFrame, but match tensor product domains with tensor product sets
@@ -90,9 +92,9 @@ DualGram(f::ExtensionFrame; options...) = DualGram(basis(f); options...)*Gram(f;
 
 MixedGram(f::ExtensionFrame; options...) = DualGram(basis(f); options...)*Gram(f; options...)
 
-DiscreteDualGram(f::ExtensionFrame; oversampling=1) = DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))*DiscreteGram(f; oversampling=oversampling)*DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))
+DiscreteDualGram(f::ExtensionFrame; oversampling=BasisFunctions.default_oversampling(f)) = DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))*DiscreteGram(f; oversampling=oversampling)*DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))
 
-DiscreteMixedGram(f::ExtensionFrame; oversampling=1) = DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))*DiscreteGram(f; oversampling=oversampling)
+DiscreteMixedGram(f::ExtensionFrame; oversampling=BasisFunctions.default_oversampling(f)) = DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))*DiscreteGram(f; oversampling=oversampling)
 
 BasisFunctions.discrete_dual_evaluation_operator(set::ExtensionFrame; oversampling=1, options...) =
     BasisFunctions.grid_evaluation_operator(set, gridspace(set, BasisFunctions.oversampled_grid(set, oversampling)), BasisFunctions.oversampled_grid(set, oversampling); options...)*DiscreteDualGram(basis(set); oversampling=BasisFunctions.basis_oversampling(set, oversampling))
