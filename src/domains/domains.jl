@@ -64,3 +64,4 @@ end
 include("tensorproductdomain.jl")
 include("derived_domains.jl")
 include("specific_domains.jl")
+include("curve.jl")

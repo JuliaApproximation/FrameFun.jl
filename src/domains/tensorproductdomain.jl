@@ -71,6 +71,8 @@ indomain(x::SVector{4}, d1::AbstractDomain{2}, d2::AbstractDomain{1}, d3::Abstra
 	indomain(SVector(x[1],x[2]), d1) && indomain(x[3], d2) && indomain(x[4], d3)
 
 # TODO: make this code for indomain more general!
+indomain{N}(x::SVector{N}, d::Vararg{AbstractDomain,N}) =
+	reduce(&, map(indomain, x, d))
 
 # TODO: provide implementation of indomain for tensorproductgrids
 

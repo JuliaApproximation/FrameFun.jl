@@ -56,8 +56,8 @@ function test_subgrids()
 
     # Generic tests for the subgrids
     @testset "result" for (grid,subgrid) in ( (grid1,subgrid1), (grid1,subgrid2), (TensorG, circle_grid))
-        print("Subgrid is ")
-        println(typeof(subgrid))
+        # print("Subgrid is ")
+        # println(typeof(subgrid))
         # Count the number of elements in the subgrid
         cnt = 0
         for i in 1:length(grid)
@@ -93,11 +93,38 @@ function test_subgrids()
     end
 end
 
+function test_randomgrids()
+    println("Random grids:")
+    @testset begin
+        d = Disk()
+        g = randomgrid(d, 10)
+        @test length(g) == 10
+        @test length(eltype(g)) == ndims(d)
+        @test reduce(&, [x ∈ d for x in g])
 
+        g2 = randomgrid(d, 10, BigFloat)
+        @test eltype(g2[1]) == BigFloat
+
+        g3 = randomgrid(Interval(0,1), 10)
+        @test length(g3) == 10
+        # 1D is a special case where we don't use vectors of length 1
+        @test eltype(g3) == Float64
+
+        box1 = BBox(0.0, 1.0, 0.0, 1.0)
+        p1 = randompoint(box1)
+        @test length(p1) == ndims(box1)
+        @test p1 ∈ box1
+        box2 = BBox(0.0, 1.0)
+        p2 = randompoint(box2)
+        @test typeof(p2) == Float64
+        @test p2 ∈ box2
+    end
+end
 
 
 
 test_subgrids()
+test_randomgrids()
 
 
 delimit("Domains")

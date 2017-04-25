@@ -10,7 +10,7 @@ using Base.Cartesian
 
 import Base: +, *, /, ^, ==, |, &, -, \, <, <=, >, >=
 
-import Base: intersect, union, isapprox, setdiff
+import Base: intersect, union, isapprox, setdiff, in
 
 import Base: length, eltype, size, push!, ctranspose, inv, similar
 
@@ -100,6 +100,12 @@ export FunConstructor
 export FourierSpace, ChebyshevSpace, ⊕, add, construct
 # from recipes.jl
 
+# from domains
+export AbstractDomain
+
+# from randomgrid.jl
+export randomgrid, randompoint
+
 
 include("box.jl")
 
@@ -140,6 +146,8 @@ include("approximation/constructors.jl")
 include("domains/fourierdomains.jl")
 
 include("domains/fractals.jl")
+
+include("randomgrid.jl")
 
 
 end # module

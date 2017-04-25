@@ -3,7 +3,7 @@
 
 ## Plot full SetFun as the underlying expansion
 @recipe function f(F::SetFun; plot_ext = false)
-    plot_ext || (title --> "SetFun")
+    # plot_ext || (title --> "SetFun")
     plot_ext ? SetExpansion(basis(F),coefficients(F)) : expansion(F)
 end
 

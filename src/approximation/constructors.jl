@@ -1,29 +1,5 @@
 # constructors.jl
 
-"""
-  Create grid consisting of random interior points
-"""
-function random_grid_in_domain{T}(domain::AbstractDomain,::Type{T}=Float64;vals::Int=200)
-    # Use the bounding box around the domain
-    box = boundingbox(domain)
-    N=ndims(domain)
-    point=Array{T}(N)
-    N == 1 ? points=Array{T}(vals) : points=Array{SVector{N,T}}(vals)
-    elements=0
-    # Generate some points inside the domain
-    while elements < vals
-        for j in 1:N
-            point[j]=left(box)[j]+(right(box)[j]-left(box)[j])*rand(1)[1]
-        end
-        N == 1 ? vpoint = point[1] : vpoint = SVector(point...)
-        if in(vpoint,domain)
-            elements+=1
-            points[elements]=vpoint
-        end
-    end
-    return ScatteredGrid(points)
-end
-
 ## """
 ##   The residual of a SetFun approximation of a Function
 ## """
@@ -38,7 +14,7 @@ end
 ## residual(F::SetFun, f::Function) = residual(f,F)
 
 """
-  Create approximation to function with with a function set in a domain.
+  Create approximation to function with a function set in a domain.
 
   The number of points is chosen adaptively.
 """
@@ -50,7 +26,7 @@ function fun_simple(f::Function, set::FunctionSet, domain::AbstractDomain;
   # TODO Decide which is best
   # tol = default_cutoff(FE_DiscreteProblem(domain, set, 2; options...))
   isequal(tol,NaN) && (tol = 10*10^(4/5*log10(eps(numtype(set)))))
-  rgrid=random_grid_in_domain(domain,numtype(set);vals=no_checkpoints)
+  rgrid = randomgrid(domain, no_checkpoints, numtype(set))
   error = Inf
   random_f=sample(rgrid, f, eltype(f(rgrid[1]...)))
   random_F=zeros(ELT,no_checkpoints)
@@ -84,7 +60,7 @@ function fun_optimal_N(f::Function, set::FunctionSet, domain::FrameFun.AbstractD
   # TODO Decide which is best
   # tol = default_cutoff(FE_DiscreteProblem(domain, set, 2; options...))
   isequal(tol,NaN) && (tol = 10*10^(4/5*log10(eps(numtype(set)))))
-  rgrid=FrameFun.random_grid_in_domain(domain,numtype(set);vals=no_checkpoints)
+  rgrid = randomgrid(domain, no_checkpoints, numtype(set))
   error = Inf
   random_f=sample(rgrid, f, eltype(f(rgrid[1]...)))
   random_F=zeros(ELT,no_checkpoints)

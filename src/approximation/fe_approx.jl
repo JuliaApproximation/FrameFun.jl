@@ -22,7 +22,7 @@ function Fun(f::Function, basis::FunctionSet, domain::AbstractDomain; options...
     SetFun(domain, dest(A), coef)
 end
 
-function fe_problem(basis, domain, sampling_factor = 2; options...)
+function fe_problem(basis, domain, sampling_factor; options...)
     frame = ExtensionFrame(domain, basis)
     FE_DiscreteProblem(domain, basis, sampling_factor; options...)
 end
