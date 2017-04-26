@@ -133,3 +133,4 @@ function solve(D::DiffEquation, solver=FE_ProjectionSolver; options...)
     coef  = A * b
     SetFun(D.D, dest(A), Adiff*coef)
 end
+

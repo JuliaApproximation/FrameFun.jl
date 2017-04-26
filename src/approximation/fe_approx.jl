@@ -44,22 +44,23 @@ function eltype(f::Function, basis)
     end
 end
 
-
-
-function approximation_operator(set::ExtensionFrame;
-    sampling_factor = 2, solver = default_frame_solver(domain(set), basis(set)), incboundary=false,options... )
-    B = primarybasis(basis(set))
+function oversampled_evaluation_operator(S::FunctionSet, D::AbstractDomain; sampling_factor=2, incboundary=false, options...)
+    B = primarybasis(S)
     # Establish time domain grid
-    G, lB = oversampled_grid(domain(set),B,sampling_factor)
+    G, lB = oversampled_grid(D,B,sampling_factor)
     
-    op = grid_evaluation_operator(basis(set),DiscreteGridSpace(G),G)
+    op = grid_evaluation_operator(S,gridspace(B,G),G)
     # Add boundary points if necessary
     if incboundary
-        BG = boundary(grid(lB), domain(set))
-        op = [op; grid_evaluation_operator(basis(set),DiscreteGridSpace(BG),BG)]
+        BG = boundary(grid(lB), D)
+        op = [op; grid_evaluation_operator(S,gridspace(B,BG),BG)]
     end
-        
-    solver(op, length(lB); options...)
+    (op,length(lB))
+end
+
+function approximation_operator(set::ExtensionFrame; solver = default_frame_solver(domain(set), basis(set)), options...)
+    (op, scaling) = oversampled_evaluation_operator(basis(set),domain(set);options...)
+    solver(op, scaling; options...)
 end
 
 primarybasis(set::FunctionSet) = set
@@ -76,11 +77,11 @@ function FE_BestSolver(op::AbstractOperator, scaling; options...)
         if R < size(op, 2)/2
             FE_ProjectionSolver(op, scaling; options...)
         else
-            FE_DirectSolver(op; options...)
+            FE_DirectSolver(op, scaling; options...)
         end
     else
         # Don't bother with a fast algorithm if there is no fast transform
-        FE_DirectSolver(op; options...)
+        FE_DirectSolver(op, scaling; options...)
     end
 end
 
