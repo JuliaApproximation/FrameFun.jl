@@ -55,7 +55,10 @@ immutable Interval{T} <: AbstractDomain{1}
     a     ::  T
     b     ::  T
 
-    Interval(a = -1, b = 1) = new(a,b)
+    function Interval(a = -1, b = 1)
+      @assert a<b
+      new(a,b)
+    end
 end
 
 Interval() = Interval{Int}()
@@ -70,6 +73,8 @@ indomain(x, d::Interval) = in(x, d.a, d.b)
 
 left(d::Interval) = d.a
 right(d::Interval) = d.b
+
+length(d::Interval) = right(d)-left(d)
 
 # Arithmetic operations
 
