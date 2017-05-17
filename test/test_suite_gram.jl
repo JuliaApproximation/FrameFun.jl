@@ -85,7 +85,7 @@ function test_discrete_gram()
         frame = extensionframe(b,d)
         Gomega = DiscreteGram(frame; oversampling=os)
         Eomega = evaluation_operator(frame; oversampling=os)
-        N = length(BasisFunctions.oversampled_grid(frame, os))
+        N = BasisFunctions.discrete_gram_scaling(frame, os)
 
         basis_os = BasisFunctions.basis_oversampling(frame,os)
 
@@ -117,6 +117,7 @@ function test_connection_restriction_extension_discretegram()
     for T in (Float64, BigFloat), (b,os) in [(BSplineTranslatesBasis(10, 1, T),1), (BSplineTranslatesBasis(10, 2, T),1), (FourierBasis(10,T),1.1), (ChebyshevBasis(20,T),.66)]
       d = Interval(left(b),right(b))/2
       frame = extensionframe(b, d)
+      N = BasisFunctions.discrete_gram_scaling(b, os)
 
        # Uses extension times two next, so works only for os=1, for bsplines, ≈ 1.1 for fourier series,...
       @assert 2≈BasisFunctions.basis_oversampling(frame, os)
@@ -136,7 +137,7 @@ function test_connection_restriction_extension_discretegram()
       matrix(A_Omega)
       e = map(T, rand(size(A_Omega,2)))
       @assert A_Omega*e ≈ evaluation_operator(frame, oversampling=os)*e
-      G_test = (1/T(length(r_time_basis)))*A_Omega'A_Omega
+      G_test = (1/T(N))*A_Omega'A_Omega
 
       e = map(T, rand(size(G,2)))
       @test 1+maximum(abs((G- G_test)*e))≈1
@@ -144,14 +145,13 @@ function test_connection_restriction_extension_discretegram()
       GD = DiscreteDualGram(frame; oversampling=os)
 
       Ad = discrete_dual_evaluation_operator(b_large)
-      # Ad_Omega = R*Ad*E
       Ad_Omega = R*discrete_dual_evaluation_operator(b; oversampling=oversampling=BasisFunctions.basis_oversampling(frame,os))
-      GD_test = (1/T(length(r_time_basis)))*Ad_Omega'Ad_Omega
+      GD_test = (1/T(N))*Ad_Omega'Ad_Omega
 
       @test 1+maximum(abs((GD- GD_test)*e))≈1.
 
       GM = DiscreteMixedGram(frame; oversampling=os)
-      GM_test = (1/T(length(r_time_basis)))*Ad_Omega'A_Omega
+      GM_test = (1/T(N))*Ad_Omega'A_Omega
 
       @test 1+maximum(abs((GM- GM_test)*e))≈1
     end
@@ -160,6 +160,7 @@ function test_connection_restriction_extension_discretegram()
     b = instantiate(B, n, T)
     d = Interval(left(b),right(b))/2
     frame = extensionframe(b, d)
+    N = BasisFunctions.discrete_gram_scaling(frame, os)
 
     G = DiscreteGram(frame; oversampling=os)
 
@@ -174,8 +175,7 @@ function test_connection_restriction_extension_discretegram()
     e = map(T, rand(size(A,2)))
     @test (R*A)*e ≈ Af*e
     A_Omega = Af
-
-    G_test = (1/T(length(r_time_basis)))*A_Omega'A_Omega
+    G_test = (1/T(N))*A_Omega'A_Omega
 
     e = map(T, rand(size(G,2)))
     @test 1+maximum(abs((G- G_test)*e))≈1
@@ -188,12 +188,12 @@ function test_connection_restriction_extension_discretegram()
     @test (R*Ad)*e ≈ Adf*e
 
     Ad_Omega = Adf
-    GD_test = (1/T(length(r_time_basis)))*Ad_Omega'Ad_Omega
+    GD_test = (1/T(N))*Ad_Omega'Ad_Omega
 
     @test 1+maximum(abs((GD- GD_test)*e))≈1.
 
     GM = DiscreteMixedGram(frame; oversampling=os)
-    GM_test = (1/T(length(r_time_basis)))*Ad_Omega'A_Omega
+    GM_test = (1/T(N))*Ad_Omega'A_Omega
 
     @test 1+maximum(abs((GM- GM_test)*e))≈1
   end
