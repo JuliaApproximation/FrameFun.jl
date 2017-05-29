@@ -7,7 +7,7 @@ is isolated using a projection operator.
 For more details, see the paper 'Fast algorithms for the computation of Fourier extensions of arbitrary length'
 http://arxiv.org/abs/1509.00206
 """
-immutable FE_ProjectionSolver{ELT} <: FE_Solver{ELT}
+struct FE_ProjectionSolver{ELT} <: FE_Solver{ELT}
     TS :: AbstractOperator
     problem     ::  FE_DiscreteProblem
     plunge_op   ::  AbstractOperator    # store the operator because it allocates memory
@@ -16,7 +16,7 @@ immutable FE_ProjectionSolver{ELT} <: FE_Solver{ELT}
     x2
     x1
 
-    function FE_ProjectionSolver(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), trunc = TruncatedSvdSolver, R = estimate_plunge_rank(problem), options...)
+    function FE_ProjectionSolver{ELT}(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), trunc = TruncatedSvdSolver, R = estimate_plunge_rank(problem), options...) where ELT
         TS = trunc(plunge_operator(problem)*operator(problem); cutoff=cutoff, R=R, verbose=true, options...)
         plunge_op = plunge_operator(problem)
         b = zeros(ELT, dest(plunge_op))

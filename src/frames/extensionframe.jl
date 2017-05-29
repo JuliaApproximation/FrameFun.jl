@@ -5,11 +5,11 @@ An ExtensionFrame is the restriction of a basis to a subset of its domain. This
 results in a frame that implicitly represents extensions of functions on the
 smaller set to the larger set.
 """
-immutable ExtensionFrame{N,T} <: DerivedSet{N,T}
+struct ExtensionFrame{N,T} <: DerivedSet{N,T}
     domain      ::  AbstractDomain{N}
     basis       ::  FunctionSet{N,T}
 
-    function ExtensionFrame(domain::AbstractDomain, basis::FunctionSet)
+    function ExtensionFrame{N,T}(domain::AbstractDomain, basis::FunctionSet) where {N,T}
         @assert is_basis(basis)
         new(domain, basis)
     end

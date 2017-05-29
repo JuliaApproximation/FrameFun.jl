@@ -17,7 +17,7 @@ import Base: length, eltype, size, push!, ctranspose, inv, similar
 import Base: eachindex, start, next, done, getindex, in, unsafe_getindex,
     checkbounds
 
-import Base: show, showcompact, call
+import Base: show, showcompact
 
 import Base: promote, promote_rule, convert, promote_eltype
 

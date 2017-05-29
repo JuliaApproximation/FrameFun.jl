@@ -6,7 +6,7 @@ If A is MxN, and of rank R, the cost of constructing this solver is MR^2.
 
 For tensor product operators it returns a decomposition of the linearized system
 """
-immutable TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
+struct TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
     # Keep the original operator
     op          ::  AbstractOperator
     # Random matrix
@@ -20,14 +20,14 @@ immutable TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
     scratch_src ::  Array{ELT,1}
     scratch_dest::  Array{ELT,1}
 
-    function TruncatedSvdSolver(op::AbstractOperator; cutoff = default_cutoff(problem), R = 5, growth_factor = sqrt(2), verbose = false, options...)
+    function TruncatedSvdSolver{ELT}(op::AbstractOperator; cutoff = default_cutoff(problem), R = 5, growth_factor = sqrt(2), verbose = false, options...) where ELT
         finished=false
         USV = ()
         R = min(R, size(op,2))
         random_matrix = map(ELT, rand(size(op,2), R))
         C = apply_multiple(op, random_matrix)
         c = cond(C)
-        m = maximum(abs(C))
+        m = maximum(abs.(C))
         while (c < m/cutoff) && (R<size(op,2))
             verbose && println("Solver truncated at R = ", R, " dof out of ",size(op,2))
             R0 = R
@@ -37,7 +37,7 @@ immutable TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
             random_matrix = [random_matrix extra_random_matrix]
             C = [C Cextra]
             c = cond(C)
-            m = maximum(abs(C))
+            m = maximum(abs.(C))
         end
         USV = LAPACK.gesdd!('S',C)
         S = USV[2]
@@ -85,7 +85,7 @@ If A is MxN, and of rank R, the cost of constructing this solver is MR^2.
 
 For tensor product operators it returns a decomposition of the linearized system
 """
-immutable DoubleTruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
+struct DoubleTruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
     # Keep the original operator
     op          ::  AbstractOperator
     # Random matrix
@@ -100,7 +100,7 @@ immutable DoubleTruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
     scratch_src ::  Array{ELT,1}
     scratch_dest::  Array{ELT,1}
 
-    function DoubleTruncatedSvdSolver(op::AbstractOperator; cutoff = default_cutoff(problem), R = 5, growth_factor = sqrt(2), verbose = false, options...)
+    function DoubleTruncatedSvdSolver{ELT}(op::AbstractOperator; cutoff = default_cutoff(problem), R = 5, growth_factor = sqrt(2), verbose = false, options...) where ELT
         finished=false
         USV = ()
         R = min(R, size(op,2))

@@ -4,7 +4,7 @@
 ### An empty domain
 ################################################################################
 
-immutable EmptyDomain{N} <: AbstractDomain{N}
+struct EmptyDomain{N} <: AbstractDomain{N}
 end
 
 EmptyDomain() = EmptyDomain{1}()
@@ -27,7 +27,7 @@ show(io::IO, d::EmptyDomain) = print(io, "an empty domain")
 ### The space R^n
 ################################################################################
 
-immutable RnDomain{N} <: AbstractDomain{N}
+struct RnDomain{N} <: AbstractDomain{N}
 end
 
 RnDomain() = RnDomain{1}()
@@ -51,11 +51,11 @@ show(io::IO, e::RnDomain) = print(io, "the ", ndims(e), "-dimensional Euclidean 
 ### An interval
 ################################################################################
 
-immutable Interval{T} <: AbstractDomain{1}
+struct Interval{T} <: AbstractDomain{1}
     a     ::  T
     b     ::  T
 
-    Interval(a = -1, b = 1) = new(a,b)
+    Interval{T}(a = -1, b = 1) where T = new(a,b)
 end
 
 Interval() = Interval{Int}()
@@ -116,7 +116,7 @@ end
 ### The unit ball in N dimensions
 ################################################################################
 
-immutable UnitBall{N} <: AbstractDomain{N}
+struct UnitBall{N} <: AbstractDomain{N}
 end
 
 indomain(x, ::UnitBall{1}) = -1 <= x <= 1
@@ -138,7 +138,7 @@ show(io::IO, d::UnitBall) = print(io, "the $(ndims(d))-dimensional unit ball")
 # ### A disk
 # ################################################################################
 #
-# immutable Disk{S,T} <: AbstractDomain{2}
+# struct Disk{S,T} <: AbstractDomain{2}
 #     radius    ::  S
 #     center    ::  SVector{2,T}
 #
@@ -173,11 +173,11 @@ const unitdisk = Disk()
 ### A 3D ball
 ################################################################################
 
-immutable Ball{S,T} <: AbstractDomain{3}
+struct Ball{S,T} <: AbstractDomain{3}
     radius    ::  S
     center    ::  SVector{3,T}
 
-    Ball(radius = one(S), center = zeros(SVector{3,T})) = new(radius, center)
+    Ball{S,T}(radius = one(S), center = zeros(SVector{3,T})) where {S,T} = new(radius, center)
 end
 
 Ball() = Ball{Int,Float64}()

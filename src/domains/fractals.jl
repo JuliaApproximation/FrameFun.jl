@@ -4,7 +4,7 @@
 ## The Mandelbrot set
 ###############################################################################
 
-immutable Mandelbrot{T} <: AbstractDomain{2}
+struct Mandelbrot{T} <: AbstractDomain{2}
     maxiter     ::  Int
     threshold   ::  T
     maskcache   ::  Dict
@@ -77,7 +77,7 @@ show(io::IO, m::Mandelbrot) = print(io, "The Mandelbrot set")
 ## Julia sets
 ################
 
-immutable JuliaSet{T} <: AbstractDomain{2}
+struct JuliaSet{T} <: AbstractDomain{2}
     c           ::  Complex{T}
     maxiter     ::  Int
     maskcache   ::  Dict

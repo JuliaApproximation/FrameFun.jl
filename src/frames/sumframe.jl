@@ -4,10 +4,10 @@
 A SumFrame is the concatenation of multiple sets, where the first set is a basis
 with an associated unitary transform (such as Fourier or Chebyshev).
 """
-immutable SumFrame{N,T} <: DerivedSet{N,T}
+struct SumFrame{N,T} <: DerivedSet{N,T}
     superset    ::  FunctionSet{N,T}
 
-    function SumFrame(set)
+    function SumFrame{N,T}(set) where {N,T}
         @assert is_sumset(set)
         new(set)
     end
@@ -33,7 +33,7 @@ default_threshold{T <: Number}(::Type{Complex{T}}) = 1000eps(T)
 
 
 "Solver to approximate functions using a SumFrame."
-immutable SumFrameSolver{T} <: AbstractOperator{T}
+struct SumFrameSolver{T} <: AbstractOperator{T}
     src     ::  FunctionSet
     dest    ::  FunctionSet
     set1    ::  FunctionSet

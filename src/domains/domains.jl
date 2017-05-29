@@ -1,17 +1,17 @@
 # domains.jl
 
 "An N-dimensional domain."
-abstract AbstractDomain{N}
+abstract type AbstractDomain{N} end
 
 ndims{N}(::Type{AbstractDomain{N}}) = N
 ndims{D <: AbstractDomain}(::Type{D}) = ndims(supertype(D))
 ndims{N}(::AbstractDomain{N}) = N
 
 
-typealias AbstractDomain1d AbstractDomain{1}
-typealias AbstractDomain2d AbstractDomain{2}
-typealias AbstractDomain3d AbstractDomain{3}
-typealias AbstractDomain4d AbstractDomain{4}
+AbstractDomain1d = AbstractDomain{1}
+AbstractDomain2d = AbstractDomain{2}
+AbstractDomain3d = AbstractDomain{3}
+AbstractDomain4d = AbstractDomain{4}
 
 # left and right of domains falls back to bounding box domains
 left(d::AbstractDomain) = left(boundingbox(d))

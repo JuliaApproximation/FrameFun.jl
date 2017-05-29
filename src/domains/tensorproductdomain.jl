@@ -7,13 +7,13 @@
 """
 A TensorProductDomain represents the tensor product of other domains.
 
-immutable TensorProductDomain{TD,N} <: AbstractDomain{N}
+struct TensorProductDomain{TD,N} <: AbstractDomain{N}
 
 Parameters:
 - TD is a tuple of (domain) types
 - N is the total dimension of this domain
 """
-immutable TensorProductDomain{TD,N} <: AbstractDomain{N}
+struct TensorProductDomain{TD,N} <: AbstractDomain{N}
 	domains	::	TD
 end
 

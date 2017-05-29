@@ -1,6 +1,6 @@
 # diffequation.jl
 
-""" 
+"""
 A DiffEquation describes a differential equation, with or without boundary conditions.
 Parameters:
 - Fun is the SetFun that will describe the result
@@ -11,7 +11,7 @@ When the equation is solved the equations:
 will hold.
 """
 
-immutable BoundaryCondition
+struct BoundaryCondition
     S      :: FunctionSet
     diff   :: AbstractOperator
     DG      :: AbstractGrid
@@ -27,9 +27,9 @@ BoundaryCondition(S :: FunctionSet, diff::AbstractOperator, D::AbstractDomain, d
 default_boundary_condition(x) = 0
 default_boundary_condition(x,y) = 0
 default_boundary_condition(x,y,z) = 0
-    
 
-immutable DiffEquation
+
+struct DiffEquation
     S     :: FunctionSet
     D     :: AbstractDomain
     Diff  :: AbstractOperator
@@ -90,6 +90,3 @@ function problem(D::DiffEquation)
     tr = t_restriction(problem)⊗IdentityOperator(element(dest(op),2:length(elements(dest(op)))))
     DEproblem = FE_DiscreteProblem(domain(problem),op, opt, fb,fbe,tb,tbe,tbr,fe,fr,te,tr, transform1(problem), itransform1(problem), transform2(problem), itransform2(problem),normalization(problem),invnormalization(problem))
 end
-
-
-

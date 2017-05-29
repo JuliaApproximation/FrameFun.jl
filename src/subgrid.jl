@@ -8,13 +8,13 @@ A MaskedGrid is a subgrid of another grid that is defined by a mask.
 The mask is true or false for each point in the supergrid. The set of points
 for which it is true make up the MaskedGrid.
 """
-immutable MaskedGrid{G,M,N,T} <: AbstractSubGrid{N,T}
+struct MaskedGrid{G,M,I,N,T} <: AbstractSubGrid{N,T}
     supergrid   ::	G
     mask	    ::	M
-    indices     ::  Vector{SVector{N,Int}}
+    indices     ::  Vector{I}
     M           ::	Int				# Total number of points in the mask
 
-    MaskedGrid(supergrid::AbstractGrid{N,T},  mask, indices) =
+    MaskedGrid{G,M,I,N,T}(supergrid::AbstractGrid{N,T}, mask, indices) where {G,M,I,N,T} =
         new(supergrid, mask, indices, sum(mask))
 end
 # TODO: In MaskedGrid, perhaps we should not be storing pointers to the points of the underlying grid, but
@@ -23,7 +23,7 @@ end
 function MaskedGrid{N,T}(supergrid::AbstractGrid{N,T}, mask, indices)
 	@assert size(supergrid) == size(mask)
 
-	MaskedGrid{typeof(supergrid),typeof(mask),N,T}(supergrid, mask, indices)
+	MaskedGrid{typeof(supergrid),typeof(mask),eltype(indices),N,T}(supergrid, mask, indices)
 end
 
 # These are for the assignment to indices in the function below.
@@ -31,7 +31,8 @@ convert{N}(::Type{NTuple{N,Int}},i::CartesianIndex{N}) = ntuple(k->i[k],N)
 
 function MaskedGrid{N}(supergrid::AbstractGrid{N}, domain::AbstractDomain{N})
     mask = in(supergrid, domain)
-    indices = Array(SVector{N,Int}, sum(mask))
+    I = eltype(eachindex(supergrid))
+    indices = Array{I}(sum(mask))
     i = 1
     for m in eachindex(supergrid)
         if mask[m]
@@ -53,7 +54,7 @@ similar_subgrid(g::MaskedGrid, g2::AbstractGrid) = MaskedGrid(g2, g.mask, g.indi
 # Check whether element grid[i] (of the underlying grid) is in the masked grid.
 is_subindex(i, g::MaskedGrid) = g.mask[i]
 
-unsafe_getindex(g::MaskedGrid, idx) = unsafe_getindex(g.supergrid, g.indices[idx]...)
+unsafe_getindex(g::MaskedGrid, idx) = unsafe_getindex(g.supergrid, g.indices[idx])
 
 
 # Efficient extension operator

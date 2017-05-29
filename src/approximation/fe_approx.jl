@@ -54,7 +54,7 @@ function approximation_operator(set::ExtensionFrame;
 end
 
 
-immutable FE_BestSolver
+struct FE_BestSolver
 end
 
 function FE_BestSolver(problem::FE_DiscreteProblem; options...)
@@ -100,7 +100,7 @@ function default_frame_n(domain::TensorProductDomain, basis)
     for i = 2:composite_length(domain)
         s = [s; default_frame_n(element(domain,i), basis)...]
     end
-    s = round(Int,s/ndims(domain))
+    s = round.(Int,s/ndims(domain))
     tuple(s...)
 end
 

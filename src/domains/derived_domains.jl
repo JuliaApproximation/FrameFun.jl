@@ -5,7 +5,7 @@
 ### A domain described by a characteristic function
 ################################################################################
 
-immutable Characteristic{N,T} <: AbstractDomain{N}
+struct Characteristic{N,T} <: AbstractDomain{N}
     char    ::  Function
     box    ::  BBox{N,T}
 end
@@ -25,11 +25,11 @@ show(io::IO, c::Characteristic) = print(io, "a domain described by a characteris
 ### The union of two domains
 ################################################################################
 
-immutable DomainUnion{D1,D2,N} <: AbstractDomain{N}
+struct DomainUnion{D1,D2,N} <: AbstractDomain{N}
     d1    ::  D1
     d2    ::  D2
 
-    DomainUnion(d1::AbstractDomain{N}, d2::AbstractDomain{N}) = new(d1, d2)
+    DomainUnion{D1,D2,N}(d1::AbstractDomain{N}, d2::AbstractDomain{N}) where {D1,D2,N} = new(d1, d2)
 end
 
 DomainUnion{N}(d1::AbstractDomain{N}, d2::AbstractDomain{N}) = DomainUnion{typeof(d1),typeof(d2),N}(d1, d2)
@@ -43,7 +43,7 @@ indomain(x, d::DomainUnion) = in(x, d.d1) || in(x, d.d2)
 function indomain_grid(g::AbstractGrid, d::DomainUnion)
     z1 = indomain_grid(g, d.d1)
     z2 = indomain_grid(g, d.d2)
-    z1 | z2
+    z1 .| z2
 end
 
 (+)(d1::AbstractDomain, d2::AbstractDomain) = union(d1,d2)
@@ -63,11 +63,11 @@ end
 ### The intersection of two domains
 ################################################################################
 
-immutable DomainIntersection{D1,D2,N} <: AbstractDomain{N}
+struct DomainIntersection{D1,D2,N} <: AbstractDomain{N}
     d1    ::  D1
     d2    ::  D2
 
-    DomainIntersection(d1::AbstractDomain{N}, d2::AbstractDomain{N}) = new(d1, d2)
+    DomainIntersection{D1,D2,N}(d1::AbstractDomain{N}, d2::AbstractDomain{N}) where {D1,D2,N} = new(d1, d2)
 end
 
 DomainIntersection{N}(d1::AbstractDomain{N},d2::AbstractDomain{N}) = DomainIntersection{typeof(d1),typeof(d2),N}(d1, d2)
@@ -78,7 +78,7 @@ indomain(x, d::DomainIntersection) = in(x, d.d1) && in(x, d.d2)
 function indomain_grid(g::AbstractGrid, d::DomainIntersection)
     z1 = indomain_grid(g, d.d1)
     z2 = indomain_grid(g, d.d2)
-    z1 & z2
+    z1 .& z2
 end
 
 (&)(d1::AbstractDomain, d2::AbstractDomain) = intersect(d1,d2)
@@ -109,11 +109,11 @@ end
 ### The difference between two domains
 ################################################################################
 
-immutable DomainDifference{D1,D2,N} <: AbstractDomain{N}
+struct DomainDifference{D1,D2,N} <: AbstractDomain{N}
     d1    ::  D1
     d2    ::  D2
 
-    DomainDifference(d1::AbstractDomain{N}, d2::AbstractDomain{N}) = new(d1, d2)
+    DomainDifference{D1,D2,N}(d1::AbstractDomain{N}, d2::AbstractDomain{N}) where {D1,D2,N} = new(d1, d2)
 end
 
 DomainDifference{N}(d1::AbstractDomain{N}, d2::AbstractDomain{N}) = DomainDifference{typeof(d1),typeof(d2),N}(d1,d2)
@@ -126,7 +126,7 @@ indomain(x, d::DomainDifference) = indomain(x, d.d1) && (~indomain(x, d.d2))
 function indomain_grid(g::AbstractGrid, d::DomainDifference)
     z1 = indomain_grid(g, d.d1)
     z2 = indomain_grid(g, d.d2)
-    z1 & (~z2)
+    z1 .& (~z2)
 end
 
 (-)(d1::AbstractDomain, d2::AbstractDomain) = setdiff(d1, d2)
@@ -146,7 +146,7 @@ end
 ### A revolved domain is a 2D-domain rotated about the X-axis
 ################################################################################
 
-immutable RevolvedDomain{D} <: AbstractDomain{3}
+struct RevolvedDomain{D} <: AbstractDomain{3}
     d     ::  D
 end
 
@@ -171,12 +171,12 @@ end
 ### A rotated domain
 ################################################################################
 
-immutable RotatedDomain{D,T,N,L} <: AbstractDomain{N}
+struct RotatedDomain{D,T,N,L} <: AbstractDomain{N}
    d                 ::  D
    angle             ::  Vector{T}
    rotationmatrix    ::  SMatrix{N,N,T,L}
 
-    RotatedDomain(d,angle,rotationmatrix) = new(d, angle, rotationmatrix)
+    RotatedDomain{D,T,N,L}(d,angle,rotationmatrix) where {D,T,N,L} = new(d, angle, rotationmatrix)
 end
 
 # Rotation in positive direction
@@ -209,11 +209,11 @@ boundingbox(r::RotatedDomain)= sqrt(2)*boundingbox(r.d)
 ### A translated domain
 ################################################################################
 
-immutable TranslatedDomain{D,T,N} <: AbstractDomain{N}
+struct TranslatedDomain{D,T,N} <: AbstractDomain{N}
     domain  ::  D
     trans   ::  SVector{N,T}
 
-    TranslatedDomain(domain::AbstractDomain{N}, trans) = new(domain, trans)
+    TranslatedDomain{D,T,N}(domain::AbstractDomain{N}, trans) where {D,T,N} = new(domain, trans)
 end
 
 TranslatedDomain{N}(domain::AbstractDomain{N}, trans::SVector{N}) = TranslatedDomain{typeof(domain),eltype(trans),N}(domain, trans)
@@ -297,13 +297,13 @@ A point lies in the mapped domain, if the inverse map of that point lies in the
 original domain.
 """
 # TODO: experiment with leaving out the type parameters and implement fast indomain_grid
-immutable MappedDomain{DOMAIN <: AbstractDomain,MAP,N} <: AbstractDomain{N}
+struct MappedDomain{DOMAIN <: AbstractDomain,MAP,N} <: AbstractDomain{N}
     domain  ::  DOMAIN
     # The forward map, from the underlying domain to the mapped domain
     fmap    ::  MAP
 
     # With this inner constructor we enforce that N is the dimension of the domain
-    MappedDomain(domain::AbstractDomain{N}, fmap) = new(domain, fmap)
+    MappedDomain{DOMAIN,MAP,N}(domain::AbstractDomain{N}, fmap) where {DOMAIN <: AbstractDomain,MAP,N} = new(domain, fmap)
 end
 
 MappedDomain{N}(domain::AbstractDomain{N}, fmap) =

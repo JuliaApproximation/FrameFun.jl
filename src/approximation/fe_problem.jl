@@ -4,7 +4,7 @@
 An FE_Problem groups all the information of a Fourier extension problem.
 This data can be used in a solver to produce an approximation.
 """
-abstract FE_Problem{N,T}
+abstract type FE_Problem{N,T} end
 
 for op in [:eltype, :ndims, :numtype]
     @eval $op(p::FE_Problem) = $op(frequency_basis(p))
@@ -12,7 +12,7 @@ end
 
 
 # This type groups the data corresponding to a FE problem.
-immutable FE_DiscreteProblem{N,T} <: FE_Problem{N,T}
+struct FE_DiscreteProblem{N,T} <: FE_Problem{N,T}
     domain          ::  AbstractDomain{N}
 
     op              ::  AbstractOperator
@@ -127,7 +127,7 @@ function FE_DiscreteProblem(domain::AbstractDomain, fbasis1, fbasis2, tbasis1, t
     # TODO: we also need to incorporate the transform_operator_pre somewhere
     normalization = f_restriction * transform_operator_post(tbasis2, fbasis2; options...) * f_extension
     invnormalization = f_restriction * inv(transform_operator_post(tbasis2, fbasis2; options...)) * f_extension
-    
+
     op  = t_restriction * itransform2 * f_extension
     opt = f_restriction * transform2 * t_extension
 

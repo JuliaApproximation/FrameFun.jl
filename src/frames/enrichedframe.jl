@@ -5,10 +5,10 @@ An EnrichedFrame is the concatenation of a basis with a bounded number of extra
 functions. It differs from a SumFrame only in the way it resizes: only the basis
 is resized, not the other set(s).
 """
-immutable EnrichedFrame{N,T} <: DerivedSet{N,T}
+struct EnrichedFrame{N,T} <: DerivedSet{N,T}
     superset    ::  FunctionSet{N,T}
 
-    function EnrichedFrame(set)
+    function EnrichedFrame{N,T}(set) where {N,T}
         @assert is_enrichedframe(set)
         new(set)
     end

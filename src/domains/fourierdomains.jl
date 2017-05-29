@@ -6,7 +6,7 @@ A FourierDomain is a domain that is implicitly defined by a Fourier series.
 Example: if relop is x -> x-2 > 0, then the Fourier domain is the domain where the given
 Fourier series is greater than 2.
 """
-immutable FourierDomain{N,T} <: AbstractDomain{N}
+struct FourierDomain{N,T} <: AbstractDomain{N}
     f       ::  SetFun{N,T}
     relop	::	Function
 end
@@ -34,7 +34,7 @@ A ComparisonDomain is a domain that is implicitly defined by two Fourier series.
 Example: if binop is (x,y) -> x > y, then the Fourier domain is the domain where the first given
 Fourier series is greater than the second.
 """
-immutable ComparisonDomain{N,T} <: AbstractDomain{N}
+struct ComparisonDomain{N,T} <: AbstractDomain{N}
     f       ::  SetFun{N,T}
     g		::	SetFun{N,T}
     binop	::	Function

@@ -1,7 +1,7 @@
 # box.jl
 
 "A BBox is an N-dimensional box specified by its bottom-left and top-right vertices."
-immutable BBox{N,T}
+struct BBox{N,T}
     left        ::  SVector{N,T}
     right       ::  SVector{N,T}
 end
@@ -22,10 +22,10 @@ elements(b::BBox{4}) = (element(b,1),element(b,2),element(b,3),element(b,4))
 
 composite_length(b::BBox) = ndims(b)
 
-typealias BBox1{T} BBox{1,T}
-typealias BBox2{T} BBox{2,T}
-typealias BBox3{T} BBox{3,T}
-typealias BBox4{T} BBox{4,T}
+BBox1{T} = BBox{1,T}
+BBox2{T} = BBox{2,T}
+BBox3{T} = BBox{3,T}
+BBox4{T} = BBox{4,T}
 
 # Dimension-specific constructors
 BBox(a::Number, b::Number) = BBox( SVector(a), SVector(b) )
@@ -96,9 +96,9 @@ within(a, b) = (a[1] >= b[1]) && (a[2] <= b[2])
 (-)(b::BBox, a::Vector) = BBox(b.left-a, b.right-a)
 
 # Operations on boxes: union and intersection
-union(b1::BBox, b2::BBox) = BBox(min(left(b1),left(b2)), max(right(b1),right(b2)))
+union(b1::BBox, b2::BBox) = BBox(min.(left(b1),left(b2)), max.(right(b1),right(b2)))
 
-intersect(b1::BBox, b2::BBox) = BBox(max(left(b1),left(b2)), min(right(b1),right(b2)))
+intersect(b1::BBox, b2::BBox) = BBox(max.(left(b1),left(b2)), min.(right(b1),right(b2)))
 
 (+)(b1::BBox, b2::BBox) = union(b1, b2)
 (&)(b1::BBox, b2::BBox) = intersect(b1, b2)

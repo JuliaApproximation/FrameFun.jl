@@ -1,10 +1,10 @@
 # curve.jl
 
-abstract ParametricCurve{N}
+abstract type ParametricCurve{N} end
 
 export Circle, point
 
-immutable Circle{T} <: ParametricCurve{2}
+struct Circle{T} <: ParametricCurve{2}
     radius  ::  T
 end
 

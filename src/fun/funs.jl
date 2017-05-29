@@ -1,15 +1,15 @@
 # funs.jl
 
-abstract AbstractFun
+abstract type AbstractFun end
 
 """
 A SetFun corresponds to an expansion in a function set, but it adds a simple user
 interface for computing with functions.
 """
-immutable SetFun{N,T} <: AbstractFun
+struct SetFun{N,T} <: AbstractFun
     expansion   ::  SetExpansion
 
-    SetFun(e::SetExpansion) = new(e)
+    SetFun{N,T}(e::SetExpansion) where {N,T} = new(e)
 end
 
 SetFun(e::SetExpansion, args...) = SetFun{ndims(e),eltype(e)}(e, args...)
@@ -19,9 +19,9 @@ SetFun{N,T}(frame::FunctionSet{N,T}, coefficients = zeros(frame), args...) =
 
 SetFun(domain::AbstractDomain, basis::FunctionSet, args...) = SetFun(ExtensionFrame(domain, basis), args...)
 
-typealias SetFun1d{T} SetFun{1,T}
-typealias SetFun2d{T} SetFun{2,T}
-typealias SetFun3d{T} SetFun{3,T}
+SetFun1d{T} = SetFun{1,T}
+SetFun2d{T} = SetFun{2,T}
+SetFun3d{T} = SetFun{3,T}
 
 expansion(fun::SetFun) = fun.expansion
 

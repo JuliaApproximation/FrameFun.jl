@@ -1,7 +1,7 @@
 # fe_solvers.jl
 
 
-abstract FE_Solver{ELT} <: AbstractOperator{ELT}
+abstract type FE_Solver{ELT} <: AbstractOperator{ELT} end
 
 problem(s::FE_Solver) = s.problem
 
@@ -19,11 +19,11 @@ dest(s::FE_Solver) = frequency_basis(s)
 
 
 
-immutable FE_DirectSolver{ELT} <: FE_Solver{ELT}
+struct FE_DirectSolver{ELT} <: FE_Solver{ELT}
     problem ::  FE_Problem
     QR      ::  Factorization
 
-    function FE_DirectSolver(problem::FE_Problem)
+    function FE_DirectSolver{ELT}(problem::FE_Problem) where ELT
         new(problem, qrfact(matrix(operator(problem)),Val{true}))
     end
 end
@@ -40,7 +40,7 @@ end
 ## abstract FE_IterativeSolver <: FE_Solver
 
 
-## immutable FE_IterativeSolverLSQR <: FE_IterativeSolver
+## struct FE_IterativeSolverLSQR <: FE_IterativeSolver
 ##     problem ::  FE_Problem
 ## end
 

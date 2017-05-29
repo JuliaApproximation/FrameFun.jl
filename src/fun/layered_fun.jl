@@ -3,10 +3,7 @@
 """
 A LayeredFun consists of several layers of functions, that can be on top of each other.
 """
-immutable LayeredFun
+structLayeredFun
     domains     ::  Vector{AbstractDomain}
     funs        ::  Vector{AbstractFun}
 end
-
-
-

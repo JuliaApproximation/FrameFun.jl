@@ -5,7 +5,7 @@ A fast FE solver based on a low-rank approximation of the plunge region. The plu
 is isolated using a projection operator. This algorithm contains an extra smoothing step
 
 """
-immutable FE_SmoothProjectionSolver{ELT} <: FE_Solver{ELT}
+struct FE_SmoothProjectionSolver{ELT} <: FE_Solver{ELT}
     TS :: TruncatedSvdSolver
         problem     ::  FE_DiscreteProblem
         plunge_op   ::  AbstractOperator    # store the operator because it allocates memory
@@ -18,7 +18,7 @@ immutable FE_SmoothProjectionSolver{ELT} <: FE_Solver{ELT}
         Q          ::  Array{ELT,2}
         D           ::  AbstractOperator
 
-    function FE_SmoothProjectionSolver(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), cutoffv=sqrt(cutoff), R = estimate_plunge_rank(problem), options...)
+    function FE_SmoothProjectionSolver{ELT}(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), cutoffv=sqrt(cutoff), R = estimate_plunge_rank(problem), options...) where ELT
         plunge_op = plunge_operator(problem)
         # Create Random matrices
         TS1 = TruncatedSvdSolver(plunge_operator(problem)*operator(problem); cutoff = cutoff, options...)
@@ -84,7 +84,7 @@ dc_index(b::ChebyshevBasis) = 1
 dc_index(b::FourierBasis) = 1
 
 # An index scaling operator, used to generate weights for the polynomial scaling algorithm.
-immutable IdxnScalingOperator{ELT} <: AbstractOperator{ELT}
+struct IdxnScalingOperator{ELT} <: AbstractOperator{ELT}
     src     ::  FunctionSet
     order   ::  Int
     scale   ::  Function

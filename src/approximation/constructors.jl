@@ -140,11 +140,11 @@ for f in (:cos, :sin, :tan, :sinh, :cosh, :tanh,
 end
 
 # A FunConstructor approximates a function in a domain given a (function)space
-immutable FunConstructor{N,T}
+struct FunConstructor{N,T}
   space   ::    FunctionSpace{N,T}
   domain  ::    AbstractDomain{N}
 
-  FunConstructor(space::FunctionSpace, domain::AbstractDomain) = new(space, domain)
+  FunConstructor{N,T}(space::FunctionSpace, domain::AbstractDomain) where {N,T} = new(space, domain)
 end
 
 FunConstructor{N,T}(space::FunctionSpace{N,T}, domain::AbstractDomain{N}) = FunConstructor{N,T}(space, domain)

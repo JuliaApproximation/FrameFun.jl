@@ -1,4 +1,4 @@
-abstract AbstractSpace{N,T}
+abstract type AbstractSpace{N,T} end
 
 basis(space::AbstractSpace) = space.basis
 ndims{N,T}(::Type{AbstractSpace{N,T}}) = N
@@ -9,11 +9,11 @@ eltype{N,T}(::Type{AbstractSpace{N,T}}) = T
 eltype{B <: AbstractSpace}(::Type{B}) = eltype(supertype(B))
 FunctionSet{N,T}(space::AbstractSpace{N,T},n) = resize(basis(space),n)
 
-immutable FunctionSpace{N,T} <: AbstractSpace{N,T}
+struct FunctionSpace{N,T} <: AbstractSpace{N,T}
   basis   ::    FunctionSet{N,T}
 
-  FunctionSpace(basis::FunctionSet) = new(basis)
-  FunctionSpace(basis::FunctionSet, bbox::BBox) = new(rescale(basis,left(bbox),right(bbox)))
+  FunctionSpace{N,T}(basis::FunctionSet) where {N,T} = new(basis)
+  FunctionSpace{N,T}(basis::FunctionSet, bbox::BBox) where {N,T} = new(rescale(basis,left(bbox),right(bbox)))
 end
 
 FunctionSpace{N,T}(basis::FunctionSet{N,T}) = FunctionSpace{N,T}(basis)
