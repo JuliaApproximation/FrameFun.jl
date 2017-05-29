@@ -25,7 +25,9 @@ typealias SetFun3d{T} SetFun{3,T}
 
 expansion(fun::SetFun) = fun.expansion
 
-for op in (:set, :ndims, :coefficients, :eltype, :numtype)
+Base.broadcast(fun::SetFun, x...) = broadcast(expansion(fun), x...)
+
+for op in (:set, :ndims, :coefficients, :eltype, :numtype, :length, :size)
     @eval $op(fun::SetFun) = $op(fun.expansion)
 end
 
