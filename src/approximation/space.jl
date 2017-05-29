@@ -22,7 +22,7 @@ FunctionSpace{N,T}(basis::FunctionSet{N,T}, bbox::BBox) = FunctionSpace{N,T}(bas
 FourierSpace(left=0,right=1) = FunctionSpace(FourierBasis(0),BBox(left,right))
 ChebyshevSpace(left=-1,right=1) = FunctionSpace(ChebyshevBasis(0),BBox(left,right))
 # place somewhere else?
-boundingbox{N,T}(f::FunctionSet{N,T}) = BBox{N,real(T)}(left(f),right(f))
+boundingbox{N,T}(f::FunctionSet{N,T}) = BBox(left(f),right(f))
 
 boundingbox(space::FunctionSpace) = boundingbox(space.basis)
 

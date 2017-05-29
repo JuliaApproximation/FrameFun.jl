@@ -150,7 +150,7 @@ end
 
 function boundary{TG,N,T}(g::TensorProductGrid{TG,N,T},dom::AbstractDomain{N},tol=1e-12)
     # Initialize neighbours
-    neighbours=Array(Int64,2^N-1,N)
+    neighbours=Array{Int64}(2^N-1,N)
     # adjust columns
     for i=1:N
         # The very first is not a neighbour but the point itself.
@@ -158,7 +158,7 @@ function boundary{TG,N,T}(g::TensorProductGrid{TG,N,T},dom::AbstractDomain{N},to
             neighbours[j-1,i]=(floor(Int,(j-1)/(2^(i-1))) % 2)
         end
     end
-    CartesianNeighbours = Array(CartesianIndex{N},2^N-1)
+    CartesianNeighbours = Array{CartesianIndex{N}}(2^N-1)
     for j=1:2^N-1
         CartesianNeighbours[j]=CartesianIndex{N}(neighbours[j,:]...)
     end

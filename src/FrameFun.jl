@@ -62,6 +62,8 @@ import BasisFunctions: postprocess, plotgrid
 import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
     similar_subgrid
 
+## Exhaustive list of exports follow
+
 # from box.jl
 export BBox, BBox1, BBox2, left, right
 export ⊂

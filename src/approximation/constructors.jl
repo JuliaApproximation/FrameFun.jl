@@ -36,7 +36,7 @@ function fun_simple(f::Function, set::FunctionSet, domain::AbstractDomain;
     set=resize(set,extension_size(set))
     F=Fun(f, set, domain; options...)
     random_F=F(rgrid)
-    error = maximum(abs(random_F-random_f))
+    error = maximum(abs.(random_F-random_f))
     print_error && (@printf "Error with %d coefficients is %1.3e\n" (length(set)) error)
     if error<tol
       return F
@@ -71,13 +71,13 @@ function fun_optimal_N(f::Function, set::FunctionSet, domain::FrameFun.AbstractD
     # println(n, ": ", Nmin, " ", emin, " ", Nmax, " ", emax)
     F=Fun(f, set, domain; options...)
     random_F=F(rgrid)
-    error = maximum(abs(random_F-random_f))
+    error = maximum(abs.(random_F-random_f))
     print_error && (@printf "Error with %d coefficients is %1.3e (%1.3e)\n" (length(set)) error tol)
     if (error<1e-2) && isnan(N0)
             N0 = n
     end
     error < tol ? (Nmax=n; emax=error) : (Nmin=n; emin=error)
-    if !isnan(Nmax) && !isnan(Nmin) && (sum(abs(collect(Nmax)-collect(Nmin))) <= N)
+    if !isnan(Nmax) && !isnan(Nmin) && (sum(abs.(collect(Nmax)-collect(Nmin))) <= N)
       set=resize(set, Nmax)
       return Fun(f, set, domain; options...)
     end
@@ -91,7 +91,7 @@ function fun_optimal_N(f::Function, set::FunctionSet, domain::FrameFun.AbstractD
         if N==1
           n = round(Int,(log(emin)*Nmin + log(emax)*Nmax)/(log(emin) + log(emax)))
         else
-          n = (round(Int,(log(emin)*collect(Nmin) + log(emax)*collect(Nmax))/(log(emin) + log(emax)))...)
+          n = (round.(Int,(log(emin)*collect(Nmin) + log(emax)*collect(Nmax))/(log(emin) + log(emax)))...)
         end
       end
     end

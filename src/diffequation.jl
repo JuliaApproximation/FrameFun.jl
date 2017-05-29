@@ -58,7 +58,7 @@ end
 function rhs(D::DiffEquation)
     problem = FE_DiscreteProblem(D.D,D.S,2)
     op = operator(problem)
-    rhs = Array(Array{eltype(src(op)),1},0)
+    rhs = Array{Array{eltype(src(op)),1}}(0)
     push!(rhs,sample(grid(time_basis_restricted(problem)),D.DRhs, eltype(src(op))))
     for BC in D.BCs
         push!(rhs,sample(BC.DG,BC.dRhs, eltype(src(op))))
