@@ -14,7 +14,7 @@
 ## ChebyFun(f::Function, domain; args...) = Fun(ChebyshevBasis, f, domain; args...)
 
 
-function Fun(f::Function, basis::FunctionSet, domain::AbstractDomain; options...)
+function Fun(f::Function, basis::FunctionSet, domain::Domain; options...)
     ELT = eltype(f, basis)
     frame = extensionframe(domain, promote_eltype(basis, ELT))
     A = approximation_operator(frame; options...)
@@ -90,14 +90,14 @@ default_frame_domain_2d(basis) = Interval() ⊗ Interval()
 default_frame_domain_3d(basis) = Interval() ⊗ Interval() ⊗ Interval()
 
 
-default_frame_n(domain::AbstractDomain1d, basis) = 61
-default_frame_n(domain::AbstractDomain2d, basis) = (31, 31)
-default_frame_n(domain::AbstractDomain3d, basis) = (7, 7, 7)
+default_frame_n(domain::Domain1d, basis) = 61
+default_frame_n(domain::Domain2d, basis) = (31, 31)
+default_frame_n(domain::Domain3d, basis) = (7, 7, 7)
 
 
-function default_frame_n(domain::TensorProductDomain, basis)
+function default_frame_n(domain::ProductDomain, basis)
     s = [default_frame_n(element(domain,1), basis)...]
-    for i = 2:composite_length(domain)
+    for i = 2:nb_elements(domain)
         s = [s; default_frame_n(element(domain,i), basis)...]
     end
     s = round.(Int,s/ndims(domain))
@@ -105,10 +105,10 @@ function default_frame_n(domain::TensorProductDomain, basis)
 end
 
 
-default_frame_T(domain::AbstractDomain{1}, basis) = 2.0
-default_frame_T{N}(domain::AbstractDomain{N}, basis) = ntuple(i->2.0,N)
+default_frame_T(domain::Domain{1}, basis) = 2.0
+default_frame_T{N}(domain::Domain{N}, basis) = ntuple(i->2.0,N)
 
 default_frame_solver(domain, basis) = FE_BestSolver
 
-default_frame_solver{N}(domain::AbstractDomain, basis::FunctionSet{N,BigFloat}) = FE_DirectSolver
-default_frame_solver{N}(domain::AbstractDomain, basis::FunctionSet{N,Complex{BigFloat}}) = FE_DirectSolver
+default_frame_solver{N}(domain::Domain, basis::FunctionSet{N,BigFloat}) = FE_DirectSolver
+default_frame_solver{N}(domain::Domain, basis::FunctionSet{N,Complex{BigFloat}}) = FE_DirectSolver

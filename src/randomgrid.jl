@@ -4,7 +4,7 @@
 Compute a scattered grid of M points randomly distributed in `Ω`, using
 the uniform probability measure on `Ω`.
 """
-randomgrid{N}(Ω::AbstractDomain{N}, M::Int, T = Float64) =
+randomgrid{N}(Ω::Domain{N}, M::Int, T = Float64) =
     ScatteredGrid([randompoint(Ω, boundingbox(Ω), T) for m in 1:M])
 
 "Generate a single random point inside the given box, with `eltype` `T`."
@@ -23,7 +23,7 @@ end
 Generate a single random point inside the given domain, with `eltype` `T`.
 Random points are generated inside the given box, until one is inside the domain.
 """
-function randompoint{N}(Ω::AbstractDomain{N}, box = boundingbox(Ω), T = Float64)
+function randompoint{N}(Ω::Domain{N}, box = boundingbox(Ω), T = Float64)
     local point
     indomain = false
     while ~indomain

@@ -6,16 +6,16 @@ results in a frame that implicitly represents extensions of functions on the
 smaller set to the larger set.
 """
 struct ExtensionFrame{N,T} <: DerivedSet{N,T}
-    domain      ::  AbstractDomain{N}
+    domain      ::  Domain{N}
     basis       ::  FunctionSet{N,T}
 
-    function ExtensionFrame{N,T}(domain::AbstractDomain, basis::FunctionSet) where {N,T}
+    function ExtensionFrame{N,T}(domain::Domain, basis::FunctionSet) where {N,T}
         @assert is_basis(basis)
         new(domain, basis)
     end
 end
 
-ExtensionFrame{N,T}(domain::AbstractDomain{N}, basis::FunctionSet{N,T}) =
+ExtensionFrame{N,T}(domain::Domain{N}, basis::FunctionSet{N,T}) =
     ExtensionFrame{N,T}(domain, basis)
 
 # superset is the function for DerivedSet's to obtain the underlying set
@@ -65,10 +65,10 @@ in a suitable way.
 For example: an interval ⊗ a disk (= a cylinder) combined with a 3D Fourier series, leads to a
 tensor product of a Fourier series on the interval ⊗ a 2D Fourier series on the disk.
 """
-function extensionframe(domain::TensorProductDomain, basis::TensorProductSet)
+function extensionframe(domain::ProductDomain, basis::TensorProductSet)
     ExtensionFrames = FunctionSet[]
     dc = 1
-    for i = 1:composite_length(domain)
+    for i = 1:nb_elements(domain)
         el = element(domain, i)
         range = dc:dc+ndims(el)-1
         push!(ExtensionFrames, ExtensionFrame(el, element(basis, range)))

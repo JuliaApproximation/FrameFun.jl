@@ -1,6 +1,6 @@
 module test_suite
 
-
+using Domains
 using BasisFunctions
 using FrameFun
 using Base.Test
@@ -15,9 +15,9 @@ function delimit(s::AbstractString)
 end
 
 function test_function_space()
-  bboxes = (Interval(), Interval(),
-      Interval(0,1), Interval(), Interval(),
-      Interval(0,1)⊗Interval(),Interval(-2,1),
+  bboxes = (Interval(-1,1), Interval(-1,1),
+      Interval(0,1), Interval(-1,1), Interval(-1,1),
+      Interval(0,1)⊗Interval(-1,1),Interval(-2,1),
       Interval(0,1)⊗Interval(0,1)⊗Interval(0,1), Interval(0,1))
   bases = (FourierBasis(64,-1,1), FourierBasis(64,-1,1),
       FourierBasis(64), FourierBasis(64,-1,1), ChebyshevBasis(64),
@@ -49,7 +49,7 @@ end
 
 function test_residual()
   @testset "Residual for basis $(basis)" for basis in (FourierBasis, ChebyshevBasis)
-    D = Interval()/2
+    D = Interval(-1, 1)/2
     f = x->cos(20x)
     res = Inf
     for n in 2.^(3:6)
@@ -65,7 +65,7 @@ end
 function test_funs()
   tests = ("fun_simple", "fun_optimal_N", "fun_greedy")
   S = FourierBasis(0,-1,1)
-  D = Interval()/2
+  D = Interval(-1, 1)/2
   f = x->x
   max_logn_coefs = 8
   @testset "$(tests[i]) tests" for (i,mth) in enumerate([FE.fun_simple, FE.fun_optimal_N, FE.fun_greedy])

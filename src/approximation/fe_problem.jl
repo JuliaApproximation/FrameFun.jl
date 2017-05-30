@@ -13,7 +13,7 @@ end
 
 # This type groups the data corresponding to a FE problem.
 struct FE_DiscreteProblem{N,T} <: FE_Problem{N,T}
-    domain          ::  AbstractDomain{N}
+    domain          ::  Domain{N}
 
     op              ::  AbstractOperator
     opt             ::  AbstractOperator
@@ -113,7 +113,7 @@ end
 
 
 
-function FE_DiscreteProblem(domain::AbstractDomain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted; options...)
+function FE_DiscreteProblem(domain::Domain, fbasis1, fbasis2, tbasis1, tbasis2, tbasis_restricted; options...)
     f_extension = extension_operator(fbasis1, fbasis2; options...)
     f_restriction = restriction_operator(fbasis2, fbasis1; options...)
 

@@ -18,7 +18,7 @@
 
   The number of points is chosen adaptively.
 """
-function fun_simple(f::Function, set::FunctionSet, domain::AbstractDomain;
+function fun_simple(f::Function, set::FunctionSet, domain::Domain;
     no_checkpoints=200, max_logn_coefs=8, tol=NaN, print_error=false, options...)
   ELT = eltype(f, set)
   N = ndims(set)
@@ -52,7 +52,7 @@ Base.isnan(::Tuple) = false
 
   The number of points is chosen adaptively.
 """
-function fun_optimal_N(f::Function, set::FunctionSet, domain::FrameFun.AbstractDomain;
+function fun_optimal_N(f::Function, set::FunctionSet, domain::FrameFun.Domain;
     no_checkpoints=200, max_logn_coefs=9, tol=NaN, print_error=false, options...)
   ELT = eltype(f, set)
   N = ndims(set)
@@ -112,7 +112,7 @@ end
   Stop the iteration when the residu of the approximation is smaller than the tolerance
   or at the maximum number of iterations.
 """
-function fun_greedy(f::Function, set::FunctionSet, domain::FrameFun.AbstractDomain;
+function fun_greedy(f::Function, set::FunctionSet, domain::FrameFun.Domain;
     max_logn_coefs = 7, tol = NaN, options...)
     isequal(tol,NaN) && (tol = 10*10^(4/5*log10(eps(numtype(set)))))
     init_n = 4
@@ -142,12 +142,12 @@ end
 # A FunConstructor approximates a function in a domain given a (function)space
 struct FunConstructor{N,T}
   space   ::    FunctionSpace{N,T}
-  domain  ::    AbstractDomain{N}
+  domain  ::    Domain{N}
 
-  FunConstructor{N,T}(space::FunctionSpace, domain::AbstractDomain) where {N,T} = new(space, domain)
+  FunConstructor{N,T}(space::FunctionSpace, domain::Domain) where {N,T} = new(space, domain)
 end
 
-FunConstructor{N,T}(space::FunctionSpace{N,T}, domain::AbstractDomain{N}) = FunConstructor{N,T}(space, domain)
+FunConstructor{N,T}(space::FunctionSpace{N,T}, domain::Domain{N}) = FunConstructor{N,T}(space, domain)
 
 domain(constructor::FunConstructor) = constructor.domain
 space(constructor::FunConstructor) = constructor.space

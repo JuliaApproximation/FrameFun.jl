@@ -1,6 +1,7 @@
 module test_suite
 
 
+using Domains
 using BasisFunctions
 using FrameFun
 using StaticArrays
@@ -42,13 +43,13 @@ show_timings(F) = show_mv_times && show_timings(F, F.approx_op)
 show_timings(F, op::FE.FE_Solver) = show_timings(F, operator(op.problem))
 
 # function show_timings(F, op::TensorProductOperator)
-#     for i in 1:composite_length(op)
+#     for i in 1:nb_elements(op)
 #         show_timings(F, element(op,i))
 #     end
 # end
 #
 # function show_timings(F, op::CompositeOperator)
-#     for i in 1:composite_length(op)
+#     for i in 1:nb_elements(op)
 #         show_timings(F, element(op,i))
 #     end
 # end

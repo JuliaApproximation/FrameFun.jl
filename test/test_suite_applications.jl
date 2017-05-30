@@ -1,6 +1,6 @@
 module test_suite_applications
 
-
+using Domains
 using BasisFunctions
 using FrameFun
 using Base.Test

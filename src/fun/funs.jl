@@ -17,7 +17,7 @@ SetFun(e::SetExpansion, args...) = SetFun{ndims(e),eltype(e)}(e, args...)
 SetFun{N,T}(frame::FunctionSet{N,T}, coefficients = zeros(frame), args...) =
     SetFun{N,T}(SetExpansion(frame, coefficients), args...)
 
-SetFun(domain::AbstractDomain, basis::FunctionSet, args...) = SetFun(ExtensionFrame(domain, basis), args...)
+SetFun(domain::Domain, basis::FunctionSet, args...) = SetFun(ExtensionFrame(domain, basis), args...)
 
 SetFun1d{T} = SetFun{1,T}
 SetFun2d{T} = SetFun{2,T}
@@ -92,13 +92,13 @@ function show(io::IO, fun::SetFun, set::ExtensionFrame)
     println(io, "Domain: ", domain(set))
 end
 
-getindex(expansion::SetExpansion, domain::AbstractDomain) = restrict(expansion, domain)
+getindex(expansion::SetExpansion, domain::Domain) = restrict(expansion, domain)
 
-getindex(fun::SetFun, domain::AbstractDomain) = restrict(expansion(fun), domain)
+getindex(fun::SetFun, domain::Domain) = restrict(expansion(fun), domain)
 
-restrict(expansion::SetExpansion, domain::AbstractDomain) = _restrict(expansion, set(expansion), domain)
+restrict(expansion::SetExpansion, domain::Domain) = _restrict(expansion, set(expansion), domain)
 
-function _restrict(expansion::SetExpansion, set::ExtensionFrame, domain1::AbstractDomain)
+function _restrict(expansion::SetExpansion, set::ExtensionFrame, domain1::Domain)
     @assert ndims(set) == ndims(domain1)
 
     domain2 = domain(set)
@@ -106,7 +106,7 @@ function _restrict(expansion::SetExpansion, set::ExtensionFrame, domain1::Abstra
     SetFun(newdomain, basis(set), coefficients(expansion))
 end
 
-function _restrict(expansion::SetExpansion, set::FunctionSet, domain::AbstractDomain)
+function _restrict(expansion::SetExpansion, set::FunctionSet, domain::Domain)
     @assert ndims(set) == ndims(domain)
     # We should check here whether the given domain lies in the support of the set
     SetFun(domain, set, coefficients(expansion))

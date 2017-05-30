@@ -29,8 +29,8 @@ end
 # These are for the assignment to indices in the function below.
 convert{N}(::Type{NTuple{N,Int}},i::CartesianIndex{N}) = ntuple(k->i[k],N)
 
-function MaskedGrid{N}(supergrid::AbstractGrid{N}, domain::AbstractDomain{N})
-    mask = in(supergrid, domain)
+function MaskedGrid{N}(supergrid::AbstractGrid{N}, domain::Domain{N})
+    mask = in.(supergrid, domain)
     I = eltype(eachindex(supergrid))
     indices = Array{I}(sum(mask))
     i = 1
@@ -111,17 +111,17 @@ function subgrid(grid::AbstractEquispacedGrid, domain::Interval)
     IndexSubGrid(grid, idx_a:idx_b)
 end
 
-subgrid(grid::AbstractGrid, domain::AbstractDomain) = MaskedGrid(grid, domain)
+subgrid(grid::AbstractGrid, domain::Domain) = MaskedGrid(grid, domain)
 
-function subgrid(grid::ScatteredGrid, domain::AbstractDomain)
-    mask = in(grid, domain)
+function subgrid(grid::ScatteredGrid, domain::Domain)
+    mask = in.(grid, domain)
     points = grid.points[mask]
     ScatteredGrid(points)
 end
 
 
 # Duck typing, v1 and v2 have to implement addition/substraction and scalar multiplication
-function midpoint(v1, v2, dom::AbstractDomain, tol)
+function midpoint(v1, v2, dom::Domain, tol)
     # There has to be a midpoint
     @assert in(v2,dom) != in(v1,dom)
     if in(v2,dom)
@@ -140,15 +140,15 @@ function midpoint(v1, v2, dom::AbstractDomain, tol)
     mid
 end
 ## Avoid ambiguity (because everything >=2D is tensor but 1D is not)
-function boundary{TG,T}(g::TensorProductGrid{TG,1,T},dom::AbstractDomain{1})
+function boundary{TG,T}(g::TensorProductGrid{TG,1,T},dom::Domain{1})
     println("This method being called means there is a 1D tensorproductgrid.")
 end
 
-function boundary{G,M}(g::MaskedGrid{G,M,1},dom::AbstractDomain{1})
+function boundary{G,M}(g::MaskedGrid{G,M,1},dom::Domain{1})
     boundary(grid(g),dom)
 end
 
-function boundary{TG,N,T}(g::TensorProductGrid{TG,N,T},dom::AbstractDomain{N},tol=1e-12)
+function boundary{TG,N,T}(g::TensorProductGrid{TG,N,T},dom::Domain{N},tol=1e-12)
     # Initialize neighbours
     neighbours=Array{Int64}(2^N-1,N)
     # adjust columns
@@ -183,7 +183,7 @@ function boundary{TG,N,T}(g::TensorProductGrid{TG,N,T},dom::AbstractDomain{N},to
 end
 
 
-function boundary{T}(g::AbstractGrid{1,T},dom::AbstractDomain{1},tol=1e-12)
+function boundary{T}(g::AbstractGrid{1,T},dom::Domain{1},tol=1e-12)
     midpoints = T[]
     # for each element
     for i in eachindex(g)
@@ -201,7 +201,7 @@ function boundary{T}(g::AbstractGrid{1,T},dom::AbstractDomain{1},tol=1e-12)
 end
 
 
-function boundary{G,M,N}(g::MaskedGrid{G,M,N},dom::AbstractDomain{N})
+function boundary{G,M,N}(g::MaskedGrid{G,M,N},dom::Domain{N})
     boundary(supergrid(g),dom)
 end
 

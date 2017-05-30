@@ -12,7 +12,7 @@ end
     plot_ext ? (SetExpansion(basis(F),coefficients(F)), target) : (expansion(F), target)
 end
 
-@recipe function f(dom::AbstractDomain2d; n=300)
+@recipe function f(dom::Domain2d; n=300)
     seriescolor --> :blues
     seriestype --> :heatmap
     B = boundingbox(dom)
@@ -22,7 +22,7 @@ end
 end
 
 # Postprocessing when the set is a frame: set values outside the domain to NaN
-function postprocess(D::AbstractDomain, grid, vals, value=NaN)
+function postprocess(D::Domain, grid, vals, value=NaN)
     mgrid = subgrid(grid, D)
     for i in eachindex(grid)
         if ~is_subindex(i, mgrid)

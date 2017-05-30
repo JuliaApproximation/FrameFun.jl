@@ -2,32 +2,44 @@
 
 module FrameFun
 
+using Base.Cartesian
 using StaticArrays
-using BasisFunctions
 using RecipesBase
 
-using Base.Cartesian
+using Domains
+using BasisFunctions
 
+###############################
+## Exhaustive list of imports
+###############################
+
+## - Imports from Base
 import Base: +, *, /, ^, ==, |, &, -, \, <, <=, >, >=
 
 import Base: intersect, union, isapprox, setdiff, in
 
-import Base: length, eltype, size, push!, ctranspose, inv, similar
+# Arrays
+import Base: ndims, length, eltype, size, push!, similar
+import Base: ctranspose, inv
 
-import Base: eachindex, start, next, done, getindex, in, unsafe_getindex,
+# Iteration and indexing
+import Base: eachindex, start, next, done, getindex, unsafe_getindex,
     checkbounds
 
+# Display
 import Base: show, showcompact
 
 import Base: promote, promote_rule, convert, promote_eltype
 
-import Base: ndims, unsafe_getindex
+
+## - Imports from Domains
+import Domains: left, right
+import Domains: element, elements, nb_elements
+import Domains: tensorproduct, flatten, ⊗
+import Domains: boundingbox
 
 
-# Imports from BasisFunctions follow
-import BasisFunctions: composite_length, ⊗, tensorproduct, flatten,
-    compose, elements, element, ⊕
-
+## - Imports from BasisFunctions
 import BasisFunctions: src, dest, matrix, matrix!, apply!, apply_inplace!, numtype
 
 import BasisFunctions: grid, left, right, stepsize, sample
@@ -35,7 +47,7 @@ import BasisFunctions: grid, left, right, stepsize, sample
 import BasisFunctions: is_basis, is_frame, has_transform, has_grid, has_derivative,
     has_antiderivative, has_extension, has_grid_transform
 
-import BasisFunctions: operator, matrix, is_diagonal, is_inplace
+import BasisFunctions: operator, matrix, is_diagonal, is_inplace, ⊕
 
 import BasisFunctions: coefficients, set,
     transform_operator_pre, transform_operator_post, evaluation_operator, interpolation_operator,
@@ -52,8 +64,6 @@ import BasisFunctions: differentiate, ∂x, ∂y, ∂z, ∫∂x, ∫∂y, ∫∂
 
 import BasisFunctions: True, False, resize, promote_eltype
 
-import BasisFunctions: left, right
-
 import BasisFunctions: show_setexpansion
 
 import BasisFunctions: postprocess, plotgrid
@@ -62,23 +72,16 @@ import BasisFunctions: postprocess, plotgrid
 import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
     similar_subgrid
 
-## Exhaustive list of exports follow
 
-# from box.jl
-export BBox, BBox1, BBox2, left, right
-export ⊂
-
-# from domains.jl
-export Interval, Disk, Square, Cube, Ball, Cylinder, atomium, boundingbox
-export ⊗, ∩, composite_length, element, elements, is_composite
-export randomcircles
-
-# from derived_domains.jl
-export Characteristic
-export numtype
+###############################
+## Exhaustive list of exports
+###############################
 
 # from funs.jl
 export ExpFun, ChebyFun, Fun, SetFun, sampling_grid, domain, abserror
+
+# from subgrid.jl
+export MaskedGrid
 
 # from frames/extensionframe.jl
 export ExtensionFrame, basis, domain
@@ -88,9 +91,6 @@ export SumFrame, sumframe
 
 # from frames/enrichedframe.jl
 export EnrichedFrame
-
-# from domains/fractal.jl
-export Mandelbrot, JuliaSet
 
 # from DiffEquation.jl
 export BoundaryCondition, DiffEquation, solve
@@ -102,39 +102,25 @@ export FunConstructor
 export FourierSpace, ChebyshevSpace, ⊕, add, construct
 # from recipes.jl
 
-# from domains
-export AbstractDomain
-
 # from randomgrid.jl
 export randomgrid, randompoint
 
 
-include("box.jl")
-
-include("domains/domains.jl")
-
 include("subgrid.jl")
 
 include("frames/extensionframe.jl")
-
 include("frames/sumframe.jl")
-
 include("frames/enrichedframe.jl")
 
 include("fun/basisdomains.jl")
-
 include("fun/funs.jl")
 
+
 include("approximation/fe_problem.jl")
-
 include("approximation/fe_solvers.jl")
-
 include("approximation/lowranksolver.jl")
-
 include("approximation/fastsolver.jl")
-
 include("approximation/smoothsolver.jl")
-
 include("approximation/fe_approx.jl")
 
 include("recipes.jl")
@@ -142,12 +128,9 @@ include("recipes.jl")
 include("diffequation.jl")
 
 include("approximation/space.jl")
-
 include("approximation/constructors.jl")
 
 include("domains/fourierdomains.jl")
-
-include("domains/fractals.jl")
 
 include("randomgrid.jl")
 

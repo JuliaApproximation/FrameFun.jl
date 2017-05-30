@@ -21,9 +21,9 @@ struct BoundaryCondition
     end
 end
 
-BoundaryCondition(S :: FunctionSet, D::AbstractDomain) = BoundaryCondition(S,IdentityOperator(S),boundary(grid(S),D),default_boundary_condition)
-BoundaryCondition(S :: FunctionSet, diff::AbstractOperator, D::AbstractDomain) = BoundaryCondition(S,diff,boundary(grid(S),D),default_boundary_condition)
-BoundaryCondition(S :: FunctionSet, diff::AbstractOperator, D::AbstractDomain, dRhs::Function) = BoundaryCondition(S,diff,boundary(grid(S),D),dRhs)
+BoundaryCondition(S :: FunctionSet, D::Domain) = BoundaryCondition(S,IdentityOperator(S),boundary(grid(S),D),default_boundary_condition)
+BoundaryCondition(S :: FunctionSet, diff::AbstractOperator, D::Domain) = BoundaryCondition(S,diff,boundary(grid(S),D),default_boundary_condition)
+BoundaryCondition(S :: FunctionSet, diff::AbstractOperator, D::Domain, dRhs::Function) = BoundaryCondition(S,diff,boundary(grid(S),D),dRhs)
 default_boundary_condition(x) = 0
 default_boundary_condition(x,y) = 0
 default_boundary_condition(x,y,z) = 0
@@ -31,16 +31,16 @@ default_boundary_condition(x,y,z) = 0
 
 struct DiffEquation
     S     :: FunctionSet
-    D     :: AbstractDomain
+    D     :: Domain
     Diff  :: AbstractOperator
     DRhs   :: Function
     BCs    :: Tuple
-    function DiffEquation(S::FunctionSet, D::AbstractDomain,Diff::AbstractOperator, DRhs:: Function, BCs::Tuple)
+    function DiffEquation(S::FunctionSet, D::Domain,Diff::AbstractOperator, DRhs:: Function, BCs::Tuple)
         new(S,D,Diff,DRhs,BCs)
     end
 end
 
-DiffEquation(S::FunctionSet, D::AbstractDomain, Diff::AbstractOperator, DRhs::Function, BC::BoundaryCondition) = DiffEquation(S,D,Diff,DRhs,(BC,))
+DiffEquation(S::FunctionSet, D::Domain, Diff::AbstractOperator, DRhs::Function, BC::BoundaryCondition) = DiffEquation(S,D,Diff,DRhs,(BC,))
 
 function operator(D::DiffEquation)
     problem = FE_DiscreteProblem(D.D,D.S,2)
