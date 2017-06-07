@@ -26,7 +26,7 @@ function fun_simple(f::Function, set::FunctionSet, domain::Domain;
   # TODO Decide which is best
   # tol = default_cutoff(FE_DiscreteProblem(domain, set, 2; options...))
   isequal(tol,NaN) && (tol = 10*10^(4/5*log10(eps(numtype(set)))))
-  rgrid = randomgrid(domain, no_checkpoints, numtype(set))
+  rgrid = randomgrid(domain, no_checkpoints)
   error = Inf
   random_f=sample(rgrid, f, eltype(f(rgrid[1]...)))
   random_F=zeros(ELT,no_checkpoints)
@@ -60,7 +60,7 @@ function fun_optimal_N(f::Function, set::FunctionSet, domain::FrameFun.Domain;
   # TODO Decide which is best
   # tol = default_cutoff(FE_DiscreteProblem(domain, set, 2; options...))
   isequal(tol,NaN) && (tol = 10*10^(4/5*log10(eps(numtype(set)))))
-  rgrid = randomgrid(domain, no_checkpoints, numtype(set))
+  rgrid = randomgrid(domain, no_checkpoints)
   error = Inf
   random_f=sample(rgrid, f, eltype(f(rgrid[1]...)))
   random_F=zeros(ELT,no_checkpoints)
@@ -142,12 +142,12 @@ end
 # A FunConstructor approximates a function in a domain given a (function)space
 struct FunConstructor{N,T}
   space   ::    FunctionSpace{N,T}
-  domain  ::    Domain{N}
+  domain  ::    Domain
 
   FunConstructor{N,T}(space::FunctionSpace, domain::Domain) where {N,T} = new(space, domain)
 end
 
-FunConstructor{N,T}(space::FunctionSpace{N,T}, domain::Domain{N}) = FunConstructor{N,T}(space, domain)
+FunConstructor{N,T}(space::FunctionSpace{N,T}, domain::Domain) = FunConstructor{N,T}(space, domain)
 
 domain(constructor::FunConstructor) = constructor.domain
 space(constructor::FunConstructor) = constructor.space

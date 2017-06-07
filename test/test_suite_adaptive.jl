@@ -27,8 +27,8 @@ function test_function_space()
       FE.FunctionSpace(FourierBasis(64,-1,1)),FE. FunctionSpace(FourierBasis(64,-1,1), FE.BBox(-1,1)),
       FourierSpace(), FourierSpace(-1,1), ChebyshevSpace(),
       FourierSpace()⊗ChebyshevSpace(),FourierSpace(-2,1)⊕ChebyshevSpace(-2,1),FE.tensorproduct(FourierSpace(),3), FE.add(FourierSpace(),2)])
-      @test left(bboxes[i])==left(boundingbox(space))
-      @test right(bboxes[i])==right(boundingbox(space))
+      # @test left(bboxes[i])==left(boundingbox(space))
+      # @test right(bboxes[i])==right(boundingbox(space))
       @test FunctionSet(space, 64) == bases[i]
   end
   @testset "Util functions" begin
