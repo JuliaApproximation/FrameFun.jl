@@ -13,7 +13,7 @@ end
 
 # This type groups the data corresponding to a FE problem.
 struct FE_DiscreteProblem{N,T} <: FE_Problem{N,T}
-    domain          ::  Domain{N}
+    domain          ::  Domain
 
     op              ::  AbstractOperator
     opt             ::  AbstractOperator

@@ -17,7 +17,7 @@ end
     seriestype --> :heatmap
     B = boundingbox(dom)
     grid = equispaced_aspect_grid(B,n)
-    Z = indomain_grid(grid, dom)
+    Z = indomain_broadcast(grid, dom)
     grid, 1./Z
 end
 

@@ -100,10 +100,10 @@ function test_randomgrids()
         @test length(eltype(g)) == ndims(d)
         @test reduce(&, [x ∈ d for x in g])
 
-        g2 = randomgrid(d, 10, BigFloat)
+        g2 = randomgrid(Disk(BigFloat), 10)
         @test eltype(g2[1]) == BigFloat
 
-        g3 = randomgrid(Interval(0,1), 10)
+        g3 = randomgrid(Interval(0.0, 1.0), 10)
         @test length(g3) == 10
         # 1D is a special case where we don't use vectors of length 1
         @test eltype(g3) == Float64

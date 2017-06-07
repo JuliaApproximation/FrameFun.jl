@@ -6,7 +6,7 @@ results in a frame that implicitly represents extensions of functions on the
 smaller set to the larger set.
 """
 struct ExtensionFrame{N,T} <: DerivedSet{N,T}
-    domain      ::  Domain{N}
+    domain      ::  Domain
     basis       ::  FunctionSet{N,T}
 
     function ExtensionFrame{N,T}(domain::Domain, basis::FunctionSet) where {N,T}
@@ -15,7 +15,7 @@ struct ExtensionFrame{N,T} <: DerivedSet{N,T}
     end
 end
 
-ExtensionFrame{N,T}(domain::Domain{N}, basis::FunctionSet{N,T}) =
+ExtensionFrame{N,T}(domain::Domain, basis::FunctionSet{N,T}) =
     ExtensionFrame{N,T}(domain, basis)
 
 # superset is the function for DerivedSet's to obtain the underlying set
