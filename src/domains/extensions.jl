@@ -55,7 +55,7 @@ in(x::Number, a::T, b::T) where {T <: Number} = a <= x <= b
 # Bounding boxes
 #################
 
-boundingbox(d::Interval) = BBox(leftendpoint(d), rightendpoint(d))
+boundingbox(d::AbstractInterval) = BBox(leftendpoint(d), rightendpoint(d))
 
 boundingbox(::UnitBall{N,T}) where {N,T} = BBox{N,T}(-ones(SVector{N,T}), ones(SVector{N,T}))
 
@@ -76,7 +76,7 @@ boundingbox(d::DifferenceDomain) = boundingbox(d.d1)
 
 # Now here is a problem: how do we compute a bounding box, without extra knowledge
 # of the map? We can only do this for some maps.
-boundingbox(d::MappedDomain) = mapped_boundingbox(boundingbox(domain(d)), mapping(d))
+boundingbox(d::MappedDomain) = mapped_boundingbox(boundingbox(superdomain(d)), mapping(d))
 
 function mapped_boundingbox(box::BBox1, fmap)
     l,r = box[1]
@@ -110,6 +110,12 @@ boundingbox(d::TranslatedDomain) = boundingbox(domain(d)) + translationvector(d)
 
 
 function randomcircles(n, radius = 0.3)
-    list = [Disk(radius, SVector(((2*rand(2)-1)*0.8)...)) for i=1:n]
+    list = [disk(radius, SVector(((2*rand(2)-1)*0.8)...)) for i=1:n]
     UnionDomain(list...)
 end
+
+ndims(::Type{Domain{T}}) where {T} = ndims_type(T)
+ndims(::Type{D}) where {D <: Domain} = ndims(supertype(D))
+ndims(d::Domain) = ndims(typeof(d))
+ndims_type(::Type{SVector{N,T}}) where {N,T} = N
+ndims_type(::Type{T}) where {T <: Number} = 1

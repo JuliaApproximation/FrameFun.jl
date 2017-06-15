@@ -31,14 +31,14 @@ function test_subgrids()
     delimit("Grid functionality")
     n = 20
     grid1 = EquispacedGrid(n, -1.0, 1.0)
-    subgrid1 = MaskedGrid(grid1, Interval(-0.5, 0.7))
+    subgrid1 = MaskedGrid(grid1, interval(-0.5, 0.7))
     subgrid2 = IndexSubGrid(grid1, 4:12)
 
     G1 = EquispacedGrid(n, -1.0, 1.0)
     G2 = EquispacedGrid(n, -1.0, 1.0)
     TensorG = G1 ⊗ G2
 
-    C = Disk(1.0)
+    C = disk(1.0)
     circle_grid = MaskedGrid(TensorG, C)
     @testset begin
 
@@ -94,16 +94,16 @@ end
 function test_randomgrids()
     println("Random grids:")
     @testset begin
-        d = Disk()
+        d = disk()
         g = randomgrid(d, 10)
         @test length(g) == 10
         @test length(eltype(g)) == ndims(d)
         @test reduce(&, [x ∈ d for x in g])
 
-        g2 = randomgrid(Disk(BigFloat), 10)
+        g2 = randomgrid(disk(BigFloat), 10)
         @test eltype(g2[1]) == BigFloat
 
-        g3 = randomgrid(Interval(0.0, 1.0), 10)
+        g3 = randomgrid(interval(0.0, 1.0), 10)
         @test length(g3) == 10
         # 1D is a special case where we don't use vectors of length 1
         @test eltype(g3) == Float64
