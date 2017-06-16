@@ -109,7 +109,7 @@ function test_smoothing_1d()
         f(x) = exp(x)
         fscale(i) = 10.0^-4+abs(i)+abs(i)^2+abs(i)^3
         F = Fun(f,B,D;solver=FrameFun.FE_SmoothProjectionSolver,scale=fscale)
-        F = Fun(f,B,D;solver=FrameFun.FE_ProjectionSolver)
+        # F = Fun(f,B,D;solver=FrameFun.FE_ProjectionSolver)
         @test (abserror(f,F) < 100*sqrt(eps(numtype(B))))
     end
 end
