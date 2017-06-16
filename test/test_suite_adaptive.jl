@@ -15,17 +15,17 @@ function delimit(s::AbstractString)
 end
 
 function test_function_space()
-  bboxes = (interval(-1,1), interval(-1,1),
-      interval(0,1), interval(-1,1), interval(-1,1),
-      interval(0,1)⊗interval(-1,1),interval(-2,1),
-      interval(0,1)⊗interval(0,1)⊗interval(0,1), interval(0,1))
-  bases = (FourierBasis(64,-1,1), FourierBasis(64,-1,1),
-      FourierBasis(64), FourierBasis(64,-1,1), ChebyshevBasis(64),
+  bboxes = (interval(-1.0, 1.0), interval(-1.0, 1.0),
+      interval(0.0, 1.0), interval(-1.0, 1.0), interval(-1.0, 1.0),
+      interval(0.0, 1.0)⊗interval(-1.0, 1.0),interval(-2.0, 1.0),
+      interval(0.0, 1.0)⊗interval(0.0, 1.0)⊗interval(0.0, 1.0), interval(0.0, 1.0))
+  bases = (FourierBasis(64,-1.0, 1.0), FourierBasis(64,-1.0, 1.0),
+      FourierBasis(64), FourierBasis(64,-1.0, 1.0), ChebyshevBasis(64),
       FourierBasis(8)⊗ChebyshevBasis(8), FourierBasis(32,-2.,1.)⊕rescale(ChebyshevBasis(32),-2.,1.),
       BA.tensorproduct(FourierBasis(4),3), BA.multiset(FourierBasis(32),FourierBasis(32)))
   @testset "Space = $(name(space)) " for (i,space) in enumerate([
-      FE.FunctionSpace(FourierBasis(64,-1,1)),FE. FunctionSpace(FourierBasis(64,-1,1), FE.BBox(-1,1)),
-      FourierSpace(), FourierSpace(-1,1), ChebyshevSpace(),
+      FE.FunctionSpace(FourierBasis(64,-1.0, 1.0)),FE. FunctionSpace(FourierBasis(64,-1.0, 1.0), FE.BBox(-1.0, 1.0)),
+      FourierSpace(), FourierSpace(-1.0, 1.0), ChebyshevSpace(),
       FourierSpace()⊗ChebyshevSpace(),FourierSpace(-2,1)⊕ChebyshevSpace(-2,1),FE.tensorproduct(FourierSpace(),3), FE.add(FourierSpace(),2)])
       # @test left(bboxes[i])==left(boundingbox(space))
       # @test right(bboxes[i])==right(boundingbox(space))
@@ -49,11 +49,11 @@ end
 
 function test_residual()
   @testset "Residual for basis $(basis)" for basis in (FourierBasis, ChebyshevBasis)
-    D = interval(-1, 1)/2
+    D = interval(-1.0, 1.0)/2
     f = x->cos(20x)
     res = Inf
     for n in 2.^(3:6)
-        S = rescale(instantiate(basis,n), -1,1)
+        S = rescale(instantiate(basis,n), -1.0, 1.0)
         F = Fun(f, S, D)
         resnew = FE.residual(f,F)
         @test  resnew < res
@@ -64,8 +64,8 @@ end
 
 function test_funs()
   tests = ("fun_simple", "fun_optimal_N", "fun_greedy")
-  S = FourierBasis(0,-1,1)
-  D = interval(-1, 1)/2
+  S = FourierBasis(0, -1.0, 1.0)
+  D = interval(-1.0, 1.0)/2
   f = x->x
   max_logn_coefs = 8
   @testset "$(tests[i]) tests" for (i,mth) in enumerate([FE.fun_simple, FE.fun_optimal_N, FE.fun_greedy])
@@ -80,7 +80,7 @@ end
 
 function test_funs2d()
   tol = 1e-8
-  D = cube([0,0],[0.5,0.5])
+  D = cube([0.0, 0.0], [0.5, 0.5])
   FF = FourierSpace()⊗FourierSpace()
   f(x,y) = exp(y*2*x)
   FC = FunConstructor(FF, D)
@@ -88,8 +88,8 @@ function test_funs2d()
   @testset "test funs in 2D" begin @test FE.maxerror(f,F0) < 100*tol end
 end
 function test_extra_functionality()
-  F = FourierSpace(-1,1)
-  D = interval(-0.5,0.5)
+  F = FourierSpace(-1.0, 1.0)
+  D = interval(-0.5, 0.5)
   FC = FunConstructor(F, D)
   x = FC(identity)
   tol = 1e-9

@@ -15,7 +15,7 @@ plot(B)
 
 plot(B[4])
 
-F=FourierBasis(5)
+F = FourierBasis(5)
 plot(F[2],plot_complex=true)
 
 B = ChebyshevBasis(5,-2,0)⊕FourierBasis(5,0,2)
@@ -32,15 +32,15 @@ G = FrameFun.subgrid(G,Mandelbrot())
 plot(G)
 
 B = FourierBasis(21,-1,1)⊗FourierBasis(21,-1,1)⊗FourierBasis(21,-1,1)
-D = Ball()-FrameFun.cube(-0.5,0.5,-0.5,0.5,-2,2)
+D = ball()-FrameFun.cube(-0.5,0.5,-0.5,0.5,-2,2)
 Df = ExtensionFrame(D,B)
 G = BasisFunctions.grid(Df)
 plot(G,size=(400,400))
 
-B=FourierBasis(51,-2.0,-0.5)
-D=Interval(-1.7,-1.0)
-f(x)=cos(3*x.^2)
-F=Fun(f,B,D)
+B = FourierBasis(51,-2.0,-0.5)
+D = interval(-1.7,-1.0)
+f(x) = cos(3*x.^2)
+F = Fun(f,B,D)
 # Easily combine multiple plots
 plot(BasisFunctions.grid(set(F)),label="grid",markercolor=:white)
 plot!(F,label="function", plot_ext=true)
@@ -51,7 +51,7 @@ df(x) = -sin(3*x^2)*6*x
 plot!(F',df,label="derivative",legend=true)
 
 B = FourierBasis(21,-1,1)⊗FourierBasis(21,-1,1)
-D = Disk(0.8)-Disk(0.4)
+D = disk(0.8)-disk(0.4)
 f(x,y) = cos(7*x-2*y^2)
 F = Fun(f,B,D)
 
