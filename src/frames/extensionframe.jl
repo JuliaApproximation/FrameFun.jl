@@ -10,7 +10,8 @@ immutable ExtensionFrame{N,T} <: DerivedSet{N,T}
     basis       ::  FunctionSet{N,T}
 
     function ExtensionFrame(domain::AbstractDomain, basis::FunctionSet)
-        @assert is_basis(basis)
+        # TODO: Redefine the type to be a restrictionframe
+        #@assert is_basis(basis)
         new(domain, basis)
     end
 end

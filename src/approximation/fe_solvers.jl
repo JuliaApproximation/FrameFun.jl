@@ -3,37 +3,36 @@
 
 abstract FE_Solver{ELT} <: AbstractOperator{ELT}
 
-problem(s::FE_Solver) = s.problem
+op(s::FE_Solver) = s.op
 
-# Delegation methods
-for op in (:frequency_basis, :frequency_basis_ext, :time_basis, :time_basis_ext,
-    :time_basis_restricted, :operator, :operator_transpose, :domain)
-    @eval $op(s::FE_Solver) = $op(problem(s))
-end
+## # Delegation methods
+## for op in (:frequency_basis, :frequency_basis_ext, :time_basis, :time_basis_ext,
+##            :time_basis_restricted, :operator, :operator_transpose, :domain)
+##     @eval $op(s::FE_Solver) = $op(op(s))
+## end
 
-size(s::FE_Solver, j::Int) = size(problem(s), j)
+size(s::FE_Solver, j::Int) = size(transpose(op(s)), j)
 
-src(s::FE_Solver) = time_basis_restricted(s)
+src(s::FE_Solver) = dest(op(s))
 
-dest(s::FE_Solver) = frequency_basis(s)
+dest(s::FE_Solver) = src(op(s))
 
 
 
 immutable FE_DirectSolver{ELT} <: FE_Solver{ELT}
-    problem ::  FE_Problem
+    op      ::  AbstractOperator
     QR      ::  Factorization
 
-    function FE_DirectSolver(problem::FE_Problem)
-        new(problem, qrfact(matrix(operator(problem)),Val{true}))
+    function FE_DirectSolver(op::AbstractOperator,scaling)
+        new(op, qrfact(matrix(op),Val{true}))
     end
 end
 
-FE_DirectSolver(problem::FE_Problem; options...) =
-    FE_DirectSolver{eltype(problem)}(problem)
+FE_DirectSolver{ELT}(op::AbstractOperator{ELT}, scaling; options...) =
+    FE_DirectSolver{eltype(op)}(op,scaling)
 
 function apply!(s::FE_DirectSolver, coef_dest, coef_src)
     coef_dest[:] = s.QR \ coef_src
-    apply!(normalization(problem(s)), coef_dest, coef_dest)
 end
 
 

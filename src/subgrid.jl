@@ -112,11 +112,15 @@ end
 
 subgrid(grid::AbstractGrid, domain::AbstractDomain) = MaskedGrid(grid, domain)
 
+subgrid(grid::AbstractGrid, domain::DomainBoundary) = boundary(g, domain)
+
 function subgrid(grid::ScatteredGrid, domain::AbstractDomain)
     mask = in(grid, domain)
     points = grid.points[mask]
     ScatteredGrid(points)
 end
+
+subgrid(grid::ScatteredGrid, domain::DomainBoundary) = error("Trying to take the boundary within a ScatteredGrid")
 
 
 # Duck typing, v1 and v2 have to implement addition/substraction and scalar multiplication
@@ -144,7 +148,7 @@ function boundary{TG,T}(g::TensorProductGrid{TG,1,T},dom::AbstractDomain{1})
 end
 
 function boundary{G,M}(g::MaskedGrid{G,M,1},dom::AbstractDomain{1})
-    boundary(grid(g),dom)
+    boundary(supergrid(g),dom)
 end
 
 function boundary{TG,N,T}(g::TensorProductGrid{TG,N,T},dom::AbstractDomain{N},tol=1e-12)

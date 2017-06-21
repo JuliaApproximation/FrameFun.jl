@@ -44,30 +44,44 @@ function eltype(f::Function, basis)
     end
 end
 
-
-
-function approximation_operator(set::ExtensionFrame;
-    sampling_factor = 2, solver = default_frame_solver(domain(set), basis(set)), options... )
-
-    problem = FE_DiscreteProblem(domain(set), basis(set), sampling_factor; options...)
-    solver(problem; options...)
+function oversampled_evaluation_operator(S::FunctionSet, D::AbstractDomain; sampling_factor=2, incboundary=false, options...)
+    B = primarybasis(S)
+    # Establish time domain grid
+    G, lB = oversampled_grid(D,B,sampling_factor)
+    
+    op = grid_evaluation_operator(S,gridspace(B,G),G)
+    # Add boundary points if necessary
+    if incboundary
+        BG = boundary(grid(lB), D)
+        op = [op; grid_evaluation_operator(S,gridspace(B,BG),BG)]
+    end
+    (op,length(lB))
 end
 
+function approximation_operator(set::ExtensionFrame; solver = default_frame_solver(domain(set), basis(set)), options...)
+    (op, scaling) = oversampled_evaluation_operator(basis(set),domain(set);options...)
+    solver(op, scaling; options...)
+end
+
+primarybasis(set::FunctionSet) = set
+function primarybasis(set::MultiSet)
+    elements(set)[findmax(map(length,elements(set)))[2]]
+end
 
 immutable FE_BestSolver
 end
 
-function FE_BestSolver(problem::FE_DiscreteProblem; options...)
-    if has_transform(frequency_basis(problem))
-        R = estimate_plunge_rank(problem)
-        if R < size(problem, 2)/2
-            FE_ProjectionSolver(problem; options...)
+function FE_BestSolver(op::AbstractOperator, scaling; options...)
+    if has_transform(src(op))
+        R = estimate_plunge_rank(op)
+        if R < size(op, 2)/2
+            FE_ProjectionSolver(op, scaling; options...)
         else
-            FE_DirectSolver(problem; options...)
+            FE_DirectSolver(op, scaling; options...)
         end
     else
         # Don't bother with a fast algorithm if there is no fast transform
-        FE_DirectSolver(problem; options...)
+        FE_DirectSolver(op, scaling; options...)
     end
 end
 
@@ -81,6 +95,7 @@ end
 # - n: number of degrees of freedom in the approximation
 # - T: the extension parameter (size of the extended domain vs the original domain)
 # - sampling: the (over)sampling factor
+
 # - domain_nd: the domain
 # - solver: the solver to use for solving the FE problem
 

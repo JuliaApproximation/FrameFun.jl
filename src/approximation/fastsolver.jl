@@ -9,43 +9,44 @@ http://arxiv.org/abs/1509.00206
 """
 immutable FE_ProjectionSolver{ELT} <: FE_Solver{ELT}
     TS :: AbstractOperator
-    problem     ::  FE_DiscreteProblem
+    op     ::  AbstractOperator
     plunge_op   ::  AbstractOperator    # store the operator because it allocates memory
     b
     blinear     ::  Array{ELT,1}
     x2
     x1
+    scaling 
 
-    function FE_ProjectionSolver(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), trunc = TruncatedSvdSolver, R = estimate_plunge_rank(problem), options...)
-        TS = trunc(plunge_operator(problem)*operator(problem); cutoff=cutoff, R=R, verbose=true, options...)
-        plunge_op = plunge_operator(problem)
+    function FE_ProjectionSolver(op::AbstractOperator, scaling; cutoff = default_cutoff(op), trunc = TruncatedSvdSolver, R = estimate_plunge_rank(op), verbose=false,options...)
+        plunge_op = plunge_operator(op, scaling)
+        TS = trunc(plunge_op*op; cutoff=cutoff, R=R, verbose=verbose, options...)
         b = zeros(ELT, dest(plunge_op))
         blinear = zeros(ELT, length(dest(plunge_op)))
-        x1 = zeros(ELT, src(operator(problem)))
-        x2 = zeros(ELT, src(operator(problem)))
-        new(TS, problem, plunge_op, b,blinear,x1,x2)
+        x1 = zeros(ELT, src(op))
+        x2 = zeros(ELT, src(op))
+        new(TS, op, plunge_op, b,blinear,x1,x2,scaling)
     end
 end
 
-FE_ProjectionSolver(problem::FE_DiscreteProblem; options...) =
-    FE_ProjectionSolver{eltype(problem)}(problem; options...)
+FE_ProjectionSolver(op::AbstractOperator, scaling; options...) =
+    FE_ProjectionSolver{eltype(op)}(op, scaling; options...)
 
 
-function plunge_operator(problem::FE_DiscreteProblem)
-    A = operator(problem)
-    Ap = operator_transpose(problem)
-    I = IdentityOperator(time_basis_restricted(problem))
+function plunge_operator(op, scaling)
+    A = op
+    Ap = op'
+    I = ScalingOperator(dest(A),scaling)
 
     A*Ap - I
 end
 
-default_cutoff(problem::FE_DiscreteProblem) = 10^(4/5*log10(eps(numtype(frequency_basis(problem)))))
-estimate_plunge_rank{N}(problem::FE_DiscreteProblem{N}) = min(round(Int, 9*log(param_N(problem))*(param_M(problem)*param_N(problem)/param_L(problem))^(1-1/N) + 2),param_N(problem))
+default_cutoff(op::AbstractOperator) = 10^(4/5*log10(eps(real(eltype(op)))))
+estimate_plunge_rank(op::AbstractOperator) = min(round(Int, 9*log(length(src(op))*(length(src(op))^2/length(dest(op)))^(1-1/ndims(src(op))) + 2)),length(src(op)))
 
-estimate_plunge_rank(problem::FE_DiscreteProblem{1,BigFloat}) = round(Int, 28*log(param_N(problem)) + 5)
+estimate_plunge_rank(op::FE_DiscreteProblem{1,BigFloat}) = round(Int, 28*log(length(src(op))) + 5)
 
 apply!(s::FE_ProjectionSolver, dest, src, coef_dest, coef_src) =
-    apply!(s, dest, src, coef_dest, coef_src, operator(s), operator_transpose(s), s.plunge_op, s.x1, s.x2)
+    apply!(s, dest, src, coef_dest, coef_src, s.op, s.op', s.plunge_op, s.x1, s.x2)
 
 function apply!(s::FE_ProjectionSolver, destset, srcset, coef_dest, coef_src, A, At, P, x1, x2)
     # Applying plunge to the right hand side
@@ -57,8 +58,6 @@ function apply!(s::FE_ProjectionSolver, destset, srcset, coef_dest, coef_src, A,
     apply!(At, x1, coef_src-s.b)
     # x1 solves the remainder through one application of the operator
     for i in eachindex(x1)
-        x1[i] += x2[i]
+        coef_dest[i] = x1[i]/s.scaling+x2[i]
     end
-    # normalization
-    apply!(normalization(problem(s)), coef_dest, x1)
 end

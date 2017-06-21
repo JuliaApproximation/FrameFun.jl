@@ -67,13 +67,14 @@ export BBox, BBox1, BBox2, left, right
 export ⊂
 
 # from domains.jl
-export Interval, Disk, Square, Cube, Ball, Cylinder, atomium, boundingbox
+export Interval, Disk, Square, Cube, Ball, Cylinder, atomium, boundingbox, RnDomain
 export ⊗, ∩, composite_length, element, elements, is_composite
 export randomcircles
 
 # from derived_domains.jl
 export Characteristic
 export numtype
+export ∠
 
 # from funs.jl
 export ExpFun, ChebyFun, Fun, SetFun, sampling_grid, domain, abserror
@@ -91,7 +92,7 @@ export EnrichedFrame
 export Mandelbrot, JuliaSet
 
 # from DiffEquation.jl
-export BoundaryCondition, DiffEquation, solve
+export DirichletBC, NeumannBC, DiffEquation, solve
 
 # from constructors.jl
 export FunConstructor
