@@ -32,7 +32,8 @@ import BasisFunctions: src, dest, matrix, matrix!, apply!, apply_inplace!, numty
 
 import BasisFunctions: grid, left, right, stepsize, sample
 
-import BasisFunctions: is_basis, is_frame, has_transform, has_grid, has_derivative,
+import BasisFunctions: is_basis, is_frame, is_orthogonal, is_orthonormal, is_biorthogonal,
+    has_transform, has_grid, has_derivative,
     has_antiderivative, has_extension, has_grid_transform
 
 import BasisFunctions: operator, matrix, is_diagonal, is_inplace
@@ -58,6 +59,10 @@ import BasisFunctions: show_setexpansion
 
 import BasisFunctions: postprocess, plotgrid
 
+import BasisFunctions: Gram, DualGram, MixedGram, DiscreteGram, DiscreteDualGram, DiscreteMixedGram
+
+import BasisFunctions: discrete_approximation_operator, continuous_approximation_operator
+
 # about subgrids
 import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
     similar_subgrid
@@ -80,8 +85,8 @@ export ∠
 export ExpFun, ChebyFun, Fun, SetFun, sampling_grid, domain, abserror
 
 # from frames/extensionframe.jl
-export ExtensionFrame, basis, domain
-
+export ExtensionFrame, basis, domain, extensionframe
+export Gram, DualGram, MixedGram
 # from frames/sumframe.jl
 export SumFrame, sumframe
 
@@ -129,6 +134,8 @@ include("approximation/fastsolver.jl")
 include("approximation/smoothsolver.jl")
 
 include("approximation/fe_approx.jl")
+
+include("approximation/oversampling.jl")
 
 include("recipes.jl")
 

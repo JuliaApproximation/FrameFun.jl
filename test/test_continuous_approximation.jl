@@ -2,7 +2,11 @@ using BasisFunctions
 using FrameFun
 
 
+<<<<<<< HEAD
 for basistype in (ChebyshevBasis, FourierBasis, PeriodicBSplineBasis), T in (Float32, Float64,)
+=======
+for basistype in (ChebyshevBasis, FourierBasis, PeriodicBSplineBasis), T in (Float32, Float64)
+>>>>>>> continuous
   tol = sqrt(eps(T))
 
   B = instantiate(basistype,11, T)

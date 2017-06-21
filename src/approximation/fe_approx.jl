@@ -48,7 +48,7 @@ function oversampled_evaluation_operator(S::FunctionSet, D::AbstractDomain; samp
     B = primarybasis(S)
     # Establish time domain grid
     G, lB = oversampled_grid(D,B,sampling_factor)
-    
+
     op = grid_evaluation_operator(S,gridspace(B,G),G)
     # Add boundary points if necessary
     if incboundary
@@ -58,6 +58,7 @@ function oversampled_evaluation_operator(S::FunctionSet, D::AbstractDomain; samp
     (op,length(lB))
 end
 
+# TODO probably change name to discrete_approximation_operator
 function approximation_operator(set::ExtensionFrame; solver = default_frame_solver(domain(set), basis(set)), options...)
     (op, scaling) = oversampled_evaluation_operator(basis(set),domain(set);options...)
     solver(op, scaling; options...)
