@@ -58,8 +58,7 @@ function oversampled_evaluation_operator(S::FunctionSet, D::AbstractDomain; samp
     (op,length(lB))
 end
 
-# TODO probably change name to discrete_approximation_operator
-function approximation_operator(set::ExtensionFrame; solver = default_frame_solver(domain(set), basis(set)), options...)
+function discrete_approximation_operator(set::ExtensionFrame; solver = default_frame_solver(domain(set), basis(set)), options...)
     (op, scaling) = oversampled_evaluation_operator(basis(set),domain(set);options...)
     solver(op, scaling; options...)
 end
