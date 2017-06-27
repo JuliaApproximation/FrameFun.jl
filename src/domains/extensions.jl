@@ -105,7 +105,64 @@ mapped_boundingbox(box::BBox{N}, fmap::ProductMap) where {N} =
 
 boundingbox(d::TranslatedDomain) = boundingbox(domain(d)) + translationvector(d)
 
+##########################################################################
+### Distances and Normals
+##########################################################################
 
+# Function that returns the normal vector when evaluated at the domain boundary
+normal(x, d::Domain) = error("Normal not available for this domain type")
+
+# Auxiliary function that returns distance from the boundary in some metric
+dist(x, d::Domain) = error("Domain distance not available for this domain type")
+
+dist(x, ::UnitSimplex) = min(minimum(x),1-sum(x))
+
+function normal(x, ::UnitSimplex)
+    if minimum(x)<abs(sum(x)-1)/sqrt(length(x))
+        index = findmin(x)[2]
+        z = zeros(x)
+        setindex(z,-1,index)
+    else
+        ones(x)
+    end
+end
+normal(x, d::UnitBall) = x/norm(x)
+
+dist(x, d::AbstractInterval) = min(rightendpoint(d)-x,x-leftendpoint(d))
+
+normal(x, d::AbstractInterval) = abs(leftendpoint(d)-x) < abs(rightendpoint(d)-x) ? -1:1
+
+dist(x, d::UnitBall) = 1-norm(x)
+
+normal(x, d::UnitSphere) = x/norm(x)
+
+dist(x, d::UnitSphere) = 1-norm(x)
+
+dist(x,d::UnionDomain) = indomain(x,d) ? sum(map(di->max(0,dist(x,di)),elements(d))) : maximum(map(di->dist(x,di),elements(d)))
+
+normal(x,d::UnionDomain) = normal(x,elements(d)[findmin(map(di->abs(dist(x,di)),elements(d)))[2]])
+
+dist(x,d::IntersectionDomain) = minimum(map(di->dist(x,di),elements(d)))
+
+normal(x,d::IntersectionDomain) = normal(x,elements(d)[findmin(map(di->dist(x,di),elements(d)))[2]])
+
+dist(x,d::DifferenceDomain) = indomain(x,d) ? min(abs(dist(x,d.d1)),abs(dist(x,d.d2))) : -1*min(abs(dist(x,d.d1)),abs(dist(x,d.d2)))
+
+normal(x,d::DifferenceDomain) = dist(x,d.d1)<dist(x,d.d2) ? normal(x,d.d1) : -1*normal(x,d.d2)
+
+dist(x, t::ProductDomain) = minimum(map(dist,x,elements(t)))
+
+dist(x, d::MappedDomain) = dist(mapping(d)*x,superdomain(d))
+
+function normal(x, d::MappedDomain)
+    x = applymap(mapping(d),normal(mapping(d)*x,superdomain(d)))
+    x0 = apply_inverse(mapping(d),zeros(size(x)))
+   (x-x0)/norm(x-x0)
+end
+function normal(x, t::ProductDomain)
+    index = findmin(map(dist,x,elements(t)))[2]
+    [(i==index)*normal(x[i],element(t,i)) for i =1:length(elements(t))]
+end
 ##########################################################################
 ### Assorted Domains
 ##########################################################################

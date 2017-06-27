@@ -38,3 +38,14 @@ postprocess(B::ExtensionFrame, args...) = postprocess(domain(B), args...)
 plotgrid(B::ExtensionFrame, n) = plotgrid(basis(B),n)
 
 # Plot a domain
+
+@recipe function f(dom::Domain2d; n=300, distance=false, xlim=[-1,1], ylim=[-1,1])
+    seriescolor --> :tempo
+     seriestype --> :heatmap
+    aspect_ratio --> 1
+    cbar --> false
+    xrange = linspace(xlim[1],xlim[2],n)
+    yrange = linspace(ylim[1],ylim[2],n)
+    grid = [SVector(i,j) for i in xrange , j in yrange]
+    plotdata = distance ? dist.(grid,dom) : in.(grid,dom)
+    xrange,yrange,plotdata
