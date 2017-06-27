@@ -40,7 +40,7 @@ end
 function indomain_broadcast(grid, d::DifferenceDomain)
     z1 = indomain_broadcast(grid, d.d1)
     z2 = indomain_broadcast(grid, d.d2)
-    z1 .& (~z2)
+    z1 .& (.~z2)
 end
 
 indomain_broadcast(grid, d::DerivedDomain) = indomain_broadcast(grid, superdomain(d))
