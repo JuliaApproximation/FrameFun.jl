@@ -1,7 +1,7 @@
 language:
   julia
 julia:
-  - 0.5
+  - 0.6
 
 env:
   - PLOTS_DEFAULT_BACKEND="plotly"
