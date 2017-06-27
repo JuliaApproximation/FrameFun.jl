@@ -40,11 +40,13 @@ end
 function indomain_broadcast(grid, d::DifferenceDomain)
     z1 = indomain_broadcast(grid, d.d1)
     z2 = indomain_broadcast(grid, d.d2)
-    z1 .& (~z2)
+    z1 .& (.~z2)
 end
 
-indomain_broadcast(grid, d::DerivedDomain) = indomain_broadcast(grid, superdomain(d))
-indomain_broadcast!(result, grid, d::DerivedDomain) = indomain_broadcast!(result, grid, superdomain(d))
+# This breaks mappeddomain in for grids
+
+## indomain_broadcast(grid, d::DerivedDomain) = indomain_broadcast(grid, superdomain(d))
+## indomain_broadcast!(result, grid, d::DerivedDomain) = indomain_broadcast!(result, grid, superdomain(d))
 
 # Check whether a value is in an interval, up to 10 times machine precision
 in(x::Number, a::T, b::T) where {T <: AbstractFloat} = (a-10eps(T) <= x <= b+10eps(T))
