@@ -127,12 +127,12 @@ end
 
 
 test_smoothing_1d()
-# TEST FAILED IN 0.6
-# test_smoothing_2d()
+
+test_smoothing_2d()
 
 test_differential_equations_1d()
-# TEST FAILED IN 0.6
-# test_differential_equations_2d()
+
+test_differential_equations_2d()
 
 
 
