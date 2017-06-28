@@ -104,8 +104,8 @@ function subgrid(grid::AbstractEquispacedGrid, domain::AbstractInterval)
     a = leftendpoint(domain)
     b = rightendpoint(domain)
     h = stepsize(grid)
-    idx_a = convert(Int, ceil( (a-left(grid))/stepsize(grid))+1 )
-    idx_b = convert(Int, floor( (b-left(grid))/stepsize(grid))+1 )
+    idx_a = convert(Int, ceil( (a-grid[1])/stepsize(grid))+1 )
+    idx_b = convert(Int, floor( (b-grid[1])/stepsize(grid))+1 )
     idx_a = max(idx_a, 1)
     idx_b = min(idx_b, length(grid))
     IndexSubGrid(grid, idx_a:idx_b)
@@ -118,6 +118,10 @@ function subgrid(grid::ScatteredGrid, domain::Domain)
     points = grid.points[mask]
     ScatteredGrid(points)
 end
+
+subgrid(grid::AbstractGrid, domain::DomainBoundary) = boundary(g, domain)
+
+subgrid(grid::ScatteredGrid, domain::DomainBoundary) = error("Trying to take the boundary within a ScatteredGrid")
 
 
 # Duck typing, v1 and v2 have to implement addition/substraction and scalar multiplication
@@ -145,6 +149,7 @@ function boundary{TG,T}(g::TensorProductGrid{TG,1,T},dom::Domain1d)
 end
 
 function boundary{G,M}(g::MaskedGrid{G,M,1},dom::Domain1d)
+  # TODO merge supergrid?
     boundary(grid(g),dom)
 end
 

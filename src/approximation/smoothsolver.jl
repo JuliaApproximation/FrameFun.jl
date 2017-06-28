@@ -6,8 +6,8 @@ is isolated using a projection operator. This algorithm contains an extra smooth
 
 """
 struct FE_SmoothProjectionSolver{ELT} <: FE_Solver{ELT}
-    TS :: TruncatedSvdSolver
-        problem     ::  FE_DiscreteProblem
+    TS :: AbstractOperator
+        op     ::  AbstractOperator
         plunge_op   ::  AbstractOperator    # store the operator because it allocates memory
         b     ::  Array{ELT,1}
         blinear     ::  Array{ELT,1}
@@ -16,37 +16,38 @@ struct FE_SmoothProjectionSolver{ELT} <: FE_Solver{ELT}
         x1          ::  Array{ELT}
         x3          ::  Array{ELT}
         Q          ::  Array{ELT,2}
-        D           ::  AbstractOperator
+    D           ::  AbstractOperator
+    scaling
 
-    function FE_SmoothProjectionSolver{ELT}(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), cutoffv=sqrt(cutoff), R = estimate_plunge_rank(problem), options...) where ELT
-        plunge_op = plunge_operator(problem)
+    function FE_SmoothProjectionSolver(op::AbstractOperator, scaling; cutoff = default_cutoff(op), cutoffv=sqrt(cutoff), R = estimate_plunge_rank(op), verbose=false,  options...)
+        plunge_op = plunge_operator(op, scaling)
         # Create Random matrices
-        TS1 = TruncatedSvdSolver(plunge_operator(problem)*operator(problem); cutoff = cutoff, options...)
-        TS2 = TruncatedSvdSolver(operator_transpose(problem)*plunge_operator(problem); cutoff = cutoff, options...)
+        TS1 = TruncatedSvdSolver(plunge_op*op; cutoff = cutoff, options...)
+        TS2 = TruncatedSvdSolver(op'*plunge_op; cutoff = cutoffv, options...)
         # D = Sobolev operator
-        D = IdxnScalingOperator(frequency_basis(problem); options...)
+        D = IdxnScalingOperator(src(op); options...)
         AD = inv(D)
         ADV = (TS2.Ut)'.*diagonal(AD)
         # Orthogonal basis for D^(-1)V_mid
         Q, R = qr(ADV)
         # Pre-allocation
         b = zeros(size(dest(plunge_op)))
-        blinear = zeros(ELT, length(dest(plunge_op)))
-        x1 = zeros(size(src(operator(problem))))
-        x2 = zeros(size(src(operator(problem))))
-        x3 = zeros(size(src(operator(problem))))
+        blinear = zeros(ELT, length(dest(op)))
+        x1 = zeros(size(src(op)))
+        x2 = zeros(size(src(op)))
+        x3 = zeros(size(src(op)))
         syv = zeros(size(TS2.Ut,1))
-        new(TS1,problem, plunge_op, b,blinear,syv,x1,x2,x3,Q, D)
+        new(TS1,op, plunge_op, b,blinear,syv,x1,x2,x3,Q, D, scaling)
     end
 end
 
 
-FE_SmoothProjectionSolver(problem::FE_DiscreteProblem; options...) =
-        FE_SmoothProjectionSolver{eltype(problem)}(problem; options...)
+FE_SmoothProjectionSolver(op::AbstractOperator, scaling; options...) =
+        FE_SmoothProjectionSolver{eltype(op)}(op, scaling; options...)
 
 function apply!(s::FE_SmoothProjectionSolver, destarg, src, coef_dest, coef_src)
-    A = operator(s)
-    At = operator_transpose(s)
+    A = s.op
+    At = A'
     P = s.plunge_op
     # Apply plunge operator to right hand side
     apply!(P,s.b, coef_src)
@@ -72,11 +73,9 @@ function apply!(s::FE_SmoothProjectionSolver, destarg, src, coef_dest, coef_src)
     apply!(A, s.b, s.x2)
     apply!(At, s.x1, coef_src-s.b)
     for i = 1:length(coef_dest)
-        coef_dest[i] = s.x1[i] + s.x2[i]
+        coef_dest[i] = s.x1[i]/s.scaling + s.x2[i]
     end
 
-    # Normalization
-    apply!(normalization(problem(s)), coef_dest, coef_dest)
 end
 
 # For FunctionSets that have a DC component

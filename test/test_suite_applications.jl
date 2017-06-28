@@ -63,9 +63,7 @@ function test_differential_equations_1d()
         B = FourierBasis(101,-1,1)
         Dom = interval(-0.5,0.5)
         # Set up Boundary conditions
-        diff = IdentityOperator(B)
-        df(x) = 0;
-        BC = BoundaryCondition(B,diff,Dom,df)
+        BC = DirichletBC(x->0)
         # Set up Differential equation
         f(x) = x
         Diff = differentiation_operator(B)^2
@@ -85,9 +83,8 @@ function test_differential_equations_2d()
         B = FourierBasis(11,-1,1)⊗FourierBasis(11,-1,1)
         Dom = disk(0.8)
         # Set up Boundary conditions
-        diff = IdentityOperator(B)
-        df(x,y) = x-y;
-        BC = BoundaryCondition(B,diff,Dom,df)
+        df = (x,y)->x-y
+        BC = DirichletBC(df,RnDomain(2))
         # Set up Differential equation
         f(x,y) = 0
         Diff = differentiation_operator(B,(2,0))+differentiation_operator(B,(0,2))

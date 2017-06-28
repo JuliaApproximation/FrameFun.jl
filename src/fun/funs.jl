@@ -154,11 +154,9 @@ function maxerror{N}(f::Function,F::SetFun{N};vals::Int=200)
     return error
 end
 
-function residual(f::Function, F::SetFun ; sampling_factor=2, options...)
-    problem = FE_DiscreteProblem(domain(F), basis(F), sampling_factor; options...)
-    op = operator(problem)
-    rhs = sample(BasisFunctions.grid(dest(op)), f, eltype(src(op)))
+function residual(f::Function, F::SetFun ;  options...)
+    op = oversampled_evaluation_operator(basis(F),domain(F); options...)[1]
+    rhs = project(dest(op),f)
     # There should be an easier way of getting the inverse of the normalization
-    invnorm = invnormalization(problem)
-    norm(op*(invnorm*coefficients(F))-rhs)
+    norm(coefficients(op*F)-rhs)
 end

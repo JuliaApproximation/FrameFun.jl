@@ -3,19 +3,19 @@
 
 abstract type FE_Solver{ELT} <: AbstractOperator{ELT} end
 
-problem(s::FE_Solver) = s.problem
+op(s::FE_Solver) = s.op
 
-# Delegation methods
-for op in (:frequency_basis, :frequency_basis_ext, :time_basis, :time_basis_ext,
-    :time_basis_restricted, :operator, :operator_transpose, :domain)
-    @eval $op(s::FE_Solver) = $op(problem(s))
-end
+## # Delegation methods
+## for op in (:frequency_basis, :frequency_basis_ext, :time_basis, :time_basis_ext,
+##            :time_basis_restricted, :operator, :operator_transpose, :domain)
+##     @eval $op(s::FE_Solver) = $op(op(s))
+## end
 
-size(s::FE_Solver, j::Int) = size(problem(s), j)
+size(s::FE_Solver, j::Int) = size(transpose(op(s)), j)
 
-src(s::FE_Solver) = time_basis_restricted(s)
+src(s::FE_Solver) = dest(op(s))
 
-dest(s::FE_Solver) = frequency_basis(s)
+dest(s::FE_Solver) = src(op(s))
 
 
 
@@ -27,16 +27,47 @@ struct FE_DirectSolver{ELT} <: FE_Solver{ELT}
         new(problem, qrfact(matrix(operator(problem)),Val{true}))
     end
 end
-
-FE_DirectSolver(problem::FE_Problem; options...) =
-    FE_DirectSolver{eltype(problem)}(problem)
+# TODO MERGE
+# FE_DirectSolver{ELT}(op::AbstractOperator{ELT}, scaling; options...) =
+#     FE_DirectSolver{eltype(op)}(op,scaling)
 
 function apply!(s::FE_DirectSolver, coef_dest, coef_src)
     coef_dest[:] = s.QR \ coef_src
-    apply!(normalization(problem(s)), coef_dest, coef_dest)
 end
 
+immutable ContinuousDirectSolver{T} <: AbstractOperator{T}
+  src                     :: FunctionSet
+  mixedgramfactorization  :: Factorization
+  normalizationofb        :: AbstractOperator
+  scratch                 :: Array{T,1}
+end
 
+dest(s::ContinuousDirectSolver) = s.src
+
+ContinuousDirectSolver(frame::ExtensionFrame; options...) =
+    ContinuousDirectSolver{eltype(frame)}(frame, qrfact(matrix(MixedGram(frame; options...)),Val{true}), DualGram(basis(frame); options...), zeros(eltype(frame),length(frame)))
+
+function apply!(s::ContinuousDirectSolver, coef_dest, coef_src)
+  apply!(s.normalizationofb, s.scratch, coef_src)
+  coef_dest[:] = s.mixedgramfactorization \ s.scratch
+end
+
+immutable ContinuousTruncatedSolver{T} <: AbstractOperator{T}
+  src                     :: FunctionSet
+  mixedgramsvd            :: AbstractOperator
+  normalizationofb        :: AbstractOperator
+  scratch                 :: Array{T,1}
+end
+
+dest(s::ContinuousTruncatedSolver) = s.src
+
+ContinuousTruncatedSolver(frame::ExtensionFrame; cutoff=1e-5, options...) =
+    ContinuousTruncatedSolver{eltype(frame)}(frame, FrameFun.TruncatedSvdSolver(MixedGram(frame; options...); cutoff=cutoff), DualGram(basis(frame); options...), zeros(eltype(frame),length(frame)))
+
+function apply!(s::ContinuousTruncatedSolver, coef_dest, coef_src)
+  apply!(s.normalizationofb, s.scratch, coef_src)
+  coef_dest[:] = s.mixedgramsvd*s.scratch
+end
 ## abstract FE_IterativeSolver <: FE_Solver
 
 

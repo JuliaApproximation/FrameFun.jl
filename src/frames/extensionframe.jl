@@ -27,6 +27,9 @@ domain(f::ExtensionFrame) = f.domain
 similar_set(f::ExtensionFrame, set::FunctionSet) = ExtensionFrame(domain(f), set)
 
 is_frame(f::ExtensionFrame) = true
+is_biorthogonal(f::ExtensionFrame) = false
+is_orthogonal(f::ExtensionFrame) = false
+is_orthonormal(f::ExtensionFrame) = false
 
 # The following properties do not hold for extension frames
 # - there is no interpolation grid
@@ -57,6 +60,8 @@ eval_element(s::ExtensionFrame, idx::Int, x) = eval_element(basis(s), idx, x)
 
 grid(f::ExtensionFrame) = subgrid(grid(basis(f)),domain(f))
 
+BasisFunctions.default_oversampling(f::ExtensionFrame) = length(subgrid(BasisFunctions.oversampled_grid(basis(f), BasisFunctions.default_oversampling(basis(f))), domain(f)))/length(basis(f))
+
 
 """
 Make an ExtensionFrame, but match tensor product domains with tensor product sets
@@ -77,7 +82,45 @@ function extensionframe(domain::ProductDomain, basis::TensorProductSet)
     tensorproduct(ExtensionFrames...)
 end
 
-extensionframe(domain, basis) = ExtensionFrame(domain, basis)
+extensionframe(domain::AbstractDomain, basis::FunctionSet) = ExtensionFrame(domain, basis)
+extensionframe(basis::FunctionSet, domain::AbstractDomain) = extensionframe(domain, basis)
 
 left(d::ExtensionFrame, x...) = left(domain(d))
 right(d::ExtensionFrame, x...) = right(domain(d))
+
+DualGram(f::ExtensionFrame; options...) = DualGram(basis(f); options...)*Gram(f; options...)*DualGram(basis(f); options...)
+
+MixedGram(f::ExtensionFrame; options...) = DualGram(basis(f); options...)*Gram(f; options...)
+
+DiscreteDualGram(f::ExtensionFrame; oversampling=BasisFunctions.default_oversampling(f)) = DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))*DiscreteGram(f; oversampling=oversampling)*DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))
+
+DiscreteMixedGram(f::ExtensionFrame; oversampling=BasisFunctions.default_oversampling(f)) = DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))*DiscreteGram(f; oversampling=oversampling)
+
+BasisFunctions.discrete_dual_evaluation_operator(set::ExtensionFrame; oversampling=1, options...) =
+    BasisFunctions.grid_evaluation_operator(set, gridspace(set, BasisFunctions.oversampled_grid(set, oversampling)), BasisFunctions.oversampled_grid(set, oversampling); options...)*DiscreteDualGram(basis(set); oversampling=BasisFunctions.basis_oversampling(set, oversampling))
+
+
+import BasisFunctions: dot
+import BasisFunctions: native_nodes
+
+function native_nodes(basis::FunctionSet, domain::Interval)
+  BasisFunctions.clip_and_cut(native_nodes(basis), left(domain), right(domain))
+end
+
+dot(frame::ExtensionFrame, f1::Function, f2::Function; options...)  =
+    dot(basis(frame), domain(frame), f1::Function, f2::Function; options...)
+
+dot(frame::ExtensionFrame, f1::Int, f2::Function; options...) =
+    dot(frame, x->eval_element(basis(frame), f1, x), f2; options...)
+
+dot(frame::ExtensionFrame, f1::Int, f2::Int; options...) =
+    dot(frame, f1 ,x->eval_element(basis(frame), f2, x); options...)
+
+dot(set::FunctionSet, domain::Interval, f1::Function, f2::Function; options...) =
+    dot(set, f1, f2, native_nodes(set, domain); options...)
+# # TODO now we assume that domainunion contains sections that do not overlap
+# dot(set::FunctionSet, domain::DomainUnion, f1::Function, f2::Function; options...) =
+#     dot(set, firstelement(domain), f1, f2; options...) +
+#     dot(set, secondelement(domain), f1, f2; options...)
+
+continuous_approximation_operator(frame::ExtensionFrame; solver = ContinuousDirectSolver, options...) = solver(frame; options...)

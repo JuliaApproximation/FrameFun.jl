@@ -50,7 +50,8 @@ import BasisFunctions: src, dest, matrix, matrix!, apply!, apply_inplace!, numty
 
 import BasisFunctions: grid, left, right, stepsize, sample
 
-import BasisFunctions: is_basis, is_frame, has_transform, has_grid, has_derivative,
+import BasisFunctions: is_basis, is_frame, is_orthogonal, is_orthonormal, is_biorthogonal,
+    has_transform, has_grid, has_derivative,
     has_antiderivative, has_extension, has_grid_transform
 
 import BasisFunctions: operator, matrix, is_diagonal, is_inplace, ⊕
@@ -80,10 +81,22 @@ import BasisFunctions: flatten
 import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
     similar_subgrid
 
+import BasisFunctions: Gram, DualGram, MixedGram, DiscreteGram, DiscreteDualGram, DiscreteMixedGram
+
+import BasisFunctions: discrete_approximation_operator, continuous_approximation_operator
 
 ###############################
 ## Exhaustive list of exports
 ###############################
+# from domains.jl
+export Interval, Disk, Square, Cube, Ball, Cylinder, atomium, boundingbox, RnDomain
+export ⊗, ∩, composite_length, element, elements, is_composite
+export randomcircles
+
+# from derived_domains.jl
+export Characteristic
+export numtype
+export ∠
 
 # from funs.jl
 export ExpFun, ChebyFun, Fun, SetFun, sampling_grid, domain, abserror
@@ -96,8 +109,8 @@ export BoundingBox, BBox, BBox1, BBox2, BBox3, BBox4
 export boundingbox
 
 # from frames/extensionframe.jl
-export ExtensionFrame, basis, domain
-
+export ExtensionFrame, basis, domain, extensionframe
+export Gram, DualGram, MixedGram
 # from frames/sumframe.jl
 export SumFrame, sumframe
 
@@ -105,7 +118,7 @@ export SumFrame, sumframe
 export EnrichedFrame
 
 # from DiffEquation.jl
-export BoundaryCondition, DiffEquation, solve
+export DirichletBC, NeumannBC, DiffEquation, solve
 
 # from constructors.jl
 export FunConstructor
@@ -140,6 +153,8 @@ include("approximation/lowranksolver.jl")
 include("approximation/fastsolver.jl")
 include("approximation/smoothsolver.jl")
 include("approximation/fe_approx.jl")
+
+include("approximation/oversampling.jl")
 
 include("recipes.jl")
 
