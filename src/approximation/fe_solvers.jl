@@ -20,11 +20,11 @@ dest(s::FE_Solver) = src(op(s))
 
 
 struct FE_DirectSolver{ELT} <: FE_Solver{ELT}
-    problem ::  FE_Problem
+    op      ::  AbstractOperator
     QR      ::  Factorization
-    scaling
-    function FE_DirectSolver{ELT}(problem::FE_Problem, scaling) where ELT
-        new(problem, qrfact(matrix(operator(problem)),Val{true}), scaling)
+
+    function FE_DirectSolver{ELT}(op::AbstractOperator,scaling) where ELT
+        new(op, qrfact(matrix(op),Val{true}))
     end
 end
 # TODO MERGE
