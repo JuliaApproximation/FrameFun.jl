@@ -49,3 +49,4 @@ plotgrid(B::ExtensionFrame, n) = plotgrid(basis(B),n)
     grid = [SVector(i,j) for i in xrange , j in yrange]
     plotdata = distance ? dist.(grid,dom) : in.(grid,dom)
     xrange,yrange,plotdata
+end

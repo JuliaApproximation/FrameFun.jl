@@ -44,7 +44,7 @@ function eltype(f::Function, basis)
     end
 end
 
-function oversampled_evaluation_operator(S::FunctionSet, D::AbstractDomain; sampling_factor=2, incboundary=false, options...)
+function oversampled_evaluation_operator(S::FunctionSet, D::Domain; sampling_factor=2, incboundary=false, options...)
     B = primarybasis(S)
     # Establish time domain grid
     G, lB = oversampled_grid(D,B,sampling_factor)

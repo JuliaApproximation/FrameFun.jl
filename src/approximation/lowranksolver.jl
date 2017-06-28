@@ -22,7 +22,7 @@ struct TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
     scratch_dest::  Array{ELT,1}
     smallcoefficients :: Bool
 
-    function TruncatedSvdSolver(op::AbstractOperator; cutoff = default_cutoff(problem), R = 5, growth_factor = sqrt(2), verbose = false, smallcoefficients=false,options...)
+    function TruncatedSvdSolver{ELT}(op::AbstractOperator; cutoff = default_cutoff(problem), R = 5, growth_factor = sqrt(2), verbose = false, smallcoefficients=false,options...) where ELT
         finished=false
         USV = ()
         R = min(R, size(op,2))

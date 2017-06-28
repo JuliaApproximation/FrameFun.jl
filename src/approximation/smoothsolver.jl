@@ -7,19 +7,19 @@ is isolated using a projection operator. This algorithm contains an extra smooth
 """
 struct FE_SmoothProjectionSolver{ELT} <: FE_Solver{ELT}
     TS :: AbstractOperator
-        op     ::  AbstractOperator
-        plunge_op   ::  AbstractOperator    # store the operator because it allocates memory
-        b     ::  Array{ELT,1}
-        blinear     ::  Array{ELT,1}
-        syv         ::  Array{ELT,1}
-        x2          ::  Array{ELT}
-        x1          ::  Array{ELT}
-        x3          ::  Array{ELT}
-        Q          ::  Array{ELT,2}
+    op     ::  AbstractOperator
+    plunge_op   ::  AbstractOperator    # store the operator because it allocates memory
+    b     ::  Array{ELT,1}
+    blinear     ::  Array{ELT,1}
+    syv         ::  Array{ELT,1}
+    x2          ::  Array{ELT}
+    x1          ::  Array{ELT}
+    x3          ::  Array{ELT}
+    Q          ::  Array{ELT,2}
     D           ::  AbstractOperator
     scaling
 
-    function FE_SmoothProjectionSolver(op::AbstractOperator, scaling; cutoff = default_cutoff(op), cutoffv=sqrt(cutoff), R = estimate_plunge_rank(op), verbose=false,  options...)
+    function FE_SmoothProjectionSolver{ELT}(op::AbstractOperator, scaling; cutoff = default_cutoff(op), cutoffv=sqrt(cutoff), R = estimate_plunge_rank(op), verbose=false,  options...) where ELT
         plunge_op = plunge_operator(op, scaling)
         # Create Random matrices
         TS1 = TruncatedSvdSolver(plunge_op*op; cutoff = cutoff, options...)

@@ -22,14 +22,14 @@ dest(s::FE_Solver) = src(op(s))
 struct FE_DirectSolver{ELT} <: FE_Solver{ELT}
     problem ::  FE_Problem
     QR      ::  Factorization
-
-    function FE_DirectSolver{ELT}(problem::FE_Problem) where ELT
-        new(problem, qrfact(matrix(operator(problem)),Val{true}))
+    scaling
+    function FE_DirectSolver{ELT}(problem::FE_Problem, scaling) where ELT
+        new(problem, qrfact(matrix(operator(problem)),Val{true}), scaling)
     end
 end
 # TODO MERGE
-# FE_DirectSolver{ELT}(op::AbstractOperator{ELT}, scaling; options...) =
-#     FE_DirectSolver{eltype(op)}(op,scaling)
+FE_DirectSolver{ELT}(op::AbstractOperator{ELT}, scaling; options...) =
+    FE_DirectSolver{eltype(op)}(op,scaling)
 
 function apply!(s::FE_DirectSolver, coef_dest, coef_src)
     coef_dest[:] = s.QR \ coef_src

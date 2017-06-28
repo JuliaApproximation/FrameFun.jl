@@ -114,18 +114,18 @@ normal(x, d::Domain) = error("Normal not available for this domain type")
 
 # Auxiliary function that returns distance from the boundary in some metric
 dist(x, d::Domain) = error("Domain distance not available for this domain type")
-
-dist(x, ::UnitSimplex) = min(minimum(x),1-sum(x))
-
-function normal(x, ::UnitSimplex)
-    if minimum(x)<abs(sum(x)-1)/sqrt(length(x))
-        index = findmin(x)[2]
-        z = zeros(x)
-        setindex(z,-1,index)
-    else
-        ones(x)
-    end
-end
+# TODO MERGE
+# dist(x, ::UnitSimplex) = min(minimum(x),1-sum(x))
+#
+# function normal(x, ::UnitSimplex)
+#     if minimum(x)<abs(sum(x)-1)/sqrt(length(x))
+#         index = findmin(x)[2]
+#         z = zeros(x)
+#         setindex(z,-1,index)
+#     else
+#         ones(x)
+#     end
+# end
 normal(x, d::UnitBall) = x/norm(x)
 
 dist(x, d::AbstractInterval) = min(rightendpoint(d)-x,x-leftendpoint(d))

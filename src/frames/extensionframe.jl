@@ -82,8 +82,8 @@ function extensionframe(domain::ProductDomain, basis::TensorProductSet)
     tensorproduct(ExtensionFrames...)
 end
 
-extensionframe(domain::AbstractDomain, basis::FunctionSet) = ExtensionFrame(domain, basis)
-extensionframe(basis::FunctionSet, domain::AbstractDomain) = extensionframe(domain, basis)
+extensionframe(domain::Domain, basis::FunctionSet) = ExtensionFrame(domain, basis)
+extensionframe(basis::FunctionSet, domain::Domain) = extensionframe(domain, basis)
 
 left(d::ExtensionFrame, x...) = left(domain(d))
 right(d::ExtensionFrame, x...) = right(domain(d))

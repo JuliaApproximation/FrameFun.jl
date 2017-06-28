@@ -19,7 +19,7 @@ end
 
 struct DirichletBC
     dRhs   :: Function
-    D      :: AbstractDomain
+    D      :: Domain
     function DirichletBC(dRhs=default_boundary_condition :: Function, D=RnDomain())
         new(dRhs,D)
     end
@@ -27,7 +27,7 @@ end
 
 struct NeumannBC
     dRhs   :: Function
-    D      :: AbstractDomain
+    D      :: Domain
     function NeumannBC(dRhs=default_boundary_condition :: Function, D=RnDomain())
         new(dRhs,D)
     end
@@ -40,12 +40,12 @@ default_boundary_condition(x) = 0
 default_boundary_condition(x,y) = 0
 default_boundary_condition(x,y,z) = 0
 
-function operator(BC :: DirichletBC, S::FunctionSet, G::AbstractGrid, D::AbstractDomain)
+function operator(BC :: DirichletBC, S::FunctionSet, G::AbstractGrid, D::Domain)
     G = subgrid(G,BC.D)
     grid_evaluation_operator(S,DiscreteGridSpace(G,eltype(S)),G)
 end
 
-function operator(BC :: NeumannBC, S::FunctionSet{2}, G::AbstractGrid{2}, D::AbstractDomain{2})
+function operator(BC :: NeumannBC, S::FunctionSet{2}, G::AbstractGrid{2}, D::Domain2d)
     G = subgrid(G,BC.D)
     GE = grid_evaluation_operator(S,DiscreteGridSpace(G,eltype(S)),G)
     dx = Float64[]
@@ -59,7 +59,7 @@ function operator(BC :: NeumannBC, S::FunctionSet{2}, G::AbstractGrid{2}, D::Abs
     X + Y
 end
 
-function operator(BC :: NeumannBC, S::FunctionSet{1}, G::AbstractGrid{1}, D::AbstractDomain{1})
+function operator(BC :: NeumannBC, S::FunctionSet{1}, G::AbstractGrid{1}, D::Domain1d)
     GE = grid_evaluation_operator(S,DiscreteGridSpace(G,eltype(S)),G)
     dx = Float64[]
     for i=1:length(G)
@@ -76,7 +76,7 @@ struct DiffEquation
     BCs    :: Tuple
     # TODO MERGE met of zonder sampling_factor
     sampling_factor
-    function DiffEquation(S::FunctionSet, D::AbstractDomain,Diff::AbstractOperator, DRhs:: Function, BCs::Tuple, sampling_factor=2)
+    function DiffEquation(S::FunctionSet, D::Domain,Diff::AbstractOperator, DRhs:: Function, BCs::Tuple, sampling_factor=2)
         new(S,D,Diff,DRhs,BCs, sampling_factor)
     end
 end
