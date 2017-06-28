@@ -8,7 +8,7 @@ using Plots
 using Base.Test
 FE = FrameFun
 BA = BasisFunctions
-
+gr()
 # test plotting functionsets
 B = ChebyshevBasis(5)
 plot(B)
