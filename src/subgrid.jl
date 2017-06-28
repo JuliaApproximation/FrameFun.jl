@@ -119,9 +119,9 @@ function subgrid(grid::ScatteredGrid, domain::Domain)
     ScatteredGrid(points)
 end
 
-subgrid(grid::AbstractGrid, domain::DomainBoundary) = boundary(g, domain)
+# subgrid(grid::AbstractGrid, domain::DomainBoundary) = boundary(g, domain)
 
-subgrid(grid::ScatteredGrid, domain::DomainBoundary) = error("Trying to take the boundary within a ScatteredGrid")
+# subgrid(grid::ScatteredGrid, domain::DomainBoundary) = error("Trying to take the boundary within a ScatteredGrid")
 
 
 # Duck typing, v1 and v2 have to implement addition/substraction and scalar multiplication

@@ -4,7 +4,7 @@
 ### A domain boundary
 ################################################################################
 
-immutable DomainBoundary{N} <: AbstractDomain{N}
+struct DomainBoundary{N} <: AbstractDomain{N}
     dom   :: AbstractDomain
     tol
 
@@ -25,7 +25,7 @@ indomain(x, d::DomainBoundary) = error("This method should not be called")
 ### A domain described by a characteristic function
 ################################################################################
 
-immutable Characteristic{N,T} <: AbstractDomain{N}
+struct Characteristic{N,T} <: AbstractDomain{N}
     char
     box    ::  BBox{N,T}
 end
@@ -43,7 +43,7 @@ show(io::IO, c::Characteristic) = print(io, "a domain described by a characteris
 ### A polar domain described by a single variable function
 ################################################################################
 
-immutable PolarDomain{T} <: AbstractDomain{2}
+struct PolarDomain{T} <: AbstractDomain{2}
     charFun
     box     ::  BBox{2,T}
 end
@@ -72,7 +72,7 @@ end
 ### The union of two domains
 ################################################################################
 
-immutable DomainUnion{D1,D2,N} <: AbstractDomain{N}
+struct DomainUnion{D1,D2,N} <: AbstractDomain{N}
     d1    ::  D1
     d2    ::  D2
 
