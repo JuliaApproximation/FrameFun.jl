@@ -88,15 +88,16 @@ import BasisFunctions: discrete_approximation_operator, continuous_approximation
 ###############################
 ## Exhaustive list of exports
 ###############################
-# from domains.jl
-export Interval, Disk, Square, Cube, Ball, Cylinder, atomium, boundingbox, RnDomain
-export ⊗, ∩, composite_length, element, elements, is_composite
-export randomcircles
-
-# from derived_domains.jl
-export Characteristic
-export numtype
-export ∠
+# TODO MERGE
+# # from domains.jl
+# export Interval, Disk, Square, Cube, Ball, Cylinder, atomium, boundingbox, RnDomain
+# export ⊗, ∩, composite_length, element, elements, is_composite
+# export randomcircles
+#
+# # from derived_domains.jl
+# export Characteristic
+# export numtype
+# export ∠
 
 # from funs.jl
 export ExpFun, ChebyFun, Fun, SetFun, sampling_grid, domain, abserror

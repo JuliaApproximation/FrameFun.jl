@@ -84,7 +84,7 @@ function test_differential_equations_2d()
         Dom = disk(0.8)
         # Set up Boundary conditions
         df = (x,y)->x-y
-        BC = DirichletBC(df,RnDomain(2))
+        BC = DirichletBC(df,euclideanspace(Val{2}()))
         # Set up Differential equation
         f(x,y) = 0
         Diff = differentiation_operator(B,(2,0))+differentiation_operator(B,(0,2))

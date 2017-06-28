@@ -20,7 +20,7 @@ end
 struct DirichletBC
     dRhs   :: Function
     D      :: Domain
-    function DirichletBC(dRhs=default_boundary_condition :: Function, D=RnDomain())
+    function DirichletBC(dRhs=default_boundary_condition :: Function, D=FullSpace())
         new(dRhs,D)
     end
 end
@@ -28,7 +28,7 @@ end
 struct NeumannBC
     dRhs   :: Function
     D      :: Domain
-    function NeumannBC(dRhs=default_boundary_condition :: Function, D=RnDomain())
+    function NeumannBC(dRhs=default_boundary_condition :: Function, D=FullSpace())
         new(dRhs,D)
     end
 end
@@ -114,7 +114,7 @@ end
 
 function rhs(D::DiffEquation; incboundary = false, options...)
     op = operator(D; incboundary=incboundary, options...)
-    rhs = Array(Array{eltype(src(op)),1},0)
+    rhs = Array{Array{eltype(src(op)),1}}(0)
     G, lB = oversampled_grid(D.D,D.S,D.sampling_factor)
 
     op = grid_evaluation_operator(D.S,DiscreteGridSpace(G,eltype(D.S)),G)
