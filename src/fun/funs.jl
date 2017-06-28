@@ -158,5 +158,5 @@ function residual(f::Function, F::SetFun ;  options...)
     op = oversampled_evaluation_operator(basis(F),domain(F); options...)[1]
     rhs = project(dest(op),f)
     # There should be an easier way of getting the inverse of the normalization
-    norm(coefficients(op*F)-rhs)
+    norm(op*coefficients(F)-rhs)
 end

@@ -85,8 +85,8 @@ end
 extensionframe(domain::Domain, basis::FunctionSet) = ExtensionFrame(domain, basis)
 extensionframe(basis::FunctionSet, domain::Domain) = extensionframe(domain, basis)
 
-left(d::ExtensionFrame, x...) = left(domain(d))
-right(d::ExtensionFrame, x...) = right(domain(d))
+left(d::ExtensionFrame, x...) = leftendpoint(domain(d))
+right(d::ExtensionFrame, x...) = rightendpoint(domain(d))
 
 DualGram(f::ExtensionFrame; options...) = DualGram(basis(f); options...)*Gram(f; options...)*DualGram(basis(f); options...)
 
@@ -104,7 +104,7 @@ import BasisFunctions: dot
 import BasisFunctions: native_nodes
 
 function native_nodes(basis::FunctionSet, domain::Interval)
-  BasisFunctions.clip_and_cut(native_nodes(basis), left(domain), right(domain))
+  BasisFunctions.clip_and_cut(native_nodes(basis), leftendpoint(domain), rightendpoint(domain))
 end
 
 dot(frame::ExtensionFrame, f1::Function, f2::Function; options...)  =

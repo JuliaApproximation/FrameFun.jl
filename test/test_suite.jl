@@ -207,32 +207,32 @@ function test_3d_cases()
 end
 
 
-    delimit("Algorithm Implementation and Accuracy")
-    # FFTW.set_num_threads(Sys.CPU_CORES)
+delimit("Algorithm Implementation and Accuracy")
+# FFTW.set_num_threads(Sys.CPU_CORES)
 
-    if include_1d_tests
-        test_1d_cases()
-    end
+if include_1d_tests
+    test_1d_cases()
+end
 
-    if include_bigfloat_tests
-        test_bigfloat()
-    end
+if include_bigfloat_tests
+    test_bigfloat()
+end
 
-    if include_2d_tests
-        test_2d_cases()
-    end
+if include_2d_tests
+    test_2d_cases()
+end
 
-    if include_3d_tests
-        test_3d_cases()
-    end
+if include_3d_tests
+    test_3d_cases()
+end
 
-    delimit("Random circles")
-    dom = FE.randomcircles(10)
+delimit("Random circles")
+dom = FE.randomcircles(10)
 #    b = FourierBasis(21) ⊗ FourierBasis(21)
-    b = FourierBasis(21) ⊗ ChebyshevBasis(21)
-    f(x,y) = cos(20*x+22*y)
-    @time F = Fun(f,b,dom)
-    show_timings(F)
+b = FourierBasis(21) ⊗ ChebyshevBasis(21)
+f(x,y) = cos(20*x+22*y)
+@time F = Fun(f,b,dom)
+show_timings(F)
 
 if show_mv_times
     println("Total bytes in MV products:\t$total_mv_allocs")
