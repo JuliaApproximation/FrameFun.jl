@@ -16,16 +16,9 @@ struct FE_ProjectionSolver{ELT} <: FE_Solver{ELT}
     x2
     x1
     scaling
-# TODO MERGE
-# <<<<<<< HEAD
-    # function FE_ProjectionSolver{ELT}(problem::FE_DiscreteProblem; cutoff = default_cutoff(problem), trunc = TruncatedSvdSolver, R = estimate_plunge_rank(problem), options...) where ELT
-    #     TS = trunc(plunge_operator(problem)*operator(problem); cutoff=cutoff, R=R, verbose=true, options...)
-    #     plunge_op = plunge_operator(problem)
-# =======
     function FE_ProjectionSolver{ELT}(op::AbstractOperator, scaling; cutoff = default_cutoff(op), trunc = TruncatedSvdSolver, R = estimate_plunge_rank(op), verbose=false,options...) where ELT
         plunge_op = plunge_operator(op, scaling)
         TS = trunc(plunge_op*op; cutoff=cutoff, R=R, verbose=verbose, options...)
-# >>>>>>> master
         b = zeros(ELT, dest(plunge_op))
         blinear = zeros(ELT, length(dest(plunge_op)))
         x1 = zeros(ELT, src(op))

@@ -74,7 +74,6 @@ struct DiffEquation
     Diff  :: AbstractOperator
     DRhs   :: Function
     BCs    :: Tuple
-    # TODO MERGE met of zonder sampling_factor
     sampling_factor
     function DiffEquation(S::FunctionSet, D::Domain,Diff::AbstractOperator, DRhs:: Function, BCs::Tuple, sampling_factor=2)
         new(S,D,Diff,DRhs,BCs, sampling_factor)

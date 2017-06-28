@@ -27,7 +27,7 @@ struct FE_DirectSolver{ELT} <: FE_Solver{ELT}
         new(op, qrfact(matrix(op),Val{true}))
     end
 end
-# TODO MERGE
+
 FE_DirectSolver{ELT}(op::AbstractOperator{ELT}, scaling; options...) =
     FE_DirectSolver{eltype(op)}(op,scaling)
 
