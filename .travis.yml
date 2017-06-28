@@ -10,8 +10,6 @@ notifications:
 
 before_install:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-install:
-  travis_wait mvn install
 
 before_script:
   - julia -e 'Pkg.init()'
