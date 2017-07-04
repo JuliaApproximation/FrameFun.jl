@@ -12,7 +12,7 @@ struct Mandelbrot{T} <: EuclideanDomain{2,T}
     box         ::  BBox2{T}
 end
 
-function Mandelbrot(maxiter = 1000, threshold = 1000.0)
+function mandelbrot(maxiter = 1000, threshold = 1000.0)
     box = BBox(-1.0, 0.35, -0.65, 0.65)
     M1 = 136
     M2 = 200
@@ -85,7 +85,7 @@ struct JuliaSet{T} <: EuclideanDomain{2,T}
     box         ::  BBox2{T}
 end
 
-function JuliaSet(c = -0.122565+0.744866im, maxiter = 1000)
+function juliaset(c = -0.122565+0.744866im, maxiter = 1000)
     box = BBox(-0.2, 1.2, -0.4, 0.4)
 
     mask1 = computejuliasetgrid(equispaced_grid(box, (100,100)), c, maxiter)

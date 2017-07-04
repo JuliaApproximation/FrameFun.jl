@@ -98,6 +98,9 @@ export MaskedGrid
 export BoundingBox, BBox, BBox1, BBox2, BBox3, BBox4
 export boundingbox
 
+# from domains/extensions.jl
+export dist, normal
+
 # from frames/extensionframe.jl
 export ExtensionFrame, basis, domain, extensionframe
 export Gram, DualGram, MixedGram
@@ -121,8 +124,16 @@ export FourierSpace, ChebyshevSpace, ⊕, add, construct
 export randomgrid, randompoint
 
 # from domains/fractals.jl
-export Mandelbrot, JuliaSet
+export mandelbrot, juliaset
 
+# from domains/atomium.jl
+export atomium
+
+# from domains/polardomain.jl
+export polardomain
+
+# from domains/characteristic.jl
+export characteristic
 
 include("subgrid.jl")
 
@@ -156,6 +167,8 @@ include("approximation/constructors.jl")
 include("domains/fourierdomains.jl")
 include("domains/fractals.jl")
 include("domains/atomium.jl")
+include("domains/characteristic.jl")
+include("domains/polardomain.jl")
 
 include("randomgrid.jl")
 

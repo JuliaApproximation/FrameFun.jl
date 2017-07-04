@@ -103,13 +103,12 @@ end
 mapped_boundingbox(box::BBox{N}, fmap::ProductMap) where {N} =
     tensorproduct([mapped_boundingbox(element(box,i), element(fmap,i)) for i in 1:N]...)
 
-boundingbox(d::TranslatedDomain) = boundingbox(domain(d)) + translationvector(d)
-
 ##########################################################################
 ### Distances and Normals
 ##########################################################################
 
 # Function that returns the normal vector when evaluated at the domain boundary
+# This vector is of unit length and points to the OUTSIDE.
 normal(x, d::Domain) = error("Normal not available for this domain type")
 
 # Auxiliary function that returns distance from the boundary in some metric
@@ -118,13 +117,14 @@ dist(x, d::Domain) = error("Domain distance not available for this domain type")
 dist(x, ::UnitSimplex) = min(minimum(x),1-sum(x))
 
 function normal(x, ::UnitSimplex)
+    z=zeros(x)
     if minimum(x)<abs(sum(x)-1)/sqrt(length(x))
         index = findmin(x)[2]
-        z = zeros(x)
-        setindex(z,-1,index)
+        setindex!(z,-1,index)
     else
-        ones(x)
+        z = ones(x)
     end
+    return z/norm(z)
 end
 
 normal(x, d::UnitBall) = x/norm(x)
@@ -149,7 +149,7 @@ normal(x,d::IntersectionDomain) = normal(x,elements(d)[findmin(map(di->dist(x,di
 
 dist(x,d::DifferenceDomain) = indomain(x,d) ? min(abs(dist(x,d.d1)),abs(dist(x,d.d2))) : -1*min(abs(dist(x,d.d1)),abs(dist(x,d.d2)))
 
-normal(x,d::DifferenceDomain) = dist(x,d.d1)<dist(x,d.d2) ? normal(x,d.d1) : -1*normal(x,d.d2)
+normal(x,d::DifferenceDomain) = abs(dist(x,d.d1))<abs(dist(x,d.d2)) ? normal(x,d.d1) : -1*normal(x,d.d2)
 
 dist(x, t::ProductDomain) = minimum(map(dist,x,elements(t)))
 
