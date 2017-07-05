@@ -1,7 +1,7 @@
 # boundingbox.jl
+"A BoundingBox is an N-dimensional box. It is a subtype of a domain "
 
-"A BoundingBox is an N-dimensional box specified by its bottom-left and top-right vertices."
-struct BoundingBox{N,T}
+struct BoundingBox{N,T} 
     left        ::  SVector{N,T}
     right       ::  SVector{N,T}
 end

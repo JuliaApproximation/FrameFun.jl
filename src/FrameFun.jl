@@ -104,11 +104,6 @@ export dist, normal
 # from frames/extensionframe.jl
 export ExtensionFrame, basis, domain, extensionframe
 export Gram, DualGram, MixedGram
-# from frames/sumframe.jl
-export SumFrame, sumframe
-
-# from frames/enrichedframe.jl
-export EnrichedFrame
 
 # from DiffEquation.jl
 export DirichletBC, NeumannBC, DiffEquation, solve
@@ -141,14 +136,11 @@ include("domains/boundingbox.jl")
 include("domains/extensions.jl")
 
 include("frames/extensionframe.jl")
-include("frames/sumframe.jl")
-include("frames/enrichedframe.jl")
 
 include("fun/basisdomains.jl")
 include("fun/funs.jl")
 
 
-include("approximation/fe_problem.jl")
 include("approximation/fe_solvers.jl")
 include("approximation/lowranksolver.jl")
 include("approximation/fastsolver.jl")
@@ -171,6 +163,7 @@ include("domains/characteristic.jl")
 include("domains/polardomain.jl")
 
 include("randomgrid.jl")
+include("oversampledgrid.jl")
 
 
 end # module

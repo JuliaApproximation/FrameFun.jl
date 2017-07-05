@@ -71,17 +71,19 @@ end
 struct FE_BestSolver
 end
 
-function FE_BestSolver(op::AbstractOperator, scaling; options...)
+function FE_BestSolver(op::AbstractOperator, scaling; verbose= false, options...)
     if has_transform(src(op))
         R = estimate_plunge_rank(op)
         if R < size(op, 2)/2
-            FE_ProjectionSolver(op, scaling; options...)
+            verbose && println("Estimated plunge rank $R smaller than $(size(op,2))/2 -> projection solver ")
+            FE_ProjectionSolver(op, scaling; verbose=verbose,options...)
         else
-            FE_DirectSolver(op, scaling; options...)
+            verbose && println("Estimated plunge rank $R greater than $(size(op,2))/2 -> direct solver ")
+            FE_DirectSolver(op, scaling; verbose=verbose,options...)
         end
     else
         # Don't bother with a fast algorithm if there is no fast transform
-        FE_DirectSolver(op, scaling; options...)
+        FE_DirectSolver(op, scaling; verbose=verbose, options...)
     end
 end
 

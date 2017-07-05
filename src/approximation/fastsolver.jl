@@ -39,9 +39,15 @@ function plunge_operator(op, scaling)
 end
 
 default_cutoff(op::AbstractOperator) = 10^(4/5*log10(eps(real(eltype(op)))))
-estimate_plunge_rank(op::AbstractOperator) = min(round(Int, 9*log(length(src(op))*(length(src(op))^2/length(dest(op)))^(1-1/ndims(src(op))) + 2)),length(src(op)))
-
-estimate_plunge_rank(op::FE_DiscreteProblem{1,BigFloat}) = round(Int, 28*log(length(src(op))) + 5)
+function estimate_plunge_rank(op::AbstractOperator)
+    nml=length(src(op))^2/length(dest(op))
+    N = ndims(src(op))
+    if N==1
+        return min(round(Int, 9*log(nml)),length(src(op)))
+    else
+        return min(round(Int, 9*log(nml)*nml^((N-1)/N)),length(src(op)))
+    end
+end
 
 apply!(s::FE_ProjectionSolver, dest, src, coef_dest, coef_src) =
     apply!(s, dest, src, coef_dest, coef_src, s.op, s.op', s.plunge_op, s.x1, s.x2)

@@ -28,7 +28,7 @@ G = BasisFunctions.grid(ChebyshevBasis(51))
 plot(G)
 
 G = BasisFunctions.grid(ChebyshevBasis(51,-1,0.3)⊗ChebyshevBasis(51,-0.5,0.5))
-G = FrameFun.subgrid(G,Mandelbrot())
+G = FrameFun.subgrid(G,mandelbrot())
 plot(G)
 
 B = FourierBasis(21,-1,1)⊗FourierBasis(21,-1,1)⊗FourierBasis(21,-1,1)
