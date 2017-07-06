@@ -5,7 +5,7 @@
 
 struct PolarDomain{T} <: EuclideanDomain{2,T}
     charFun
-    box     ::  BBox{2,T}
+    box     ::  EuclideanDomain{2,T}
 end
 
 polardomain(char, dom) = PolarDomain(Fun(char,FourierBasis(100,-pi,pi),interval(-pi,pi)),boundingbox(dom))

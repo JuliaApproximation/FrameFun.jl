@@ -8,16 +8,19 @@ randomgrid(Ω::Domain, M::Int) =
     ScatteredGrid([randompoint(Ω, boundingbox(Ω)) for m in 1:M])
 
 "Generate a single random point inside the given box, with `eltype` `T`."
-function randompoint(box::BBox{N,T}) where {N,T}
-    vals = Point{N,T}(rand(N))
-    vals .* left(box) + (1-vals) .* right(box)
+function randompoint(dom::ProductDomain) 
+    convert(eltype(dom),map(randompoint,elements(dom)))
 end
 
 # Don't return an SVector in 1d, just a value
-function randompoint(box::BBox{1})
+function randompoint(dom::Interval)
+    # Random is not implemented for BigFloats, see issue #13950
+    # That's why we just use Float64
     val = rand()
-    val * left(box) + (1-val) * right(box)
+    convert(eltype(dom),val * leftendpoint(dom) + (1-val) * rightendpoint(dom))
 end
+
+
 
 """
 Generate a single random point inside the given domain, with `eltype` `T`.

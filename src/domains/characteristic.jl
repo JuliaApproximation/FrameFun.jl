@@ -5,10 +5,10 @@ A domain that is described by its characteristic function.
 """
 struct Characteristic{N,T} <: EuclideanDomain{N,T}
     char    ::  Function
-    box     ::  BBox{N,T}
+    box     ::  EuclideanDomain{N,T}
 end
 
-characteristic(char::Function, dom::EuclideanDomain{N,T}) where {N,T} = Characteristic(char,boundingbox(dom))
+characteristic(char::Function, dom)  = Characteristic(char,boundingbox(dom))
 
 indomain(x, c::Characteristic) = c.char(x)
 

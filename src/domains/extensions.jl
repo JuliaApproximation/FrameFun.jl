@@ -57,30 +57,66 @@ in(x::Number, a::T, b::T) where {T <: Number} = a <= x <= b
 # Bounding boxes
 #################
 
-boundingbox(d::AbstractInterval) = BBox(leftendpoint(d), rightendpoint(d))
+# A bounding box is an Interval or ProductDomain of intervals that encompasses the domain.
 
-boundingbox(::UnitBall{N,T}) where {N,T} = BBox{N,T}(-ones(SVector{N,T}), ones(SVector{N,T}))
+# If the boundingbox is not a product of intervals, something has gone wrong.
 
-boundingbox(c::Ball) = BBox((c.center[1]-c.radius,c.center[2]-c.radius,c.center[3]-c.radius),(c.center[1]+c.radius,c.center[2]+c.radius,c.center[3]+c.radius))
+# Some of these constructors can hopefully disappear when spaces are introduced.
+
+boundingbox(a::SVector{1}, b::SVector{1}) = interval(a[1],b[1])
+
+boundingbox(a::Number, b::Number) = interval(a,b)
+
+boundingbox(a, b) = cube(a,b)
+
+boundingbox(d::AbstractInterval) = d
+
+boundingbox(::UnitBall{N,T}) where {N,T} = cube(-ones(SVector{N,T}), ones(SVector{N,T}))
+
+boundingbox(c::Ball) = cube((c.center[1]-c.radius,c.center[2]-c.radius,c.center[3]-c.radius),(c.center[1]+c.radius,c.center[2]+c.radius,c.center[3]+c.radius))
 
 boundingbox(d::ProductDomain) = tensorproduct(map(boundingbox, elements(d))...)
 
 boundingbox(d::DerivedDomain) = boundingbox(superdomain(d))
 
-boundingbox(d::UnionDomain) = ∪(map(boundingbox, elements(d))...)
-
-boundingbox(d::IntersectionDomain) = ∩(map(boundingbox, elements(d))...)
-
 boundingbox(d::DifferenceDomain) = boundingbox(d.d1)
 
+# Extra functions
 
+ndims(d::ProductDomain) = length(elements(d))
 
+ndims(d::AbstractInterval) = 1
+
+leftendpoint(d::Domain) = leftendpoint(boundingbox(d))
+
+rightendpoint(d::Domain) = rightendpoint(boundingbox(d))
+
+leftendpoint(box::ProductDomain) = SVector(map(leftendpoint,elements(box)))
+
+rightendpoint(box::ProductDomain) = SVector(map(rightendpoint,elements(box)))
+
+corners(d::Domain) = [leftendpoint(boundingbox(d)),rightendpoint(boundingbox(d))]
+
+# TODO: improve when grids move into domains?
+equispaced_grid(d::Domain, ns) = tensorproduct([PeriodicEquispacedGrid(ns[idx], leftendpoint(d)[idx], rightendpoint(d)[idx]) for idx = 1:ndims(boundingbox(d))]...)
+
+function boundingbox(d::UnionDomain)
+    left = SVector(minimum(hcat(map(leftendpoint,elements(d))...),2)...)
+    right = SVector(maximum(hcat(map(rightendpoint,elements(d))...),2)...)
+    boundingbox(left,right)
+end
+
+function boundingbox(d::IntersectionDomain)
+    left = SVector(maximum(hcat(map(leftendpoint,elements(d))...),2))
+    right = SVector(minimum(hcat(map(rightendpoint,elements(d))...),2))
+    boundingbox(left,right)
+end
 
 # Now here is a problem: how do we compute a bounding box, without extra knowledge
 # of the map? We can only do this for some maps.
 boundingbox(d::MappedDomain) = mapped_boundingbox(boundingbox(superdomain(d)), mapping(d))
 
-function mapped_boundingbox(box::BBox1, fmap)
+function mapped_boundingbox(box::Interval, fmap)
     l,r = box[1]
     ml = fmap*l
     mr = fmap*r
@@ -90,18 +126,28 @@ end
 # In general, we can at least map all the corners of the bounding box of the
 # underlying domain, and compute a bounding box for those points. This will be
 # correct for affine maps.
-function mapped_boundingbox(box::BBox{N}, fmap) where {N}
-    crn = corners(box)
-    mapped_corners = [fmap*c for c in crn]
-    left = [minimum([mapped_corners[i][j] for i in 1:length(mapped_corners)]) for j in 1:N]
-    right = [maximum([mapped_corners[i][j] for i in 1:length(mapped_corners)]) for j in 1:N]
-    BBox(left, right)
+function mapped_boundingbox(box::ProductDomain, fmap) 
+    crn = corners(leftendpoint(box),rightendpoint(box))
+    mapped_corners = [fmap*crn[:,i] for i in 1:size(crn,2)]
+    left = [minimum([mapped_corners[i][j] for i in 1:length(mapped_corners)]) for j in 1:size(crn,1)]
+    right = [maximum([mapped_corners[i][j] for i in 1:length(mapped_corners)]) for j in 1:size(crn,1)]
+    cube(left, right)
 end
 
-# We can do better for diagonal maps, since the problem simplifies: each dimension
-# is mapped independently.
-mapped_boundingbox(box::BBox{N}, fmap::ProductMap) where {N} =
-    tensorproduct([mapped_boundingbox(element(box,i), element(fmap,i)) for i in 1:N]...)
+# Auxiliary functions to rotate a bounding box when mapping it.
+function corners(left::AbstractVector, right::AbstractVector)
+    @assert length(left)==length(right)
+    N=length(left)
+    corners = zeros(N,2^N)
+    # All possible permutations of the corners
+    for i=1:2^length(left)
+        for j=1:N
+            corners[j,i] = ((i>>(j-1))%2==0) ? left[j] : right[j]
+        end
+    end
+    corners
+end
+
 
 ##########################################################################
 ### Distances and Normals

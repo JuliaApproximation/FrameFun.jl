@@ -13,16 +13,16 @@ struct FunctionSpace{N,T} <: AbstractSpace{N,T}
   basis   ::    FunctionSet{N,T}
 
   FunctionSpace{N,T}(basis::FunctionSet) where {N,T} = new(basis)
-  FunctionSpace{N,T}(basis::FunctionSet, bbox::BBox) where {N,T} = new(rescale(basis,left(bbox),right(bbox)))
+  FunctionSpace{N,T}(basis::FunctionSet, dom::Domain) where {N,T} = new(rescale(basis,leftendpoint(dom),rightendpoint(dom)))
 end
 
 FunctionSpace{N,T}(basis::FunctionSet{N,T}) = FunctionSpace{N,T}(basis)
-FunctionSpace{N,T}(basis::FunctionSet{N,T}, bbox::BBox) = FunctionSpace{N,T}(basis,bbox)
+FunctionSpace{N,T}(basis::FunctionSet{N,T}, dom::Domain) = FunctionSpace{N,T}(basis,dom)
 # place somewhere else?
-FourierSpace(left=0,right=1) = FunctionSpace(FourierBasis(0),BBox(left,right))
-ChebyshevSpace(left=-1,right=1) = FunctionSpace(ChebyshevBasis(0),BBox(left,right))
+FourierSpace(left=0,right=1) = FunctionSpace(FourierBasis(0),interval(left,right))
+ChebyshevSpace(left=-1,right=1) = FunctionSpace(ChebyshevBasis(0),interval(left,right))
 # place somewhere else?
-boundingbox{N,T}(f::FunctionSet{N,T}) = BBox(left(f),right(f))
+boundingbox{N,T}(f::FunctionSet{N,T}) = boundingbox(left(f),right(f))
 
 boundingbox(space::FunctionSpace) = boundingbox(space.basis)
 

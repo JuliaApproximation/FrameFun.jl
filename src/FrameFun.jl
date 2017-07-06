@@ -132,7 +132,7 @@ export characteristic
 
 include("subgrid.jl")
 
-include("domains/boundingbox.jl")
+#include("domains/boundingbox.jl")
 include("domains/extensions.jl")
 
 include("frames/extensionframe.jl")

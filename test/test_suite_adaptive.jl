@@ -24,7 +24,7 @@ function test_function_space()
       FourierBasis(8)⊗ChebyshevBasis(8), FourierBasis(32,-2.,1.)⊕rescale(ChebyshevBasis(32),-2.,1.),
       BA.tensorproduct(FourierBasis(4),3), BA.multiset(FourierBasis(32),FourierBasis(32)))
   @testset "Space = $(name(space)) " for (i,space) in enumerate([
-      FE.FunctionSpace(FourierBasis(64,-1.0, 1.0)),FE. FunctionSpace(FourierBasis(64,-1.0, 1.0), FE.BBox(-1.0, 1.0)),
+      FE.FunctionSpace(FourierBasis(64,-1.0, 1.0)),FE. FunctionSpace(FourierBasis(64,-1.0, 1.0), interval(-1.0, 1.0)),
       FourierSpace(), FourierSpace(-1.0, 1.0), ChebyshevSpace(),
       FourierSpace()⊗ChebyshevSpace(),FourierSpace(-2,1)⊕ChebyshevSpace(-2,1),FE.tensorproduct(FourierSpace(),3), FE.add(FourierSpace(),2)])
       # @test left(bboxes[i])==left(boundingbox(space))
