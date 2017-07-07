@@ -36,24 +36,24 @@ function test_subgrids()
 
     G1 = EquispacedGrid(n, -1.0, 1.0)
     G2 = EquispacedGrid(n, -1.0, 1.0)
-    TensorG = G1 ⊗ G2
+    ProductG = G1 × G2
 
     C = disk(1.0)
-    circle_grid = MaskedGrid(TensorG, C)
+    circle_grid = MaskedGrid(ProductG, C)
     @testset begin
 
-        @test (length(circle_grid)/length(TensorG)-pi*0.25) < 0.01
+        @test (length(circle_grid)/length(ProductG)-pi*0.25) < 0.01
 
         G1s = IndexSubGrid(G1,2:4)
         G2s = IndexSubGrid(G2,3:5)
-        TensorGs = G1s ⊗ G2s
+        ProductGs = G1s × G2s
         @test G1s[1] == G1[2]
         @test G2s[1] == G2[3]
-        @test TensorGs[1,1] == [G1[2],G2[3]]
+        @test ProductGs[1,1] == [G1[2],G2[3]]
     end
 
     # Generic tests for the subgrids
-    @testset "result" for (grid,subgrid) in ( (grid1,subgrid1), (grid1,subgrid2), (TensorG, circle_grid))
+    @testset "result" for (grid,subgrid) in ( (grid1,subgrid1), (grid1,subgrid2), (ProductG, circle_grid))
         # print("Subgrid is ")
         # println(typeof(subgrid))
         # Count the number of elements in the subgrid

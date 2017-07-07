@@ -144,8 +144,8 @@ function midpoint(v1, v2, dom::Domain, tol)
     mid
 end
 ## Avoid ambiguity (because everything >=2D is tensor but 1D is not)
-function boundary{TG,T}(g::TensorProductGrid{TG,1,T},dom::Domain1d)
-    println("This method being called means there is a 1D tensorproductgrid.")
+function boundary{TG,T}(g::ProductGrid{TG,1,T},dom::Domain1d)
+    println("This method being called means there is a 1D ProductGrid.")
 end
 
 function boundary{G,M}(g::MaskedGrid{G,M,1},dom::Domain1d)
@@ -153,7 +153,7 @@ function boundary{G,M}(g::MaskedGrid{G,M,1},dom::Domain1d)
     boundary(grid(g),dom)
 end
 
-function boundary{TG,N,T}(g::TensorProductGrid{TG,N,T},dom::EuclideanDomain{N},tol=1e-12)
+function boundary{TG,N,T}(g::ProductGrid{TG,N,T},dom::EuclideanDomain{N},tol=1e-12)
     # Initialize neighbours
     neighbours=Array{Int64}(2^N-1,N)
     # adjust columns

@@ -75,7 +75,7 @@ boundingbox(::UnitBall{N,T}) where {N,T} = cube(-ones(SVector{N,T}), ones(SVecto
 
 boundingbox(c::Ball) = cube((c.center[1]-c.radius,c.center[2]-c.radius,c.center[3]-c.radius),(c.center[1]+c.radius,c.center[2]+c.radius,c.center[3]+c.radius))
 
-boundingbox(d::ProductDomain) = tensorproduct(map(boundingbox, elements(d))...)
+boundingbox(d::ProductDomain) = cartesianproduct(map(boundingbox, elements(d))...)
 
 boundingbox(d::DerivedDomain) = boundingbox(superdomain(d))
 
@@ -92,7 +92,7 @@ leftendpoint(box::ProductDomain) = SVector(map(leftendpoint,elements(box)))
 rightendpoint(box::ProductDomain) = SVector(map(rightendpoint,elements(box)))
 
 # TODO: improve when grids move into domains?
-equispaced_grid(d::Domain, ns) = tensorproduct([PeriodicEquispacedGrid(ns[idx], leftendpoint(d)[idx], rightendpoint(d)[idx]) for idx = 1:ndims(boundingbox(d))]...)
+equispaced_grid(d::Domain, ns) = cartesianproduct([PeriodicEquispacedGrid(ns[idx], leftendpoint(d)[idx], rightendpoint(d)[idx]) for idx = 1:ndims(boundingbox(d))]...)
 
 function boundingbox(d::UnionDomain)
     left = SVector(minimum(hcat(map(leftendpoint,elements(d))...),2)...)
@@ -120,7 +120,7 @@ end
 # In general, we can at least map all the corners of the bounding box of the
 # underlying domain, and compute a bounding box for those points. This will be
 # correct for affine maps.
-function mapped_boundingbox(box::ProductDomain, fmap) 
+function mapped_boundingbox(box::ProductDomain, fmap)
     crn = corners(leftendpoint(box),rightendpoint(box))
     mapped_corners = [fmap*crn[:,i] for i in 1:size(crn,2)]
     left = [minimum([mapped_corners[i][j] for i in 1:length(mapped_corners)]) for j in 1:size(crn,1)]
