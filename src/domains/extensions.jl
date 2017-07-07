@@ -83,10 +83,6 @@ boundingbox(d::DifferenceDomain) = boundingbox(d.d1)
 
 # Extra functions
 
-ndims(d::ProductDomain) = length(elements(d))
-
-ndims(d::AbstractInterval) = 1
-
 leftendpoint(d::Domain) = leftendpoint(boundingbox(d))
 
 rightendpoint(d::Domain) = rightendpoint(boundingbox(d))
@@ -94,8 +90,6 @@ rightendpoint(d::Domain) = rightendpoint(boundingbox(d))
 leftendpoint(box::ProductDomain) = SVector(map(leftendpoint,elements(box)))
 
 rightendpoint(box::ProductDomain) = SVector(map(rightendpoint,elements(box)))
-
-corners(d::Domain) = [leftendpoint(boundingbox(d)),rightendpoint(boundingbox(d))]
 
 # TODO: improve when grids move into domains?
 equispaced_grid(d::Domain, ns) = tensorproduct([PeriodicEquispacedGrid(ns[idx], leftendpoint(d)[idx], rightendpoint(d)[idx]) for idx = 1:ndims(boundingbox(d))]...)
@@ -214,11 +208,6 @@ end
 ### Assorted Domains
 ##########################################################################
 
-
-function randomcircles(n, radius = 0.3)
-    list = [disk(radius, SVector(((2*rand(2)-1)*0.8)...)) for i=1:n]
-    UnionDomain(list...)
-end
 
 ndims(::Type{Domain{T}}) where {T} = ndims_type(T)
 ndims(::Type{D}) where {D <: Domain} = ndims(supertype(D))

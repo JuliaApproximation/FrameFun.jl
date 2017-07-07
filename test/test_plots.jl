@@ -51,7 +51,7 @@ df(x) = -sin(3*x^2)*6*x
 plot!(F',df,label="derivative",legend=true)
 
 B = FourierBasis(21,-1,1)⊗FourierBasis(21,-1,1)
-D = disk(0.8)-disk(0.4)
+D = intersect(disk(0.8),disk(0.4))
 f(x,y) = cos(7*x-2*y^2)
 F = Fun(f,B,D)
 
