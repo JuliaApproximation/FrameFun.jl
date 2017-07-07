@@ -114,44 +114,20 @@ end
 
 # Get the mean approximation error in random interior points.
 function abserror{N}(f::Function,F::SetFun{N};vals::Int=200)
-    # Use the bounding box around the domain
-    box = boundingbox(domain(F))
-    point=Array{numtype(F)}(N)
-    elements=0
-    error=0
-    # Generate some points inside the domain, and compare with the target function
-    while elements < vals
-        for j in 1:N
-            point[j]=left(box)[j]+(right(box)[j]-left(box)[j])*rand(1)[1]
-        end
-        vpoint = SVector{N}(point)
-        if in(vpoint,domain(F))
-            elements+=1
-            error+=abs(f(vpoint...)-F(vpoint...))
-        end
-    end
-    return error/elements
+    rgrid = randomgrid(domain(F),vals)
+    Fval = F(rgrid)
+    # TODO: type based on space of F
+    fval = sample(rgrid,f,eltype(F))
+    return sum(abs.(Fval-fval))/vals
 end
 
 # Get the max approximation error in random interior points
 function maxerror{N}(f::Function,F::SetFun{N};vals::Int=200)
-    # Use the bounding box around the domain
-    box = boundingbox(domain(F))
-    point=Array{numtype(F)}(N)
-    elements=0
-    error=0
-    # Generate some points inside the domain, and compare with the target function
-    while elements < vals
-        for j in 1:N
-            point[j]=left(box)[j]+(right(box)[j]-left(box)[j])*rand(1)[1]
-        end
-        N == 1 ? vpoint = point[1] : vpoint = SVector(point...)
-        if in(vpoint,domain(F))
-            elements+=1
-            error=max(error,abs(f(vpoint...)-F(vpoint...)))
-        end
-    end
-    return error
+    rgrid = randomgrid(domain(F),vals)
+    Fval = F(rgrid)
+    # TODO: type based on space of F
+    fval = sample(rgrid,f,eltype(F))
+    return maximum(abs.(Fval-fval))
 end
 
 function residual(f::Function, F::SetFun ;  options...)

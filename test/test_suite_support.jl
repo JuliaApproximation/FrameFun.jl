@@ -108,11 +108,11 @@ function test_randomgrids()
         # 1D is a special case where we don't use vectors of length 1
         @test eltype(g3) == Float64
 
-        box1 = BBox(0.0, 1.0, 0.0, 1.0)
+        box1 = rectangle(0.0, 1.0, 0.0, 1.0)
         p1 = randompoint(box1)
         @test length(p1) == ndims(box1)
         @test p1 ∈ box1
-        box2 = BBox(0.0, 1.0)
+        box2 = interval(0.0, 1.0)
         p2 = randompoint(box2)
         @test typeof(p2) == Float64
         @test p2 ∈ box2

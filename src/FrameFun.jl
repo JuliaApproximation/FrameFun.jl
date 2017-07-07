@@ -98,14 +98,12 @@ export MaskedGrid
 export BoundingBox, BBox, BBox1, BBox2, BBox3, BBox4
 export boundingbox
 
+# from domains/extensions.jl
+export dist, normal
+
 # from frames/extensionframe.jl
 export ExtensionFrame, basis, domain, extensionframe
 export Gram, DualGram, MixedGram
-# from frames/sumframe.jl
-export SumFrame, sumframe
-
-# from frames/enrichedframe.jl
-export EnrichedFrame
 
 # from DiffEquation.jl
 export DirichletBC, NeumannBC, DiffEquation, solve
@@ -121,23 +119,28 @@ export FourierSpace, ChebyshevSpace, ⊕, add, construct
 export randomgrid, randompoint
 
 # from domains/fractals.jl
-export Mandelbrot, JuliaSet
+export mandelbrot, juliaset
 
+# from domains/atomium.jl
+export atomium
+
+# from domains/polardomain.jl
+export polardomain
+
+# from domains/characteristic.jl
+export characteristic
 
 include("subgrid.jl")
 
-include("domains/boundingbox.jl")
+#include("domains/boundingbox.jl")
 include("domains/extensions.jl")
 
 include("frames/extensionframe.jl")
-include("frames/sumframe.jl")
-include("frames/enrichedframe.jl")
 
 include("fun/basisdomains.jl")
 include("fun/funs.jl")
 
 
-include("approximation/fe_problem.jl")
 include("approximation/fe_solvers.jl")
 include("approximation/lowranksolver.jl")
 include("approximation/fastsolver.jl")
@@ -156,8 +159,11 @@ include("approximation/constructors.jl")
 include("domains/fourierdomains.jl")
 include("domains/fractals.jl")
 include("domains/atomium.jl")
+include("domains/characteristic.jl")
+include("domains/polardomain.jl")
 
 include("randomgrid.jl")
+include("oversampledgrid.jl")
 
 
 end # module

@@ -60,6 +60,7 @@ function operator(BC :: NeumannBC, S::FunctionSet{2}, G::AbstractGrid{2}, D::Dom
 end
 
 function operator(BC :: NeumannBC, S::FunctionSet{1}, G::AbstractGrid{1}, D::Domain1d)
+    G = subgrid(G,BC.D)
     GE = grid_evaluation_operator(S,DiscreteGridSpace(G,eltype(S)),G)
     dx = Float64[]
     for i=1:length(G)
@@ -139,18 +140,3 @@ function solve(D::DiffEquation, solver=FE_ProjectionSolver; options...)
     SetFun(D.D, dest(A), Adiff*coef)
 end
 
-function problem(D::DiffEquation)
-    problem = FE_DiscreteProblem(D.D,D.S,2)
-    op = operator(D)
-    opt = ctranspose(op)
-    fb = frequency_basis(problem)
-    fbe = frequency_basis_ext(problem)
-    tb = MultiSet([time_basis(problem); elements(dest(op))[2:end]])
-    tbe = MultiSet([time_basis_ext(problem); elements(dest(op))[2:end]])
-    tbr = MultiSet([time_basis_restricted(problem); elements(dest(op))[2:end]])
-    fe = f_extension(problem)
-    fr = f_restriction(problem)
-    te = t_extension(problem)⊕IdentityOperator(element(dest(op),2:length(elements(dest(op)))))
-    tr = t_restriction(problem)⊗IdentityOperator(element(dest(op),2:length(elements(dest(op)))))
-    DEproblem = FE_DiscreteProblem(domain(problem),op, opt, fb,fbe,tb,tbe,tbr,fe,fr,te,tr, transform1(problem), itransform1(problem), transform2(problem), itransform2(problem),normalization(problem),invnormalization(problem))
-end

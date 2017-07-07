@@ -8,7 +8,7 @@ for basistype in (ChebyshevBasis, FourierBasis, BSplineTranslatesBasis), T in (F
 
   B = instantiate(basistype,11, T)
   # println(B)
-  D = Interval(left(B),right(B))
+  D = interval(left(B),right(B))
   frame = extensionframe(B,D)
   f = x->B[1](x)
 

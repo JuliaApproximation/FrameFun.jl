@@ -9,11 +9,11 @@ struct Mandelbrot{T} <: EuclideanDomain{2,T}
     maxiter     ::  Int
     threshold   ::  T
     maskcache   ::  Dict
-    box         ::  BBox2{T}
+    box         ::  Domain
 end
 
-function Mandelbrot(maxiter = 1000, threshold = 1000.0)
-    box = BBox(-1.0, 0.35, -0.65, 0.65)
+function mandelbrot(maxiter = 1000, threshold = 1000.0)
+    box = rectangle(-1.0, 0.35, -0.65, 0.65)
     M1 = 136
     M2 = 200
     mask1 = computemandelbrotgrid(equispaced_grid(box, (M1,M1)), maxiter, threshold)
@@ -48,7 +48,7 @@ function computemandelbrotgrid(grid, maxiter, threshold)
 end
 
 function indomain_broadcast(grid, m::Mandelbrot)
-    if (left(grid) ≈ left(m.box)) && (right(grid) ≈ right(m.box))
+    if (left(grid) ≈ leftendpoint(m.box)) && (right(grid) ≈ rightendpoint(m.box))
         if haskey(m.maskcache, size(grid,1))
             mask = m.maskcache[size(grid,1)]
         else # compute mask and cache it
@@ -82,11 +82,11 @@ struct JuliaSet{T} <: EuclideanDomain{2,T}
     c           ::  Complex{T}
     maxiter     ::  Int
     maskcache   ::  Dict
-    box         ::  BBox2{T}
+    box         ::  Domain
 end
 
-function JuliaSet(c = -0.122565+0.744866im, maxiter = 1000)
-    box = BBox(-0.2, 1.2, -0.4, 0.4)
+function juliaset(c = -0.122565+0.744866im, maxiter = 1000)
+    box = rectangle(-0.2, 1.2, -0.4, 0.4)
 
     mask1 = computejuliasetgrid(equispaced_grid(box, (100,100)), c, maxiter)
     mask2 = computejuliasetgrid(equispaced_grid(box, (200,200)), c, maxiter)

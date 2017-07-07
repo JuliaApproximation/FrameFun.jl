@@ -90,7 +90,7 @@ function test_1d_cases()
 
     @testset "result" for ELT in (Float32,Float64),
             Basis in (FourierBasis, ChebyshevBasis),
-            D in [interval(ELT), interval(ELT, -1.5, 0.7), interval(ELT, -1.5,-0.5)+interval(ELT, 0.5,1.5)],
+            D in [interval(ELT, -1.5, 0.7), interval(ELT, -1.5,-0.5)+interval(ELT, 0.5,1.5)],
             solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
         println()
         println("Testing \t solver = $solver, \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = $ELT ")
@@ -226,13 +226,12 @@ if include_3d_tests
     test_3d_cases()
 end
 
-delimit("Random circles")
-dom = FE.randomcircles(10)
-#    b = FourierBasis(21) ⊗ FourierBasis(21)
-b = FourierBasis(21) ⊗ ChebyshevBasis(21)
-f(x,y) = cos(20*x+22*y)
-@time F = Fun(f,b,dom)
-show_timings(F)
+## delimit("Random circles")
+## dom = FE.randomcircles(10)
+## #    b = FourierBasis(21) ⊗ FourierBasis(21)
+## b = FourierBasis(31) ⊗ ChebyshevBasis(31)
+## f(x,y) = cos(20*x+22*y)
+## @time F = Fun(f,b,dom,verbose=true)
 
 if show_mv_times
     println("Total bytes in MV products:\t$total_mv_allocs")

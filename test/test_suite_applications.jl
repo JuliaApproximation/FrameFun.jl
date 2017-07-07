@@ -59,7 +59,7 @@ end
 
 
 function test_differential_equations_1d()
-    @testset "diff 1D" for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
+    @testset "diff 1D dirichlet" for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
         B = FourierBasis(101,-1,1)
         Dom = interval(-0.5,0.5)
         # Set up Boundary conditions
@@ -76,10 +76,28 @@ function test_differential_equations_1d()
         error = abserror(f,F'')
         @test (error < sqrt(eps(numtype(B)))*100)
     end
+    @testset "diff 1D mixed" for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
+        B = FourierBasis(101,-2,2)
+        Dom = interval(-1.0,1.0)
+        # Set up Boundary conditions
+        BC1 = DirichletBC(x->0, interval(-2.0,0.0))
+        BC2 = NeumannBC(x->0, interval(-2.0,0.0))
+        # Set up Differential equation
+        f(x) = x
+        Diff = differentiation_operator(B)^2
+        DE = DiffEquation(B,Dom,Diff, f, (BC1,BC2))
+        # Actually solve the differential equation
+        F = solve(DE, solver=solver)
+        sol(x) = x^3/6 - x/2 -1/3
+        error = abserror(sol,F)
+        @test (error < sqrt(eps(numtype(B)))*10)
+        error = abserror(f,F'')
+        @test (error < sqrt(eps(numtype(B)))*100)
+    end
 end
 
 function test_differential_equations_2d()
-    @testset "diff 2D" for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
+    @testset "diff 2D dirichlet" for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
         B = FourierBasis(11,-1,1)⊗FourierBasis(11,-1,1)
         Dom = disk(0.8)
         # Set up Boundary conditions
@@ -93,6 +111,24 @@ function test_differential_equations_2d()
         F = solve(DE, solver=solver)
         error = abserror(df,F)
         @test (error < 0.3)
+        error = abserror(f,∂x(∂x(F))+∂y(∂y(F)))
+        @test (error < 0.3)
+    end
+    @testset "diff 2D Neumann" for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
+        B = FourierBasis(11,-1,1)⊗FourierBasis(11,-1,1)
+        Dom = disk(0.8)
+        # Set up Boundary conditions
+        df = (x,y)->x-y
+        BC = NeumannBC(df,euclideanspace(Val{2}()))
+        # Set up Differential equation
+        f(x,y) = 0
+        Diff = differentiation_operator(B,(2,0))+differentiation_operator(B,(0,2))
+        DE = DiffEquation(B,Dom,Diff, f, (BC,))
+        # Actually solve the differential equation
+        F = solve(DE, solver=solver)
+        # We should find a way to check the boundary condition more easily
+        berror = sum(abs.(element(operator(DE),2,1)*coefficients(Diff*F)-element(FrameFun.rhs(DE),2)))/length(element(FrameFun.rhs(DE),2))
+        @test berror < 0.6
         error = abserror(f,∂x(∂x(F))+∂y(∂y(F)))
         @test (error < 0.3)
     end
