@@ -2,8 +2,18 @@ using BasisFunctions
 using FrameFun
 using Base.Test
 
+function delimit(s::AbstractString)
+    println()
+    println("############")
+    println("# ",s)
+    println("############")
+end
 
-for basistype in (ChebyshevBasis, FourierBasis, BSplineTranslatesBasis), T in (Float32, Float64,)
+delimit("Continuous solver")
+
+frameF = 0
+basisF = 0
+@testset for basistype in (ChebyshevBasis, FourierBasis, BSplineTranslatesBasis), T in (Float32, Float64,)
   tol = sqrt(eps(T))
 
   B = instantiate(basistype,11, T)
@@ -33,7 +43,7 @@ for basistype in (ChebyshevBasis, FourierBasis, BSplineTranslatesBasis), T in (F
   # println(norm(frameFcoef-basisFcoef))
 end
 
-using Plots
-
-plot(frameF)
-plot!(basisF, linestyle=:dot, ylims=[-1,10])
+# using Plots
+#
+# plot(frameF)
+# plot!(basisF, linestyle=:dot, linewidth=10, color=:red)

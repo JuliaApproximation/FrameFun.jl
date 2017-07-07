@@ -12,15 +12,6 @@ end
     plot_ext ? (SetExpansion(basis(F),coefficients(F)), target) : (expansion(F), target)
 end
 
-@recipe function f(dom::Domain2d; n=300)
-    seriescolor --> :blues
-    seriestype --> :heatmap
-    B = boundingbox(dom)
-    grid = equispaced_aspect_grid(B,n)
-    Z = indomain_broadcast(grid, dom)
-    grid, 1./Z
-end
-
 # Postprocessing when the set is a frame: set values outside the domain to NaN
 function postprocess(D::Domain, grid, vals, value=NaN)
     mgrid = subgrid(grid, D)
@@ -50,3 +41,12 @@ plotgrid(B::ExtensionFrame, n) = plotgrid(basis(B),n)
     plotdata = distance ? dist.(grid,dom) : in.(grid,dom)
     xrange,yrange,plotdata
 end
+
+# @recipe function f(dom::Domain2d; n=300)
+#     seriescolor --> :blues
+#     seriestype --> :heatmap
+#     B = boundingbox(dom)
+#     grid = equispaced_aspect_grid(B,n)
+#     Z = indomain_broadcast(grid, dom)
+#     grid, 1./Z
+# end
