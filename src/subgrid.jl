@@ -8,26 +8,26 @@ A MaskedGrid is a subgrid of another grid that is defined by a mask.
 The mask is true or false for each point in the supergrid. The set of points
 for which it is true make up the MaskedGrid.
 """
-struct MaskedGrid{G,M,I,N,T} <: AbstractSubGrid{N,T}
+struct MaskedGrid{G,M,I,T} <: AbstractSubGrid{T}
     supergrid   ::	G
     mask	    ::	M
     indices     ::  Vector{I}
     M           ::	Int				# Total number of points in the mask
 
-    MaskedGrid{G,M,I,N,T}(supergrid::AbstractGrid{N,T}, mask, indices) where {G,M,I,N,T} =
+    MaskedGrid{G,M,I,T}(supergrid::AbstractGrid{T}, mask, indices) where {G,M,I,T} =
         new(supergrid, mask, indices, sum(mask))
 end
 # TODO: In MaskedGrid, perhaps we should not be storing pointers to the points of the underlying grid, but
 # rather the points themselves. In that case we wouldn't need to specialize on the type of grid (parameter G can go).
 
-function MaskedGrid{N,T}(supergrid::AbstractGrid{N,T}, mask, indices)
+function MaskedGrid(supergrid::AbstractGrid{T}, mask, indices) where {T}
 	@assert size(supergrid) == size(mask)
 
-	MaskedGrid{typeof(supergrid),typeof(mask),eltype(indices),N,T}(supergrid, mask, indices)
+	MaskedGrid{typeof(supergrid),typeof(mask),eltype(indices),T}(supergrid, mask, indices)
 end
 
 # These are for the assignment to indices in the function below.
-convert{N}(::Type{NTuple{N,Int}},i::CartesianIndex{N}) = ntuple(k->i[k],N)
+convert(::Type{NTuple{N,Int}},i::CartesianIndex{N}) where {N} = ntuple(k->i[k],N)
 
 function MaskedGrid(supergrid::AbstractGrid, domain::Domain)
     mask = in.(supergrid, domain)
@@ -143,17 +143,18 @@ function midpoint(v1, v2, dom::Domain, tol)
     end
     mid
 end
+
 ## Avoid ambiguity (because everything >=2D is tensor but 1D is not)
-function boundary{TG,T}(g::ProductGrid{TG,1,T},dom::Domain1d)
+function boundary{TG,T}(g::ProductGrid{TG,T},dom::Domain1d)
     println("This method being called means there is a 1D ProductGrid.")
 end
 
-function boundary{G,M}(g::MaskedGrid{G,M,1},dom::Domain1d)
+function boundary{G,M}(g::MaskedGrid{G,M},dom::Domain1d)
   # TODO merge supergrid?
     boundary(grid(g),dom)
 end
 
-function boundary{TG,N,T}(g::ProductGrid{TG,N,T},dom::EuclideanDomain{N},tol=1e-12)
+function boundary{TG,N,T}(g::ProductGrid{TG,T},dom::EuclideanDomain{N},tol=1e-12)
     # Initialize neighbours
     neighbours=Array{Int64}(2^N-1,N)
     # adjust columns
@@ -167,7 +168,7 @@ function boundary{TG,N,T}(g::ProductGrid{TG,N,T},dom::EuclideanDomain{N},tol=1e-
     for j=1:2^N-1
         CartesianNeighbours[j]=CartesianIndex{N}(neighbours[j,:]...)
     end
-    midpoints = SVector{N,T}[]
+    midpoints = eltype(g)[]
     # for each element
     for i in eachindex(g)
         # for all neighbours
@@ -188,7 +189,7 @@ function boundary{TG,N,T}(g::ProductGrid{TG,N,T},dom::EuclideanDomain{N},tol=1e-
 end
 
 
-function boundary{T}(g::AbstractGrid{1,T},dom::Domain1d,tol=1e-12)
+function boundary(g::AbstractGrid{T},dom::Domain1d,tol=1e-12) where {T <: Number}
     midpoints = T[]
     # for each element
     for i in eachindex(g)
@@ -206,7 +207,7 @@ function boundary{T}(g::AbstractGrid{1,T},dom::Domain1d,tol=1e-12)
 end
 
 
-function boundary{G,M,N}(g::MaskedGrid{G,M,N},dom::EuclideanDomain{N})
+function boundary{G,M,N}(g::MaskedGrid{G,M},dom::EuclideanDomain{N})
     boundary(supergrid(g),dom)
 end
 

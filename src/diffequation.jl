@@ -45,7 +45,7 @@ function operator(BC :: DirichletBC, S::FunctionSet, G::AbstractGrid, D::Domain)
     grid_evaluation_operator(S,DiscreteGridSpace(G,eltype(S)),G)
 end
 
-function operator(BC :: NeumannBC, S::FunctionSet{2}, G::AbstractGrid{2}, D::Domain2d)
+function operator(BC :: NeumannBC, S::FunctionSet{2}, G::AbstractGrid, D::Domain2d)
     G = subgrid(G,BC.D)
     GE = grid_evaluation_operator(S,DiscreteGridSpace(G,eltype(S)),G)
     dx = Float64[]
@@ -59,7 +59,7 @@ function operator(BC :: NeumannBC, S::FunctionSet{2}, G::AbstractGrid{2}, D::Dom
     X + Y
 end
 
-function operator(BC :: NeumannBC, S::FunctionSet{1}, G::AbstractGrid{1}, D::Domain1d)
+function operator(BC :: NeumannBC, S::FunctionSet{1}, G::AbstractGrid1d, D::Domain1d)
     G = subgrid(G,BC.D)
     GE = grid_evaluation_operator(S,DiscreteGridSpace(G,eltype(S)),G)
     dx = Float64[]
@@ -139,4 +139,3 @@ function solve(D::DiffEquation, solver=FE_ProjectionSolver; options...)
     coef  = A * b
     SetFun(D.D, dest(A), Adiff*coef)
 end
-
