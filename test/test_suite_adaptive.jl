@@ -40,16 +40,12 @@ function test_function_space()
   @testset "Util functions" begin
     for n in 1:4
       S = FE.tensorproduct(FourierSpace(),n)
-      @test ndims(typeof(S)) == n
-      @test ndims(S) == n
-      @test numtype(S) == Float64
-      @test eltype(S) == Complex128
+      @test dimension(S) == n
+      @test rangetype(S) == Complex128
     end
-    @test eltype(promote_eltype(ChebyshevSpace(),Complex128)) == Complex128
-    @test eltype(promote_eltype(ChebyshevSpace(),Float32)) == Float64
-    @test eltype(promote_eltype(ChebyshevSpace(),Float64)) == Float64
-    @test promote(ChebyshevSpace(), ChebyshevSpace()) == (ChebyshevSpace(), ChebyshevSpace())
-    @test promote(ChebyshevSpace(), FourierSpace()) == (promote_eltype(ChebyshevSpace(),Complex128), FourierSpace())
+    @test domaintype(promote_domaintype(ChebyshevSpace(),Complex128)) == domaintype(promote_domaintype(ChebyshevBasis(11),Complex128))
+    @test domaintype(promote_domaintype(ChebyshevSpace(),Float32)) == domaintype(promote_domaintype(ChebyshevBasis(11),Float32))
+    @test domaintype(promote_domaintype(ChebyshevSpace(),Float64)) == domaintype(promote_domaintype(ChebyshevBasis(11),Float64))
   end
 end
 

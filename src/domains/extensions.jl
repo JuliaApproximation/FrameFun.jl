@@ -92,7 +92,7 @@ leftendpoint(box::ProductDomain) = SVector(map(leftendpoint,elements(box)))
 rightendpoint(box::ProductDomain) = SVector(map(rightendpoint,elements(box)))
 
 # TODO: improve when grids move into domains?
-equispaced_grid(d::Domain, ns) = cartesianproduct([PeriodicEquispacedGrid(ns[idx], leftendpoint(d)[idx], rightendpoint(d)[idx]) for idx = 1:ndims(boundingbox(d))]...)
+equispaced_grid(d::Domain, ns) = cartesianproduct([PeriodicEquispacedGrid(ns[idx], leftendpoint(d)[idx], rightendpoint(d)[idx]) for idx = 1:dimension(boundingbox(d))]...)
 
 function boundingbox(d::UnionDomain)
     left = SVector(minimum(hcat(map(leftendpoint,elements(d))...),2)...)
@@ -207,10 +207,3 @@ end
 ##########################################################################
 ### Assorted Domains
 ##########################################################################
-
-
-ndims(::Type{Domain{T}}) where {T} = ndims_type(T)
-ndims(::Type{D}) where {D <: Domain} = ndims(supertype(D))
-ndims(d::Domain) = ndims(typeof(d))
-ndims_type(::Type{SVector{N,T}}) where {N,T} = N
-ndims_type(::Type{T}) where {T <: Number} = 1

@@ -15,11 +15,11 @@
 
 
 function Fun(f::Function, basis::FunctionSet, domain::Domain; options...)
-    ELT = eltype(f, basis)
-    frame = extensionframe(domain, promote_eltype(basis, ELT))
-    A = approximation_operator(frame; options...)
+    ELT = real(rangetype(f, basis))
+    frame = extensionframe(domain, promote_domaintype(basis, ELT))
+    A = approximation_operator(span(frame); options...)
     coef = A * f
-    SetFun(domain, dest(A), coef)
+    SetFun(domain, set(dest(A)), coef)
 end
 
 function fe_problem(basis, domain, sampling_factor; options...)
@@ -29,14 +29,14 @@ end
 
 function fe_solver(basis, domain; options...)
     frame = ExtensionFrame(domain, basis)
-    approximation_operator(frame; options...)
+    approximation_operator(span(frame); options...)
 end
 
 # We assume f as a function is type stable.
-function eltype(f::Function, basis)
-    ELT = eltype(basis)
+function rangetype(f::Function, basis)
+    ELT = rangetype(basis)
     # We only test for the return type in zero
-    RT = typeof(f(fill(zero(ELT),ndims(basis))...))
+    RT = typeof(f(fill(zero(domaintype(basis)),dimension(basis))...))
     if (RT <: Complex)
         complex(ELT)
     else
@@ -44,10 +44,10 @@ function eltype(f::Function, basis)
     end
 end
 
-function oversampled_evaluation_operator(S::FunctionSet, D::Domain; sampling_factor=2, incboundary=false, options...)
-    B = primarybasis(S)
+function oversampled_evaluation_operator(S::Span, D::Domain; sampling_factor=2, incboundary=false, options...)
+    B = primaryspan(S)
     # Establish time domain grid
-    G, lB = oversampled_grid(D,B,sampling_factor)
+    G, lB = oversampled_grid(D,set(B),sampling_factor)
 
     op = grid_evaluation_operator(S,gridspace(B,G),G)
     # Add boundary points if necessary
@@ -58,14 +58,14 @@ function oversampled_evaluation_operator(S::FunctionSet, D::Domain; sampling_fac
     (op,length(lB))
 end
 
-function discrete_approximation_operator(set::ExtensionFrame; solver = default_frame_solver(domain(set), basis(set)), options...)
-    (op, scaling) = oversampled_evaluation_operator(basis(set),domain(set);options...)
+function discrete_approximation_operator(set::ExtensionSpan; solver = default_frame_solver(domain(set), basisspan(set)), options...)
+    (op, scaling) = oversampled_evaluation_operator(basisspan(set),domain(set);options...)
     solver(op, scaling; options...)
 end
 
-primarybasis(set::FunctionSet) = set
-function primarybasis(set::MultiSet)
-    elements(set)[findmax(map(length,elements(set)))[2]]
+primaryspan(span::Span) = span
+function primaryspan(span::BasisFunctions.MultiSetSpan)
+    elements(span)[findmax(map(length,elements(span)))[2]]
 end
 
 struct FE_BestSolver
@@ -117,15 +117,17 @@ function default_frame_n(domain::ProductDomain, basis)
     for i = 2:nb_elements(domain)
         s = [s; default_frame_n(element(domain,i), basis)...]
     end
-    s = round.(Int,s/ndims(domain))
+    s = round.(Int,s/dimension(domain))
     tuple(s...)
 end
 
 
-default_frame_T(domain::Domain{1}, basis) = 2.0
-default_frame_T{N}(domain::Domain{N}, basis) = ntuple(i->2.0,N)
+# default_frame_T(domain::Domain{1}, basis) = 2.0
+# default_frame_T{N}(domain::Domain{N}, basis) = ntuple(i->2.0,N)
 
 default_frame_solver(domain, basis) = FE_BestSolver
 
-default_frame_solver{N}(domain::Domain, basis::FunctionSet{N,BigFloat}) = FE_DirectSolver
-default_frame_solver{N}(domain::Domain, basis::FunctionSet{N,Complex{BigFloat}}) = FE_DirectSolver
+default_frame_solver(domain::Domain, basis::FunctionSet{SVector{N,BigFloat}}) where {N} = FE_DirectSolver
+default_frame_solver(domain::Domain, basis::FunctionSet{SVector{N,Complex{BigFloat}}}) where {N} = FE_DirectSolver
+default_frame_solver(domain::Domain, basis::FunctionSet{BigFloat}) = FE_DirectSolver
+default_frame_solver(domain::Domain, basis::FunctionSet{Complex{BigFloat}}) = FE_DirectSolver

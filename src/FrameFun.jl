@@ -19,7 +19,7 @@ import Base: +, *, /, ^, ==, |, &, -, \, <, <=, >, >=
 import Base: intersect, union, isapprox, setdiff, in
 
 # Arrays
-import Base: ndims, length, eltype, size, push!, similar
+import Base: length, eltype, size, push!, similar
 import Base: ctranspose, inv
 
 # Iteration and indexing
@@ -34,7 +34,7 @@ import Base: promote, promote_rule, convert, promote_eltype
 import Base: broadcast
 
 ## - Imports from Domains
-import Domains: indomain
+import Domains: indomain, dimension
 # - for intervals
 import Domains: leftendpoint, rightendpoint
 # - for mapped domains
@@ -46,7 +46,7 @@ import Domains: cartesianproduct, ×
 
 
 ## - Imports from BasisFunctions
-import BasisFunctions: src, dest, matrix, matrix!, apply!, apply_inplace!, numtype
+import BasisFunctions: src, dest, matrix, matrix!, apply!, apply_inplace!, dimension, rangetype, domaintype
 
 import BasisFunctions: tensorproduct, ⊗
 
@@ -64,7 +64,7 @@ import BasisFunctions: coefficients, set,
     extend, extension_size, extension_operator, restriction_operator,
     default_approximation_operator, has_extension, wrap_operator
 
-import BasisFunctions: set_promote_domaintype, superset, similar_set
+import BasisFunctions: superset, similar_set, promote_domaintype
 
 import BasisFunctions: eval_set_element, eval_element, eval_expansion,
     call_set_expansion, name, in_support

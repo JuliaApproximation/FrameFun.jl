@@ -6,33 +6,34 @@ abstract type AbstractFun end
 A SetFun corresponds to an expansion in a function set, but it adds a simple user
 interface for computing with functions.
 """
-struct SetFun{N,T} <: AbstractFun
+struct SetFun{T} <: AbstractFun
     expansion   ::  SetExpansion
 
-    SetFun{N,T}(e::SetExpansion) where {N,T} = new(e)
+    SetFun{T}(e::SetExpansion) where {T} = new(e)
 end
 
-SetFun(e::SetExpansion, args...) = SetFun{ndims(e),eltype(e)}(e, args...)
+SetFun(e::SetExpansion, args...) = SetFun{eltype(e)}(e, args...)
 
-SetFun{N,T}(frame::FunctionSet{N,T}, coefficients = zeros(frame), args...) =
-    SetFun{N,T}(SetExpansion(frame, coefficients), args...)
+SetFun{T}(frame::FunctionSet{T}, coefficients = zeros(frame), args...) =
+    SetFun{T}(SetExpansion(frame, coefficients), args...)
 
 SetFun(domain::Domain, basis::FunctionSet, args...) = SetFun(ExtensionFrame(domain, basis), args...)
 
-SetFun1d{T} = SetFun{1,T}
-SetFun2d{T} = SetFun{2,T}
-SetFun3d{T} = SetFun{3,T}
+# Warning: not all 2d function sets have SVector{2,T} type, they could have (S,T) type
+const SetFun1d{T <: Number} = SetFun{T}
+const SetFun2d{T} = SetFun{SVector{2,T}}
+const SetFun3d{T} = SetFun{SVector{3,T}}
 
 expansion(fun::SetFun) = fun.expansion
 
 Base.broadcast(fun::SetFun, x...) = broadcast(expansion(fun), x...)
 
-for op in (:set, :ndims, :coefficients, :eltype, :numtype, :length, :size)
+for op in (:set, :dimension, :coefficients, :eltype, :numtype, :length, :size)
     @eval $op(fun::SetFun) = $op(fun.expansion)
 end
 
 for op in (:ctranspose, :∫, :∂x, :∂y, :∂z, :∫∂x, :∫∂y, :∫∂z, :differentiate, :antidifferentiate)
-    @eval $op{N,T}(fun::SetFun{N,T}, args...) = SetFun{N,T}($op(fun.expansion, args...))
+    @eval $op{T}(fun::SetFun{T}, args...) = SetFun{T}($op(fun.expansion, args...))
 end
 
 for op in (:ExtensionFrame, :basis)
@@ -82,12 +83,12 @@ end
 show(io::IO, fun::SetFun) = show(io, fun, set(fun))
 
 function show(io::IO, fun::SetFun, set::FunctionSet)
-  println(io, "A ", ndims(fun), "-dimensional SetFun with ", length(coefficients(fun)), " degrees of freedom.")
+  println(io, "A ", dimension(fun), "-dimensional SetFun with ", length(coefficients(fun)), " degrees of freedom.")
   println(io, "Basis: ", name(set))
 end
 
 function show(io::IO, fun::SetFun, set::ExtensionFrame)
-    println(io, "A ", ndims(fun), "-dimensional SetFun with ", length(coefficients(fun)), " degrees of freedom.")
+    println(io, "A ", dimension(fun), "-dimensional SetFun with ", length(coefficients(fun)), " degrees of freedom.")
     println(io, "Basis: ", name(basis(set)))
     println(io, "Domain: ", domain(set))
 end
@@ -99,7 +100,7 @@ getindex(fun::SetFun, domain::Domain) = restrict(expansion(fun), domain)
 restrict(expansion::SetExpansion, domain::Domain) = _restrict(expansion, set(expansion), domain)
 
 function _restrict(expansion::SetExpansion, set::ExtensionFrame, domain1::Domain)
-    @assert ndims(set) == ndims(domain1)
+    @assert dimension(set) == dimension(domain1)
 
     domain2 = domain(set)
     newdomain = domain1 ∩ domain2
@@ -107,7 +108,7 @@ function _restrict(expansion::SetExpansion, set::ExtensionFrame, domain1::Domain
 end
 
 function _restrict(expansion::SetExpansion, set::FunctionSet, domain::Domain)
-    @assert ndims(set) == ndims(domain)
+    @assert dimension(set) == dimension(domain)
     # We should check here whether the given domain lies in the support of the set
     SetFun(domain, set, coefficients(expansion))
 end
@@ -131,7 +132,7 @@ function maxerror{N}(f::Function,F::SetFun{N};vals::Int=200)
 end
 
 function residual(f::Function, F::SetFun ;  options...)
-    op = oversampled_evaluation_operator(basis(F),domain(F); options...)[1]
+    op = oversampled_evaluation_operator(span(basis(F)),domain(F); options...)[1]
     rhs = project(dest(op),f)
     # There should be an easier way of getting the inverse of the normalization
     norm(op*coefficients(F)-rhs)

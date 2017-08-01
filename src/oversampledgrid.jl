@@ -9,7 +9,7 @@ oversampled_grid(set::ExtensionFrame, args...) =
 
 
 function oversampled_grid(domain, basis::BasisFunctions.FunctionSet, sampling_factor)
-    N = ndims(basis)
+    N = dimension(basis)
     n_goal = length(basis) * sampling_factor^N
     grid1 = BasisFunctions.grid(basis)
     grid2 = FrameFun.subgrid(grid1, domain)

@@ -18,9 +18,11 @@ end
 const ExtensionSpan{A,F <: ExtensionFrame} = Span{A,F}
 
 "The span of the basis of the given extension frame span."
-basisspan(s::ExtensionSpan) = Span(superset(s), coeftype(s))
+basisspan(s::ExtensionSpan) = Span(basis(s), coeftype(s))
+domain(s::ExtensionSpan) = domain(set(s))
+basis(s::ExtensionSpan) = basis(set(s))
 
-ExtensionFrame{T}(domain::Domain, basis::FuncionSet{T}) =
+ExtensionFrame{T}(domain::Domain, basis::FunctionSet{T}) =
     ExtensionFrame{T}(domain, basis)
 
 # superset is the function for DerivedSet's to obtain the underlying set
@@ -80,9 +82,9 @@ function extensionframe(domain::ProductDomain, basis::TensorProductSet)
     dc = 1
     for i = 1:nb_elements(domain)
         el = element(domain, i)
-        range = dc:dc+ndims(el)-1
+        range = dc:dc+dimension(el)-1
         push!(ExtensionFrames, ExtensionFrame(el, element(basis, range)))
-        dc += ndims(el)
+        dc += dimension(el)
     end
     tensorproduct(ExtensionFrames...)
 end

@@ -41,7 +41,7 @@ end
 default_cutoff(op::AbstractOperator) = 10^(4/5*log10(eps(real(eltype(op)))))
 function estimate_plunge_rank(op::AbstractOperator)
     nml=length(src(op))^2/length(dest(op))
-    N = ndims(src(op))
+    N = dimension(src(op))
     if N==1
         return min(round(Int, 9*log(nml)),length(src(op)))
     else

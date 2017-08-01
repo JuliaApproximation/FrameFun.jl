@@ -21,7 +21,7 @@
 function fun_simple(f::Function, set::FunctionSet, domain::Domain;
     no_checkpoints=200, max_logn_coefs=8, tol=NaN, print_error=false, options...)
   ELT = eltype(f, set)
-  N = ndims(set)
+  N = dimension(set)
   F = nothing
   # TODO Decide which is best
   # tol = default_cutoff(FE_DiscreteProblem(domain, set, 2; options...))
@@ -55,7 +55,7 @@ Base.isnan(::Tuple) = false
 function fun_optimal_N(f::Function, set::FunctionSet, domain::FrameFun.Domain;
     no_checkpoints=200, max_logn_coefs=9, tol=NaN, print_error=false, options...)
   ELT = eltype(f, set)
-  N = ndims(set)
+  N = dimension(set)
   F = nothing
   # TODO Decide which is best
   # tol = default_cutoff(FE_DiscreteProblem(domain, set, 2; options...))
@@ -140,14 +140,14 @@ for f in (:cos, :sin, :tan, :sinh, :cosh, :tanh,
 end
 
 # A FunConstructor approximates a function in a domain given a (function)space
-struct FunConstructor{N,T}
-  space   ::    FunctionSpace{N,T}
+struct FunConstructor{T}
+  space   ::    FunctionSpace{T}
   domain  ::    Domain
 
-  FunConstructor{N,T}(space::FunctionSpace, domain::Domain) where {N,T} = new(space, domain)
+  FunConstructor{T}(space::FunctionSpace, domain::Domain) where {T} = new(space, domain)
 end
 
-FunConstructor{N,T}(space::FunctionSpace{N,T}, domain::Domain) = FunConstructor{N,T}(space, domain)
+FunConstructor(space::FunctionSpace{T}, domain::Domain) where {T} = FunConstructor{T}(space, domain)
 
 domain(constructor::FunConstructor) = constructor.domain
 space(constructor::FunConstructor) = constructor.space

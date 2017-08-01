@@ -22,9 +22,9 @@ basisF = 0
   frame = extensionframe(B,D)
   f = x->B[1](x)
 
-  frameop = approximation_operator(frame; discrete=false, abstol=tol)
+  frameop = approximation_operator(span(frame); discrete=false, abstol=tol)
   # framopmatrix = matrix(frameop)
-  basisop = approximation_operator(B; discrete=false, abstol=tol)
+  basisop = approximation_operator(span(B); discrete=false, abstol=tol)
   # basisopmatrix = matrix(basisop)
 
   framesol = *(frameop,f; discrete=false, abstol=tol)
