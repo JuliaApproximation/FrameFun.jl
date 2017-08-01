@@ -8,22 +8,22 @@ A MaskedGrid is a subgrid of another grid that is defined by a mask.
 The mask is true or false for each point in the supergrid. The set of points
 for which it is true make up the MaskedGrid.
 """
-struct MaskedGrid{G,M,I,N,T} <: AbstractSubGrid{N,T}
+struct MaskedGrid{G,M,I,T} <: AbstractSubGrid{T}
     supergrid   ::	G
     mask	    ::	M
     indices     ::  Vector{I}
     M           ::	Int				# Total number of points in the mask
 
-    MaskedGrid{G,M,I,N,T}(supergrid::AbstractGrid{N,T}, mask, indices) where {G,M,I,N,T} =
+    MaskedGrid{G,M,I,T}(supergrid::AbstractGrid{T}, mask, indices) where {G,M,I,T} =
         new(supergrid, mask, indices, sum(mask))
 end
 # TODO: In MaskedGrid, perhaps we should not be storing pointers to the points of the underlying grid, but
 # rather the points themselves. In that case we wouldn't need to specialize on the type of grid (parameter G can go).
 
-function MaskedGrid{N,T}(supergrid::AbstractGrid{N,T}, mask, indices)
+function MaskedGrid{T}(supergrid::AbstractGrid{T}, mask, indices)
 	@assert size(supergrid) == size(mask)
 
-	MaskedGrid{typeof(supergrid),typeof(mask),eltype(indices),N,T}(supergrid, mask, indices)
+	MaskedGrid{typeof(supergrid),typeof(mask),eltype(indices),T}(supergrid, mask, indices)
 end
 
 # These are for the assignment to indices in the function below.

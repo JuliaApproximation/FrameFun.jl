@@ -5,18 +5,23 @@ An ExtensionFrame is the restriction of a basis to a subset of its domain. This
 results in a frame that implicitly represents extensions of functions on the
 smaller set to the larger set.
 """
-struct ExtensionFrame{N,T} <: DerivedSet{N,T}
+struct ExtensionFrame{T} <: DerivedSet{T}
     domain      ::  Domain
-    basis       ::  FunctionSet{N,T}
+    basis       ::  FunctionSet{T}
 
-    function ExtensionFrame{N,T}(domain::Domain, basis::FunctionSet) where {N,T}
+    function ExtensionFrame{T}(domain::Domain, basis::FunctionSet) where {T}
         @assert is_basis(basis)
         new(domain, basis)
     end
 end
 
-ExtensionFrame{N,T}(domain::Domain, basis::FunctionSet{N,T}) =
-    ExtensionFrame{N,T}(domain, basis)
+const ExtensionSpan{A,F <: ExtensionFrame} = Span{A,F}
+
+"The span of the basis of the given extension frame span."
+basisspan(s::ExtensionSpan) = Span(superset(s), coeftype(s))
+
+ExtensionFrame{T}(domain::Domain, basis::FuncionSet{T}) =
+    ExtensionFrame{T}(domain, basis)
 
 # superset is the function for DerivedSet's to obtain the underlying set
 superset(f::ExtensionFrame) = f.basis
@@ -88,16 +93,16 @@ extensionframe(basis::FunctionSet, domain::Domain) = extensionframe(domain, basi
 left(d::ExtensionFrame, x...) = leftendpoint(domain(d))
 right(d::ExtensionFrame, x...) = rightendpoint(domain(d))
 
-DualGram(f::ExtensionFrame; options...) = DualGram(basis(f); options...)*Gram(f; options...)*DualGram(basis(f); options...)
+DualGram(f::ExtensionSpan; options...) = DualGram(basisspan(f); options...)*Gram(f; options...)*DualGram(basisspan(f); options...)
 
-MixedGram(f::ExtensionFrame; options...) = DualGram(basis(f); options...)*Gram(f; options...)
+MixedGram(f::ExtensionSpan; options...) = DualGram(basisspan(f); options...)*Gram(f; options...)
 
-DiscreteDualGram(f::ExtensionFrame; oversampling=BasisFunctions.default_oversampling(f)) = DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))*DiscreteGram(f; oversampling=oversampling)*DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))
+DiscreteDualGram(f::ExtensionSpan; oversampling=BasisFunctions.default_oversampling(set(f))) = DiscreteDualGram(basisspan(f); oversampling=BasisFunctions.basis_oversampling(set(f), oversampling))*DiscreteGram(f; oversampling=oversampling)*DiscreteDualGram(basisspan(f); oversampling=BasisFunctions.basis_oversampling(set(f), oversampling))
 
-DiscreteMixedGram(f::ExtensionFrame; oversampling=BasisFunctions.default_oversampling(f)) = DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))*DiscreteGram(f; oversampling=oversampling)
+DiscreteMixedGram(f::ExtensionSpan; oversampling=BasisFunctions.default_oversampling(set(f))) = DiscreteDualGram(basisspan(f); oversampling=BasisFunctions.basis_oversampling(set(f), oversampling))*DiscreteGram(f; oversampling=oversampling)
 
-BasisFunctions.discrete_dual_evaluation_operator(set::ExtensionFrame; oversampling=1, options...) =
-    BasisFunctions.grid_evaluation_operator(set, gridspace(set, BasisFunctions.oversampled_grid(set, oversampling)), BasisFunctions.oversampled_grid(set, oversampling); options...)*DiscreteDualGram(basis(set); oversampling=BasisFunctions.basis_oversampling(set, oversampling))
+BasisFunctions.discrete_dual_evaluation_operator(span::ExtensionSpan; oversampling=1, options...) =
+    BasisFunctions.grid_evaluation_operator(span, gridspace(span, BasisFunctions.oversampled_grid(set(span), oversampling)), BasisFunctions.oversampled_grid(set(span), oversampling); options...)*DiscreteDualGram(basisspan(span); oversampling=BasisFunctions.basis_oversampling(set(span), oversampling))
 
 
 import BasisFunctions: dot

@@ -64,7 +64,7 @@ import BasisFunctions: coefficients, set,
     extend, extension_size, extension_operator, restriction_operator,
     default_approximation_operator, has_extension, wrap_operator
 
-import BasisFunctions: set_promote_eltype, superset, similar_set
+import BasisFunctions: set_promote_domaintype, superset, similar_set
 
 import BasisFunctions: eval_set_element, eval_element, eval_expansion,
     call_set_expansion, name, in_support
@@ -78,6 +78,8 @@ import BasisFunctions: show_setexpansion
 import BasisFunctions: postprocess, plotgrid
 
 import BasisFunctions: flatten
+
+import BasisFunctions: span, coefficient_type, coeftype, similar_span
 
 # about subgrids
 import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
