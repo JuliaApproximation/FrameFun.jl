@@ -130,4 +130,4 @@ dot(span::Span, domain::Interval, f1::Function, f2::Function; options...) =
 #     dot(set, firstelement(domain), f1, f2; options...) +
 #     dot(set, secondelement(domain), f1, f2; options...)
 
-continuous_approximation_operator(frame::ExtensionFrame; solver = ContinuousDirectSolver, options...) = solver(frame; options...)
+continuous_approximation_operator(span::ExtensionSpan; solver = ContinuousDirectSolver, options...) = solver(span; options...)

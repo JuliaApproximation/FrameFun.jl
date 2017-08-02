@@ -36,7 +36,7 @@ function apply!(s::FE_DirectSolver, coef_dest, coef_src)
 end
 
 immutable ContinuousDirectSolver{T} <: AbstractOperator{T}
-  src                     :: FunctionSet
+  src                     :: Span
   mixedgramfactorization  :: Factorization
   normalizationofb        :: AbstractOperator
   scratch                 :: Array{T,1}
@@ -53,7 +53,7 @@ function apply!(s::ContinuousDirectSolver, coef_dest, coef_src)
 end
 
 immutable ContinuousTruncatedSolver{T} <: AbstractOperator{T}
-  src                     :: FunctionSet
+  src                     :: Span
   mixedgramsvd            :: AbstractOperator
   normalizationofb        :: AbstractOperator
   scratch                 :: Array{T,1}

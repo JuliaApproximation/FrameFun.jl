@@ -15,10 +15,10 @@
 
 
 function Fun(f::Function, basis::FunctionSet, domain::Domain; options...)
-    ELT = real(rangetype(f, basis))
+    ELT = rangetype(f, basis)
 
-    frame = extensionframe(domain, promote_domainsubtype(basis, ELT))
-    A = approximation_operator(span(frame); options...)
+    frame = extensionframe(domain, promote_domainsubtype(basis, real(ELT)))
+    A = approximation_operator(span(frame,ELT); options...)
     coef = A * f
     SetFun(domain, set(dest(A)), coef)
 end

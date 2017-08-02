@@ -34,9 +34,9 @@ basisF = 0
   @test norm(framesol-basissol) < 10*tol
   # println(norm(framesol-basissol))
 
-  frameF = approximate(frame, f; discrete=false, abstol=tol)
+  frameF = approximate(span(frame), f; discrete=false, abstol=tol)
   frameFcoef = coefficients(frameF)
-  basisF = approximate(B, f; discrete=false, abstol=tol)
+  basisF = approximate(span(B), f; discrete=false, abstol=tol)
   basisFcoef = coefficients(basisF)
 
   @test norm(frameFcoef-basisFcoef) < 10*tol
