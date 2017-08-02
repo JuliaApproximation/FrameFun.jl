@@ -22,10 +22,10 @@ function in(g::AbstractGrid, d::FourierDomain)
 	map(d.relop, z)
 end
 
-(<)(f::SetFun{T}, a::Number) where {T} = FourierDomain{T}(f, x-> x < a)
-(<=)(f::SetFun{T}, a::Number) where {T} = FourierDomain{T}(f, x-> x <= a)
-(>)(f::SetFun{T}, a::Number) where {T} = FourierDomain{T}(f, x-> x > a)
-(>=)(f::SetFun{T}, a::Number) where {T} = FourierDomain{T}(f, x-> x >= a)
+(<)(f::SetFun{T}, a::Number) where {T} = FourierDomain{convert(SVector,T)}(f, x-> x < a)
+(<=)(f::SetFun{T}, a::Number) where {T} = FourierDomain{convert(SVector,T)}(f, x-> x <= a)
+(>)(f::SetFun{T}, a::Number) where {T} = FourierDomain{convert(SVector,T)}(f, x-> x > a)
+(>=)(f::SetFun{T}, a::Number) where {T} = FourierDomain{convert(SVector,T)}(f, x-> x >= a)
 
 boundingbox(d::FourierDomain) = boundingbox(domain(d.f))
 
@@ -53,9 +53,9 @@ function in(g::AbstractGrid, d::ComparisonDomain)
 	in(g,domain(d.f)) & in(g,domain(d.g)) & map(d.binop, z1, z2)
 end
 
-(<)(f::SetFun{T}, g::SetFun{T}) where {T} = ComparisonDomain{eltype(f)}(f, g, (x,y)-> x < y)
-(<=)(f::SetFun{T}, g::SetFun{T}) where {T} = ComparisonDomain{eltype(f)}(f, g, (x,y)-> x <= y)
-(>)(f::SetFun{T}, g::SetFun{T}) where {T} = ComparisonDomain{eltype(f)}(f, g, (x,y)-> x > y)
-(>=)(f::SetFun{T}, g::SetFun{T}) where {T} = ComparisonDomain{eltype(f)}(f, g, (x,y)-> x >= y)
+(<)(f::SetFun{T}, g::SetFun{T}) where {T} = ComparisonDomain{convert(SVector,T)}(f, g, (x,y)-> x < y)
+(<=)(f::SetFun{T}, g::SetFun{T}) where {T} = ComparisonDomain{convert(SVector,T)}(f, g, (x,y)-> x <= y)
+(>)(f::SetFun{T}, g::SetFun{T}) where {T} = ComparisonDomain{convert(SVector),T}(f, g, (x,y)-> x > y)
+(>=)(f::SetFun{T}, g::SetFun{T}) where {T} = ComparisonDomain{convert(SVector,T)}(f, g, (x,y)-> x >= y)
 
 boundingbox(d::ComparisonDomain) = boundingbox(domain(d.f))+boundingbox(domain(d.g))
