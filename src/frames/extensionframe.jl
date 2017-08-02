@@ -114,17 +114,17 @@ function native_nodes(basis::FunctionSet, domain::Interval)
   BasisFunctions.clip_and_cut(native_nodes(basis), leftendpoint(domain), rightendpoint(domain))
 end
 
-dot(frame::ExtensionFrame, f1::Function, f2::Function; options...)  =
-    dot(basis(frame), domain(frame), f1::Function, f2::Function; options...)
+dot(span::ExtensionSpan, f1::Function, f2::Function; options...)  =
+    dot(basisspan(span), domain(span), f1::Function, f2::Function; options...)
 
-dot(frame::ExtensionFrame, f1::Int, f2::Function; options...) =
-    dot(frame, x->eval_element(basis(frame), f1, x), f2; options...)
+dot(span::ExtensionSpan, f1::Int, f2::Function; options...) =
+    dot(span, x->eval_element(basis(span), f1, x), f2; options...)
 
-dot(frame::ExtensionFrame, f1::Int, f2::Int; options...) =
-    dot(frame, f1 ,x->eval_element(basis(frame), f2, x); options...)
+dot(span::ExtensionSpan, f1::Int, f2::Int; options...) =
+    dot(span, f1 ,x->eval_element(basis(span), f2, x); options...)
 
-dot(set::FunctionSet, domain::Interval, f1::Function, f2::Function; options...) =
-    dot(set, f1, f2, native_nodes(set, domain); options...)
+dot(span::Span, domain::Interval, f1::Function, f2::Function; options...) =
+    dot(span, f1, f2, native_nodes(set(span), domain); options...)
 # # TODO now we assume that domainunion contains sections that do not overlap
 # dot(set::FunctionSet, domain::DomainUnion, f1::Function, f2::Function; options...) =
 #     dot(set, firstelement(domain), f1, f2; options...) +

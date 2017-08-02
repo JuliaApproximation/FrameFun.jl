@@ -65,8 +65,8 @@ function test_subgrids()
         end
         @test cnt == length(subgrid)
 
-        space = DiscreteGridSpace(grid)
-        subspace = DiscreteGridSpace(subgrid)
+        space = gridspace(grid)
+        subspace = gridspace(subgrid)
         R = restriction_operator(space, subspace)
         E = extension_operator(subspace, space)
 
@@ -97,7 +97,7 @@ function test_randomgrids()
         d = disk()
         g = randomgrid(d, 10)
         @test length(g) == 10
-        @test length(eltype(g)) == ndims(d)
+        @test length(eltype(g)) == dimension(d)
         @test reduce(&, [x ∈ d for x in g])
 
         g2 = randomgrid(disk(BigFloat), 10)
@@ -110,7 +110,7 @@ function test_randomgrids()
 
         box1 = rectangle(0.0, 1.0, 0.0, 1.0)
         p1 = randompoint(box1)
-        @test length(p1) == ndims(box1)
+        @test length(p1) == dimension(box1)
         @test p1 ∈ box1
         box2 = interval(0.0, 1.0)
         p2 = randompoint(box2)
