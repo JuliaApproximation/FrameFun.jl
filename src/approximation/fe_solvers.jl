@@ -61,8 +61,10 @@ end
 
 dest(s::ContinuousTruncatedSolver) = s.src
 
-ContinuousTruncatedSolver(frame::ExtensionFrame; cutoff=1e-5, options...) =
-    ContinuousTruncatedSolver{eltype(frame)}(frame, FrameFun.TruncatedSvdSolver(MixedGram(frame; options...); cutoff=cutoff), DualGram(basis(frame); options...), zeros(eltype(frame),length(frame)))
+function ContinuousTruncatedSolver(frame::ExtensionFrame; cutoff=1e-5, fullsvd=false, options...)
+    fullsvd? solver = FrameFun.ExactTruncatedSvdSolver: solver = FrameFun.TruncatedSvdSolver
+    ContinuousTruncatedSolver{eltype(frame)}(frame, solver(MixedGram(frame; options...); cutoff=cutoff, options...), DualGram(basis(frame); options...), zeros(eltype(frame),length(frame)))
+end
 
 function apply!(s::ContinuousTruncatedSolver, coef_dest, coef_src)
   apply!(s.normalizationofb, s.scratch, coef_src)
