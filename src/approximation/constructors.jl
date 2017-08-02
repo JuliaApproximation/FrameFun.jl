@@ -19,13 +19,12 @@
   The number of points is chosen adaptively.
 """
 function fun_simple(f::Function, set::FunctionSet, domain::Domain;
-    no_checkpoints=200, max_logn_coefs=8, tol=NaN, print_error=false, options...)
-  ELT = eltype(f, set)
+    no_checkpoints=200, max_logn_coefs=8, tol=1e-12, print_error=false, options...)
+  ELT = rangetype(f, set)
   N = dimension(set)
   F = nothing
   # TODO Decide which is best
   # tol = default_cutoff(FE_DiscreteProblem(domain, set, 2; options...))
-  isequal(tol,NaN) && (tol = 10*10^(4/5*log10(eps(numtype(set)))))
   rgrid = randomgrid(domain, no_checkpoints)
   error = Inf
   random_f=sample(rgrid, f, eltype(f(rgrid[1]...)))
@@ -53,13 +52,12 @@ Base.isnan(::Tuple) = false
   The number of points is chosen adaptively.
 """
 function fun_optimal_N(f::Function, set::FunctionSet, domain::FrameFun.Domain;
-    no_checkpoints=200, max_logn_coefs=9, tol=NaN, print_error=false, options...)
-  ELT = eltype(f, set)
+    no_checkpoints=200, max_logn_coefs=9, tol=1e-12, print_error=false, options...)
+  ELT = rangetype(f, set)
   N = dimension(set)
   F = nothing
   # TODO Decide which is best
   # tol = default_cutoff(FE_DiscreteProblem(domain, set, 2; options...))
-  isequal(tol,NaN) && (tol = 10*10^(4/5*log10(eps(numtype(set)))))
   rgrid = randomgrid(domain, no_checkpoints)
   error = Inf
   random_f=sample(rgrid, f, eltype(f(rgrid[1]...)))
@@ -113,8 +111,7 @@ end
   or at the maximum number of iterations.
 """
 function fun_greedy(f::Function, set::FunctionSet, domain::FrameFun.Domain;
-    max_logn_coefs = 7, tol = NaN, options...)
-    isequal(tol,NaN) && (tol = 10*10^(4/5*log10(eps(numtype(set)))))
+    max_logn_coefs = 7, tol = 1e-12, options...)
     init_n = 4
     set = resize(set,init_n)
     F = Fun(x->0, set, domain; options...)

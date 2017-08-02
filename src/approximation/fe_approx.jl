@@ -16,7 +16,8 @@
 
 function Fun(f::Function, basis::FunctionSet, domain::Domain; options...)
     ELT = real(rangetype(f, basis))
-    frame = extensionframe(domain, promote_domaintype(basis, ELT))
+
+    frame = extensionframe(domain, promote_domainsubtype(basis, ELT))
     A = approximation_operator(span(frame); options...)
     coef = A * f
     SetFun(domain, set(dest(A)), coef)
@@ -36,7 +37,7 @@ end
 function rangetype(f::Function, basis)
     ELT = rangetype(basis)
     # We only test for the return type in zero
-    RT = typeof(f(fill(zero(domaintype(basis)),dimension(basis))...))
+    RT = typeof(f(zero(GeometricSpace{domaintype(basis)})...))
     if (RT <: Complex)
         complex(ELT)
     else

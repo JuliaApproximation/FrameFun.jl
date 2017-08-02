@@ -64,7 +64,7 @@ import BasisFunctions: coefficients, set,
     extend, extension_size, extension_operator, restriction_operator,
     default_approximation_operator, has_extension, wrap_operator
 
-import BasisFunctions: superset, similar_set, promote_domaintype
+import BasisFunctions: superset, similar_set, promote_domaintype, promote_domainsubtype
 
 import BasisFunctions: eval_set_element, eval_element, eval_expansion,
     call_set_expansion, name, in_support

@@ -8,11 +8,9 @@ interface for computing with functions.
 """
 struct SetFun{T} <: AbstractFun
     expansion   ::  SetExpansion
-
-    SetFun{T}(e::SetExpansion) where {T} = new(e)
 end
 
-SetFun(e::SetExpansion, args...) = SetFun{eltype(e)}(e, args...)
+SetFun(e::SetExpansion, args...) = SetFun{domaintype(set(e))}(e, args...)
 
 SetFun{T}(frame::FunctionSet{T}, coefficients = zeros(frame), args...) =
     SetFun{T}(SetExpansion(frame, coefficients), args...)
@@ -80,7 +78,7 @@ end
 (fun::SetFun)(x...) = expansion(fun)(x...)
 
 
-show(io::IO, fun::SetFun) = show(io, fun, set(fun))
+# show(io::IO, fun::SetFun) = show(io, fun, set(fun))
 
 function show(io::IO, fun::SetFun, set::FunctionSet)
   println(io, "A ", dimension(fun), "-dimensional SetFun with ", length(coefficients(fun)), " degrees of freedom.")

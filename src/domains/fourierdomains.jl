@@ -53,9 +53,9 @@ function in(g::AbstractGrid, d::ComparisonDomain)
 	in(g,domain(d.f)) & in(g,domain(d.g)) & map(d.binop, z1, z2)
 end
 
-(<)(f::SetFun{T}, g::SetFun{T}) where {T} = ComparisonDomain{T}(f, g, (x,y)-> x < y)
-(<=)(f::SetFun{T}, g::SetFun{T}) where {T} = ComparisonDomain{T}(f, g, (x,y)-> x <= y)
-(>)(f::SetFun{T}, g::SetFun{T}) where {T} = ComparisonDomain{T}(f, g, (x,y)-> x > y)
-(>=)(f::SetFun{T}, g::SetFun{T}) where {T} = ComparisonDomain{T}(f, g, (x,y)-> x >= y)
+(<)(f::SetFun{T}, g::SetFun{T}) where {T} = ComparisonDomain{eltype(f)}(f, g, (x,y)-> x < y)
+(<=)(f::SetFun{T}, g::SetFun{T}) where {T} = ComparisonDomain{eltype(f)}(f, g, (x,y)-> x <= y)
+(>)(f::SetFun{T}, g::SetFun{T}) where {T} = ComparisonDomain{eltype(f)}(f, g, (x,y)-> x > y)
+(>=)(f::SetFun{T}, g::SetFun{T}) where {T} = ComparisonDomain{eltype(f)}(f, g, (x,y)-> x >= y)
 
 boundingbox(d::ComparisonDomain) = boundingbox(domain(d.f))+boundingbox(domain(d.g))

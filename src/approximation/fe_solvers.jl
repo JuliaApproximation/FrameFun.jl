@@ -44,8 +44,8 @@ end
 
 dest(s::ContinuousDirectSolver) = s.src
 
-ContinuousDirectSolver(frame::ExtensionFrame; options...) =
-    ContinuousDirectSolver{eltype(frame)}(frame, qrfact(matrix(MixedGram(frame; options...)),Val{true}), DualGram(basis(frame); options...), zeros(eltype(frame),length(frame)))
+ContinuousDirectSolver(frame::ExtensionSpan; options...) =
+    ContinuousDirectSolver{coeftype(frame)}(frame, qrfact(matrix(MixedGram(frame; options...)),Val{true}), DualGram(basisspan(frame); options...), zeros(coeftype(frame),length(frame)))
 
 function apply!(s::ContinuousDirectSolver, coef_dest, coef_src)
   apply!(s.normalizationofb, s.scratch, coef_src)
@@ -61,8 +61,8 @@ end
 
 dest(s::ContinuousTruncatedSolver) = s.src
 
-ContinuousTruncatedSolver(frame::ExtensionFrame; cutoff=1e-5, options...) =
-    ContinuousTruncatedSolver{eltype(frame)}(frame, FrameFun.TruncatedSvdSolver(MixedGram(frame; options...); cutoff=cutoff), DualGram(basis(frame); options...), zeros(eltype(frame),length(frame)))
+ContinuousTruncatedSolver(frame::ExtensionSpan; cutoff=1e-5, options...) =
+    ContinuousTruncatedSolver{coeftype(frame)}(frame, FrameFun.TruncatedSvdSolver(MixedGram(frame; options...); cutoff=cutoff), DualGram(basisspan(frame); options...), zeros(coeftype(frame),length(frame)))
 
 function apply!(s::ContinuousTruncatedSolver, coef_dest, coef_src)
   apply!(s.normalizationofb, s.scratch, coef_src)

@@ -52,7 +52,7 @@ struct TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
         Sinv = 1./S[1:maxind]
         y = zeros(ELT, size(USV[3],1))
         sy = zeros(ELT, maxind)
-        Wsrc = ELT <: Complex ? Cn{ELT}(size(random_matrix,2)) : Rn{ELT}(size(random_matrix,2))
+        Wsrc = Span(DiscreteSet(size(random_matrix,2)), ELT)
         Wdest = src(op)
         W = MatrixOperator(Wsrc, Wdest, random_matrix)
 
@@ -97,4 +97,3 @@ function apply!(s::TruncatedSvdSolver, coef_dest, coef_src)
     apply!(s.W, s.scratch_dest, s.y)
     delinearize_coefficients!(dest(s), coef_dest, s.scratch_dest)
 end
-
