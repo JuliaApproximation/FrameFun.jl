@@ -70,8 +70,8 @@ end
 
 # Delegate operator applications to the underlying expansion
 function (*)(op::AbstractOperator, fun::SetFun)
-    @assert src(op) == basis(set(fun))
-    SetFun(domain(fun),dest(op),op*coefficients(fun))
+    @assert src(op) == span(basis(set(fun)))
+    SetFun(domain(fun),set(dest(op)),op*coefficients(fun))
 end
 
 # Delegate all calling to the underlying expansion.

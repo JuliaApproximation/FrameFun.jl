@@ -19,10 +19,10 @@ struct FE_ProjectionSolver{ELT} <: FE_Solver{ELT}
     function FE_ProjectionSolver{ELT}(op::AbstractOperator, scaling; cutoff = default_cutoff(op), trunc = TruncatedSvdSolver, R = estimate_plunge_rank(op), verbose=false,options...) where ELT
         plunge_op = plunge_operator(op, scaling)
         TS = trunc(plunge_op*op; cutoff=cutoff, R=R, verbose=verbose, options...)
-        b = zeros(ELT, dest(plunge_op))
+        b = zeros(dest(plunge_op))
         blinear = zeros(ELT, length(dest(plunge_op)))
-        x1 = zeros(ELT, src(op))
-        x2 = zeros(ELT, src(op))
+        x1 = zeros(src(op))
+        x2 = zeros(src(op))
         new(TS, op, plunge_op, b,blinear,x1,x2,scaling)
     end
 end
