@@ -66,8 +66,8 @@ function test_differential_equations_1d()
         BC = DirichletBC(x->0)
         # Set up Differential equation
         f(x) = x
-        Diff = differentiation_operator(B)^2
-        DE = DiffEquation(B,Dom,Diff, f, (BC,))
+        Diff = differentiation_operator(span(B))^2
+        DE = DiffEquation(span(B),Dom,Diff, f, (BC,))
         # Actually solve the differential equation
         F = solve(DE, solver=solver)
         sol(x) = x^3/6 - x/24

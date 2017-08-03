@@ -101,8 +101,8 @@ is_inplace(::IdxnScalingOperator) = true
 is_diagonal(::IdxnScalingOperator) = true
 
 ctranspose(op::IdxnScalingOperator) = DiagonalOperator(src(op), conj(diagonal(op)))
-function apply_inplace!(op::IdxnScalingOperator, destframe, src, coef_srcdest)
-    dest = set(destframe)
+function apply_inplace!(op::IdxnScalingOperator, destspan, srcspan, coef_srcdest)
+    dest = set(destspan)
     ELT = eltype(op)
     for i in eachindex(dest)
         coef_srcdest[i] *= op.scale(ELT(BasisFunctions.index(native_index(dest,i))))^op.order
@@ -110,7 +110,7 @@ function apply_inplace!(op::IdxnScalingOperator, destframe, src, coef_srcdest)
     coef_srcdest
 end
 
-function apply_inplace!(op::IdxnScalingOperator, destspan::Span{A,TensorProductSet{Tuple{TS1,TS2}}}, src, coef_srcdest) where {A,TS1,TS2}
+function apply_inplace!(op::IdxnScalingOperator, destspan::Span{A,SET}, srcspan, coef_srcdest) where {A,TS1,TS2, SET<:TensorProductSet{Tuple{TS1,TS2}}}
     dest = set(destspan)
     ELT = eltype(op)
     for i in eachindex(coef_srcdest)
