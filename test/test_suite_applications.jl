@@ -72,9 +72,9 @@ function test_differential_equations_1d()
         F = solve(DE, solver=solver)
         sol(x) = x^3/6 - x/24
         error = abserror(sol,F)
-        @test (error < sqrt(eps(numtype(B)))*10)
+        @test (error < sqrt(eps(real(rangetype(B))))*10)
         error = abserror(f,F'')
-        @test (error < sqrt(eps(numtype(B)))*100)
+        @test (error < sqrt(eps(real(rangetype(B))))*100)
     end
     @testset "diff 1D mixed" for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
         B = FourierBasis(101,-2,2)
@@ -90,9 +90,9 @@ function test_differential_equations_1d()
         F = solve(DE, solver=solver)
         sol(x) = x^3/6 - x/2 -1/3
         error = abserror(sol,F)
-        @test (error < sqrt(eps(numtype(B)))*10)
+        @test (error < sqrt(eps(real(rangetype(B))))*10)
         error = abserror(f,F'')
-        @test (error < sqrt(eps(numtype(B)))*100)
+        @test (error < sqrt(eps(real(rangetype(B))))*100)
     end
 end
 
@@ -143,7 +143,7 @@ function test_smoothing_1d()
         fscale(i) = 10.0^-4+abs(i)+abs(i)^2+abs(i)^3
         F = Fun(f,B,D;solver=FrameFun.FE_SmoothProjectionSolver,scale=fscale)
         # F = Fun(f,B,D;solver=FrameFun.FE_ProjectionSolver)
-        @test (abserror(f,F) < 100*sqrt(eps(numtype(B))))
+        @test (abserror(f,F) < 100*sqrt(eps(real(rangetype(B)))))
     end
 end
 
@@ -154,7 +154,7 @@ function test_smoothing_2d()
         f(x,y) = exp(x*y)
         fscale(i,j) = 10.0^-4+100*abs((i)^2+abs(j^2))
         F = Fun(f,B,D;solver=FrameFun.FE_SmoothProjectionSolver,scale=fscale)
-        @test (abserror(f,F) < 100*sqrt(sqrt(eps(numtype(B)))))
+        @test (abserror(f,F) < 100*sqrt(sqrt(eps(real(rangetype(B))))))
     end
 end
 

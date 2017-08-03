@@ -84,13 +84,13 @@ dc_index(b::FourierBasis) = 1
 
 # An index scaling operator, used to generate weights for the polynomial scaling algorithm.
 struct IdxnScalingOperator{ELT} <: AbstractOperator{ELT}
-    src     ::  FunctionSet
+    src     ::  Span
     order   ::  Int
     scale   ::  Function
 end
 
-IdxnScalingOperator(src::FunctionSet; order=1, scale = default_scaling_function) =
-    IdxnScalingOperator{eltype(src)}(src, order, scale)
+IdxnScalingOperator(span::Span; order=1, scale = default_scaling_function) =
+    IdxnScalingOperator{BasisFunctions.op_eltype(span,span)}(span, order, scale)
 
 dest(op::IdxnScalingOperator) = src(op)
 
@@ -101,7 +101,8 @@ is_inplace(::IdxnScalingOperator) = true
 is_diagonal(::IdxnScalingOperator) = true
 
 ctranspose(op::IdxnScalingOperator) = DiagonalOperator(src(op), conj(diagonal(op)))
-function apply_inplace!(op::IdxnScalingOperator, dest, src, coef_srcdest)
+function apply_inplace!(op::IdxnScalingOperator, destframe, src, coef_srcdest)
+    dest = set(destframe)
     ELT = eltype(op)
     for i in eachindex(dest)
         coef_srcdest[i] *= op.scale(ELT(BasisFunctions.index(native_index(dest,i))))^op.order
@@ -109,7 +110,8 @@ function apply_inplace!(op::IdxnScalingOperator, dest, src, coef_srcdest)
     coef_srcdest
 end
 
-function apply_inplace!{TS1,TS2}(op::IdxnScalingOperator, dest::TensorProductSet{Tuple{TS1,TS2}}, src, coef_srcdest)
+function apply_inplace!(op::IdxnScalingOperator, destspan::Span{A,TensorProductSet{Tuple{TS1,TS2}}}, src, coef_srcdest) where {A,TS1,TS2}
+    dest = set(destspan)
     ELT = eltype(op)
     for i in eachindex(coef_srcdest)
         ni = native_index(dest,i)
