@@ -105,8 +105,8 @@ function test_differential_equations_2d()
         BC = DirichletBC(df,euclideanspace(Val{2}()))
         # Set up Differential equation
         f(x,y) = 0
-        Diff = differentiation_operator(B,(2,0))+differentiation_operator(B,(0,2))
-        DE = DiffEquation(B,Dom,Diff, f, (BC,))
+        Diff = differentiation_operator(span(B),(2,0))+differentiation_operator(B,(0,2))
+        DE = DiffEquation(span(B),Dom,Diff, f, (BC,))
         # Actually solve the differential equation
         F = solve(DE, solver=solver)
         error = abserror(df,F)
@@ -122,8 +122,8 @@ function test_differential_equations_2d()
         BC = NeumannBC(df,euclideanspace(Val{2}()))
         # Set up Differential equation
         f(x,y) = 0
-        Diff = differentiation_operator(B,(2,0))+differentiation_operator(B,(0,2))
-        DE = DiffEquation(B,Dom,Diff, f, (BC,))
+        Diff = differentiation_operator(span(B),(2,0))+differentiation_operator(span(B),(0,2))
+        DE = DiffEquation(span(B),Dom,Diff, f, (BC,))
         # Actually solve the differential equation
         F = solve(DE, solver=solver)
         # We should find a way to check the boundary condition more easily
@@ -162,10 +162,10 @@ end
 test_smoothing_1d()
 
 test_smoothing_2d()
+warn("Differential equation tests not activated")
+# test_differential_equations_1d()
 
-test_differential_equations_1d()
-
-test_differential_equations_2d()
+# test_differential_equations_2d()
 
 
 
