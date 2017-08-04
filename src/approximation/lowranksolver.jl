@@ -98,3 +98,64 @@ function apply!(s::TruncatedSvdSolver, coef_dest, coef_src)
     delinearize_coefficients!(dest(s), coef_dest, s.scratch_dest)
 end
 
+
+"""
+A Truncated SVD solver storing a decomposition of an operator A.
+The cost is equal to the computation of the SVD of A.
+
+For tensor product operators it returns a decomposition of the linearized system
+"""
+struct ExactTruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
+    # Keep the original operator
+    op          ::  AbstractOperator
+    # Decomposition
+    Ut          ::  Array{ELT,2}
+    Sinv        ::  Array{ELT,1}
+    V          ::  Array{ELT,2}
+    # For storing intermediate results when applying
+    y           ::  Array{ELT,1}
+    sy          ::  Array{ELT,1}
+    scratch_src ::  Array{ELT,1}
+
+    function ExactTruncatedSvdSolver{ELT}(op::AbstractOperator; cutoff = default_cutoff(problem), verbose = false,options...) where ELT
+        C = matrix(op)
+        m = maximum(abs.(C))
+        USV = LAPACK.gesdd!('S',C)
+        S = USV[2]
+        maxind = findlast(S.>cutoff*m)
+        verbose && println("Solver truncated at singular value equal to ", S[maxind], " cutoff was ", cutoff, " and norm of A ", m)
+        Sinv = 1./S[1:maxind]
+        y = zeros(ELT, size(USV[3],1))
+        sy = zeros(ELT, maxind)
+
+        scratch_src = zeros(ELT, length(dest(op)))
+        new(op, USV[1][:,1:maxind]',Sinv,USV[3][1:maxind,:]',y,sy, scratch_src)
+    end
+end
+
+src(t::ExactTruncatedSvdSolver) = dest(t.op)
+dest(t::ExactTruncatedSvdSolver) = src(t.op)
+inv(t::ExactTruncatedSvdSolver) = t.op
+
+ExactTruncatedSvdSolver(op::AbstractOperator; options...) =
+    ExactTruncatedSvdSolver{eltype(op)}(op::AbstractOperator; options...)
+
+# We don't need to (de)linearize coefficients when they are already vectors
+function apply!(s::ExactTruncatedSvdSolver, coef_dest::Vector, coef_src::Vector)
+    # Applying the truncated SVD to P*Rhs
+    A_mul_B!(s.sy, s.Ut, coef_src)
+    for i =1:length(s.sy)
+        s.sy[i]=s.sy[i]*s.Sinv[i]
+    end
+    A_mul_B!(coef_dest, s.V, s.sy)
+end
+
+function apply!(s::ExactTruncatedSvdSolver, coef_dest, coef_src)
+    linearize_coefficients!(src(s), s.scratch_src, coef_src)
+    A_mul_B!(s.sy, s.Ut, s.scratch_src)
+    for i =1:length(s.sy)
+        s.sy[i]=s.sy[i]*s.Sinv[i]
+    end
+    A_mul_B!(s.y, s.V, s.sy)
+    delinearize_coefficients!(dest(s), coef_dest, s.y)
+end

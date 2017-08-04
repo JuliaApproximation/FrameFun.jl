@@ -103,9 +103,8 @@ BasisFunctions.discrete_dual_evaluation_operator(set::ExtensionFrame; oversampli
 import BasisFunctions: dot
 import BasisFunctions: native_nodes
 
-function native_nodes(basis::FunctionSet, domain::Interval)
+native_nodes(basis::FunctionSet, domain::Interval) =
   BasisFunctions.clip_and_cut(native_nodes(basis), leftendpoint(domain), rightendpoint(domain))
-end
 
 dot(frame::ExtensionFrame, f1::Function, f2::Function; options...)  =
     dot(basis(frame), domain(frame), f1::Function, f2::Function; options...)
@@ -114,7 +113,7 @@ dot(frame::ExtensionFrame, f1::Int, f2::Function; options...) =
     dot(frame, x->eval_element(basis(frame), f1, x), f2; options...)
 
 dot(frame::ExtensionFrame, f1::Int, f2::Int; options...) =
-    dot(frame, f1 ,x->eval_element(basis(frame), f2, x); options...)
+    dot(frame, f1, x->eval_element(basis(frame), f2, x); options...)
 
 dot(set::FunctionSet, domain::Interval, f1::Function, f2::Function; options...) =
     dot(set, f1, f2, native_nodes(set, domain); options...)
@@ -124,3 +123,25 @@ dot(set::FunctionSet, domain::Interval, f1::Function, f2::Function; options...) 
 #     dot(set, secondelement(domain), f1, f2; options...)
 
 continuous_approximation_operator(frame::ExtensionFrame; solver = ContinuousDirectSolver, options...) = solver(frame; options...)
+
+#################
+## Gram operators extended
+#################
+dual(frame::ExtensionFrame; options...) = extensionframe(dual(basis(frame); options...), domain(frame))
+dot(frame1::ExtensionFrame, frame2::ExtensionFrame, f1::Int, f2::Int; options...) =
+    dot(frame1, frame2, x->eval_element(basis(frame1), f1, x), x->eval_element(basis(frame2), f2, x); options...)
+
+function dot(frame1::ExtensionFrame, frame2::ExtensionFrame, f1::Function, f2::Function; options...)
+    d1 = domain(frame1); d2 = domain(frame2)
+    @assert d1 == d2
+    dot(basis(frame1), basis(frame2), d1, f1, f2; options...)
+end
+
+dot(set1::FunctionSet, set2::FunctionSet, domain::Interval, f1::Function, f2::Function; options...) =
+    dot(set1, set2, f1, f2, native_nodes(set1, set2, domain); options...)
+
+function native_nodes(set1::FunctionSet, set2::FunctionSet, domain::Interval)
+    @assert left(set1) ≈ left(set2)
+    @assert left(set2) ≈ left(set2)
+    native_nodes(set1, domain)
+end
