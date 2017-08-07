@@ -60,7 +60,7 @@ end
 
 function discrete_approximation_operator(set::ExtensionFrame; solver = default_frame_solver(domain(set), basis(set)), options...)
     (op, scaling) = oversampled_evaluation_operator(basis(set),domain(set);options...)
-    solver(op, scaling; options...)
+    solver(op; scaling=scaling, options...)
 end
 
 primarybasis(set::FunctionSet) = set
@@ -71,7 +71,7 @@ end
 struct FE_BestSolver
 end
 
-function FE_BestSolver(op::AbstractOperator, scaling; verbose= false, options...)
+function FE_BestSolver(op::AbstractOperator; scaling=NaN, verbose= false, options...)
     if has_transform(src(op))
         R = estimate_plunge_rank(op)
         if R < size(op, 2)/2
@@ -79,7 +79,7 @@ function FE_BestSolver(op::AbstractOperator, scaling; verbose= false, options...
             FE_ProjectionSolver(op, scaling; verbose=verbose,options...)
         else
             verbose && println("Estimated plunge rank $R greater than $(size(op,2))/2 -> direct solver ")
-            FE_DirectSolver(op, scaling; verbose=verbose,options...)
+            FE_DirectSolver(op; verbose=verbose,options...)
         end
     else
         # Don't bother with a fast algorithm if there is no fast transform

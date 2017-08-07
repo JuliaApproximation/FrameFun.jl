@@ -6,7 +6,7 @@ If A is MxN, and of rank R, the cost of constructing this solver is MR^2.
 
 For tensor product operators it returns a decomposition of the linearized system
 """
-struct TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
+struct TruncatedSvdSolver{ELT} <: FE_Solver{ELT}
     # Keep the original operator
     op          ::  AbstractOperator
     # Random matrix
@@ -22,7 +22,7 @@ struct TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
     scratch_dest::  Array{ELT,1}
     smallcoefficients :: Bool
 
-    function TruncatedSvdSolver{ELT}(op::AbstractOperator; cutoff = default_cutoff(problem), R = 5, growth_factor = sqrt(2), verbose = false, smallcoefficients=false,options...) where ELT
+    function TruncatedSvdSolver{ELT}(op::AbstractOperator; cutoff = default_cutoff(op), R = 5, growth_factor = sqrt(2), verbose = false, smallcoefficients=false,options...) where ELT
         finished=false
         USV = ()
         R = min(R, size(op,2))
@@ -105,7 +105,7 @@ The cost is equal to the computation of the SVD of A.
 
 For tensor product operators it returns a decomposition of the linearized system
 """
-struct ExactTruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
+struct ExactTruncatedSvdSolver{ELT} <: FE_Solver{ELT}
     # Keep the original operator
     op          ::  AbstractOperator
     # Decomposition
@@ -117,7 +117,7 @@ struct ExactTruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
     sy          ::  Array{ELT,1}
     scratch_src ::  Array{ELT,1}
 
-    function ExactTruncatedSvdSolver{ELT}(op::AbstractOperator; cutoff = default_cutoff(problem), verbose = false,options...) where ELT
+    function ExactTruncatedSvdSolver{ELT}(op::AbstractOperator; cutoff = default_cutoff(op), verbose = false,options...) where ELT
         C = matrix(op)
         m = maximum(abs.(C))
         USV = LAPACK.gesdd!('S',C)

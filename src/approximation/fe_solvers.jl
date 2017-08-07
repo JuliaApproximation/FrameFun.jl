@@ -21,13 +21,13 @@ struct FE_DirectSolver{ELT} <: FE_Solver{ELT}
     op      ::  AbstractOperator
     QR      ::  Factorization
 
-    function FE_DirectSolver{ELT}(op::AbstractOperator,scaling) where ELT
+    function FE_DirectSolver{ELT}(op::AbstractOperator) where ELT
         new(op, qrfact(matrix(op),Val{true}))
     end
 end
 
-FE_DirectSolver{ELT}(op::AbstractOperator{ELT}, scaling; options...) =
-    FE_DirectSolver{eltype(op)}(op,scaling)
+FE_DirectSolver{ELT}(op::AbstractOperator{ELT}; options...) =
+    FE_DirectSolver{eltype(op)}(op)
 
 function apply!(s::FE_DirectSolver, coef_dest, coef_src)
     coef_dest[:] = s.QR \ coef_src

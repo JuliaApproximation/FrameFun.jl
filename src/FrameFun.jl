@@ -145,6 +145,7 @@ include("fun/funs.jl")
 
 
 include("approximation/fe_solvers.jl")
+include("approximation/continuous_solver.jl")
 include("approximation/lowranksolver.jl")
 include("approximation/fastsolver.jl")
 include("approximation/smoothsolver.jl")
