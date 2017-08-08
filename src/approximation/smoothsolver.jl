@@ -42,7 +42,7 @@ struct FE_SmoothProjectionSolver{ELT} <: FE_Solver{ELT}
 end
 
 
-FE_SmoothProjectionSolver(op::AbstractOperator, scaling; options...) =
+FE_SmoothProjectionSolver(op::AbstractOperator; scaling=nothing, options...) =
         FE_SmoothProjectionSolver{eltype(op)}(op, scaling; options...)
 
 function apply!(s::FE_SmoothProjectionSolver, destarg, src, coef_dest, coef_src)

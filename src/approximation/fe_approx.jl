@@ -76,7 +76,7 @@ function FE_BestSolver(op::AbstractOperator; scaling=NaN, verbose= false, option
         R = estimate_plunge_rank(op)
         if R < size(op, 2)/2
             verbose && println("Estimated plunge rank $R smaller than $(size(op,2))/2 -> projection solver ")
-            FE_ProjectionSolver(op, scaling; verbose=verbose,options...)
+            FE_ProjectionSolver(op; scaling=scaling, verbose=verbose,options...)
         else
             verbose && println("Estimated plunge rank $R greater than $(size(op,2))/2 -> direct solver ")
             FE_DirectSolver(op; verbose=verbose,options...)

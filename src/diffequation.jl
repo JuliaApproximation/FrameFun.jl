@@ -135,8 +135,7 @@ function solve(D::DiffEquation, solver=FE_ProjectionSolver; options...)
     Adiff= inv_diagonal(D.Diff)
     b = rhs(D; options...)
     OP = operator(D; options...)
-    A = solver(OP, length(lB); options...)
+    A = solver(OP; scaling=length(lB), options...)
     coef  = A * b
     SetFun(D.D, dest(A), Adiff*coef)
 end
-
