@@ -88,13 +88,13 @@ extensionframe(basis::FunctionSet, domain::Domain) = extensionframe(domain, basi
 left(d::ExtensionFrame, x...) = leftendpoint(domain(d))
 right(d::ExtensionFrame, x...) = rightendpoint(domain(d))
 
-DualGram(f::ExtensionFrame; options...) = DualGram(basis(f); options...)*Gram(f; options...)*DualGram(basis(f); options...)
+DualGram(f::ExtensionFrame; options...) = wrap_operator(f, f, DualGram(basis(f); options...)*Gram(f; options...)*DualGram(basis(f); options...))
 
-MixedGram(f::ExtensionFrame; options...) = DualGram(basis(f); options...)*Gram(f; options...)
+MixedGram(f::ExtensionFrame; options...) = wrap_operator(f, f, DualGram(basis(f); options...)*Gram(f; options...))
 
-DiscreteDualGram(f::ExtensionFrame; oversampling=BasisFunctions.default_oversampling(f)) = DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))*DiscreteGram(f; oversampling=oversampling)*DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))
+DiscreteDualGram(f::ExtensionFrame; oversampling=BasisFunctions.default_oversampling(f)) = wrap_operator(f, f, DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))*DiscreteGram(f; oversampling=oversampling)*DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling)))
 
-DiscreteMixedGram(f::ExtensionFrame; oversampling=BasisFunctions.default_oversampling(f)) = DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))*DiscreteGram(f; oversampling=oversampling)
+DiscreteMixedGram(f::ExtensionFrame; oversampling=BasisFunctions.default_oversampling(f)) = wrap_operator(f, f, DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))*DiscreteGram(f; oversampling=oversampling))
 
 BasisFunctions.discrete_dual_evaluation_operator(set::ExtensionFrame; oversampling=1, options...) =
     BasisFunctions.grid_evaluation_operator(set, gridspace(set, BasisFunctions.oversampled_grid(set, oversampling)), BasisFunctions.oversampled_grid(set, oversampling); options...)*DiscreteDualGram(basis(set); oversampling=BasisFunctions.basis_oversampling(set, oversampling))
