@@ -10,7 +10,7 @@ struct ExtensionFrame{N,T} <: DerivedSet{N,T}
     basis       ::  FunctionSet{N,T}
 
     function ExtensionFrame{N,T}(domain::Domain, basis::FunctionSet) where {N,T}
-        @assert is_basis(basis)
+        #@assert is_basis(basis)
         new(domain, basis)
     end
 end

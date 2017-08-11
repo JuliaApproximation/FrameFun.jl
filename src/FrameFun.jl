@@ -41,12 +41,14 @@ import Domains: leftendpoint, rightendpoint
 import Domains: domain, mapping
 # - for composite structures
 import Domains: element, elements, nb_elements
-# - for tensor products
-import Domains: tensorproduct, ⊗
+# - for cartesian products
+import Domains: cartesianproduct, ×
 
 
 ## - Imports from BasisFunctions
 import BasisFunctions: src, dest, matrix, matrix!, apply!, apply_inplace!, numtype
+
+import BasisFunctions: tensorproduct, ⊗
 
 import BasisFunctions: grid, left, right, stepsize, sample
 
