@@ -21,8 +21,9 @@ struct TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
     scratch_src ::  Array{ELT,1}
     scratch_dest::  Array{ELT,1}
     smallcoefficients :: Bool
+    smalltol :: Float64
 
-    function TruncatedSvdSolver{ELT}(op::AbstractOperator; cutoff = default_cutoff(problem), R = 5, growth_factor = sqrt(2), verbose = false, smallcoefficients=false,options...) where ELT
+    function TruncatedSvdSolver{ELT}(op::AbstractOperator; cutoff = default_cutoff(problem), R = 5, growth_factor = sqrt(2), verbose = false, smallcoefficients=false,smalltol=10,options...) where ELT
         finished=false
         USV = ()
         R = min(R, size(op,2))
@@ -58,7 +59,7 @@ struct TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
 
         scratch_src = zeros(ELT, length(dest(op)))
         scratch_dest = zeros(ELT, length(src(op)))
-        new(op, W, USV[1][:,1:maxind]',Sinv,USV[3][1:maxind,:]',y,sy, scratch_src, scratch_dest,smallcoefficients)
+        new(op, W, USV[1][:,1:maxind]',Sinv,USV[3][1:maxind,:]',y,sy, scratch_src, scratch_dest,smallcoefficients,smalltol)
     end
 end
 
@@ -77,7 +78,7 @@ function apply!(s::TruncatedSvdSolver, coef_dest::Vector, coef_src::Vector)
         s.sy[i]=s.sy[i]*s.Sinv[i]
     end
     if s.smallcoefficients
-        s.sy[abs(s.sy).>100*maximum(abs(coef_src))]=0
+        s.sy[abs.(s.sy).>s.smalltol*maximum(abs.(coef_src))]=0
     end
     A_mul_B!(s.y, s.V, s.sy)
 
@@ -91,7 +92,7 @@ function apply!(s::TruncatedSvdSolver, coef_dest, coef_src)
         s.sy[i]=s.sy[i]*s.Sinv[i]
     end
     if s.smallcoefficients
-        s.sy[abs(s.sy).>100*maximum(abs(coef_src))]=0
+        s.sy[abs.(s.sy).>s.smalltol*maximum(abs.(coef_src))]=0
     end
     A_mul_B!(s.y, s.V, s.sy)
     apply!(s.W, s.scratch_dest, s.y)
