@@ -132,6 +132,8 @@ export polardomain
 # from domains/characteristic.jl
 export characteristic
 
+export FeFun
+
 include("subgrid.jl")
 
 #include("domains/boundingbox.jl")
@@ -166,6 +168,8 @@ include("domains/polardomain.jl")
 
 include("randomgrid.jl")
 include("oversampledgrid.jl")
+
+include("fun/fefun.jl")
 
 
 end # module
