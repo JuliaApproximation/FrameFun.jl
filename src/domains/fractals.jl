@@ -48,16 +48,16 @@ function computemandelbrotgrid(grid, maxiter, threshold)
 end
 
 function indomain_broadcast(grid, m::Mandelbrot)
-    if (left(grid) ≈ leftendpoint(m.box)) && (right(grid) ≈ rightendpoint(m.box))
-        if haskey(m.maskcache, size(grid,1))
-            mask = m.maskcache[size(grid,1)]
-        else # compute mask and cache it
-            mask = computemandelbrotgrid(grid, m.maxiter, m.threshold)
-            m.maskcache[size(grid,1)] = mask
-        end
-    else # Don't cache if the grid doesn't match the bounding box
-        mask = computemandelbrotgrid(grid, m.maxiter, m.threshold)
-    end
+    # if (left(grid) ≈ leftendpoint(m.box)) && (right(grid) ≈ rightendpoint(m.box))
+    #     if haskey(m.maskcache, size(grid,1))
+    #         mask = m.maskcache[size(grid,1)]
+    #     else # compute mask and cache it
+    #         mask = computemandelbrotgrid(grid, m.maxiter, m.threshold)
+    #         m.maskcache[size(grid,1)] = mask
+    #     end
+    # else # Don't cache if the grid doesn't match the bounding box
+    mask = computemandelbrotgrid(grid, m.maxiter, m.threshold)
+    # end
     mask
 end
 
