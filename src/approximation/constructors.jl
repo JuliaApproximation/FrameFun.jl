@@ -47,60 +47,83 @@ function fun_simple(f::Function, set::FunctionSet, domain::Domain;
 end
 Base.isnan(::Tuple) = false
 
-"""
-  Create approximation to function with with a function set in a domain.
+function fun_optimal_N(f::Function, set::FunctionSet{N,T}, domain::Domain;
+  no_checkpoints=200, max_logn_coefs=8, cutoff=default_cutoff(T), tol=100*cutoff, verbose=false, adaptive_verbose = verbose, return_log=false, randomtest=false, options...) where {N,T}
 
-  The number of points is chosen adaptively.
-"""
-function fun_optimal_N(f::Function, set::FunctionSet, domain::FrameFun.Domain;
-    no_checkpoints=200, max_logn_coefs=9, tol=NaN, print_error=false, options...)
   ELT = eltype(f, set)
-  N = ndims(set)
+
   F = nothing
-  # TODO Decide which is best
-  # tol = default_cutoff(FE_DiscreteProblem(domain, set, 2; options...))
-  isequal(tol,NaN) && (tol = 10*10^(4/5*log10(eps(numtype(set)))))
-  rgrid = randomgrid(domain, no_checkpoints)
   error = Inf
-  random_f=sample(rgrid, f, eltype(f(rgrid[1]...)))
-  random_F=zeros(ELT,no_checkpoints)
-  N0 = NaN; Nmax = NaN; emax = NaN; Nmin = 1; emin = NaN
+  Nmax = NaN; Nmin = 1;
   n = 8
   set=resize(set, n)
-  while length(set) <= 2^max_logn_coefs
-    # println(n, ": ", Nmin, " ", emin, " ", Nmax, " ", emax)
-    F=Fun(f, set, domain; options...)
-    random_F=F(rgrid)
-    error = maximum(abs.(random_F-random_f))
-    print_error && (@printf "Error with %d coefficients is %1.3e (%1.3e)\n" (length(set)) error tol)
-    if (error<1e-2) && isnan(N0)
-            N0 = n
-    end
-    error < tol ? (Nmax=n; emax=error) : (Nmin=n; emin=error)
+  return_log && (log = zeros(T,0,4))
+  its = 0
+  while length(set) <= 2^max_logn_coefs && its < 100
+    # Find new approximation
+    F=Fun(f, set, domain; verbose=verbose, cutoff=cutoff, options...)
+    # Calculate error
+    # Using residual
+    error = residual(f, F)/sqrt(length(F))
+
+    # println(n, ": ", Nmin, " ", Nmax, " ", error)
+    return_log && (log = [log; n Nmin Nmax error])
+
+
+    adaptive_verbose  && (@printf "Error with %d coefficients is %1.3e (%1.3e)\n" (length(set)) error tol)
+
+    error < tol ? Nmax=n : Nmin=n
+
+    succeeded_randomtest = true
+    # Stop condition
+    # Stop if the bounds Nmin and Nmax are determined and if they are close
     if !isnan(Nmax) && !isnan(Nmin) && (sum(abs.(collect(Nmax)-collect(Nmin))) <= N)
-      set=resize(set, Nmax)
-      return Fun(f, set, domain; options...)
+        set=resize(set, Nmax)
+        F = Fun(f, set, domain; verbose=verbose, cutoff=cutoff, options...)
+        #test in 3 random points if randomtest
+        randomtestsucceeded = true
+        if randomtest
+            if maxerror(f, F, vals=3) > tol
+                randomtestsucceeded = false
+            end
+            # return if test succeded
+            if randomtestsucceeded
+                return_log && (return F, log)
+                return F
+            else
+                # continue if test failed
+                adaptive_verbose && (@printf "Random test in 3 points failed\n")
+                succeeded_randomtest = false
+            end
+        else
+            return_log && (return F, log)
+            return F
+        end
     end
+
     # Decide on new n
-    if isnan(Nmax)
+    if isnan(Nmax) || !succeeded_randomtest
+      # tolerance is not yet met, increase n
       n = extension_size(set)
     else
-      if isnan(emin)
-        return F
+      # tolerance is reached, find optimal n by subdivision
+      if N==1
+        # in one dimension Nmin and Nmax are floats
+        n = round(Int,(Nmin + Nmax)/2)
       else
-        if N==1
-          n = round(Int,(log(emin)*Nmin + log(emax)*Nmax)/(log(emin) + log(emax)))
-        else
-          n = (round.(Int,(log(emin)*collect(Nmin) + log(emax)*collect(Nmax))/(log(emin) + log(emax)))...)
-        end
+        # in multiple dimensions, Nmin and Nmax are tupples
+        n = (round.(Int,(collect(Nmin) + collect(Nmax))/2)...)
       end
     end
+
+    # Use new n
     set=resize(set, n)
+    its = its + 1
   end
   warn("Maximum number of coefficients exceeded, error is $(error)")
   F
 end
-
+default_cutoff(::Type{T}) where T= 10*10^(4/5*log10(eps(real(T))))
 """
   Greedy scheme to get decreasing coefficients.
 

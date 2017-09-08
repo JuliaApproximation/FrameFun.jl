@@ -132,7 +132,7 @@ export polardomain
 # from domains/characteristic.jl
 export characteristic
 
-export FeFun
+export FeFun, FeFunNd
 
 include("subgrid.jl")
 
