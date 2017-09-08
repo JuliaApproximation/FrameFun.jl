@@ -29,9 +29,10 @@ struct TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
         random_matrix = map(ELT, rand(size(op,2), R))
         C = apply_multiple(op, random_matrix)
         c = cond(C)
-        cold = 1
+        # TODO change things with cold back
+        # cold = 1
         m = maximum(abs.(C))
-        while (c < 1/cutoff) && (R<size(op,2)) && (c/cold > 10)
+        while (c < 1/cutoff) && (R<size(op,2)) #&& (c/cold > 10)
             verbose && println("Solver truncated at R = ", R, " dof out of ",size(op,2))
             R0 = R
             R = min(round(Int,growth_factor*R),size(op,2))
@@ -41,7 +42,7 @@ struct TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
             Cextra = apply_multiple(op, extra_random_matrix)
             random_matrix = [random_matrix extra_random_matrix]
             # Extra condition: condition number has to increase by a significant amount each step, otherwise, possibly well conditioned.
-            cold = c
+            # cold = c
             C = [C Cextra]
             c = cond(C)
             m = maximum(abs.(C))
