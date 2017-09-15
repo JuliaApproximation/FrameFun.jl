@@ -48,7 +48,7 @@ end
 Base.isnan(::Tuple) = false
 
 function fun_optimal_N(f::Function, set::FunctionSet{N,T}, domain::Domain;
-  no_checkpoints=200, max_logn_coefs=8, cutoff=default_cutoff(T), tol=100*cutoff, verbose=false, adaptive_verbose = verbose, return_log=false, randomtest=false, options...) where {N,T}
+  no_checkpoints=200, max_logn_coefs=8, cutoff=default_cutoff(real(T)), tol=100*cutoff, verbose=false, adaptive_verbose = verbose, return_log=false, randomtest=false, options...) where {N,T}
 
   ELT = eltype(f, set)
 
@@ -124,6 +124,7 @@ function fun_optimal_N(f::Function, set::FunctionSet{N,T}, domain::Domain;
   F
 end
 default_cutoff(::Type{T}) where T= 10*10^(4/5*log10(eps(real(T))))
+default_cutoff(::Type{Float64}) = 1e-16
 """
   Greedy scheme to get decreasing coefficients.
 
