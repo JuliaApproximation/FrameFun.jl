@@ -20,8 +20,9 @@ end
 struct DirichletBC
     dRhs   :: Function
     D      :: Domain
-    function DirichletBC(dRhs=default_boundary_condition :: Function, D=FullSpace())
-        new(dRhs,D)
+    factor :: Number
+    function DirichletBC(dRhs=default_boundary_condition :: Function, D=FullSpace(), factor=1.0)
+        new(dRhs,D,factor)
     end
 end
 
@@ -42,7 +43,7 @@ default_boundary_condition(x,y,z) = 0
 
 function operator(BC :: DirichletBC, S::FunctionSet, G::AbstractGrid, D::Domain)
     G = subgrid(G,BC.D)
-    grid_evaluation_operator(S,DiscreteGridSpace(G,eltype(S)),G)
+    BC.factor*grid_evaluation_operator(S,DiscreteGridSpace(G,eltype(S)),G)
 end
 
 function operator(BC :: NeumannBC, S::FunctionSet{2}, G::AbstractGrid{2}, D::Domain2d)
@@ -124,8 +125,8 @@ function rhs(D::DiffEquation; incboundary = false, options...)
     if incboundary
         push!(rhs,sample(BG,D.DRhs, eltype(src(op))))
     end
-    for BC in D.BCs
-        push!(rhs,sample(subgrid(BG,BC.D),BC.dRhs, eltype(src(op))))
+    for i = 1:length(D.BCs)
+        push!(rhs,sample(subgrid(BG,D.BCs[i].D),D.BCs[i].dRhs, eltype(src(op))))
     end
     MultiArray(rhs)
 end

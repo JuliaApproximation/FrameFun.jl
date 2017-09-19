@@ -55,8 +55,12 @@ function oversampled_evaluation_operator(S::FunctionSet, D::Domain; sampling_fac
         BG = boundary(grid(lB), D)
         op = [op; grid_evaluation_operator(S,gridspace(B,BG),BG)]
     end
-    (op,length(lB))
+    (op,scaling_factor(lB))
 end
+
+scaling_factor(S::FunctionSet) = length(S)
+scaling_factor(S::DerivedSet) = scaling_factor(superset(S))
+scaling_factor(S::ChebyshevBasis) = length(S)/2
 
 function discrete_approximation_operator(set::ExtensionFrame; solver = default_frame_solver(domain(set), basis(set)), options...)
     (op, scaling) = oversampled_evaluation_operator(basis(set),domain(set);options...)
