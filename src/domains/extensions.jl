@@ -101,8 +101,8 @@ function boundingbox(d::UnionDomain)
 end
 
 function boundingbox(d::IntersectionDomain)
-    left = SVector(maximum(hcat(map(leftendpoint,elements(d))...),2))
-    right = SVector(minimum(hcat(map(rightendpoint,elements(d))...),2))
+    left = SVector(maximum(hcat(map(leftendpoint,elements(d))...),2)...)
+    right = SVector(minimum(hcat(map(rightendpoint,elements(d))...),2)...)
     boundingbox(left,right)
 end
 

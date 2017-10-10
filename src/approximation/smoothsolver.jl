@@ -22,8 +22,8 @@ struct FE_SmoothProjectionSolver{ELT} <: FE_Solver{ELT}
     function FE_SmoothProjectionSolver{ELT}(op::AbstractOperator, scaling; cutoff = default_cutoff(op), cutoffv=sqrt(cutoff), R = estimate_plunge_rank(op), verbose=false,  options...) where ELT
         plunge_op = plunge_operator(op, scaling)
         # Create Random matrices
-        TS1 = TruncatedSvdSolver(plunge_op*op; cutoff = cutoff, options...)
-        TS2 = TruncatedSvdSolver(op'*plunge_op; cutoff = cutoffv, options...)
+        TS1 = TruncatedSvdSolver(plunge_op*op; cutoff = cutoff, verbose=verbose,R=R,options...)
+        TS2 = TruncatedSvdSolver(op'*plunge_op; cutoff = cutoffv, verbose=verbose, R=R, options...)
         # D = Sobolev operator
         D = IdxnScalingOperator(src(op); options...)
         AD = inv(D)

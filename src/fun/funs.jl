@@ -59,9 +59,9 @@ domain(fun::SetFun, set::ExtensionFrame) = domain(set)
 
 basis(fun::SetFun, set::ExtensionFrame) = basis(set)
 
-function matrix(fun::SetFun; sampling_factor=2)
-    problem = FE_DiscreteProblem(domain(fun), basis(fun), sampling_factor)
-    matrix(operator(problem))
+function matrix(fun::SetFun; options...)
+    op = oversampled_evaluation_operator(basis(fun),domain(fun);  options...)[1]
+    matrix(op)
 end
 
 function sampling_grid(fun::SetFun; sampling_factor=2)
