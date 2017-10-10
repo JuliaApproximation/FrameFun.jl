@@ -21,22 +21,22 @@ struct TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
     scratch_src ::  Array{ELT,1}
     scratch_dest::  Array{ELT,1}
     smallcoefficients :: Bool
+    smalltol :: Float64
 
-    function TruncatedSvdSolver{ELT}(op::AbstractOperator; cutoff = default_cutoff(problem), R = 5, growth_factor = sqrt(2), verbose = false, smallcoefficients=false,options...) where ELT
+    function TruncatedSvdSolver{ELT}(op::AbstractOperator; cutoff = default_cutoff(problem), R = 5, growth_factor = 2, verbose = false, smallcoefficients=false,smalltol=10,options...) where ELT
         finished=false
         USV = ()
         R = min(R, size(op,2))
         random_matrix = map(ELT, rand(size(op,2), R))
         C = apply_multiple(op, random_matrix)
         c = cond(C)
-        cold = 1
+        cold = cutoff
         m = maximum(abs.(C))
-        while (c < 1/cutoff) && (R<size(op,2)) && (c/cold > 10)
+        while (c < 1/cutoff) && (R<size(op,2)) && (c>cold*10)
+            verbose && println("c : $c\t cold : $cold\t cutoff : $cutoff")
             verbose && println("Solver truncated at R = ", R, " dof out of ",size(op,2))
             R0 = R
             R = min(round(Int,growth_factor*R),size(op,2))
-            verbose && println("Solver truncated at R = ", R, " dof out of ",size(op,2))
-            verbose && println(c," ",m," ",cutoff)
             extra_random_matrix = map(ELT, rand(size(op,2), R-R0))
             Cextra = apply_multiple(op, extra_random_matrix)
             random_matrix = [random_matrix extra_random_matrix]
@@ -44,13 +44,13 @@ struct TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
             cold = c
             C = [C Cextra]
             c = cond(C)
-            m = maximum(abs.(C))
+
         end
+        verbose && println("c : $c\t cold : $cold\t cutoff : $cutoff")
         verbose && println("Solver truncated at R = ", R, " dof out of ",size(op,2))
-            verbose && println(c," ",m," ",cutoff)
         USV = LAPACK.gesdd!('S',C)
         S = USV[2]
-        maxind = findlast(S.>cutoff*m)
+        maxind = findlast(S.>(maximum(S)*cutoff))
         Sinv = 1./S[1:maxind]
         y = zeros(ELT, size(USV[3],1))
         sy = zeros(ELT, maxind)
@@ -60,7 +60,7 @@ struct TruncatedSvdSolver{ELT} <: AbstractOperator{ELT}
 
         scratch_src = zeros(ELT, length(dest(op)))
         scratch_dest = zeros(ELT, length(src(op)))
-        new(op, W, USV[1][:,1:maxind]',Sinv,USV[3][1:maxind,:]',y,sy, scratch_src, scratch_dest,smallcoefficients)
+        new(op, W, USV[1][:,1:maxind]',Sinv,USV[3][1:maxind,:]',y,sy, scratch_src, scratch_dest,smallcoefficients,smalltol)
     end
 end
 
@@ -79,7 +79,7 @@ function apply!(s::TruncatedSvdSolver, coef_dest::Vector, coef_src::Vector)
         s.sy[i]=s.sy[i]*s.Sinv[i]
     end
     if s.smallcoefficients
-        s.sy[abs(s.sy).>100*maximum(abs(coef_src))]=0
+        s.sy[abs.(s.sy).>s.smalltol*maximum(abs.(coef_src))]=0
     end
     A_mul_B!(s.y, s.V, s.sy)
 
@@ -93,7 +93,7 @@ function apply!(s::TruncatedSvdSolver, coef_dest, coef_src)
         s.sy[i]=s.sy[i]*s.Sinv[i]
     end
     if s.smallcoefficients
-        s.sy[abs(s.sy).>100*maximum(abs(coef_src))]=0
+        s.sy[abs.(s.sy).>s.smalltol*maximum(abs.(coef_src))]=0
     end
     A_mul_B!(s.y, s.V, s.sy)
     apply!(s.W, s.scratch_dest, s.y)
