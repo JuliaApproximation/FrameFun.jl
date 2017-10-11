@@ -59,9 +59,9 @@ domain(fun::SetFun, set::ExtensionFrame) = domain(set)
 
 basis(fun::SetFun, set::ExtensionFrame) = basis(set)
 
-function matrix(fun::SetFun; sampling_factor=2)
-    problem = FE_DiscreteProblem(domain(fun), basis(fun), sampling_factor)
-    matrix(operator(problem))
+function matrix(fun::SetFun; options...)
+    op = oversampled_evaluation_operator(basis(fun),domain(fun);  options...)[1]
+    matrix(op)
 end
 
 function sampling_grid(fun::SetFun; sampling_factor=2)
@@ -129,10 +129,20 @@ function maxerror{N}(f::Function,F::SetFun{N};vals::Int=200)
     fval = sample(rgrid,f,eltype(F))
     return maximum(abs.(Fval-fval))
 end
+using QuadGK
+function L2error(f::Function, F::SetFun{N,T}; reltol = eps(real(T)), abstol = 0, options...) where {N,T}
+    I = QuadGK.quadgk(x->abs(F(x)-f(x))^2, left(set(F)), right(set(F)), reltol=reltol, abstol=abstol)
+    @assert I[2] < 100max(reltol*I[1],abstol)
+    sqrt(I[1])
+end
 
 function residual(f::Function, F::SetFun ;  options...)
     op = oversampled_evaluation_operator(basis(F),domain(F); options...)[1]
     rhs = project(dest(op),f)
-    # There should be an easier way of getting the inverse of the normalization
+
+
     norm(op*coefficients(F)-rhs)
 end
+
+residual(f::Function, set::ExtensionFrame, c; options...) = residual(f, basis(set), domain(set), c; options...)
+residual(f::Function, set::FunctionSet, domain::Domain, c; options...) = nothing

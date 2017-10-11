@@ -84,6 +84,7 @@ import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
     similar_subgrid
 
 import BasisFunctions: Gram, DualGram, MixedGram, DiscreteGram, DiscreteDualGram, DiscreteMixedGram
+import BasisFunctions: dual
 
 import BasisFunctions: discrete_approximation_operator, continuous_approximation_operator
 
@@ -91,7 +92,7 @@ import BasisFunctions: discrete_approximation_operator, continuous_approximation
 ## Exhaustive list of exports
 ###############################
 # from funs.jl
-export ExpFun, ChebyFun, Fun, SetFun, sampling_grid, domain, abserror
+export ExpFun, ChebyFun, Fun, SetFun, sampling_grid, domain, abserror, maxerror, L2error
 
 # from subgrid.jl
 export MaskedGrid
@@ -146,6 +147,7 @@ include("fun/funs.jl")
 
 
 include("approximation/fe_solvers.jl")
+include("approximation/continuous_solver.jl")
 include("approximation/lowranksolver.jl")
 include("approximation/fastsolver.jl")
 include("approximation/smoothsolver.jl")
