@@ -77,11 +77,11 @@ function test_distances_and_normals()
     D5 = cube(Val{2})
     @test domb([0.4,0.0],D5)
     @test domn([0.4,0.0],D5,[0,-1])
-    
-    
+
+
 end
 
-    
+
 
 delimit("Extended Domains")
 
