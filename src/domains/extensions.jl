@@ -108,7 +108,7 @@ end
 
 # Now here is a problem: how do we compute a bounding box, without extra knowledge
 # of the map? We can only do this for some maps.
-boundingbox(d::MappedDomain) = mapped_boundingbox(boundingbox(superdomain(d)), mapping(d))
+boundingbox(d::MappedDomain) = mapped_boundingbox(boundingbox(source(d)), forward_map(d))
 
 function mapped_boundingbox(box::Interval, fmap)
     l,r = box[1]
@@ -193,11 +193,11 @@ normal(x,d::DifferenceDomain) = abs(dist(x,d.d1))<abs(dist(x,d.d2)) ? normal(x,d
 
 dist(x, t::ProductDomain) = minimum(map(dist,x,elements(t)))
 
-dist(x, d::MappedDomain) = dist(mapping(d)*x,superdomain(d))
+dist(x, d::MappedDomain) = dist(inverse_map(d)*x,source(d))
 
 function normal(x, d::MappedDomain)
-    x = applymap(mapping(d),normal(mapping(d)*x,superdomain(d)))
-    x0 = apply_inverse(mapping(d),zeros(size(x)))
+    x = applymap(inverse_map(d),normal(inverse_map(d)*x,source(d)))
+    x0 = apply_inverse(inverse_map(d),zeros(size(x)))
    (x-x0)/norm(x-x0)
 end
 function normal(x, t::ProductDomain)

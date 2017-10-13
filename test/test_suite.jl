@@ -90,7 +90,7 @@ function test_1d_cases()
 
     @testset "result" for ELT in (Float32,Float64),
             Basis in (FourierBasis, ChebyshevBasis),
-            D in [interval(ELT, -1.5, 0.7), interval(ELT, -1.5,-0.5)+interval(ELT, 0.5,1.5)],
+            D in [interval(ELT, -1.5, 0.7), interval(ELT, -1.5,-0.5)∪interval(ELT, 0.5,1.5)],
             solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
         println()
         println("Testing \t solver = $solver, \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = $ELT ")

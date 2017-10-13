@@ -38,7 +38,7 @@ import Domains: indomain, dimension
 # - for intervals
 import Domains: leftendpoint, rightendpoint
 # - for mapped domains
-import Domains: domain, mapping
+import Domains: domain
 # - for composite structures
 import Domains: element, elements, nb_elements
 # - for cartesian products
