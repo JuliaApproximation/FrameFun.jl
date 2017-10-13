@@ -136,7 +136,7 @@ end
 
 # We just test the accuracy, not the smoothing properties
 function test_smoothing_1d()
-    @testset "Smoothing $(name(instantiate(Basis,10)))" for Basis in (FourierBasis, ChebyshevBasis)
+    @testset "Smoothing $(name(instantiate(Basis,10)))" for Basis in (FourierBasis,)
         B = Basis(101,-1,1)
         D = interval(-0.5,0.5)
         f(x) = exp(x)
@@ -148,7 +148,7 @@ function test_smoothing_1d()
 end
 
 function test_smoothing_2d()
-    @testset "Smoothing $(name(instantiate(Basis,10)))" for Basis in (FourierBasis, ChebyshevBasis)
+    @testset "Smoothing $(name(instantiate(Basis,10)))" for Basis in (FourierBasis,)
         B = Basis(20,-1.0,1.0)⊗Basis(20,-1.0,1.0)
         D = disk(0.5)
         f(x,y) = exp(x*y)

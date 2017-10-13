@@ -17,21 +17,19 @@ src(s::FE_Solver) = dest(op(s))
 
 dest(s::FE_Solver) = src(op(s))
 
-
-
 struct FE_DirectSolver{ELT} <: FE_Solver{ELT}
     op      ::  AbstractOperator
     QR      ::  Factorization
 
     src_scratch :: Vector{ELT}
 
-    function FE_DirectSolver{ELT}(op::AbstractOperator,scaling) where ELT
+    function FE_DirectSolver{ELT}(op::AbstractOperator) where ELT
         new(op, qrfact(matrix(op),Val{true}), zeros(ELT, length(dest(op))))
     end
 end
 
-FE_DirectSolver{ELT}(op::AbstractOperator{ELT}, scaling; options...) =
-    FE_DirectSolver{eltype(op)}(op,scaling)
+FE_DirectSolver{ELT}(op::AbstractOperator{ELT}; options...) =
+    FE_DirectSolver{eltype(op)}(op)
 
 function apply!(s::FE_DirectSolver, coef_dest, coef_src::MultiArray)
     linearize_coefficients!(s.src_scratch, coef_src)

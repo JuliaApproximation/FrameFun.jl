@@ -4,6 +4,10 @@
 ###########################
 # Applying broadcast to in
 ###########################
+forward_map(d::MappedDomain) = inv(mapping(d))
+
+inverse_map(d::MappedDomain) = mapping(d)
+
 
 # Intercept a broadcasted call to indomain. We assume that the user wants evaluation
 # in a set of points (which we call a grid), rather than in a single point.
@@ -101,14 +105,14 @@ function boundingbox(d::UnionDomain)
 end
 
 function boundingbox(d::IntersectionDomain)
-    left = SVector(maximum(hcat(map(leftendpoint,elements(d))...),2))
-    right = SVector(minimum(hcat(map(rightendpoint,elements(d))...),2))
+    left = SVector(maximum(hcat(map(leftendpoint,elements(d))...),2)...)
+    right = SVector(minimum(hcat(map(rightendpoint,elements(d))...),2)...)
     boundingbox(left,right)
 end
 
 # Now here is a problem: how do we compute a bounding box, without extra knowledge
 # of the map? We can only do this for some maps.
-boundingbox(d::MappedDomain) = mapped_boundingbox(boundingbox(source(d)), forward_map(d))
+boundingbox(d::MappedDomain) = mapped_boundingbox(boundingbox(superdomain(d)), forward_map(d))
 
 function mapped_boundingbox(box::Interval, fmap)
     l,r = box[1]
@@ -193,10 +197,10 @@ normal(x,d::DifferenceDomain) = abs(dist(x,d.d1))<abs(dist(x,d.d2)) ? normal(x,d
 
 dist(x, t::ProductDomain) = minimum(map(dist,x,elements(t)))
 
-dist(x, d::MappedDomain) = dist(inverse_map(d)*x,source(d))
+dist(x, d::MappedDomain) = dist(inverse_map(d)*x,superdomain(d))
 
 function normal(x, d::MappedDomain)
-    x = applymap(inverse_map(d),normal(inverse_map(d)*x,source(d)))
+    x = applymap(inverse_map(d),normal(inverse_map(d)*x,superdomain(d)))
     x0 = apply_inverse(inverse_map(d),zeros(size(x)))
    (x-x0)/norm(x-x0)
 end

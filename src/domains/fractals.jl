@@ -48,17 +48,18 @@ function computemandelbrotgrid(grid, maxiter, threshold)
 end
 
 function indomain_broadcast(grid, m::Mandelbrot)
-    if (leftendpoint(grid) ≈ leftendpoint(m.box)) && (rightendpoint(grid) ≈ rightendpoint(m.box))
-        if haskey(m.maskcache, size(grid,1))
-            mask = m.maskcache[size(grid,1)]
-        else # compute mask and cache it
-            mask = computemandelbrotgrid(grid, m.maxiter, m.threshold)
-            m.maskcache[size(grid,1)] = mask
-        end
-    else # Don't cache if the grid doesn't match the bounding box
+    # if (leftendpoint(grid) ≈ leftendpoint(m.box)) && (rightendpoint(grid) ≈ rightendpoint(m.box))
+    #     if haskey(m.maskcache, size(grid,1))
+    #         mask = m.maskcache[size(grid,1)]
+    #     else # compute mask and cache it
+    #         mask = computemandelbrotgrid(grid, m.maxiter, m.threshold)
+    #         m.maskcache[size(grid,1)] = mask
+    #     end
+    # else # Don't cache if the grid doesn't match the bounding box
+    warn("Merge with branch that calculates this more efficient")
         mask = computemandelbrotgrid(grid, m.maxiter, m.threshold)
-    end
-    mask
+    # end
+    # mask
 end
 
 function isapprox{T}(t::Tuple{T,T}, v::SVector{2,T})

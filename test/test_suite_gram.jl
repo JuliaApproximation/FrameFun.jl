@@ -203,11 +203,26 @@ function test_connection_restriction_extension_discretegram()
   end
 end
 
+function test_general_gram()
+  T = Float64
+  tol = max(sqrt(eps(T)), 1e-10)
+  for method in (Gram, DualGram, MixedGram), B in (FourierBasis(11,T), BSplineTranslatesBasis(5, 1,T))
+    D = interval(left(B), right(B))
+    frame = extensionframe(B,D)
+    GBB = method(span(frame),span(frame); abstol=tol, reltol=tol)
+    GB = method(span(B); abstol=tol, reltol=tol)
+
+    e = rand(length(frame))
+    @test norm(GBB*e - GB*e) <= 1000*tol
+  end
+end
+
 delimit("Gram")
 basis_test()
 prolate_test()
 test_basis_oversampling()
 test_discrete_gram()
 test_connection_restriction_extension_discretegram()
+test_general_gram()
 
 end

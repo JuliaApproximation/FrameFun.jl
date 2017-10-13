@@ -56,12 +56,16 @@ function oversampled_evaluation_operator(S::Span, D::Domain; sampling_factor=2, 
         BG = boundary(grid(lB), D)
         op = [op; grid_evaluation_operator(S,gridspace(B,BG),BG)]
     end
-    (op,length(lB))
+    (op,scaling_factor(lB))
 end
+
+scaling_factor(S::FunctionSet) = length(S)
+scaling_factor(S::DerivedSet) = scaling_factor(superset(S))
+scaling_factor(S::ChebyshevBasis) = length(S)/2
 
 function discrete_approximation_operator(set::ExtensionSpan; solver = default_frame_solver(domain(set), basisspan(set)), options...)
     (op, scaling) = oversampled_evaluation_operator(basisspan(set),domain(set);options...)
-    solver(op, scaling; options...)
+    solver(op; scaling=scaling, options...)
 end
 
 primaryspan(span::Span) = span
@@ -72,15 +76,15 @@ end
 struct FE_BestSolver
 end
 
-function FE_BestSolver(op::AbstractOperator, scaling; verbose= false, options...)
+function FE_BestSolver(op::AbstractOperator; scaling=NaN, verbose= false, options...)
     if has_transform(src(op))
         R = estimate_plunge_rank(op)
         if R < size(op, 2)/2
             verbose && println("Estimated plunge rank $R smaller than $(size(op,2))/2 -> projection solver ")
-            FE_ProjectionSolver(op, scaling; verbose=verbose,options...)
+            FE_ProjectionSolver(op; scaling=scaling, verbose=verbose,options...)
         else
             verbose && println("Estimated plunge rank $R greater than $(size(op,2))/2 -> direct solver ")
-            FE_DirectSolver(op, scaling; verbose=verbose,options...)
+            FE_DirectSolver(op; verbose=verbose,options...)
         end
     else
         # Don't bother with a fast algorithm if there is no fast transform

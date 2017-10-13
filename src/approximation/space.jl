@@ -19,8 +19,8 @@ end
 FunctionSpace(basis::FunctionSet{T}) where {T} = FunctionSpace{T}(basis)
 FunctionSpace(basis::FunctionSet{T}, dom::Domain) where {T} = FunctionSpace{T}(basis,dom)
 # place somewhere else?
-FourierSpace(left=0,right=1) = FunctionSpace(FourierBasis(0), interval(left,right))
-ChebyshevSpace(left=-1,right=1) = FunctionSpace(ChebyshevBasis(0), interval(left,right))
+FourierSpace(left::Real=0,right::Real=1) = FunctionSpace(FourierBasis(0), interval(left,right))
+ChebyshevSpace(left::Real=-1,right::Real=1) = FunctionSpace(ChebyshevBasis(0), interval(left,right))
 # place somewhere else?
 boundingbox(f::FunctionSet{T}) where {T} = boundingbox(left(f), right(f))
 

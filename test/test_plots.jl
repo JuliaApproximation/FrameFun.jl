@@ -32,7 +32,7 @@ G = FrameFun.subgrid(G,mandelbrot())
 plot(G)
 
 B = FourierBasis(21,-1,1)⊗FourierBasis(21,-1,1)⊗FourierBasis(21,-1,1)
-D = ball() \ FrameFun.cube(-0.5,0.5,-0.5,0.5,-2.,2.)
+D = ball()\FrameFun.cube(-0.5,0.5,-0.5,0.5,-2.,2.)
 Df = ExtensionFrame(D,B)
 G = BasisFunctions.grid(Df)
 plot(G,size=(400,400))

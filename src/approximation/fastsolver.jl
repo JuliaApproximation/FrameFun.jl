@@ -27,7 +27,7 @@ struct FE_ProjectionSolver{ELT} <: FE_Solver{ELT}
     end
 end
 
-FE_ProjectionSolver(op::AbstractOperator, scaling; options...) =
+FE_ProjectionSolver(op::AbstractOperator; scaling=nothing, options...) =
     FE_ProjectionSolver{eltype(op)}(op, scaling; options...)
 
 function plunge_operator(op, scaling)

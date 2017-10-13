@@ -10,7 +10,7 @@ struct ExtensionFrame{T} <: DerivedSet{T}
     basis       ::  FunctionSet{T}
 
     function ExtensionFrame{T}(domain::Domain, basis::FunctionSet) where {T}
-        @assert is_basis(basis)
+        # @assert is_basis(basis)
         new(domain, basis)
     end
 end
@@ -91,17 +91,18 @@ end
 
 extensionframe(domain::Domain, basis::FunctionSet) = ExtensionFrame(domain, basis)
 extensionframe(basis::FunctionSet, domain::Domain) = extensionframe(domain, basis)
+extensionspan(span::Span, domain::Domain) = Span(extensionframe(domain, set(span)))
 
 left(d::ExtensionFrame, x...) = leftendpoint(domain(d))
 right(d::ExtensionFrame, x...) = rightendpoint(domain(d))
 
-DualGram(f::ExtensionSpan; options...) = DualGram(basisspan(f); options...)*Gram(f; options...)*DualGram(basisspan(f); options...)
+DualGram(f::ExtensionSpan; options...) = wrap_operator(f, f, DualGram(basisspan(f); options...)*Gram(f; options...)*DualGram(basisspan(f); options...))
 
-MixedGram(f::ExtensionSpan; options...) = DualGram(basisspan(f); options...)*Gram(f; options...)
+MixedGram(f::ExtensionSpan; options...) = wrap_operator(f, f, DualGram(basisspan(f); options...)*Gram(f; options...))
 
-DiscreteDualGram(f::ExtensionSpan; oversampling=BasisFunctions.default_oversampling(set(f))) = DiscreteDualGram(basisspan(f); oversampling=BasisFunctions.basis_oversampling(set(f), oversampling))*DiscreteGram(f; oversampling=oversampling)*DiscreteDualGram(basisspan(f); oversampling=BasisFunctions.basis_oversampling(set(f), oversampling))
+DiscreteDualGram(f::ExtensionSpan; oversampling=BasisFunctions.default_oversampling(set(f))) = wrap_operator(f, f, DiscreteDualGram(basisspan(f); oversampling=BasisFunctions.basis_oversampling(set(f), oversampling))*DiscreteGram(f; oversampling=oversampling)*DiscreteDualGram(basisspan(f); oversampling=BasisFunctions.basis_oversampling(set(f), oversampling)))
 
-DiscreteMixedGram(f::ExtensionSpan; oversampling=BasisFunctions.default_oversampling(set(f))) = DiscreteDualGram(basisspan(f); oversampling=BasisFunctions.basis_oversampling(set(f), oversampling))*DiscreteGram(f; oversampling=oversampling)
+DiscreteMixedGram(f::ExtensionSpan; oversampling=BasisFunctions.default_oversampling(set(f))) = wrap_operator(f, f, DiscreteDualGram(basisspan(f); oversampling=BasisFunctions.basis_oversampling(set(f), oversampling))*DiscreteGram(f; oversampling=oversampling))
 
 BasisFunctions.discrete_dual_evaluation_operator(span::ExtensionSpan; oversampling=1, options...) =
     BasisFunctions.grid_evaluation_operator(span, gridspace(span, BasisFunctions.oversampled_grid(set(span), oversampling)), BasisFunctions.oversampled_grid(set(span), oversampling); options...)*DiscreteDualGram(basisspan(span); oversampling=BasisFunctions.basis_oversampling(set(span), oversampling))
@@ -110,9 +111,8 @@ BasisFunctions.discrete_dual_evaluation_operator(span::ExtensionSpan; oversampli
 import BasisFunctions: dot
 import BasisFunctions: native_nodes
 
-function native_nodes(basis::FunctionSet, domain::Interval)
+native_nodes(basis::FunctionSet, domain::Interval) =
   BasisFunctions.clip_and_cut(native_nodes(basis), leftendpoint(domain), rightendpoint(domain))
-end
 
 dot(span::ExtensionSpan, f1::Function, f2::Function; options...)  =
     dot(basisspan(span), domain(span), f1::Function, f2::Function; options...)
@@ -131,3 +131,26 @@ dot(span::Span, domain::Interval, f1::Function, f2::Function; options...) =
 #     dot(set, secondelement(domain), f1, f2; options...)
 
 continuous_approximation_operator(span::ExtensionSpan; solver = ContinuousDirectSolver, options...) = solver(span; options...)
+
+#################
+## Gram operators extended
+#################
+dual(span::ExtensionSpan; options...) = extensionspan(dual(basisspan(span); options...), domain(span))
+
+dot(frame1::ExtensionSpan, frame2::ExtensionSpan, f1::Int, f2::Int; options...) =
+    dot(frame1, frame2, x->eval_element(set(frame1), f1, x), x->eval_element(set(frame2), f2, x); options...)
+
+function dot(frame1::ExtensionFrame, frame2::ExtensionFrame, f1::Function, f2::Function; options...)
+    d1 = domain(frame1); d2 = domain(frame2)
+    @assert d1 == d2
+    dot(basisspan(frame1), basisspan(frame2), d1, f1, f2; options...)
+end
+
+dot(set1::ExtensionSpan, set2::ExtensionSpan, domain::Interval, f1::Function, f2::Function; options...) =
+    dot(set1, set2, f1, f2, native_nodes(set(set1), set(set2), domain); options...)
+
+function native_nodes(set1::FunctionSet, set2::FunctionSet, domain::Interval)
+    @assert left(set1) ≈ left(set2)
+    @assert left(set2) ≈ left(set2)
+    native_nodes(set1, domain)
+end
