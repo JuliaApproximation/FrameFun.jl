@@ -59,7 +59,7 @@ domain(fun::SetFun, set::ExtensionFrame) = domain(set)
 basis(fun::SetFun, set::ExtensionFrame) = basis(set)
 
 function matrix(fun::SetFun; options...)
-    op = oversampled_evaluation_operator(basis(fun),domain(fun);  options...)[1]
+    op = oversampled_evaluation_operator(span(basis(fun),eltype(fun)),domain(fun);  options...)[1]
     matrix(op)
 end
 

@@ -35,11 +35,15 @@ plotgrid(B::ExtensionFrame, n) = plotgrid(basis(B),n)
      seriestype --> :heatmap
     aspect_ratio --> 1
     cbar --> false
-    xrange = linspace(xlim[1],xlim[2],n)
-    yrange = linspace(ylim[1],ylim[2],n)
-    grid = [SVector(i,j) for i in xrange , j in yrange]
+    # xrange = linspace(xlim[1],xlim[2],n)
+    xrange = EquispacedGrid(n,xlim[1],xlim[2])
+    # yrange = linspace(ylim[1],ylim[2],n)
+    yrange = EquispacedGrid(n,ylim[1],ylim[2])
+    # grid = [SVector(i,j) for i in xrange , j in yrange]
+    grid = xrange×yrange
+
     plotdata = distance ? dist.(grid,dom) : in.(grid,dom)
-    xrange,yrange,plotdata
+    collect(xrange),collect(yrange),plotdata
 end
 
 # @recipe function f(dom::Domain2d; n=300)

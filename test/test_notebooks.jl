@@ -1,0 +1,10 @@
+
+# run(`jupyter nbconvert --execute $(pwd())/examples/*`)
+run(`jupyter nbconvert --execute --config $(pwd())/jupyter_nbconvert_config.py $(pwd())/examples/test.ipynb`)
+run(`jupyter nbconvert --execute --config $(pwd())/jupyter_nbconvert_config.py $(pwd())/examples/Adaptive.ipynb`)
+run(`jupyter nbconvert --execute --config $(pwd())/jupyter_nbconvert_config.py $(pwd())/examples/Approximation.ipynb `)
+run(`jupyter nbconvert --execute --config $(pwd())/jupyter_nbconvert_config.py $(pwd())/examples/Derivatives.ipynb `)
+run(`jupyter nbconvert --execute --config $(pwd())/jupyter_nbconvert_config.py $(pwd())/examples/DiffEquation.ipynb `)
+run(`jupyter nbconvert --execute --config $(pwd())/jupyter_nbconvert_config.py $(pwd())/examples/Plotting.ipynb `)
+run(`jupyter nbconvert --execute --config $(pwd())/jupyter_nbconvert_config.py $(pwd())/examples/ProlateSpheroidalAnalogues.ipynb `)
+run(`jupyter nbconvert --execute --config $(pwd())/jupyter_nbconvert_config.py $(pwd())/examples/Smoothing.ipynb `)
