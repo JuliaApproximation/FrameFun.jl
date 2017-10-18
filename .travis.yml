@@ -30,6 +30,7 @@ before_script:
   - ./.travis/setup.sh
   - julia -e 'Pkg.add("GR")'
   - julia -e 'Pkg.add("IJulia")'
+  - julia -e 'Pkg.build("ZMQ")'
   - julia -e 'using IJulia'
   - julia -e 'IJulia.jupyter'
   - julia -e 'Pkg.clone(pwd())'
