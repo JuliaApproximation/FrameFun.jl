@@ -7,12 +7,24 @@ env:
   - PLOTS_DEFAULT_BACKEND="plotly"
 notifications:
   email: false
+
 install:
-  - pip install -r jupyter
-  - pip install -r nbconvert
+  - pip3 install --upgrade pip
+  - pip3 install jupyter
 
 before_install:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+  # - sudo apt-get -qq update
+  # - sudo apt-get install -y libxml2-dev
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - rm -f miniconda.sh
+  - conda config --set always_yes yes --set changeps1 no
+  - conda info -a
+  - conda update -q conda
+  - conda install pip
+  - pip install jupyter
+
 
 before_script:
   - julia -e 'Pkg.init()'
