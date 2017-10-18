@@ -12,7 +12,7 @@ notifications:
   email: false
 before_install:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - apt-get install libzmq3
+  - apt-get install libzmq3-dev
   # Install jupyter to test notebooks
   # - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   # - bash miniconda.sh -b -p $HOME/miniconda
