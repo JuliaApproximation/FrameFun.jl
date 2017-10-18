@@ -13,14 +13,14 @@ notifications:
 before_install:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
   # Install jupyter to test notebooks
-  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - rm -f miniconda.sh
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  - conda config --set always_yes yes --set changeps1 no
-  - conda info -a
-  - conda update -q conda
-  - conda install pip
+  # - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+  # - bash miniconda.sh -b -p $HOME/miniconda
+  # - rm -f miniconda.sh
+  # - export PATH="$HOME/miniconda/bin:$PATH"
+  # - conda config --set always_yes yes --set changeps1 no
+  # - conda info -a
+  # - conda update -q conda
+  # - conda install pip
 install:
   - pip install jupyter
 before_script:
@@ -29,6 +29,9 @@ before_script:
   - julia -e 'Pkg.clone("https://github.com/daanhb/Domains.jl")'
   - ./.travis/setup.sh
   - julia -e 'Pkg.add("GR")'
+  - julia -e 'Pkg.add("IJulia")'
+  - julia -e 'using IJulia'
+  - julia -e 'IJulia.jupyter'
   - julia -e 'Pkg.clone(pwd())'
 script:
   - julia --code-coverage=user test/runtests.jl
