@@ -29,7 +29,13 @@ before_script:
   - julia -e 'Pkg.clone("https://github.com/daanhb/BasisFunctions.jl")'
   - julia -e 'Pkg.clone("https://github.com/daanhb/Domains.jl")'
   - ./.travis/setup.sh
-  - "julia -e 'Pkg.clone(pwd()); Pkg.build(\"IJulia\")'",
+  # - julia -e 'Pkg.add("GR")'
+  # - julia -e 'Pkg.add("IJulia")'
+  # - julia -e 'Pkg.build("ZMQ")'
+  # - julia -e 'using IJulia'
+  - julia -e 'Pkg.clone(pwd())'
+  - julia -e 'Pkg.clone(pwd())'
+  - julia -e 'IJulia.jupyter'
 script:
   - julia --code-coverage=user test/runtests.jl
 after_success:
