@@ -7,6 +7,9 @@ env:
   - PLOTS_DEFAULT_BACKEND="plotly"
 notifications:
   email: false
+install:
+  - pip install -r jupyter
+  - pip install -r nbconvert
 
 before_install:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
