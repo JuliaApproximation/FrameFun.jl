@@ -8,9 +8,9 @@ env:
 notifications:
   email: false
 
-install:
-  - pip3 install --upgrade pip
-  - pip3 install jupyter
+# install:
+  # - pip3 install --upgrade pip
+  # - pip3 install jupyter
 
 before_install:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
