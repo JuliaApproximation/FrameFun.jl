@@ -31,8 +31,9 @@ before_script:
   - julia -e 'Pkg.clone(pwd())'
   - ./.travis/setup.sh
   # - julia -e 'Pkg.add("GR")'
-  - julia -e 'Pkg.add("IJulia")'
-  - julia -e 'Pkg.build("IJulia")'
+  # - julia -e 'Pkg.add("IJulia")'
+  # - julia -e 'Pkg.build("IJulia")'
+  - julia -e 'using IJulia'
   - julia -e 'IJulia.jupyter'
 script:
   - julia --code-coverage=user test/runtests.jl
