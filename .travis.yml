@@ -10,14 +10,9 @@ env:
   - PLOTS_DEFAULT_BACKEND="plotly"
 notifications:
   email: false
-
-install:
-  - pip install jupyter
-
 before_install:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  # - sudo apt-get -qq update
-  # - sudo apt-get install -y libxml2-dev
+  # Install jupyter to test notebooks
   - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
   - rm -f miniconda.sh
@@ -26,8 +21,8 @@ before_install:
   - conda info -a
   - conda update -q conda
   - conda install pip
-
-
+install:
+  - pip install jupyter
 before_script:
   - julia -e 'Pkg.init()'
   - julia -e 'Pkg.clone("https://github.com/daanhb/BasisFunctions.jl")'
