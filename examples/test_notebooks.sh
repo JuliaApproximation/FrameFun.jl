@@ -2,4 +2,4 @@
 
 
 jupyter nbconvert --to script examples/*.ipynb
-ls examples/*.jl > notebookscripts
+find examples/*.jl > notebookscripts
