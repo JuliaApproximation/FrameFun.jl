@@ -7,7 +7,7 @@ julia:
 python:
   - 3.3
 env:
-  - PLOTS_DEFAULT_BACKEND="GR"
+  - PLOTS_DEFAULT_BACKEND="plotlyjs"
 notifications:
   email: false
 before_install:
