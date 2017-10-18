@@ -11,19 +11,20 @@ function delimit(s::AbstractString)
     println("############")
 end
 
-delimit("Notebooks")
-run(`examples/test_notebooks.sh`)
-
-FILE = open("notebookscripts")
-for LINE in eachline(FILE)
-    println("Run $(LINE)")
-    include(LINE)
-    # Following makes things slow but deletes dependencies between notebooks.
-    # workspace()
-end
-close(FILE)
-run(`examples/test_notebooks_after.sh`)
+# delimit("Notebooks")
+# run(`examples/test_notebooks.sh`)
+#
+# FILE = open("notebookscripts")
+# for LINE in eachline(FILE)
+#     println("Run $(LINE)")
+#     include(LINE)
+#     # Following makes things slow but deletes dependencies between notebooks.
+#     # workspace()
+# end
+# close(FILE)
+# run(`examples/test_notebooks_after.sh`)
 
 println("Create README.md")
+run(`ls`)
 run(`jupyter nbconvert --execute --to markdown --output README.md README.ipynb`)
 end
