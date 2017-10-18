@@ -1,3 +1,4 @@
+
 [![Build Status](https://travis-ci.org/daanhb/FrameFun.jl.svg?branch=master)](https://travis-ci.org/daanhb/FrameFun.jl)
 [![Coverage Status](https://coveralls.io/repos/github/daanhb/FrameFun.jl/badge.svg)](https://coveralls.io/github/daanhb/FrameFun.jl)
 
@@ -9,6 +10,8 @@ Exploring practical possibilities of approximating functions with frames rather 
 # Frame Approximations in 1D
 
 After choosing a suitable Basis and Domain, any function can be approximated in the resulting frame:
+
+
 ```julia
 using BasisFunctions
 using Plots
@@ -16,47 +19,68 @@ using Domains
 using FrameFun
 B = FourierBasis(61, -1, 1)
 D = interval(-0.5,0.5)
-f(x) = x
+f = x->x
 F = Fun(f,B,D)
 
-plot(F,plot_ext=true); plot(F,f,plot_ext=true)
+P = plot(F,plot_ext=true, layout = 2)
+plot!(F,f,plot_ext=true, subplot=2)
+Plots.savefig(P,"images/lowprecision.png")
 ```
 
 ![](images/lowprecision.png)
 
 The bases support any AbstractFloat subtype, so high precision approximations are straightforward:
 
+
+
 ```julia
 B = FourierBasis(61, -1, 1, BigFloat)
 F = Fun(f,B,D)
 
-plot(F,plot_ext=true); plot(F,f,plot_ext=true)
+P = plot(F,plot_ext=true,layout=2)
+plot!(F,f,plot_ext=true,subplot=2)
+Plots.savefig(P,"images/highprecision.png")
 ```
+
+![](images/highprecision.png)
 
 ![](images/highprecision.png)
 
 # Frame Approximations in 2D
 
 In higher dimensions, a basis can be any tensorproduct of (scaled) lower dimensional bases:
+
+
 ```julia
-C = disk(1.0)\disk(0.3,[0.2; 0.5])
+using StaticArrays
+C = disk(1.0)\disk(0.3,SVector(0.2, 0.5))
 B = FourierBasis(31,-1.3,1.3) ⊗ FourierBasis(31,-1.3,1.3)
-f(x,y) = exp(x+y)
+f = (x,y)->exp(x+y)
 F = Fun(f,B,C)
 
-heatmap(F,plot_ext=true); plot(F,f,plot_ext=true)
+P = heatmap(F,plot_ext=true,layout=2,aspect_ratio=1)
+plot!(F,f,plot_ext=true,subplot=2,aspect_ratio=1)
+Plots.savefig(P,"images/deathstar.png")
 ```
 
 ![](images/deathstar.png)
 
 Even fractal domains are not a problem:
 
+
 ```julia
 B = FourierBasis(31,-1.0,0.35) ⊗ FourierBasis(31,-0.65,0.65)
-f(x,y) = cos(10*x*y)
+f = (x,y)->cos(10*x*y)
 F = Fun(f, B, mandelbrot())
 
-heatmap(F,plot_ext=true), plot(F,f,ext=true)
+P = heatmap(F,plot_ext=true,layout=2,aspect_ratio=1)
+plot!(F,f,plot_ext=true,aspect_ratio=1,subplot=2)
+Plots.savefig(P,"images/mandelbrot")
 ```
 
 ![](images/mandelbrot.png)
+
+
+```julia
+
+```
