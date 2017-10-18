@@ -11,9 +11,8 @@ env:
 notifications:
   email: false
 
-# install:
-  # - pip3 install --upgrade pip
-  # - pip3 install jupyter
+install:
+  - pip install jupyter
 
 before_install:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
@@ -27,7 +26,6 @@ before_install:
   - conda info -a
   - conda update -q conda
   - conda install pip
-  - pip install jupyter
 
 
 before_script:
