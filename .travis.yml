@@ -22,7 +22,7 @@ before_install:
   # - conda update -q conda
   # - conda install pip
 install:
-  - pip install jupyter
+  # - pip install jupyter
 before_script:
   - julia -e 'Pkg.init()'
   - julia -e 'Pkg.clone("https://github.com/daanhb/BasisFunctions.jl")'
