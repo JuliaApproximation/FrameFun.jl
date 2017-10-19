@@ -1,15 +1,15 @@
 # diffequation.jl
 
-"""
-A DiffEquation describes a differential equation, with or without boundary conditions.
-Parameters:
-- Fun is the SetFun that will describe the result
-
-When the equation is solved the equations:
--Diff(Fun) = DRhs on the domain
--diff(Fun) = dRhs on boundary
-will hold.
-"""
+# """
+# A DiffEquation describes a differential equation, with or without boundary conditions.
+# Parameters:
+# - Fun is the SetFun that will describe the result
+#
+# When the equation is solved the equations:
+# -Diff(Fun) = DRhs on the domain
+# -diff(Fun) = dRhs on boundary
+# will hold.
+# """
 
 # struct BoundaryCondition
 #     S      :: FunctionSet
@@ -82,7 +82,7 @@ struct DiffEquation
     end
 end
 
-DiffEquation(S::Span, D::Domain, Diff::AbstractOperator, DRhs::Function, BC::BoundaryCondition, sampling_factor=2) = DiffEquation(S,D,Diff,DRhs,(BC,), sampling_factor)
+# DiffEquation(S::Span, D::Domain, Diff::AbstractOperator, DRhs::Function, BC::BoundaryCondition, sampling_factor=2) = DiffEquation(S,D,Diff,DRhs,(BC,), sampling_factor)
 
 function boundarygrid(D::DiffEquation)
     G, lB = oversampled_grid(D.D,set(D.S),D.sampling_factor)

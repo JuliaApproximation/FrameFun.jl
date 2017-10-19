@@ -14,7 +14,7 @@ After choosing a suitable Basis and Domain, any function can be approximated in 
 
 ```julia
 using BasisFunctions
-using Plots
+using Plots;gr()
 using Domains
 using FrameFun
 B = FourierBasis(61, -1, 1)
