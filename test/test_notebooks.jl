@@ -24,7 +24,4 @@ end
 # close(FILE)
 # run(`examples/test_notebooks_after.sh`)
 
-println("Create README.md")
-run(`ls`)
-run(`jupyter nbconvert --execute --to markdown --output README.md README.ipynb`)
 end
