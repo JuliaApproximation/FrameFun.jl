@@ -1,7 +1,9 @@
 BasisFunctions
 StaticArrays
 Plots
+GR
+PlotlyJS
+Rsvg
 Interact
 Reactive
 IJulia
-GR

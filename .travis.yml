@@ -28,6 +28,8 @@ before_script:
   - julia -e 'Pkg.clone("https://github.com/daanhb/BasisFunctions.jl")'
   - julia -e 'Pkg.clone("https://github.com/daanhb/Domains.jl")'
   - julia -e 'Pkg.clone(pwd())'
+  - julia -e 'import Blink'
+  - julia -e 'Blink.AtomShell.install()'
   - ./.travis/setup.sh
 script:
   - julia --code-coverage=user test/runtests.jl
