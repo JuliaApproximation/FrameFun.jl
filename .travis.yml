@@ -25,9 +25,6 @@ install:
   - pip install jupyter
 before_script:
   - julia -e 'Pkg.init()'
-  - julia -e 'Pkg.add("Blink")'
-  - julia -e 'using Blink'
-  - julia -e 'Blink.AtomShell.install()'
   - julia -e 'Pkg.clone("https://github.com/daanhb/BasisFunctions.jl")'
   - julia -e 'Pkg.clone("https://github.com/daanhb/Domains.jl")'
   - julia -e 'Pkg.clone(pwd())'
