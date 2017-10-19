@@ -67,9 +67,6 @@ eval_element(s::ExtensionFrame, idx::Int, x) = eval_element(basis(s), idx, x)
 
 grid(f::ExtensionFrame) = subgrid(grid(basis(f)),domain(f))
 
-BasisFunctions.default_oversampling(f::ExtensionFrame) = length(subgrid(BasisFunctions.oversampled_grid(basis(f), BasisFunctions.default_oversampling(basis(f))), domain(f)))/length(basis(f))
-
-
 """
 Make an ExtensionFrame, but match tensor product domains with tensor product sets
 in a suitable way.
@@ -129,7 +126,7 @@ dot(span::Span, domain::Interval, f1::Function, f2::Function; options...) =
 # dot(set::FunctionSet, domain::DomainUnion, f1::Function, f2::Function; options...) =
 #     dot(set, firstelement(domain), f1, f2; options...) +
 #     dot(set, secondelement(domain), f1, f2; options...)
-# 
+#
 # continuous_approximation_operator(span::ExtensionSpan; solver = ContinuousDirectSolver, options...) = solver(span; options...)
 
 #################
@@ -139,18 +136,3 @@ dual(span::ExtensionSpan; options...) = extensionspan(dual(basisspan(span); opti
 
 dot(frame1::ExtensionSpan, frame2::ExtensionSpan, f1::Int, f2::Int; options...) =
     dot(frame1, frame2, x->eval_element(set(frame1), f1, x), x->eval_element(set(frame2), f2, x); options...)
-
-function dot(frame1::ExtensionFrame, frame2::ExtensionFrame, f1::Function, f2::Function; options...)
-    d1 = domain(frame1); d2 = domain(frame2)
-    @assert d1 == d2
-    dot(basisspan(frame1), basisspan(frame2), d1, f1, f2; options...)
-end
-
-dot(set1::ExtensionSpan, set2::ExtensionSpan, domain::Interval, f1::Function, f2::Function; options...) =
-    dot(set1, set2, f1, f2, native_nodes(set(set1), set(set2), domain); options...)
-
-function native_nodes(set1::FunctionSet, set2::FunctionSet, domain::Interval)
-    @assert left(set1) ≈ left(set2)
-    @assert left(set2) ≈ left(set2)
-    native_nodes(set1, domain)
-end
