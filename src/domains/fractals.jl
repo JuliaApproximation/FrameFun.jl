@@ -47,8 +47,8 @@ function computemandelbrotgrid(grid, maxiter, threshold)
     mask
 end
 
-function indomain_broadcast(grid, m::Mandelbrot)
-    if (map(leftendpoint, elements(grid)) ≈ leftendpoint(m.box)) && (map(rightendpoint,elements(grid)) ≈ rightendpoint(m.box))
+function indomain_broadcast(grid::ProductGrid, m::Mandelbrot)
+    if (map(leftendpoint, elements(grid)) ≈ leftendpoint(boundingbox(m))) && (map(rightendpoint,elements(grid)) ≈ rightendpoint(boundingbox(m)))
         if haskey(m.maskcache, size(grid,1))
             mask = m.maskcache[size(grid,1)]
         else # compute mask and cache it
@@ -119,7 +119,7 @@ function computejuliasetgrid(grid, c, maxiter)
 end
 
 function indomain_broadcast(grid, js::JuliaSet)
-    if isequal(leftendpoint(grid),left(js.box)) && isequal(rightendpoint(grid),right(js.box))
+    if (map(leftendpoint, elements(grid)) ≈ leftendpoint(boundingbox(js))) && (map(rightendpoint,elements(grid)) ≈ rightendpoint(boundingbox(js)))
         if haskey(js.maskcache, size(grid,1))
             mask = js.maskcache[size(grid,1)]
         else # compute mask and cache it

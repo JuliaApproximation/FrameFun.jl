@@ -40,39 +40,6 @@ function apply!(s::FE_DirectSolver, coef_dest, coef_src)
     coef_dest[:] = s.QR \ coef_src
 end
 
-immutable ContinuousDirectSolver{T} <: AbstractOperator{T}
-  src                     :: Span
-  mixedgramfactorization  :: Factorization
-  normalizationofb        :: AbstractOperator
-  scratch                 :: Array{T,1}
-end
-
-dest(s::ContinuousDirectSolver) = s.src
-
-ContinuousDirectSolver(frame::ExtensionSpan; options...) =
-    ContinuousDirectSolver{coeftype(frame)}(frame, qrfact(matrix(MixedGram(frame; options...)),Val{true}), DualGram(basisspan(frame); options...), zeros(coeftype(frame),length(frame)))
-
-function apply!(s::ContinuousDirectSolver, coef_dest, coef_src)
-  apply!(s.normalizationofb, s.scratch, coef_src)
-  coef_dest[:] = s.mixedgramfactorization \ s.scratch
-end
-
-immutable ContinuousTruncatedSolver{T} <: AbstractOperator{T}
-  src                     :: Span
-  mixedgramsvd            :: AbstractOperator
-  normalizationofb        :: AbstractOperator
-  scratch                 :: Array{T,1}
-end
-
-dest(s::ContinuousTruncatedSolver) = s.src
-
-ContinuousTruncatedSolver(frame::ExtensionSpan; cutoff=1e-5, options...) =
-    ContinuousTruncatedSolver{coeftype(frame)}(frame, FrameFun.TruncatedSvdSolver(MixedGram(frame; options...); cutoff=cutoff), DualGram(basisspan(frame); options...), zeros(coeftype(frame),length(frame)))
-
-function apply!(s::ContinuousTruncatedSolver, coef_dest, coef_src)
-  apply!(s.normalizationofb, s.scratch, coef_src)
-  coef_dest[:] = s.mixedgramsvd*s.scratch
-end
 ## abstract FE_IterativeSolver <: FE_Solver
 
 

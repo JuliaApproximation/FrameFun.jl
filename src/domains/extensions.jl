@@ -115,10 +115,10 @@ end
 boundingbox(d::MappedDomain) = mapped_boundingbox(boundingbox(superdomain(d)), forward_map(d))
 
 function mapped_boundingbox(box::Interval, fmap)
-    l,r = box[1]
+    l,r = (leftendpoint(box),rightendpoint(box))
     ml = fmap*l
     mr = fmap*r
-    BBox(min(ml,mr), max(ml,mr))
+    boundingbox(min(ml,mr), max(ml,mr))
 end
 
 # In general, we can at least map all the corners of the bounding box of the

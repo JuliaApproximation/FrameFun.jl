@@ -129,8 +129,8 @@ dot(span::Span, domain::Interval, f1::Function, f2::Function; options...) =
 # dot(set::FunctionSet, domain::DomainUnion, f1::Function, f2::Function; options...) =
 #     dot(set, firstelement(domain), f1, f2; options...) +
 #     dot(set, secondelement(domain), f1, f2; options...)
-
-continuous_approximation_operator(span::ExtensionSpan; solver = ContinuousDirectSolver, options...) = solver(span; options...)
+# 
+# continuous_approximation_operator(span::ExtensionSpan; solver = ContinuousDirectSolver, options...) = solver(span; options...)
 
 #################
 ## Gram operators extended

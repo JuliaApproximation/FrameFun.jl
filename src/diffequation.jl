@@ -11,11 +11,11 @@ When the equation is solved the equations:
 will hold.
 """
 
-struct BoundaryCondition
-    S      :: FunctionSet
-    diff   :: AbstractOperator
-    DG      :: AbstractGrid
-end
+# struct BoundaryCondition
+#     S      :: FunctionSet
+#     diff   :: AbstractOperator
+#     DG      :: AbstractGrid
+# end
 
 struct DirichletBC
     dRhs   :: Function
@@ -34,12 +34,12 @@ struct NeumannBC
     end
 end
 
-BoundaryCondition(S :: Span, D::Domain) = BoundaryCondition(S,IdentityOperator(S),boundary(grid(S),D),default_boundary_condition)
-BoundaryCondition(S :: Span, diff::AbstractOperator, D::Domain) = BoundaryCondition(S,diff,boundary(grid(S),D),default_boundary_condition)
-BoundaryCondition(S :: Span, diff::AbstractOperator, D::Domain, dRhs::Function) = BoundaryCondition(S,diff,boundary(grid(S),D),dRhs)
-default_boundary_condition(x) = 0
-default_boundary_condition(x,y) = 0
-default_boundary_condition(x,y,z) = 0
+# BoundaryCondition(S :: Span, D::Domain) = BoundaryCondition(S,IdentityOperator(S),boundary(grid(S),D),default_boundary_condition)
+# BoundaryCondition(S :: Span, diff::AbstractOperator, D::Domain) = BoundaryCondition(S,diff,boundary(grid(S),D),default_boundary_condition)
+# BoundaryCondition(S :: Span, diff::AbstractOperator, D::Domain, dRhs::Function) = BoundaryCondition(S,diff,boundary(grid(S),D),dRhs)
+# default_boundary_condition(x) = 0
+# default_boundary_condition(x,y) = 0
+# default_boundary_condition(x,y,z) = 0
 
 function operator(BC :: DirichletBC, S::Span, G::AbstractGrid, D::Domain)
     G = subgrid(G,BC.D)
