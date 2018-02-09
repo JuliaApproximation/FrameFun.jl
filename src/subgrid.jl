@@ -29,20 +29,21 @@ end
 # These are for the assignment to indices in the function below.
 convert(::Type{NTuple{N,Int}},i::CartesianIndex{N}) where {N} = ntuple(k->i[k],N)
 
-function MaskedGrid(supergrid::AbstractGrid, domain::Domain)
-    mask = in.(supergrid, domain)
-    I = eltype(eachindex(supergrid))
+MaskedGrid(supergrid::AbstractGrid, domain::Domain) =
+    MaskedGrid(supergrid, in.(supergrid, domain))
+
+function MaskedGrid(supergrid::AbstractGrid, mask::Array{Bool})
+    I= eltype(eachindex(supergrid))
     indices = Array{I}(sum(mask))
     i = 1
     for m in eachindex(supergrid)
-        if mask[m]
-            indices[i] = m
-            i += 1
-        end
+       if mask[m]
+           indices[i] = m
+           i += 1
+       end
     end
     MaskedGrid(supergrid, mask, indices)
 end
-
 
 length(g::MaskedGrid) = g.M
 
