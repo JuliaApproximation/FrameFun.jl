@@ -99,7 +99,10 @@ import BasisFunctions: discrete_approximation_operator, continuous_approximation
 export ExpFun, ChebyFun, Fun, SetFun, sampling_grid, domain, abserror, maxerror, L2error
 
 # from subgrid.jl
-export MaskedGrid
+export MaskedGrid, boundary_grid
+
+# from spline_approximation.jl
+export boundary_extension_operator, boundary_support_grid
 
 # from domains/boundingbox.jl
 export BoundingBox, BBox, BBox1, BBox2, BBox3, BBox4
@@ -140,6 +143,8 @@ export characteristic
 export FeFun, FeFunNd
 
 include("subgrid.jl")
+
+include("spline_approximation.jl")
 
 #include("domains/boundingbox.jl")
 include("domains/extensions.jl")
