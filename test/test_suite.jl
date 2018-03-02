@@ -102,7 +102,7 @@ function test_1d_cases()
             for T in (1.9,)
                 for func in (f,g)
 
-                    B = Basis(n, -T, T, ELT)
+                    B = Basis{ELT}(n, -T, T)
                     F = @timed( Fun(func, B, D; solver=solver) )
                     error = abserror(func, F[1])
                     if verbose

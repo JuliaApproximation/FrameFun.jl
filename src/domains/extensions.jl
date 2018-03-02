@@ -4,10 +4,6 @@
 ###########################
 # Applying broadcast to in
 ###########################
-forward_map(d::MappedDomain) = inv(mapping(d))
-
-inverse_map(d::MappedDomain) = mapping(d)
-
 
 # Intercept a broadcasted call to indomain. We assume that the user wants evaluation
 # in a set of points (which we call a grid), rather than in a single point.
@@ -109,6 +105,8 @@ function boundingbox(d::IntersectionDomain)
     right = SVector(minimum(hcat(map(rightendpoint,elements(d))...),2)...)
     boundingbox(left,right)
 end
+
+Domains.superdomain(d::MappedDomain) = Domains.source(d)
 
 # Now here is a problem: how do we compute a bounding box, without extra knowledge
 # of the map? We can only do this for some maps.

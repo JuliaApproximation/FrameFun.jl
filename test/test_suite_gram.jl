@@ -10,7 +10,7 @@ function prolate_test()
   @testset "Fourier frame on half, symmetric domain (prolates)" begin
     for T in (Float32, Float64,), n in (11,13,)
       tol = sqrt(eps(T))
-      b = FourierBasis(n,T)
+      b = FourierBasis{T}(n)
       d = interval(T(.25),T(.75))
       frame = extensionframe(b, d)
       g = Gram(span(frame); reltol=tol,abstol=tol)
@@ -37,7 +37,7 @@ function basis_test()
     for T in (Float32,Float64,), n in (10,11)
       tol = sqrt(eps(T))
       e = rand(T,n)
-      for B in (ChebyshevBasis,LegendreBasis,FourierBasis,SineSeries,CosineSeries,BSplineTranslatesBasis,)
+      for B in (ChebyshevBasis,LegendrePolynomials,FourierBasis,SineSeries,CosineSeries,BSplineTranslatesBasis,)
         basis = instantiate(B, n, T)
         domain = interval(left(basis),right(basis))
         frame = extensionframe(basis, domain)
@@ -114,7 +114,7 @@ end
 
 function test_connection_restriction_extension_discretegram()
   @testset "Testing connection extension with discrete gram" begin
-    for T in (Float64, BigFloat), (b,os) in [(BSplineTranslatesBasis(10, 1, T),1), (BSplineTranslatesBasis(10, 2, T),1), (FourierBasis(10,T),1.1), (ChebyshevBasis(20,T),.66)]
+    for T in (Float64, BigFloat), (b,os) in [(BSplineTranslatesBasis(10, 1, T),1), (BSplineTranslatesBasis(10, 2, T),1), (FourierBasis{T}(10),1.1), (ChebyshevBasis(20,T),.66)]
       d = interval(left(b),right(b))/2
       frame = extensionframe(b, d)
       bspan = span(b)
@@ -206,7 +206,7 @@ end
 function test_general_gram()
   T = Float64
   tol = max(sqrt(eps(T)), 1e-10)
-  for method in (Gram, DualGram, MixedGram), B in (FourierBasis(11,T), BSplineTranslatesBasis(5, 1,T))
+  for method in (Gram, DualGram, MixedGram), B in (FourierBasis{T}(11), BSplineTranslatesBasis(5, 1,T))
     D = interval(left(B), right(B))
     frame = extensionframe(B,D)
     GBB = method(span(frame),span(frame); abstol=tol, reltol=tol)
