@@ -35,13 +35,13 @@ function test_function_space()
       FE.add(FourierSpace(),2)])
       # @test left(bboxes[i])==left(boundingbox(space))
       # @test right(bboxes[i])==right(boundingbox(space))
-      @test FunctionSet(space, 64) == bases[i]
+      @test Dictionary(space, 64) == bases[i]
   end
   @testset "Util functions" begin
     for n in 1:4
       S = FE.tensorproduct(FourierSpace(),n)
       @test dimension(S) == n
-      @test rangetype(S) == Complex128
+      @test codomaintype(S) == Complex128
     end
     @test domaintype(promote_domaintype(ChebyshevSpace(),Complex128)) == domaintype(promote_domaintype(ChebyshevBasis(11),Complex128))
     @test domaintype(promote_domaintype(ChebyshevSpace(),Float32)) == domaintype(promote_domaintype(ChebyshevBasis(11),Float32))
@@ -73,7 +73,7 @@ function test_funs()
     @testset "$(tests[i]) tests" for (i,mth) in enumerate([FE.fun_simple, FE.fun_optimal_N, FE.fun_greedy])
         for tol in 10.0.^(-4.:-4.:-16.)
             F = mth(f, S, D, tol=tol, max_logn_coefs=max_logn_coefs)
-            @test ( (FE.maxerror(f,F) < tol*100) || (length(set(F))>= 2^max_logn_coefs))
+            @test ( (FE.maxerror(f,F) < tol*100) || (length(dictionary(F))>= 2^max_logn_coefs))
         end
         F = mth(x->cos(4π*x), S, D)
         @test FE.residual(x->cos(4π*x),F) < 1e-13

@@ -6,6 +6,6 @@ domain(b::FourierBasis) = interval(0,1)
 
 domain(b::ChebyshevBasis) = interval(-1, 1)
 
-domain(s::TensorProductSet) = cartesianproduct(map(domain, elements(s))...)
+domain(d::TensorProductDict) = cartesianproduct(map(domain, elements(d))...)
 
-domain(set::MappedSet) = apply_map(domain(superset(set)), mapping(set))
+domain(dict::MappedDict) = apply_map(domain(superdict(dict)), mapping(dict))

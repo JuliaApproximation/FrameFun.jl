@@ -58,7 +58,7 @@ unsafe_getindex(g::MaskedGrid, idx) = unsafe_getindex(g.supergrid, g.indices[idx
 
 
 # Efficient extension operator
-function apply!{G <: MaskedGrid}(op::Extension, dest, src::GridSet{G}, coef_dest, coef_src)
+function apply!{G <: MaskedGrid}(op::Extension, dest, src::GridBasis{G}, coef_dest, coef_src)
     @assert length(coef_src) == length(src)
     @assert length(coef_dest) == length(dest)
     # @assert grid(dest) == supergrid(grid(src))
@@ -78,7 +78,7 @@ end
 
 
 # Efficient restriction operator
-function apply!{G <: MaskedGrid}(op::Restriction, dest::GridSet{G}, src, coef_dest, coef_src)
+function apply!{G <: MaskedGrid}(op::Restriction, dest::GridBasis{G}, src, coef_dest, coef_src)
     @assert length(coef_src) == length(src)
     @assert length(coef_dest) == length(dest)
     # This line below seems to allocate memory...

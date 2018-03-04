@@ -1,32 +1,35 @@
-abstract type AbstractSpace{T}
+abstract type AbstractSpace{S,T}
 end
 
 basis(space::AbstractSpace) = space.basis
 
 dimension(space::B) where{B<:AbstractSpace} = dimension(basis(space))
 domaintype(space::B) where{B<:AbstractSpace} = domaintype(basis(space))
-rangetype(space::B) where{B<:AbstractSpace} = rangetype(basis(space))
+codomaintype(space::B) where{B<:AbstractSpace} = codomaintype(basis(space))
 
-FunctionSet{T}(space::AbstractSpace{T},n) = resize(basis(space),n)
+Dictionary{S,T}(space::AbstractSpace{S,T},n) = resize(basis(space),n)
 
-struct FunctionSpace{T} <: AbstractSpace{T}
-    basis   ::    FunctionSet{T}
+struct FunctionSpace{S,T} <: AbstractSpace{S,T}
+    basis   ::    Dictionary{S,T}
 
-    FunctionSpace{T}(basis::FunctionSet) where {T} = new(basis)
-    FunctionSpace{T}(basis::FunctionSet, dom::Domain) where {T} = new(rescale(basis,leftendpoint(dom),rightendpoint(dom)))
+    FunctionSpace{S,T}(basis::Dictionary) where {S,T} = new(basis)
 end
 
-FunctionSpace(basis::FunctionSet{T}) where {T} = FunctionSpace{T}(basis)
-FunctionSpace(basis::FunctionSet{T}, dom::Domain) where {T} = FunctionSpace{T}(basis,dom)
+FunctionSpace(basis::Dictionary{S,T}) where {S,T} = FunctionSpace{S,T}(basis)
+FunctionSpace(basis::Dictionary, dom::Domain) =
+    FunctionSpace(rescale(basis, leftendpoint(dom), rightendpoint(dom)))
+
 # place somewhere else?
-FourierSpace(left::Real=0,right::Real=1) = FunctionSpace(FourierBasis(0), interval(left,right))
-ChebyshevSpace(left::Real=-1,right::Real=1) = FunctionSpace(ChebyshevBasis(0), interval(left,right))
+FourierSpace(left::Real=0,right::Real=1) =
+    FunctionSpace(FourierBasis(0), interval(left,right))
+ChebyshevSpace(left::Real=-1,right::Real=1) =
+    FunctionSpace(ChebyshevBasis(0), interval(left,right))
 # place somewhere else?
-boundingbox(f::FunctionSet{T}) where {T} = boundingbox(left(f), right(f))
+boundingbox(f::Dictionary) = boundingbox(left(f), right(f))
 
 boundingbox(space::FunctionSpace) = boundingbox(space.basis)
 
-name(space::AbstractSpace) = "Space of "*name(FunctionSet(space,0))
+name(space::AbstractSpace) = "Space of "*name(Dictionary(space,0))
 
 "Tensorproduct of function space"
 tensorproduct(space::FunctionSpace) = space

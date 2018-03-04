@@ -6,7 +6,7 @@
 """
 function fun_simple(f::Function, set::FunctionSet, domain::Domain;
     no_checkpoints=200, max_logn_coefs=8, tol=1e-12, print_error=false, options...)
-  ELT = rangetype(f, set)
+  ELT = codomaintype(f, set)
   N = dimension(set)
   F = nothing
   # TODO Decide which is best
@@ -39,7 +39,7 @@ Base.isnan(::Tuple) = false
 """
 function fun_optimal_N(f::Function, set::FunctionSet{T}, domain::Domain;
   no_checkpoints=200, max_logn_coefs=8, cutoff=default_cutoff(real(T)), tol=100*cutoff, verbose=false, adaptive_verbose = verbose, return_log=false, randomtest=false, options...) where {T}
-  ELT = rangetype(f, set)
+  ELT = codomaintype(f, set)
   N = dimension(set)
   F = nothing
   rgrid = randomgrid(domain, no_checkpoints)

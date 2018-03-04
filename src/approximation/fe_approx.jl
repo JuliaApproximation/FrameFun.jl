@@ -15,12 +15,12 @@
 
 
 function Fun(f::Function, basis::FunctionSet, domain::Domain; options...)
-    ELT = rangetype(f, basis)
+    ELT = codomaintype(f, basis)
 
     frame = extensionframe(domain, promote_domainsubtype(basis, real(ELT)))
     A = approximation_operator(span(frame,ELT); options...)
     coef = A * f
-    SetFun(domain, set(dest(A)), coef)
+    SetFun(domain, dictionary(dest(A)), coef)
 end
 
 function fe_problem(basis, domain, sampling_factor; options...)
@@ -34,8 +34,8 @@ function fe_solver(basis, domain; options...)
 end
 
 # We assume f as a function is type stable.
-function rangetype(f::Function, basis)
-    ELT = rangetype(basis)
+function codomaintype(f::Function, basis)
+    ELT = codomaintype(basis)
     # We only test for the return type in zero
     RT = typeof(f(zero(GeometricSpace{domaintype(basis)})...))
     if (RT <: Complex)
@@ -48,7 +48,7 @@ end
 function oversampled_evaluation_operator(S::Span, D::Domain; sampling_factor=2, incboundary=false, options...)
     B = primaryspan(S)
     # Establish time domain grid
-    G, lB = oversampled_grid(D,set(B),sampling_factor)
+    G, lB = oversampled_grid(D,dictionary(B),sampling_factor)
 
     op = grid_evaluation_operator(S,gridspace(B,G),G)
     # Add boundary points if necessary
@@ -60,7 +60,7 @@ function oversampled_evaluation_operator(S::Span, D::Domain; sampling_factor=2, 
 end
 
 scaling_factor(S::FunctionSet) = length(S)
-scaling_factor(S::DerivedSet) = scaling_factor(superset(S))
+scaling_factor(S::DerivedDict) = scaling_factor(superdict(S))
 scaling_factor(S::ChebyshevBasis) = length(S)/2
 
 function discrete_approximation_operator(set::ExtensionSpan; solver = default_frame_solver(domain(set), basisspan(set)), options...)

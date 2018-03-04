@@ -13,7 +13,7 @@ function prolate_test()
       b = FourierBasis{T}(n)
       d = interval(T(.25),T(.75))
       frame = extensionframe(b, d)
-      g = Gram(span(frame); reltol=tol,abstol=tol)
+      g = Gram(Span((frame); reltol=tol,abstol=tol)
       m = matrix(g)
       @test norm(imag(m)) < tol
       m1 = real(m)
@@ -42,18 +42,18 @@ function basis_test()
         domain = interval(left(basis),right(basis))
         frame = extensionframe(basis, domain)
 
-        @test norm(Gram(span(frame); abstol=tol, reltol=tol)*e - Gram(span(basis); abstol=tol, reltol=tol)*e) <100*tol
-        @test norm(DualGram(span(frame); abstol=tol, reltol=tol)*e - DualGram(span(basis); abstol=tol, reltol=tol)*e) <100*tol
-        @test norm(MixedGram(span(frame); abstol=tol, reltol=tol)*e - MixedGram(span(basis); abstol=tol, reltol=tol)*e) <100*tol
+        @test norm(Gram(Span((frame); abstol=tol, reltol=tol)*e - Gram(Span((basis); abstol=tol, reltol=tol)*e) <100*tol
+        @test norm(DualGram(Span((frame); abstol=tol, reltol=tol)*e - DualGram(Span((basis); abstol=tol, reltol=tol)*e) <100*tol
+        @test norm(MixedGram(Span((frame); abstol=tol, reltol=tol)*e - MixedGram(Span((basis); abstol=tol, reltol=tol)*e) <100*tol
       end
       for B in (ChebyshevBasis,FourierBasis,CosineSeries,BSplineTranslatesBasis,), oversampling in 1:4
         basis = instantiate(B, n, T)
         domain = interval(left(basis),right(basis))
         frame = extensionframe(basis, domain)
 
-        @test norm(DiscreteGram(span(frame); oversampling=oversampling)*e - DiscreteGram(span(basis); oversampling=oversampling)*e) <100*tol
-        @test norm(DiscreteDualGram(span(frame); oversampling=oversampling)*e - DiscreteDualGram(span(basis); oversampling=oversampling)*e) <100*tol
-        @test norm(DiscreteMixedGram(span(frame); oversampling=oversampling)*e - DiscreteMixedGram(span(basis); oversampling=oversampling)*e) <100*tol
+        @test norm(DiscreteGram(Span((frame); oversampling=oversampling)*e - DiscreteGram(Span((basis); oversampling=oversampling)*e) <100*tol
+        @test norm(DiscreteDualGram(Span((frame); oversampling=oversampling)*e - DiscreteDualGram(Span((basis); oversampling=oversampling)*e) <100*tol
+        @test norm(DiscreteMixedGram(Span((frame); oversampling=oversampling)*e - DiscreteMixedGram(Span((basis); oversampling=oversampling)*e) <100*tol
       end
     end
   end
@@ -83,8 +83,8 @@ function test_discrete_gram()
         b = instantiate(B,n,T)
         d = interval(left(b), right(b))/2
         frame = extensionframe(b,d)
-        Gomega = DiscreteGram(span(frame); oversampling=os)
-        Eomega = evaluation_operator(span(frame); oversampling=os)
+        Gomega = DiscreteGram(Span((frame); oversampling=os)
+        Eomega = evaluation_operator(Span((frame); oversampling=os)
         N = BasisFunctions.discrete_gram_scaling(frame, os)
 
         basis_os = BasisFunctions.basis_oversampling(frame,os)
@@ -92,7 +92,7 @@ function test_discrete_gram()
 
         @test (Eomega'Eomega)*e/N≈Gomega*e
 
-        GT = DiscreteDualGram(span(b); oversampling=basis_os)
+        GT = DiscreteDualGram(Span((b); oversampling=basis_os)
 
         ETomega = Eomega*GT
 
@@ -104,9 +104,9 @@ function test_discrete_gram()
 
         @test (ETomega'Eomega)*e/N≈GMomega*e
 
-        @test DiscreteGram(span(frame);oversampling=os)*e≈Gomega*e
-        @test DiscreteDualGram(span(frame); oversampling=os)*e≈GTomega*e
-        @test DiscreteMixedGram(span(frame); oversampling=os)*e≈GMomega*e
+        @test DiscreteGram(Span((frame);oversampling=os)*e≈Gomega*e
+        @test DiscreteDualGram(Span((frame); oversampling=os)*e≈GTomega*e
+        @test DiscreteMixedGram(Span((frame); oversampling=os)*e≈GMomega*e
       end
     end
   end
@@ -117,8 +117,8 @@ function test_connection_restriction_extension_discretegram()
     for T in (Float64, BigFloat), (b,os) in [(BSplineTranslatesBasis(10, 1, T),1), (BSplineTranslatesBasis(10, 2, T),1), (FourierBasis{T}(10),1.1), (ChebyshevBasis(20,T),.66)]
       d = interval(left(b),right(b))/2
       frame = extensionframe(b, d)
-      bspan = span(b)
-      framespan = span(frame)
+      bspan = Span((b)
+      framespan = Span((frame)
       N = BasisFunctions.discrete_gram_scaling(b, os)
 
        # Uses extension times two next, so works only for os=1, for bsplines, ≈ 1.1 for fourier series,...
@@ -127,7 +127,7 @@ function test_connection_restriction_extension_discretegram()
 
       # check whether the previous calculation is the same as extension by 2.
       b_large = extend(b)
-      b_largespan = span(b_large)
+      b_largespan = Span((b_large)
       time_basisspan = gridspace(b_largespan)
       r_time_basisspan = gridspace(b_largespan,FrameFun.subgrid(grid(b_large), d))
 
@@ -160,10 +160,10 @@ function test_connection_restriction_extension_discretegram()
   end
   for T in (Float64,BigFloat), B in (BSplineTranslatesBasis, FourierBasis, ChebyshevBasis,), n in (10,11), os in 1:4
     b = instantiate(B, n, T)
-    bspan = span(b)
+    bspan = Span((b)
     d = interval(left(b),right(b))/2
     frame = extensionframe(b, d)
-    framespan = span(frame)
+    framespan = Span((frame)
     N = BasisFunctions.discrete_gram_scaling(frame, os)
 
     G = DiscreteGram(framespan; oversampling=os)
@@ -209,8 +209,8 @@ function test_general_gram()
   for method in (Gram, DualGram, MixedGram), B in (FourierBasis{T}(11), BSplineTranslatesBasis(5, 1,T))
     D = interval(left(B), right(B))
     frame = extensionframe(B,D)
-    GBB = method(span(frame),span(frame); abstol=tol, reltol=tol)
-    GB = method(span(B); abstol=tol, reltol=tol)
+    GBB = method(Span((frame),Span((frame); abstol=tol, reltol=tol)
+    GB = method(Span((B); abstol=tol, reltol=tol)
 
     e = rand(length(frame))
     @test norm(GBB*e - GB*e) <= 1000*tol

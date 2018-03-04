@@ -7,13 +7,13 @@ A SetFun corresponds to an expansion in a function set, but it adds a simple use
 interface for computing with functions.
 """
 struct SetFun{T} <: AbstractFun
-    expansion   ::  SetExpansion
+    expansion   ::  Expansion
 end
 
-SetFun(e::SetExpansion, args...) = SetFun{domaintype(set(e))}(e, args...)
+SetFun(e::Expansion, args...) = SetFun{domaintype(dictionary(e))}(e, args...)
 
 SetFun{T}(frame::FunctionSet{T}, coefficients = zeros(frame), args...) =
-    SetFun{T}(SetExpansion(frame, coefficients), args...)
+    SetFun{T}(Expansion(frame, coefficients), args...)
 
 SetFun(domain::Domain, basis::FunctionSet, args...) = SetFun(ExtensionFrame(domain, basis), args...)
 
@@ -35,10 +35,10 @@ for op in (:ctranspose, :∫, :∂x, :∂y, :∂z, :∫∂x, :∫∂y, :∫∂z,
 end
 
 for op in (:ExtensionFrame, :basis)
-    @eval $op(fun::SetFun) = $op(fun, set(fun))
+    @eval $op(fun::SetFun) = $op(fun, dictionary(fun))
 end
 
-domain(fun::SetFun) = domain(set(fun))
+domain(fun::SetFun) = domain(dictionary(fun))
 
 for op in (:+, :-, :*)
     @eval $op(fun1::SetFun,fun2::SetFun) = SetFun($op(fun1.expansion,fun2.expansion))
@@ -70,8 +70,8 @@ end
 
 # Delegate operator applications to the underlying expansion
 function (*)(op::AbstractOperator, fun::SetFun)
-    @assert src(op) == span(basis(set(fun)))
-    SetFun(domain(fun),set(dest(op)),op*coefficients(fun))
+    @assert src(op) == span(basis(dictionary(fun)))
+    SetFun(domain(fun),dictionary(dest(op)),op*coefficients(fun))
 end
 
 # Delegate all calling to the underlying expansion.
@@ -91,13 +91,13 @@ function show(io::IO, fun::SetFun, set::ExtensionFrame)
     println(io, "Domain: ", domain(set))
 end
 
-getindex(expansion::SetExpansion, domain::Domain) = restrict(expansion, domain)
+getindex(expansion::Expansion, domain::Domain) = restrict(expansion, domain)
 
 getindex(fun::SetFun, domain::Domain) = restrict(expansion(fun), domain)
 
-restrict(expansion::SetExpansion, domain::Domain) = _restrict(expansion, set(expansion), domain)
+restrict(expansion::Expansion, domain::Domain) = _restrict(expansion, dictionary(expansion), domain)
 
-function _restrict(expansion::SetExpansion, set::ExtensionFrame, domain1::Domain)
+function _restrict(expansion::Expansion, set::ExtensionFrame, domain1::Domain)
     @assert dimension(set) == dimension(domain1)
 
     domain2 = domain(set)
@@ -105,7 +105,7 @@ function _restrict(expansion::SetExpansion, set::ExtensionFrame, domain1::Domain
     SetFun(newdomain, basis(set), coefficients(expansion))
 end
 
-function _restrict(expansion::SetExpansion, set::FunctionSet, domain::Domain)
+function _restrict(expansion::Expansion, set::FunctionSet, domain::Domain)
     @assert dimension(set) == dimension(domain)
     # We should check here whether the given domain lies in the support of the set
     SetFun(domain, set, coefficients(expansion))
@@ -130,7 +130,7 @@ function maxerror{N}(f::Function,F::SetFun{N};vals::Int=200)
 end
 using QuadGK
 function L2error(f::Function, F::SetFun{T}; reltol = eps(real(T)), abstol = 0, options...) where {T}
-    I = QuadGK.quadgk(x->abs(F(x)-f(x))^2, left(set(F)), right(set(F)), reltol=reltol, abstol=abstol)
+    I = QuadGK.quadgk(x->abs(F(x)-f(x))^2, left(dictionary(F)), right(dictionary(F)), reltol=reltol, abstol=abstol)
     @assert I[2] < 100max(reltol*I[1],abstol)
     sqrt(I[1])
 end

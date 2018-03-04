@@ -85,7 +85,7 @@ end
 DiffEquation(S::Span, D::Domain, Diff::AbstractOperator, DRhs::Function, BC::BoundaryCondition, sampling_factor=2) = DiffEquation(S,D,Diff,DRhs,(BC,), sampling_factor)
 
 function boundarygrid(D::DiffEquation)
-    G, lB = oversampled_grid(D.D,set(D.S),D.sampling_factor)
+    G, lB = oversampled_grid(D.D,dictionary(D.S),D.sampling_factor)
     boundary(grid(lB),D.D)
 end
 
@@ -95,7 +95,7 @@ function operator(D::DiffEquation; incboundary=false, options...)
     B = D.S
     ADiff = inv_diagonal(D.Diff)
     ops = incboundary ? Array{AbstractOperator}(length(D.BCs)+2,1) : Array{AbstractOperator}(length(D.BCs)+1,1)
-    G, lB = oversampled_grid(D.D,set(D.S),D.sampling_factor)
+    G, lB = oversampled_grid(D.D,dictionary(D.S),D.sampling_factor)
 
     op = grid_evaluation_operator(D.S,gridspace(G,coeftype(D.S)),G)
 
@@ -116,7 +116,7 @@ end
 function rhs(D::DiffEquation; incboundary = false, options...)
     op = operator(D; incboundary=incboundary, options...)
     rhs = Array{Array{coeftype(src(op)),1}}(0)
-    G, lB = oversampled_grid(D.D,set(D.S),D.sampling_factor)
+    G, lB = oversampled_grid(D.D,dictionary(D.S),D.sampling_factor)
 
     op = grid_evaluation_operator(D.S,gridspace(G,coeftype(D.S)),G)
     push!(rhs,sample(G,D.DRhs, coeftype(src(op))))
@@ -132,11 +132,11 @@ function rhs(D::DiffEquation; incboundary = false, options...)
 end
 
 function solve(D::DiffEquation; solver=FE_ProjectionSolver, options...)
-    G, lB = oversampled_grid(D.D,set(D.S),D.sampling_factor)
+    G, lB = oversampled_grid(D.D,dictionary(D.S),D.sampling_factor)
     Adiff= inv_diagonal(D.Diff)
     b = rhs(D; options...)
     OP = operator(D; options...)
     A = solver(OP; scaling=length(lB), options...)
     coef  = A * b
-    SetFun(D.D, set(dest(A)), Adiff*coef)
+    SetFun(D.D, dictionary(dest(A)), Adiff*coef)
 end

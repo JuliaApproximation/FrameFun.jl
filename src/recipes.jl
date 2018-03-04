@@ -4,12 +4,12 @@
 ## Plot full SetFun as the underlying expansion
 @recipe function f(F::SetFun; plot_ext = false)
     # plot_ext || (title --> "SetFun")
-    plot_ext ? SetExpansion(basis(F),coefficients(F)) : expansion(F)
+    plot_ext ? Expansion(basis(F),coefficients(F)) : expansion(F)
 end
 
 # When supplying a function along with the SetFun, plot the error
 @recipe function f(F::SetFun, target::Function; plot_ext = true)
-    plot_ext ? (SetExpansion(basis(F),coefficients(F)), target) : (expansion(F), target)
+    plot_ext ? (Expansion(basis(F),coefficients(F)), target) : (expansion(F), target)
 end
 
 # Postprocessing when the set is a frame: set values outside the domain to NaN

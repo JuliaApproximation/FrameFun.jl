@@ -42,7 +42,7 @@ D = interval(-1.7,-1.0)
 f(x) = cos(3*x.^2)
 F = Fun(f,B,D)
 # Easily combine multiple plots
-plot(BasisFunctions.grid(set(F)),label="grid",markercolor=:white)
+plot(BasisFunctions.grid(dictionary(F)),label="grid",markercolor=:white)
 plot!(F,label="function", plot_ext=true)
 plot!(F',title="Function and derivative",label="derivative",legend=true)
 

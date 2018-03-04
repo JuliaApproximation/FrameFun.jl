@@ -193,7 +193,7 @@ function test_3d_cases()
 
         for T in ((1.7,1.2,1.3),)
             B = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2]) ⊗ Basis(n[3],-T[3],T[3])
-            F = @timed( Fun(f, B, D; solver=solver, cutoff=10.0^(3/4*log10(eps(real(rangetype(B))))),sampling_factor=1.5))
+            F = @timed( Fun(f, B, D; solver=solver, cutoff=10.0^(3/4*log10(eps(real(codomaintype(B))))),sampling_factor=1.5))
             error = FrameFun.residual(f, F[1])/length(B)
             if verbose
                 print("$n \t $T \t\t")

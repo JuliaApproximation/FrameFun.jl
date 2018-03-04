@@ -66,15 +66,15 @@ function test_differential_equations_1d()
         BC = DirichletBC(x->0)
         # Set up Differential equation
         f(x) = x
-        Diff = differentiation_operator(span(B))^2
-        DE = DiffEquation(span(B),Dom,Diff, f, (BC,))
+        Diff = differentiation_operator(Span((B))^2
+        DE = DiffEquation(Span((B),Dom,Diff, f, (BC,))
         # Actually solve the differential equation
         F = solve(DE, solver=solver)
         sol(x) = x^3/6 - x/24
         error = abserror(sol,F)
-        @test (error < sqrt(eps(real(rangetype(B))))*10)
+        @test (error < sqrt(eps(real(codomaintype(B))))*10)
         error = abserror(f,F'')
-        @test (error < sqrt(eps(real(rangetype(B))))*100)
+        @test (error < sqrt(eps(real(codomaintype(B))))*100)
     end
     @testset "diff 1D mixed" for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
         B = FourierBasis(101,-2,2)
@@ -84,15 +84,15 @@ function test_differential_equations_1d()
         BC2 = NeumannBC(x->0, interval(-2.0,0.0))
         # Set up Differential equation
         f(x) = x
-        Diff = differentiation_operator(span(B))^2
-        DE = DiffEquation(span(B),Dom,Diff, f, (BC1,BC2))
+        Diff = differentiation_operator(Span((B))^2
+        DE = DiffEquation(Span((B),Dom,Diff, f, (BC1,BC2))
         # Actually solve the differential equation
         F = solve(DE, solver=solver)
         sol(x) = x^3/6 - x/2 -1/3
         error = abserror(sol,F)
-        @test (error < sqrt(eps(real(rangetype(B))))*10)
+        @test (error < sqrt(eps(real(codomaintype(B))))*10)
         error = abserror(f,F'')
-        @test (error < sqrt(eps(real(rangetype(B))))*100)
+        @test (error < sqrt(eps(real(codomaintype(B))))*100)
     end
 end
 
@@ -105,8 +105,8 @@ function test_differential_equations_2d()
         BC = DirichletBC(df,euclideanspace(Val{2}()))
         # Set up Differential equation
         f(x,y) = 0
-        Diff = differentiation_operator(span(B),(2,0))+differentiation_operator(span(B),(0,2))
-        DE = DiffEquation(span(B),Dom,Diff, f, (BC,))
+        Diff = differentiation_operator(Span((B),(2,0))+differentiation_operator(Span((B),(0,2))
+        DE = DiffEquation(Span((B),Dom,Diff, f, (BC,))
         # Actually solve the differential equation
         F = solve(DE, solver=solver)
         error = abserror(df,F)
@@ -122,8 +122,8 @@ function test_differential_equations_2d()
         BC = NeumannBC(df,euclideanspace(Val{2}()))
         # Set up Differential equation
         f(x,y) = 0
-        Diff = differentiation_operator(span(B),(2,0))+differentiation_operator(span(B),(0,2))
-        DE = DiffEquation(span(B),Dom,Diff, f, (BC,))
+        Diff = differentiation_operator(Span((B),(2,0))+differentiation_operator(Span((B),(0,2))
+        DE = DiffEquation(Span((B),Dom,Diff, f, (BC,))
         # Actually solve the differential equation
         F = solve(DE, solver=solver)
         # We should find a way to check the boundary condition more easily
@@ -143,7 +143,7 @@ function test_smoothing_1d()
         fscale(i) = 10.0^-4+abs(i)+abs(i)^2+abs(i)^3
         F = Fun(f,B,D;solver=FrameFun.FE_SmoothProjectionSolver,scale=fscale)
         # F = Fun(f,B,D;solver=FrameFun.FE_ProjectionSolver)
-        @test (abserror(f,F) < 100*sqrt(eps(real(rangetype(B)))))
+        @test (abserror(f,F) < 100*sqrt(eps(real(codomaintype(B)))))
     end
 end
 
@@ -154,7 +154,7 @@ function test_smoothing_2d()
         f(x,y) = exp(x*y)
         fscale(i,j) = 10.0^-4+100*abs((i)^2+abs(j^2))
         F = Fun(f,B,D;solver=FrameFun.FE_SmoothProjectionSolver,scale=fscale)
-        @test (abserror(f,F) < 100*sqrt(sqrt(eps(real(rangetype(B))))))
+        @test (abserror(f,F) < 100*sqrt(sqrt(eps(real(codomaintype(B))))))
     end
 end
 

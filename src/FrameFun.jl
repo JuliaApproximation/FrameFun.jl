@@ -46,7 +46,8 @@ import Domains: cartesianproduct, ×
 
 
 ## - Imports from BasisFunctions
-import BasisFunctions: src, dest, matrix, matrix!, apply!, apply_inplace!, dimension, rangetype, domaintype
+import BasisFunctions: src, dest, matrix, matrix!, apply!, apply_inplace!,
+    dimension, codomaintype, domaintype
 
 import BasisFunctions: tensorproduct, ⊗
 
@@ -58,13 +59,13 @@ import BasisFunctions: is_basis, is_frame, is_orthogonal, is_orthonormal, is_bio
 
 import BasisFunctions: operator, matrix, is_diagonal, is_inplace, ⊕
 
-import BasisFunctions: coefficients, set,
+import BasisFunctions: coefficients, dictionary,
     transform_operator_pre, transform_operator_post, evaluation_operator, interpolation_operator,
     differentiation_operator, antidifferentiation_operator, approximation_operator,
     extend, extension_size, extension_operator, restriction_operator,
     default_approximation_operator, has_extension, wrap_operator
 
-import BasisFunctions: superset, similar_set, promote_domaintype, promote_domainsubtype
+import BasisFunctions: superdict, similar_dict, promote_domaintype, promote_domainsubtype
 
 import BasisFunctions: eval_set_element, eval_element, eval_expansion,
     call_set_expansion, name, in_support
@@ -81,7 +82,7 @@ import BasisFunctions: flatten
 
 import BasisFunctions: Span, Span1d, Span2d
 
-import BasisFunctions: span, coefficient_type, coeftype, similar_span
+import BasisFunctions: coefficient_type, coeftype, similar_span
 
 # about subgrids
 import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
