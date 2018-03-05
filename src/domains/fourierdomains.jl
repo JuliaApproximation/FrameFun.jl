@@ -7,7 +7,7 @@ Example: if relop is x -> x-2 > 0, then the Fourier domain is the domain where t
 Fourier series is greater than 2.
 """
 struct FourierDomain{T} <: Domain{T}
-    f       ::  SetFun
+    f       ::  DictFun
     relop	::	Function
 end
 
@@ -22,10 +22,10 @@ function in(g::AbstractGrid, d::FourierDomain)
 	map(d.relop, z)
 end
 
-(<)(f::SetFun{T}, a::Number) where {T} = FourierDomain{convert(SVector,T)}(f, x-> x < a)
-(<=)(f::SetFun{T}, a::Number) where {T} = FourierDomain{convert(SVector,T)}(f, x-> x <= a)
-(>)(f::SetFun{T}, a::Number) where {T} = FourierDomain{convert(SVector,T)}(f, x-> x > a)
-(>=)(f::SetFun{T}, a::Number) where {T} = FourierDomain{convert(SVector,T)}(f, x-> x >= a)
+(<)(f::DictFun{T}, a::Number) where {T} = FourierDomain{convert(SVector,T)}(f, x-> x < a)
+(<=)(f::DictFun{T}, a::Number) where {T} = FourierDomain{convert(SVector,T)}(f, x-> x <= a)
+(>)(f::DictFun{T}, a::Number) where {T} = FourierDomain{convert(SVector,T)}(f, x-> x > a)
+(>=)(f::DictFun{T}, a::Number) where {T} = FourierDomain{convert(SVector,T)}(f, x-> x >= a)
 
 boundingbox(d::FourierDomain) = boundingbox(domain(d.f))
 
@@ -35,8 +35,8 @@ Example: if binop is (x,y) -> x > y, then the Fourier domain is the domain where
 Fourier series is greater than the second.
 """
 struct ComparisonDomain{T} <: Domain{T}
-    f       ::  SetFun
-    g		::	SetFun
+    f       ::  DictFun
+    g		::	DictFun
     binop	::	Function
 end
 
@@ -53,9 +53,9 @@ function in(g::AbstractGrid, d::ComparisonDomain)
 	in(g,domain(d.f)) & in(g,domain(d.g)) & map(d.binop, z1, z2)
 end
 
-(<)(f::SetFun{T}, g::SetFun{T}) where {T} = ComparisonDomain{convert(SVector,T)}(f, g, (x,y)-> x < y)
-(<=)(f::SetFun{T}, g::SetFun{T}) where {T} = ComparisonDomain{convert(SVector,T)}(f, g, (x,y)-> x <= y)
-(>)(f::SetFun{T}, g::SetFun{T}) where {T} = ComparisonDomain{convert(SVector),T}(f, g, (x,y)-> x > y)
-(>=)(f::SetFun{T}, g::SetFun{T}) where {T} = ComparisonDomain{convert(SVector,T)}(f, g, (x,y)-> x >= y)
+(<)(f::DictFun{T}, g::DictFun{T}) where {T} = ComparisonDomain{convert(SVector,T)}(f, g, (x,y)-> x < y)
+(<=)(f::DictFun{T}, g::DictFun{T}) where {T} = ComparisonDomain{convert(SVector,T)}(f, g, (x,y)-> x <= y)
+(>)(f::DictFun{T}, g::DictFun{T}) where {T} = ComparisonDomain{convert(SVector),T}(f, g, (x,y)-> x > y)
+(>=)(f::DictFun{T}, g::DictFun{T}) where {T} = ComparisonDomain{convert(SVector,T)}(f, g, (x,y)-> x >= y)
 
 boundingbox(d::ComparisonDomain) = boundingbox(domain(d.f))+boundingbox(domain(d.g))

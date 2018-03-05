@@ -65,7 +65,8 @@ import BasisFunctions: coefficients, dictionary,
     extend, extension_size, extension_operator, restriction_operator,
     default_approximation_operator, has_extension, wrap_operator
 
-import BasisFunctions: superdict, similar_dict, promote_domaintype, promote_domainsubtype
+import BasisFunctions: superdict, similar_dictionary,
+    promote_domaintype, promote_domainsubtype
 
 import BasisFunctions: eval_set_element, eval_element, eval_expansion,
     call_set_expansion, name, in_support
@@ -97,7 +98,7 @@ import BasisFunctions: discrete_approximation_operator, continuous_approximation
 ## Exhaustive list of exports
 ###############################
 # from funs.jl
-export ExpFun, ChebyFun, Fun, SetFun, sampling_grid, domain, abserror, maxerror, L2error
+export ExpFun, ChebyFun, Fun, DictFun, sampling_grid, domain, abserror, maxerror, L2error
 
 # from subgrid.jl
 export MaskedGrid

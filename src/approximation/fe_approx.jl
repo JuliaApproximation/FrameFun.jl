@@ -1,7 +1,7 @@
 # fe_fourier.jl
 
 
-## "An ExpFun is a SetFun based on Fourier series."
+## "An ExpFun is a DictFun based on Fourier series."
 ## ExpFun(f::Function; n=n, T=T, args...) = Fun(FourierBasis, f ; args...)
 ## # one of three things should be provided: n(tuple), domain or basis
 ## # only n
@@ -9,18 +9,18 @@
 ## ExpFun(f::Function, n::Int)
 ## ExpFun{N}(f::Function, n::Ntuple{N}) = Fun(FourierBasis, f, domain; args...)
 
-## "A ChebyFun is a SetFun based on Chebyshev polynomials."
+## "A ChebyFun is a DictFun based on Chebyshev polynomials."
 ## ChebyFun(f::Function; args...) = Fun(ChebyshevBasis, f; args...)
 ## ChebyFun(f::Function, domain; args...) = Fun(ChebyshevBasis, f, domain; args...)
 
 
-function Fun(f::Function, basis::FunctionSet, domain::Domain; options...)
+function Fun(f::Function, basis::Dictionary, domain::Domain; options...)
     ELT = codomaintype(f, basis)
 
     frame = extensionframe(domain, promote_domainsubtype(basis, real(ELT)))
-    A = approximation_operator(span(frame,ELT); options...)
+    A = approximation_operator(Span(frame,ELT); options...)
     coef = A * f
-    SetFun(domain, dictionary(dest(A)), coef)
+    DictFun(domain, dictionary(dest(A)), coef)
 end
 
 function fe_problem(basis, domain, sampling_factor; options...)
@@ -30,7 +30,7 @@ end
 
 function fe_solver(basis, domain; options...)
     frame = ExtensionFrame(domain, basis)
-    approximation_operator(span(frame); options...)
+    approximation_operator(Span(frame); options...)
 end
 
 # We assume f as a function is type stable.
@@ -59,7 +59,7 @@ function oversampled_evaluation_operator(S::Span, D::Domain; sampling_factor=2, 
     (op,scaling_factor(lB))
 end
 
-scaling_factor(S::FunctionSet) = length(S)
+scaling_factor(S::Dictionary) = length(S)
 scaling_factor(S::DerivedDict) = scaling_factor(superdict(S))
 scaling_factor(S::ChebyshevBasis) = length(S)/2
 
@@ -69,7 +69,7 @@ function discrete_approximation_operator(set::ExtensionSpan; solver = default_fr
 end
 
 primaryspan(span::Span) = span
-function primaryspan(span::BasisFunctions.MultiSetSpan)
+function primaryspan(span::BasisFunctions.MultiDictSpan)
     elements(span)[findmax(map(length,elements(span)))[2]]
 end
 
@@ -132,7 +132,7 @@ end
 
 default_frame_solver(domain, basis) = FE_BestSolver
 
-default_frame_solver(domain::Domain, basis::FunctionSet{SVector{N,BigFloat}}) where {N} = FE_DirectSolver
-default_frame_solver(domain::Domain, basis::FunctionSet{SVector{N,Complex{BigFloat}}}) where {N} = FE_DirectSolver
-default_frame_solver(domain::Domain, basis::FunctionSet{BigFloat}) = FE_DirectSolver
-default_frame_solver(domain::Domain, basis::FunctionSet{Complex{BigFloat}}) = FE_DirectSolver
+default_frame_solver(domain::Domain, basis::Dictionary{S,SVector{N,BigFloat}}) where {S,N} = FE_DirectSolver
+default_frame_solver(domain::Domain, basis::Dictionary{S,SVector{N,Complex{BigFloat}}}) where {S,N} = FE_DirectSolver
+default_frame_solver(domain::Domain, basis::Dictionary{BigFloat}) = FE_DirectSolver
+default_frame_solver(domain::Domain, basis::Dictionary{Complex{BigFloat}}) = FE_DirectSolver

@@ -3,7 +3,7 @@
 """
 A DiffEquation describes a differential equation, with or without boundary conditions.
 Parameters:
-- Fun is the SetFun that will describe the result
+- Fun is the DictFun that will describe the result
 
 When the equation is solved the equations:
 -Diff(Fun) = DRhs on the domain
@@ -12,9 +12,9 @@ will hold.
 """
 
 struct BoundaryCondition
-    S      :: FunctionSet
+    S      :: Dictionary
     diff   :: AbstractOperator
-    DG      :: AbstractGrid
+    DG     :: AbstractGrid
 end
 
 struct DirichletBC
@@ -138,5 +138,5 @@ function solve(D::DiffEquation; solver=FE_ProjectionSolver, options...)
     OP = operator(D; options...)
     A = solver(OP; scaling=length(lB), options...)
     coef  = A * b
-    SetFun(D.D, dictionary(dest(A)), Adiff*coef)
+    DictFun(D.D, dictionary(dest(A)), Adiff*coef)
 end

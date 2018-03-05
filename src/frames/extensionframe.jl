@@ -17,11 +17,6 @@ end
 
 const ExtensionSpan{A,S,T,D <: ExtensionFrame} = Span{A,S,T,D}
 
-"The span of the basis of the given extension frame span."
-basisspan(s::ExtensionSpan) = Span(basis(s), coeftype(s))
-domain(s::ExtensionSpan) = domain(dictionary(s))
-basis(s::ExtensionSpan) = basis(dictionary(s))
-
 ExtensionFrame{S,T}(domain::Domain, basis::Dictionary{S,T}) =
     ExtensionFrame{S,T}(domain, basis)
 
@@ -31,7 +26,13 @@ superdict(f::ExtensionFrame) = f.basis
 basis(f::ExtensionFrame) = f.basis
 domain(f::ExtensionFrame) = f.domain
 
-similar_dict(f::ExtensionFrame, dict::Dictionary) = ExtensionFrame(domain(f), dict)
+"The span of the basis of the given extension frame span."
+basisspan(s::ExtensionSpan) = Span(basis(s), coeftype(s))
+domain(s::ExtensionSpan) = domain(dictionary(s))
+basis(s::ExtensionSpan) = basis(dictionary(s))
+
+
+similar_dictionary(f::ExtensionFrame, dict::Dictionary) = ExtensionFrame(domain(f), dict)
 
 is_frame(f::ExtensionFrame) = true
 is_biorthogonal(f::ExtensionFrame) = false
@@ -77,7 +78,7 @@ in a suitable way.
 For example: an interval ⊗ a disk (= a cylinder) combined with a 3D Fourier series, leads to a
 tensor product of a Fourier series on the interval ⊗ a 2D Fourier series on the disk.
 """
-function extensionframe(domain::ProductDomain, basis::TensorProductSet)
+function extensionframe(domain::ProductDomain, basis::TensorProductDict)
     ExtensionFrames = Dictionary[]
     dc = 1
     for i = 1:nb_elements(domain)

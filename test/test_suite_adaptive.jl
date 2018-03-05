@@ -22,7 +22,7 @@ function test_function_space()
   bases = (FourierBasis(64,-1.0, 1.0), FourierBasis(64,-1.0, 1.0),
       FourierBasis(64), FourierBasis(64,-1.0, 1.0), ChebyshevBasis(64),
       FourierBasis(8)⊗ChebyshevBasis(8), FourierBasis(32,-2.,1.)⊕rescale(ChebyshevBasis(32),-2.,1.),
-      BA.tensorproduct(FourierBasis(4),3), BA.multiset(FourierBasis(32),FourierBasis(32)))
+      BA.tensorproduct(FourierBasis(4),3), BA.multidict(FourierBasis(32),FourierBasis(32)))
   @testset "Space = $(name(space)) " for (i,space) in enumerate([
       FE.FunctionSpace(FourierBasis(64,-1.0, 1.0)),
       FE.FunctionSpace(FourierBasis(64,-1.0, 1.0), interval(-1.0, 1.0)),

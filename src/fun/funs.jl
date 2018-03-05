@@ -1,99 +1,101 @@
 # funs.jl
 
-abstract type AbstractFun end
+abstract type AbstractFun
+end
 
 """
-A SetFun corresponds to an expansion in a function set, but it adds a simple user
+A `DictFun` corresponds to an expansion in a dictionary, but it adds a simple user
 interface for computing with functions.
 """
-struct SetFun{T} <: AbstractFun
+struct DictFun{S,T} <: AbstractFun
     expansion   ::  Expansion
 end
 
-SetFun(e::Expansion, args...) = SetFun{domaintype(dictionary(e))}(e, args...)
+DictFun(e::Expansion, args...) = DictFun{domaintype(dictionary(e)),codomaintype(dictionary(e))}(e, args...)
 
-SetFun{T}(frame::FunctionSet{T}, coefficients = zeros(frame), args...) =
-    SetFun{T}(Expansion(frame, coefficients), args...)
+DictFun(frame::Dictionary{S,T}, coefficients = zeros(frame), args...) where {S,T} =
+    DictFun{S,T}(Expansion(frame, coefficients), args...)
 
-SetFun(domain::Domain, basis::FunctionSet, args...) = SetFun(ExtensionFrame(domain, basis), args...)
+DictFun(domain::Domain, basis::Dictionary, args...) = DictFun(ExtensionFrame(domain, basis), args...)
 
 # Warning: not all 2d function sets have SVector{2,T} type, they could have (S,T) type
-const SetFun1d{T <: Number} = SetFun{T}
-const SetFun2d{T} = SetFun{SVector{2,T}}
-const SetFun3d{T} = SetFun{SVector{3,T}}
+const DictFun1d{S <: Number,T} = DictFun{S,T}
+const DictFun2d{S <: Number,T} = DictFun{SVector{2,S},T}
+const DictFun3d{S <: Number,T} = DictFun{SVector{3,S},T}
+const DictFun4d{S <: Number,T} = DictFun{SVector{4,S},T}
 
-expansion(fun::SetFun) = fun.expansion
+expansion(fun::DictFun) = fun.expansion
 
-Base.broadcast(fun::SetFun, x...) = broadcast(expansion(fun), x...)
+Base.broadcast(fun::DictFun, x...) = broadcast(expansion(fun), x...)
 
-for op in (:set, :dimension, :coefficients, :eltype, :numtype, :length, :size)
-    @eval $op(fun::SetFun) = $op(fun.expansion)
+for op in (:dictionary, :dimension, :coefficients, :eltype, :numtype, :length, :size)
+    @eval $op(fun::DictFun) = $op(fun.expansion)
 end
 
 for op in (:ctranspose, :∫, :∂x, :∂y, :∂z, :∫∂x, :∫∂y, :∫∂z, :differentiate, :antidifferentiate)
-    @eval $op{T}(fun::SetFun{T}, args...) = SetFun{T}($op(fun.expansion, args...))
+    @eval $op(fun::DictFun{S,T}, args...) where {S,T} = DictFun{S,T}($op(fun.expansion, args...))
 end
 
 for op in (:ExtensionFrame, :basis)
-    @eval $op(fun::SetFun) = $op(fun, dictionary(fun))
+    @eval $op(fun::DictFun) = $op(fun, dictionary(fun))
 end
 
-domain(fun::SetFun) = domain(dictionary(fun))
+domain(fun::DictFun) = domain(dictionary(fun))
 
 for op in (:+, :-, :*)
-    @eval $op(fun1::SetFun,fun2::SetFun) = SetFun($op(fun1.expansion,fun2.expansion))
-end
-
-for op in (:+, :-, :*)
-    @eval $op(a::Number,fun::SetFun) = SetFun($op(a,fun.expansion))
+    @eval $op(fun1::DictFun,fun2::DictFun) = DictFun($op(fun1.expansion,fun2.expansion))
 end
 
 for op in (:+, :-, :*)
-    @eval $op(fun::SetFun,a::Number) = $op(a,fun)
+    @eval $op(a::Number,fun::DictFun) = DictFun($op(a,fun.expansion))
 end
 
-ExtensionFrame(fun::SetFun, set::ExtensionFrame) = set
+for op in (:+, :-, :*)
+    @eval $op(fun::DictFun,a::Number) = $op(a,fun)
+end
 
-domain(fun::SetFun, set::ExtensionFrame) = domain(set)
+ExtensionFrame(fun::DictFun, set::ExtensionFrame) = set
 
-basis(fun::SetFun, set::ExtensionFrame) = basis(set)
+domain(fun::DictFun, set::ExtensionFrame) = domain(set)
 
-function matrix(fun::SetFun; options...)
+basis(fun::DictFun, set::ExtensionFrame) = basis(set)
+
+function matrix(fun::DictFun; options...)
     op = oversampled_evaluation_operator(basis(fun),domain(fun);  options...)[1]
     matrix(op)
 end
 
-function sampling_grid(fun::SetFun; sampling_factor=2)
+function sampling_grid(fun::DictFun; sampling_factor=2)
     problem = FE_DiscreteProblem(domain(fun), basis(fun), sampling_factor)
     grid(time_basis_restricted(problem))
 end
 
 # Delegate operator applications to the underlying expansion
-function (*)(op::AbstractOperator, fun::SetFun)
-    @assert src(op) == span(basis(dictionary(fun)))
-    SetFun(domain(fun),dictionary(dest(op)),op*coefficients(fun))
+function (*)(op::AbstractOperator, fun::DictFun)
+    @assert src(op) == Span(basis(dictionary(fun)))
+    DictFun(domain(fun),dictionary(dest(op)),op*coefficients(fun))
 end
 
 # Delegate all calling to the underlying expansion.
-(fun::SetFun)(x...) = expansion(fun)(x...)
+(fun::DictFun)(x...) = expansion(fun)(x...)
 
 
-# show(io::IO, fun::SetFun) = show(io, fun, set(fun))
+# show(io::IO, fun::DictFun) = show(io, fun, set(fun))
 
-function show(io::IO, fun::SetFun, set::FunctionSet)
-  println(io, "A ", dimension(fun), "-dimensional SetFun with ", length(coefficients(fun)), " degrees of freedom.")
-  println(io, "Basis: ", name(set))
+function show(io::IO, fun::DictFun, set::Dictionary)
+    println(io, "A ", dimension(fun), "-dimensional DictFun with ", length(coefficients(fun)), " degrees of freedom.")
+    println(io, "Basis: ", name(set))
 end
 
-function show(io::IO, fun::SetFun, set::ExtensionFrame)
-    println(io, "A ", dimension(fun), "-dimensional SetFun with ", length(coefficients(fun)), " degrees of freedom.")
+function show(io::IO, fun::DictFun, set::ExtensionFrame)
+    println(io, "A ", dimension(fun), "-dimensional DictFun with ", length(coefficients(fun)), " degrees of freedom.")
     println(io, "Basis: ", name(basis(set)))
     println(io, "Domain: ", domain(set))
 end
 
 getindex(expansion::Expansion, domain::Domain) = restrict(expansion, domain)
 
-getindex(fun::SetFun, domain::Domain) = restrict(expansion(fun), domain)
+getindex(fun::DictFun, domain::Domain) = restrict(expansion(fun), domain)
 
 restrict(expansion::Expansion, domain::Domain) = _restrict(expansion, dictionary(expansion), domain)
 
@@ -102,17 +104,17 @@ function _restrict(expansion::Expansion, set::ExtensionFrame, domain1::Domain)
 
     domain2 = domain(set)
     newdomain = domain1 ∩ domain2
-    SetFun(newdomain, basis(set), coefficients(expansion))
+    DictFun(newdomain, basis(set), coefficients(expansion))
 end
 
-function _restrict(expansion::Expansion, set::FunctionSet, domain::Domain)
+function _restrict(expansion::Expansion, set::Dictionary, domain::Domain)
     @assert dimension(set) == dimension(domain)
     # We should check here whether the given domain lies in the support of the set
-    SetFun(domain, set, coefficients(expansion))
+    DictFun(domain, set, coefficients(expansion))
 end
 
 # Get the mean approximation error in random interior points.
-function abserror{N}(f::Function,F::SetFun{N};vals::Int=200)
+function abserror(f::Function,F::DictFun;vals::Int=200)
     rgrid = randomgrid(domain(F),vals)
     Fval = F(rgrid)
     # TODO: type based on space of F
@@ -121,24 +123,24 @@ function abserror{N}(f::Function,F::SetFun{N};vals::Int=200)
 end
 
 # Get the max approximation error in random interior points
-function maxerror{N}(f::Function,F::SetFun{N};vals::Int=200)
+function maxerror(f::Function,F::DictFun;vals::Int=200)
     rgrid = randomgrid(domain(F),vals)
     Fval = F(rgrid)
     # TODO: type based on space of F
     fval = sample(rgrid,f,eltype(F))
     return maximum(abs.(Fval-fval))
 end
+
 using QuadGK
-function L2error(f::Function, F::SetFun{T}; reltol = eps(real(T)), abstol = 0, options...) where {T}
+
+function L2error(f::Function, F::DictFun{S,T}; reltol = eps(real(T)), abstol = 0, options...) where {S,T}
     I = QuadGK.quadgk(x->abs(F(x)-f(x))^2, left(dictionary(F)), right(dictionary(F)), reltol=reltol, abstol=abstol)
     @assert I[2] < 100max(reltol*I[1],abstol)
     sqrt(I[1])
 end
 
-function residual(f::Function, F::SetFun ;  options...)
-    op = oversampled_evaluation_operator(span(basis(F)),domain(F); options...)[1]
+function residual(f::Function, F::DictFun ;  options...)
+    op = oversampled_evaluation_operator(Span(basis(F)),domain(F); options...)[1]
     rhs = project(dest(op),f)
-
-
     norm(op*coefficients(F)-rhs)
 end

@@ -1,14 +1,14 @@
 ## Series
 
 
-## Plot full SetFun as the underlying expansion
-@recipe function f(F::SetFun; plot_ext = false)
-    # plot_ext || (title --> "SetFun")
+## Plot full DictFun as the underlying expansion
+@recipe function f(F::DictFun; plot_ext = false)
+    # plot_ext || (title --> "DictFun")
     plot_ext ? Expansion(basis(F),coefficients(F)) : expansion(F)
 end
 
-# When supplying a function along with the SetFun, plot the error
-@recipe function f(F::SetFun, target::Function; plot_ext = true)
+# When supplying a function along with the DictFun, plot the error
+@recipe function f(F::DictFun, target::Function; plot_ext = true)
     plot_ext ? (Expansion(basis(F),coefficients(F)), target) : (expansion(F), target)
 end
 

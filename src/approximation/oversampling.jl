@@ -2,7 +2,7 @@
 
 BasisFunctions.basis_oversampling(frame::ExtensionFrame, sampling_factor::Real) = extensionframe_oversampling(domain(frame), basis(frame), sampling_factor)
 
-function extensionframe_oversampling(domain, basis::BasisFunctions.FunctionSet, sampling_factor::Real)
+function extensionframe_oversampling(domain, basis::Dictionary, sampling_factor::Real)
   N = dimension(basis)
   n_goal = length(basis) * sampling_factor^N
   grid1 = BasisFunctions.grid(basis)
