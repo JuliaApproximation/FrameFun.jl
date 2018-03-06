@@ -22,6 +22,7 @@ ExtensionFrame{S,T}(domain::Domain, basis::Dictionary{S,T}) =
 
 # superdict is the function for DerivedDict's to obtain the underlying set
 superdict(f::ExtensionFrame) = f.basis
+superspan(s::ExtensionSpan) = Span(superdict(dictionary(s)), coeftype(s))
 
 basis(f::ExtensionFrame) = f.basis
 domain(f::ExtensionFrame) = f.domain
@@ -61,10 +62,8 @@ function (*)(d1::ExtensionFrame, d2::ExtensionFrame, args...)
     (df, mcoef)
 end
 
-# Should we check whether x lies in the domain?
-call_set_expansion(e::Expansion, s::ExtensionFrame, coef, x...) = eval_expansion(basis(s), coef, x...)
-
-eval_element(s::ExtensionFrame, idx::Int, x) = eval_element(basis(s), idx, x)
+unsafe_eval_element(s::ExtensionFrame, idx::Int, x) =
+    unsafe_eval_element(basis(s), idx, x)
 
 grid(f::ExtensionFrame) = subgrid(grid(basis(f)),domain(f))
 

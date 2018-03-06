@@ -7,22 +7,22 @@ FE = FrameFun
 BA = BasisFunctions
 
 function prolate_test()
-  @testset "Fourier frame on half, symmetric domain (prolates)" begin
-    for T in (Float32, Float64,), n in (11,13,)
-      tol = sqrt(eps(T))
-      b = FourierBasis{T}(n)
-      d = interval(T(.25),T(.75))
-      frame = extensionframe(b, d)
-      g = Gram(Span(frame); reltol=tol,abstol=tol)
-      m = matrix(g)
-      @test norm(imag(m)) < tol
-      m1 = real(m)
+    @testset "Fourier frame on half, symmetric domain (prolates)" begin
+        for T in (Float32, Float64,), n in (11,13,)
+            tol = sqrt(eps(T))
+            b = FourierBasis{T}(n)
+            d = interval(T(.25),T(.75))
+            frame = extensionframe(b, d)
+            g = Gram(Span(frame); reltol=tol,abstol=tol)
+            m = matrix(g)
+            @test norm(imag(m)) < tol
+            m1 = real(m)
 
-      I = [native_index(b, i).index for i in 1:n]
-      m2 = real([k==l ? .5: exp(1im*pi*(k-l))/(pi*(k-l))*sin(2pi*(1/2-T(.25))*(k-l)) for k in I, l in I])
-      @test norm(m1-m2) < tol
+            I = [value(native_index(b, i)) for i in 1:n]
+            m2 = real([k==l ? .5: exp(1im*pi*(k-l))/(pi*(k-l))*sin(2pi*(1/2-T(.25))*(k-l)) for k in I, l in I])
+            @test norm(m1-m2) < tol
+        end
     end
-  end
 end
 
 function delimit(s::AbstractString)
@@ -33,83 +33,82 @@ function delimit(s::AbstractString)
 end
 
 function basis_test()
-  @testset "Frame on entire domain (i.e, basis problem)" begin
-    for T in (Float32,Float64,), n in (10,11)
-      tol = sqrt(eps(T))
-      e = rand(T,n)
-      for B in (ChebyshevBasis,LegendrePolynomials,FourierBasis,SineSeries,CosineSeries,BSplineTranslatesBasis,)
-        basis = instantiate(B, n, T)
-        domain = interval(left(basis),right(basis))
-        frame = extensionframe(basis, domain)
+    @testset "Frame on entire domain (i.e, basis problem)" begin
+        for T in (Float32,Float64,), n in (10,11)
+            tol = sqrt(eps(T))
+            e = rand(T,n)
+            for B in (ChebyshevBasis,LegendrePolynomials,FourierBasis,SineSeries,CosineSeries,BSplineTranslatesBasis,)
+                basis = instantiate(B, n, T)
+                domain = interval(left(basis),right(basis))
+                frame = extensionframe(basis, domain)
 
-        @test norm(Gram(Span(frame); abstol=tol, reltol=tol)*e - Gram(Span(basis); abstol=tol, reltol=tol)*e) <100*tol
-        @test norm(DualGram(Span(frame); abstol=tol, reltol=tol)*e - DualGram(Span(basis); abstol=tol, reltol=tol)*e) <100*tol
-        @test norm(MixedGram(Span(frame); abstol=tol, reltol=tol)*e - MixedGram(Span(basis); abstol=tol, reltol=tol)*e) <100*tol
-      end
-      for B in (ChebyshevBasis,FourierBasis,CosineSeries,BSplineTranslatesBasis,), oversampling in 1:4
-        basis = instantiate(B, n, T)
-        domain = interval(left(basis),right(basis))
-        frame = extensionframe(basis, domain)
+                @test norm(Gram(Span(frame); abstol=tol, reltol=tol)*e - Gram(Span(basis); abstol=tol, reltol=tol)*e) <100*tol
+                @test norm(DualGram(Span(frame); abstol=tol, reltol=tol)*e - DualGram(Span(basis); abstol=tol, reltol=tol)*e) <100*tol
+                @test norm(MixedGram(Span(frame); abstol=tol, reltol=tol)*e - MixedGram(Span(basis); abstol=tol, reltol=tol)*e) <100*tol
+            end
+            for B in (ChebyshevBasis,FourierBasis,CosineSeries,BSplineTranslatesBasis,), oversampling in 1:4
+                  basis = instantiate(B, n, T)
+                  domain = interval(left(basis),right(basis))
+                  frame = extensionframe(basis, domain)
 
-        @test norm(DiscreteGram(Span(frame); oversampling=oversampling)*e - DiscreteGram(Span(basis); oversampling=oversampling)*e) <100*tol
-        @test norm(DiscreteDualGram(Span(frame); oversampling=oversampling)*e - DiscreteDualGram(Span(basis); oversampling=oversampling)*e) <100*tol
-        @test norm(DiscreteMixedGram(Span(frame); oversampling=oversampling)*e - DiscreteMixedGram(Span(basis); oversampling=oversampling)*e) <100*tol
-      end
+                  @test norm(DiscreteGram(Span(frame); oversampling=oversampling)*e - DiscreteGram(Span(basis); oversampling=oversampling)*e) <100*tol
+                  @test norm(DiscreteDualGram(Span(frame); oversampling=oversampling)*e - DiscreteDualGram(Span(basis); oversampling=oversampling)*e) <100*tol
+                  @test norm(DiscreteMixedGram(Span(frame); oversampling=oversampling)*e - DiscreteMixedGram(Span(basis); oversampling=oversampling)*e) <100*tol
+            end
+        end
     end
-  end
 end
 
 function test_basis_oversampling()
-  @testset "oversampling" begin
-    for B in (ChebyshevBasis,CosineSeries,BSplineTranslatesBasis,), oversampling in 1:4, n in (10,11)
-      basis = instantiate(B, n, Float64)
-      domain = interval(left(basis),right(basis))
-      @test BasisFunctions.basis_oversampling(extensionframe(basis, domain), oversampling)==oversampling
+    @testset "oversampling" begin
+        for B in (ChebyshevBasis,CosineSeries,BSplineTranslatesBasis,), oversampling in 1:4, n in (10,11)
+            basis = instantiate(B, n, Float64)
+            domain = interval(left(basis),right(basis))
+            @test BasisFunctions.basis_oversampling(extensionframe(basis, domain), oversampling)==oversampling
+        end
+        for B in (CosineSeries,BSplineTranslatesBasis,), oversampling in 1:4, n in (1000,1001)
+            basis = instantiate(B, n, Float64)
+            domain = interval(left(basis),right(basis))/2
+            # println(FrameFun.basis_oversampling(domain, basis, oversampling), " ", 2oversampling)
+            @test abs(BasisFunctions.basis_oversampling(extensionframe(basis, domain), oversampling)-2oversampling) < .01
+        end
     end
-    for B in (CosineSeries,BSplineTranslatesBasis,), oversampling in 1:4, n in (1000,1001)
-      basis = instantiate(B, n, Float64)
-      domain = interval(left(basis),right(basis))/2
-      # println(FrameFun.basis_oversampling(domain, basis, oversampling), " ", 2oversampling)
-      @test abs(BasisFunctions.basis_oversampling(extensionframe(basis, domain), oversampling)-2oversampling) < .01
-    end
-  end
 end
 
 function test_discrete_gram()
-  @testset "Testing discrete dual gram en mixed gram with oversampling" begin
-    for T in [Float64, BigFloat]
-      for n in [10,11], os in 1:4, B in [ChebyshevBasis, FourierBasis, BSplineTranslatesBasis]
-        e = map(T, rand(n))
-        b = instantiate(B,n,T)
-        d = interval(left(b), right(b))/2
-        frame = extensionframe(b,d)
-        Gomega = DiscreteGram(Span(frame); oversampling=os)
-        Eomega = evaluation_operator(Span(frame); oversampling=os)
-        N = BasisFunctions.discrete_gram_scaling(frame, os)
+    @testset "Testing discrete dual gram en mixed gram with oversampling" begin
+        for T in [Float64, BigFloat]
+            for n in [10,11], os in 1:4, B in [ChebyshevBasis, FourierBasis, BSplineTranslatesBasis]
+                e = map(T, rand(n))
+                b = instantiate(B,n,T)
+                d = interval(left(b), right(b))/2
+                frame = extensionframe(b,d)
+                Gomega = DiscreteGram(Span(frame); oversampling=os)
+                Eomega = evaluation_operator(Span(frame); oversampling=os)
+                N = BasisFunctions.discrete_gram_scaling(frame, os)
 
-        basis_os = BasisFunctions.basis_oversampling(frame,os)
+                basis_os = BasisFunctions.basis_oversampling(frame,os)
 
+                @test (Eomega'Eomega)*e/N≈Gomega*e
 
-        @test (Eomega'Eomega)*e/N≈Gomega*e
+                GT = DiscreteDualGram(Span(b); oversampling=basis_os)
 
-        GT = DiscreteDualGram(Span(b); oversampling=basis_os)
+                ETomega = Eomega*GT
 
-        ETomega = Eomega*GT
+                GTomega = GT*Gomega*GT
 
-        GTomega = GT*Gomega*GT
+                @test (ETomega'ETomega)*e/N≈GTomega*e
 
-        @test (ETomega'ETomega)*e/N≈GTomega*e
+                GMomega = GT*Gomega
 
-        GMomega = GT*Gomega
+                @test (ETomega'Eomega)*e/N≈GMomega*e
 
-        @test (ETomega'Eomega)*e/N≈GMomega*e
-
-        @test DiscreteGram(Span(frame);oversampling=os)*e≈Gomega*e
-        @test DiscreteDualGram(Span(frame); oversampling=os)*e≈GTomega*e
-        @test DiscreteMixedGram(Span(frame); oversampling=os)*e≈GMomega*e
-      end
+                @test DiscreteGram(Span(frame);oversampling=os)*e≈Gomega*e
+                @test DiscreteDualGram(Span(frame); oversampling=os)*e≈GTomega*e
+                @test DiscreteMixedGram(Span(frame); oversampling=os)*e≈GMomega*e
+            end
+        end
     end
-  end
 end
 
 function test_connection_restriction_extension_discretegram()
@@ -204,17 +203,17 @@ function test_connection_restriction_extension_discretegram()
 end
 
 function test_general_gram()
-  T = Float64
-  tol = max(sqrt(eps(T)), 1e-10)
-  for method in (Gram, DualGram, MixedGram), B in (FourierBasis{T}(11), BSplineTranslatesBasis(5, 1,T))
-    D = interval(left(B), right(B))
-    frame = extensionframe(B,D)
-    GBB = method(Span(frame),Span(frame); abstol=tol, reltol=tol)
-    GB = method(Span(B); abstol=tol, reltol=tol)
+    T = Float64
+    tol = max(sqrt(eps(T)), 1e-10)
+    for method in (Gram, DualGram, MixedGram), B in (FourierBasis{T}(11), BSplineTranslatesBasis(5, 1,T))
+        D = interval(left(B), right(B))
+        frame = extensionframe(B,D)
+        GBB = method(Span(frame),Span(frame); abstol=tol, reltol=tol)
+        GB = method(Span(B); abstol=tol, reltol=tol)
 
-    e = rand(length(frame))
-    @test norm(GBB*e - GB*e) <= 1000*tol
-  end
+        e = rand(length(frame))
+        @test norm(GBB*e - GB*e) <= 1000*tol
+    end
 end
 
 delimit("Gram")

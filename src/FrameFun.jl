@@ -68,8 +68,9 @@ import BasisFunctions: coefficients, dictionary,
 import BasisFunctions: superdict, similar_dictionary,
     promote_domaintype, promote_domainsubtype
 
-import BasisFunctions: eval_set_element, eval_element, eval_expansion,
-    call_set_expansion, name, in_support
+import BasisFunctions: eval_element, eval_element_derivative, eval_expansion,
+    unsafe_eval_element, unsafe_eval_element_derivative,
+    name, in_support
 
 import BasisFunctions: differentiate, ∂x, ∂y, ∂z, ∫∂x, ∫∂y, ∫∂z, ∫, is_compatible
 

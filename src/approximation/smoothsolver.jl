@@ -101,21 +101,22 @@ is_inplace(::IdxnScalingOperator) = true
 is_diagonal(::IdxnScalingOperator) = true
 
 ctranspose(op::IdxnScalingOperator) = DiagonalOperator(src(op), conj(diagonal(op)))
-function apply_inplace!(op::IdxnScalingOperator, destspan, srcspan, coef_srcdest)
+
+function apply_inplace!(op::IdxnScalingOperator, destspan::Span1d, srcspan, coef_srcdest)
     dest = dictionary(destspan)
     ELT = eltype(op)
     for i in eachindex(dest)
-        coef_srcdest[i] *= op.scale(ELT(BasisFunctions.index(native_index(dest,i))))^op.order
+        coef_srcdest[i] *= op.scale(ELT(BasisFunctions.value(native_index(dest,i))))^op.order
     end
     coef_srcdest
 end
 
-function apply_inplace!(op::IdxnScalingOperator, destspan::Span{A,S,T,SET}, srcspan, coef_srcdest) where {A,S,T,TS1,TS2, SET<:TensorProductDict{Tuple{TS1,TS2}}}
+function apply_inplace!(op::IdxnScalingOperator, destspan::Span2d, srcspan, coef_srcdest)
     dest = dictionary(destspan)
     ELT = eltype(op)
     for i in eachindex(coef_srcdest)
-        ni = native_index(dest,i)
-        coef_srcdest[i]*=op.scale(ELT(BasisFunctions.index(ni[1])),ELT(BasisFunctions.index(ni[2])))^op.order
+        ni = recursive_native_index(dest,i)
+        coef_srcdest[i]*=op.scale(ELT(BasisFunctions.value(ni[1])),ELT(BasisFunctions.value(ni[2])))^op.order
     end
     coef_srcdest
 end
