@@ -61,7 +61,7 @@ struct TruncatedSvdSolver{ELT} <: FE_Solver{ELT}
         Sinv = 1./S[1:maxind]
         y = zeros(ELT, size(USV[3],1))
         sy = zeros(ELT, maxind)
-        Wsrc = Span(DiscreteSet{ELT}(size(random_matrix,2)))
+        Wsrc = Span(DiscreteVectorSet{ELT}(size(random_matrix,2)))
         Wdest = src(op)
         W = MatrixOperator(Wsrc, Wdest, random_matrix)
 

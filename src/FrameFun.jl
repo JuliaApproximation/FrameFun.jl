@@ -70,7 +70,7 @@ import BasisFunctions: superdict, similar_dictionary,
 
 import BasisFunctions: eval_element, eval_element_derivative, eval_expansion,
     unsafe_eval_element, unsafe_eval_element_derivative,
-    name, in_support
+    name, in_support, domain
 
 import BasisFunctions: differentiate, ∂x, ∂y, ∂z, ∫∂x, ∫∂y, ∫∂z, ∫, is_compatible
 
