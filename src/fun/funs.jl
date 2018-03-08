@@ -128,6 +128,7 @@ function maxerror{N}(f::Function,F::SetFun{N};vals::Int=200)
     fval = sample(rgrid,f,eltype(F))
     return maximum(abs.(Fval-fval))
 end
+
 using QuadGK
 function L2error(f::Function, F::SetFun{T}; reltol = eps(real(T)), abstol = 0, options...) where {T}
     I = QuadGK.quadgk(x->abs(F(x)-f(x))^2, left(set(F)), right(set(F)), reltol=reltol, abstol=abstol)
@@ -142,3 +143,23 @@ function residual(f::Function, F::SetFun ;  options...)
 
     norm(op*coefficients(F)-rhs)
 end
+
+function relresidual(f::Function, F::SetFun ;  options...)
+    op = oversampled_evaluation_operator(span(basis(F)),domain(F); options...)[1]
+    rhs = project(dest(op),f)
+
+
+    norm(op*coefficients(F)-rhs)/norm(rhs)
+end
+
+function residualmax(f::Function, F::SetFun ;  options...)
+    op = oversampled_evaluation_operator(span(basis(F)),domain(F); options...)[1]
+    rhs = project(dest(op),f)
+
+
+    maximum(abs(op*coefficients(F)-rhs))
+end
+
+    
+
+    

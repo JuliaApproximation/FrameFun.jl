@@ -59,15 +59,18 @@ function apply!(s::FE_SmoothProjectionSolver, destarg, src, coef_dest, coef_src)
     AD = inv(D)
     # Project Dx2 onto the orthogonal complement of D^(-1)V_mid
     apply!(D,s.x1,s.x2)
+    ## apply!(MatrixOperator(s.Q'),s.syv,s.x1)
+    ## apply!(MatrixOperator(s.Q),s.x3,s.syv)
+    ## for i = 1:length(s.x1)
+    ##     s.x1[i] = s.x1[i]- s.x3[i]
+    ## end
+    ## apply!(AD,s.x3,s.x1)
+    ## for i = 1:length(s.x2)
+    ##     s.x2[i] = s.x2[i] - s.x3[i]
+## end
     apply!(MatrixOperator(s.Q'),s.syv,s.x1)
     apply!(MatrixOperator(s.Q),s.x3,s.syv)
-    for i = 1:length(s.x1)
-        s.x1[i] = s.x1[i]- s.x3[i]
-    end
-    apply!(AD,s.x3,s.x1)
-    for i = 1:length(s.x2)
-        s.x2[i] = s.x2[i] - s.x3[i]
-    end
+    apply!(AD,s.x2,s.x3)
 
     # post smoothing step
     apply!(A, s.b, s.x2)

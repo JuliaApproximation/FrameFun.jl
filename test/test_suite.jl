@@ -86,7 +86,33 @@ function test_1d_cases()
     # Complex and real functions / Float64
     f(x) = cos(x^2-1//2)-1
     g(x) = 1im*cos(x^2-1//2)-1
+    Basis = FourierBasis
+    D = interval(-1.0,1.0)
     # Chebyshev and Fourier Bases
+    solver = FE.FE_DiagonalSolver
+    println()
+    println("Testing \t solver = $solver, \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = Float64 ")
+    verbose && println("N\t T\t Complex?\t abserror\t time\t\t \memory   ")
+    
+    for n in [FE.default_frame_n(D, Basis)]
+
+        # There is some symmetry around T=2, test smaller and larger values
+        for T in (1.9,)
+            for func in (f,g)
+                
+                B = Basis(n, -T, T)
+                F = @timed( Fun(func, B, D; solver=solver) )
+                error = abserror(func, F[1])
+                if verbose
+                    print("$n\t $T\t\t")
+                    func==g ? print("Y\t") : print("N\t")
+                    @printf("%3.2e\t %3.2e s\t %3.2e bytes \n",error, F[2],F[3])
+                end
+                @test  (error < sqrt(eps(Float64))*10)
+                show_timings(F[1])
+            end
+        end
+    end
 
     @testset "result" for ELT in (Float32,Float64),
             Basis in (FourierBasis, ChebyshevBasis),
@@ -116,6 +142,7 @@ function test_1d_cases()
             end
         end
     end
+    
 end
 
 function test_bigfloat()
