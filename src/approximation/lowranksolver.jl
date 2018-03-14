@@ -8,7 +8,7 @@ For tensor product operators it returns a decomposition of the linearized system
 """
 struct TruncatedSvdSolver{ELT} <: FE_Solver{ELT}
     # Keep the original operator
-    op          ::  AbstractOperator
+    A          ::  AbstractOperator
     # Random matrix
     W           ::  MultiplicationOperator
     # Decomposition
@@ -24,12 +24,12 @@ struct TruncatedSvdSolver{ELT} <: FE_Solver{ELT}
     smalltol :: Float64
 
 
-    function TruncatedSvdSolver{ELT}(op::AbstractOperator; cutoff = default_cutoff(op), R = 5, growth_factor = 2, verbose = false, smallcoefficients=false,smalltol=10,options...) where ELT
+    function TruncatedSvdSolver{ELT}(A::AbstractOperator; cutoff = default_cutoff(A), R = 5, growth_factor = 2, verbose = false, smallcoefficients=false,smalltol=10,options...) where ELT
         finished=false
         USV = ()
-        R = min(R, size(op,2))
-        random_matrix = map(ELT, rand(size(op,2), R))
-        C = apply_multiple(op, random_matrix)
+        R = min(R, size(A,2))
+        random_matrix = map(ELT, rand(size(A,2), R))
+        C = apply_multiple(A, random_matrix)
         c = cond(C)
 # <<<<<<< HEAD
 #         # TODO change things with cold back
@@ -39,13 +39,13 @@ struct TruncatedSvdSolver{ELT} <: FE_Solver{ELT}
 # =======
         cold = cutoff
         m = maximum(abs.(C))
-        while (c < 1/cutoff) && (R<size(op,2)) && (c>cold*10)
+        while (c < 1/cutoff) && (R<size(A,2)) && (c>cold*10)
             verbose && println("c : $c\t cold : $cold\t cutoff : $cutoff")
-            verbose && println("Solver truncated at R = ", R, " dof out of ",size(op,2))
+            verbose && println("Solver truncated at R = ", R, " dof out of ",size(A,2))
             R0 = R
-            R = min(round(Int,growth_factor*R),size(op,2))
-            extra_random_matrix = map(ELT, rand(size(op,2), R-R0))
-            Cextra = apply_multiple(op, extra_random_matrix)
+            R = min(round(Int,growth_factor*R),size(A,2))
+            extra_random_matrix = map(ELT, rand(size(A,2), R-R0))
+            Cextra = apply_multiple(A, extra_random_matrix)
             random_matrix = [random_matrix extra_random_matrix]
             # Extra condition: condition number has to increase by a significant amount each step, otherwise, possibly well conditioned.
             # cold = c
@@ -54,7 +54,7 @@ struct TruncatedSvdSolver{ELT} <: FE_Solver{ELT}
 
         end
         verbose && println("c : $c\t cold : $cold\t cutoff : $cutoff")
-        verbose && println("Solver truncated at R = ", R, " dof out of ",size(op,2))
+        verbose && println("Solver truncated at R = ", R, " dof out of ",size(A,2))
         USV = LAPACK.gesdd!('S',C)
         S = USV[2]
         maxind = findlast(S.>(maximum(S)*cutoff))
@@ -62,21 +62,21 @@ struct TruncatedSvdSolver{ELT} <: FE_Solver{ELT}
         y = zeros(ELT, size(USV[3],1))
         sy = zeros(ELT, maxind)
         Wsrc = Span(DiscreteSet(size(random_matrix,2)), ELT)
-        Wdest = src(op)
+        Wdest = src(A)
         W = MatrixOperator(Wsrc, Wdest, random_matrix)
 
-        scratch_src = zeros(ELT, length(dest(op)))
-        scratch_dest = zeros(ELT, length(src(op)))
-        new(op, W, USV[1][:,1:maxind]',Sinv,USV[3][1:maxind,:]',y,sy, scratch_src, scratch_dest,smallcoefficients,smalltol)
+        scratch_src = zeros(ELT, length(dest(A)))
+        scratch_dest = zeros(ELT, length(src(A)))
+        new(A, W, USV[1][:,1:maxind]',Sinv,USV[3][1:maxind,:]',y,sy, scratch_src, scratch_dest,smallcoefficients,smalltol)
     end
 end
 
-src(t::TruncatedSvdSolver) = dest(t.op)
-dest(t::TruncatedSvdSolver) = src(t.op)
-inv(t::TruncatedSvdSolver) = t.op
+src(t::TruncatedSvdSolver) = dest(t.A)
+dest(t::TruncatedSvdSolver) = src(t.A)
+inv(t::TruncatedSvdSolver) = t.A
 
-TruncatedSvdSolver(op::AbstractOperator; options...) =
-    TruncatedSvdSolver{eltype(op)}(op::AbstractOperator; options...)
+TruncatedSvdSolver(A::AbstractOperator; options...) =
+    TruncatedSvdSolver{eltype(A)}(A::AbstractOperator; options...)
 
 # We don't need to (de)linearize coefficients when they are already vectors
 function apply!(s::TruncatedSvdSolver, coef_dest::Vector, coef_src::Vector)
@@ -116,7 +116,7 @@ For tensor product operators it returns a decomposition of the linearized system
 """
 struct ExactTruncatedSvdSolver{ELT} <: FE_Solver{ELT}
     # Keep the original operator
-    op          ::  AbstractOperator
+    A          ::  AbstractOperator
     # Decomposition
     Ut          ::  Array{ELT,2}
     Sinv        ::  Array{ELT,1}
@@ -126,8 +126,8 @@ struct ExactTruncatedSvdSolver{ELT} <: FE_Solver{ELT}
     sy          ::  Array{ELT,1}
     scratch_src ::  Array{ELT,1}
 
-    function ExactTruncatedSvdSolver{ELT}(op::AbstractOperator; cutoff = default_cutoff(op), verbose = false,options...) where ELT
-        C = matrix(op)
+    function ExactTruncatedSvdSolver{ELT}(A::AbstractOperator; cutoff = default_cutoff(A), verbose = false,options...) where ELT
+        C = matrix(A)
         m = maximum(abs.(C))
         USV = LAPACK.gesdd!('S',C)
         S = USV[2]
@@ -137,17 +137,17 @@ struct ExactTruncatedSvdSolver{ELT} <: FE_Solver{ELT}
         y = zeros(ELT, size(USV[3],1))
         sy = zeros(ELT, maxind)
 
-        scratch_src = zeros(ELT, length(dest(op)))
-        new(op, USV[1][:,1:maxind]',Sinv,USV[3][1:maxind,:]',y,sy, scratch_src)
+        scratch_src = zeros(ELT, length(dest(A)))
+        new(A, USV[1][:,1:maxind]',Sinv,USV[3][1:maxind,:]',y,sy, scratch_src)
     end
 end
 
-src(t::ExactTruncatedSvdSolver) = dest(t.op)
-dest(t::ExactTruncatedSvdSolver) = src(t.op)
-inv(t::ExactTruncatedSvdSolver) = t.op
+src(t::ExactTruncatedSvdSolver) = dest(t.A)
+dest(t::ExactTruncatedSvdSolver) = src(t.A)
+inv(t::ExactTruncatedSvdSolver) = t.A
 
-ExactTruncatedSvdSolver(op::AbstractOperator; options...) =
-    ExactTruncatedSvdSolver{eltype(op)}(op::AbstractOperator; options...)
+ExactTruncatedSvdSolver(A::AbstractOperator; options...) =
+    ExactTruncatedSvdSolver{eltype(A)}(A::AbstractOperator; options...)
 
 # We don't need to (de)linearize coefficients when they are already vectors
 function apply!(s::ExactTruncatedSvdSolver, coef_dest::Vector, coef_src::Vector)

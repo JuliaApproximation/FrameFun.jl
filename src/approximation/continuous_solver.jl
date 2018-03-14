@@ -1,5 +1,5 @@
 
-function continuous_approximation_operator(dest::ExtensionSpan; sampling_factor=1, solver=FrameFun.FE_DirectSolver, options...)
+function continuous_approximation_operator(dest::ExtensionSpan; sampling_factor=1, solver=DirectSolver, options...)
     # since the other one is not very efficient (this one isnt either), concider this not as a general case
     (sampling_factor ≈ 1) &&
         (return ContinuousSolverPlan(solver(MixedGram(dest; options...); options...), continuous_normalization(dest; options...)))
@@ -18,7 +18,7 @@ immutable ContinuousSolverPlan{T} <: AbstractOperator{T}
     scratch                 :: Vector{T}
     mixedgram               :: AbstractOperator
     ContinuousSolverPlan{T}(src::Span, dest::Span, mixedgramsolver::FE_Solver, normalizationofb::AbstractOperator) where {T} =
-        new(src, dest, mixedgramsolver, normalizationofb, zeros(T, length(src)), mixedgramsolver.op)
+        new(src, dest, mixedgramsolver, normalizationofb, zeros(T, length(src)), op(mixedgramsolver))
 end
 
 ContinuousSolverPlan(solver::FE_Solver{T}, normalization::AbstractOperator) where {T} =

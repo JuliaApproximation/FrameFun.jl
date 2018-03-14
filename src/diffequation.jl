@@ -131,7 +131,7 @@ function rhs(D::DiffEquation; incboundary = false, options...)
     MultiArray(rhs)
 end
 
-function solve(D::DiffEquation; solver=FE_ProjectionSolver, options...)
+function solve(D::DiffEquation; solver=AZSolver, options...)
     G, lB = oversampled_grid(D.D,set(D.S),D.sampling_factor)
     Adiff= inv_diagonal(D.Diff)
     b = rhs(D; options...)

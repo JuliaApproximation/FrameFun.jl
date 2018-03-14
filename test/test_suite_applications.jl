@@ -59,7 +59,7 @@ end
 
 
 function test_differential_equations_1d()
-    @testset "diff 1D dirichlet" for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
+    @testset "diff 1D dirichlet" for solver in (AZSolver, DirectSolver)
         B = FourierBasis(101,-1,1)
         Dom = interval(-0.5,0.5)
         # Set up Boundary conditions
@@ -76,7 +76,7 @@ function test_differential_equations_1d()
         error = abserror(f,F'')
         @test (error < sqrt(eps(real(rangetype(B))))*100)
     end
-    @testset "diff 1D mixed" for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
+    @testset "diff 1D mixed" for solver in (AZSolver, DirectSolver)
         B = FourierBasis(101,-2,2)
         Dom = interval(-1.0,1.0)
         # Set up Boundary conditions
@@ -97,7 +97,7 @@ function test_differential_equations_1d()
 end
 
 function test_differential_equations_2d()
-    @testset "diff 2D dirichlet" for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
+    @testset "diff 2D dirichlet" for solver in (AZSolver, DirectSolver)
         B = FourierBasis(11,-1,1)⊗FourierBasis(11,-1,1)
         Dom = disk(0.8)
         # Set up Boundary conditions
@@ -114,7 +114,7 @@ function test_differential_equations_2d()
         error = abserror(f,∂x(∂x(F))+∂y(∂y(F)))
         @test (error < 0.3)
     end
-    @testset "diff 2D Neumann" for solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
+    @testset "diff 2D Neumann" for solver in (AZSolver, DirectSolver)
         B = FourierBasis(11,-1,1)⊗FourierBasis(11,-1,1)
         Dom = disk(0.8)
         # Set up Boundary conditions
@@ -141,8 +141,8 @@ function test_smoothing_1d()
         D = interval(-0.5,0.5)
         f(x) = exp(x)
         fscale(i) = 10.0^-4+abs(i)+abs(i)^2+abs(i)^3
-        F = Fun(f,B,D;solver=FrameFun.FE_SmoothProjectionSolver,scale=fscale)
-        # F = Fun(f,B,D;solver=FrameFun.FE_ProjectionSolver)
+        F = Fun(f,B,D;solver=AZSmoothSolver,scale=fscale)
+        # F = Fun(f,B,D;solver=AZSolver)
         @test (abserror(f,F) < 100*sqrt(eps(real(rangetype(B)))))
     end
 end
@@ -153,7 +153,7 @@ function test_smoothing_2d()
         D = disk(0.5)
         f(x,y) = exp(x*y)
         fscale(i,j) = 10.0^-4+100*abs((i)^2+abs(j^2))
-        F = Fun(f,B,D;solver=FrameFun.FE_SmoothProjectionSolver,scale=fscale)
+        F = Fun(f,B,D;solver=AZSmoothSolver,scale=fscale)
         @test (abserror(f,F) < 100*sqrt(sqrt(eps(real(rangetype(B))))))
     end
 end

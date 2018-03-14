@@ -139,6 +139,9 @@ export characteristic
 
 export FeFun, FeFunNd
 
+# from approximation
+export DirectSolver, AZSolver, AZSmoothSolver, TridiagonalSolver
+
 include("subgrid.jl")
 
 #include("domains/boundingbox.jl")

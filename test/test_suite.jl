@@ -89,7 +89,7 @@ function test_1d_cases()
     Basis = FourierBasis
     D = interval(-1.0,1.0)
     # Chebyshev and Fourier Bases
-    solver = FE.FE_DiagonalSolver
+    solver = FE.FE_TridiagonalSolver
     println()
     println("Testing \t solver = $solver, \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = Float64 ")
     verbose && println("N\t T\t Complex?\t abserror\t time\t\t \memory   ")
@@ -117,7 +117,7 @@ function test_1d_cases()
     @testset "result" for ELT in (Float32,Float64),
             Basis in (FourierBasis, ChebyshevBasis),
             D in [interval(ELT, -1.5, 0.7), interval(ELT, -1.5,-0.5)∪ interval(ELT, 0.5,1.5)],
-            solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
+            solver in (AZSolver, DirectSolver)
         println()
         println("Testing \t solver = $solver, \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = $ELT ")
         verbose && println("N\t T\t Complex?\t abserror\t time\t\t \memory   ")
@@ -151,12 +151,12 @@ function test_bigfloat()
     @testset "result" for Basis in (FourierBasis, ChebyshevBasis),
         D in [interval(BigFloat, -3//2, 7//10)]
         println()
-        println("Testing \t solver = FE.FE_DirectSolver{ELT}\n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = BigFloat ")
+        println("Testing \t solver = DirectSolver{ELT}\n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = BigFloat ")
         verbose && println("N\t T\t Complex?\t abserror\t time\t\t \memory   ")
         for T in (BigFloat(17//10),)
             for func in (f,g)
                 B = Basis(91, -T, T)
-                F = @timed( Fun(func, B, D; solver = FE.FE_DirectSolver) )
+                F = @timed( Fun(func, B, D; solver = DirectSolver) )
                 error = abserror(func, F[1])
                 if verbose
                     @printf("91\t %3.2e\t\t",T)
@@ -177,7 +177,7 @@ function test_2d_cases()
     g(x,y) = 1im*cos(0.5*x)+2*sin(0.2*y)-1.0im*x*y
     @testset "result" for Basis in (FourierBasis, ChebyshevBasis),
         D in [disk(1.2,v[-0.1,-0.2]), cube((-1.0,-1.5),(0.5,0.7))],
-        solver in (FE.FE_ProjectionSolver, FE.FE_DirectSolver)
+        solver in (AZSolver, DirectSolver)
 
         println()
         println("Testing \t solver = $solver \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10)⊗instantiate(Basis,10))),\n\t\t ELT = Float64 ")
@@ -208,9 +208,9 @@ function test_3d_cases()
     delimit("3D")
 
     f(x,y,z) = cos(x)+sin(y)-x*z
-    # @testset "result" for Basis in (FourierBasis, ChebyshevBasis), D in (Cube((-1.2,-1.0,-0.9),(1.0,0.9,1.2)),FE.tensorproduct(Interval(-1.0,1.0),Disk(1.05)), FE.Ball(1.2,[-0.3,0.25,0.1])), solver in (FE.FE_ProjectionSolver, )
+    # @testset "result" for Basis in (FourierBasis, ChebyshevBasis), D in (Cube((-1.2,-1.0,-0.9),(1.0,0.9,1.2)),FE.tensorproduct(Interval(-1.0,1.0),Disk(1.05)), FE.Ball(1.2,[-0.3,0.25,0.1])), solver in (AZSolver, )
     #             show(solver); println()
-    @testset "result" for Basis in (FourierBasis, ChebyshevBasis), D in (cube((-1.2,-1.0,-0.9),(1.0,0.9,1.2)), FE.ball(1.2,v[-0.3,0.25,0.1])), solver in (FE.FE_ProjectionSolver, )
+    @testset "result" for Basis in (FourierBasis, ChebyshevBasis), D in (cube((-1.2,-1.0,-0.9),(1.0,0.9,1.2)), FE.ball(1.2,v[-0.3,0.25,0.1])), solver in (AZSolver, )
                 show(solver); println()
         println()
         println("Testing \t solver = $solver \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10)⊗instantiate(Basis,10)⊗instantiate(Basis,10))),\n\t\t ELT = Float64 ")

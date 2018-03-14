@@ -5,9 +5,10 @@ A fast FE solver based on a low-rank approximation of the plunge region. The plu
 is isolated using a projection operator. This algorithm contains an extra smoothing step
 
 """
-struct FE_SmoothProjectionSolver{ELT} <: FE_Solver{ELT}
+struct AZSmoothSolver{ELT} <: FE_Solver{ELT}
     TS :: AbstractOperator
-    op     ::  AbstractOperator
+    A     ::  AbstractOperator
+    Zt    ::  AbstractOperator
     plunge_op   ::  AbstractOperator    # store the operator because it allocates memory
     b     ::  Array{ELT,1}
     blinear     ::  Array{ELT,1}
@@ -17,37 +18,38 @@ struct FE_SmoothProjectionSolver{ELT} <: FE_Solver{ELT}
     x3          ::  Array{ELT}
     Q          ::  Array{ELT,2}
     D           ::  AbstractOperator
-    scaling
 
-    function FE_SmoothProjectionSolver{ELT}(op::AbstractOperator, scaling; cutoff = default_cutoff(op), cutoffv=sqrt(cutoff), R = estimate_plunge_rank(op), verbose=false,  options...) where ELT
-        plunge_op = plunge_operator(op, scaling)
+    function AZSmoothSolver{ELT}(A::AbstractOperator, Zt::AbstractOperator; cutoff = default_cutoff(A), cutoffv=sqrt(cutoff), R = estimate_plunge_rank(A), verbose=false,  options...) where ELT
+        plunge_op = plunge_operator(A, Zt)
         # Create Random matrices
-        TS1 = TruncatedSvdSolver(plunge_op*op; cutoff = cutoff, verbose=verbose,R=R,options...)
-        TS2 = TruncatedSvdSolver(op'*plunge_op; cutoff = cutoffv, verbose=verbose, R=R, options...)
+        TS1 = TruncatedSvdSolver(plunge_op*A; cutoff = cutoff, verbose=verbose,R=R,options...)
+        TS2 = TruncatedSvdSolver(Zt*plunge_op; cutoff = cutoffv, verbose=verbose, R=R, options...)
         # D = Sobolev operator
-        D = IdxnScalingOperator(src(op); options...)
+        D = IdxnScalingOperator(src(A); options...)
         AD = inv(D)
         ADV = (TS2.Ut)'.*diagonal(AD)
         # Orthogonal basis for D^(-1)V_mid
         Q, R = qr(ADV)
         # Pre-allocation
         b = zeros(size(dest(plunge_op)))
-        blinear = zeros(ELT, length(dest(op)))
-        x1 = zeros(size(src(op)))
-        x2 = zeros(size(src(op)))
-        x3 = zeros(size(src(op)))
+        blinear = zeros(ELT, length(dest(A)))
+        x1 = zeros(size(src(A)))
+        x2 = zeros(size(src(A)))
+        x3 = zeros(size(src(A)))
         syv = zeros(size(TS2.Ut,1))
-        new(TS1,op, plunge_op, b,blinear,syv,x1,x2,x3,Q, D, scaling)
+        new(TS1,A, Zt, plunge_op, b,blinear,syv,x1,x2,x3,Q, D)
     end
 end
 
+AZSmoothSolver(A::AbstractOperator, Zt::AbstractOperator; options...) =
+    AZSmoothSolver{eltype(A)}(A, Zt; options...)
+    
+AZSmoothSolver(A::AbstractOperator; scaling=nothing, options...) =
+        AZSmoothSolver{eltype(A)}(A, 1/scaling*A'; options...)
 
-FE_SmoothProjectionSolver(op::AbstractOperator; scaling=nothing, options...) =
-        FE_SmoothProjectionSolver{eltype(op)}(op, scaling; options...)
-
-function apply!(s::FE_SmoothProjectionSolver, destarg, src, coef_dest, coef_src)
-    A = s.op
-    At = A'
+function apply!(s::AZSmoothSolver, destarg, src, coef_dest, coef_src)
+    A = s.A
+    At = s.Zt
     P = s.plunge_op
     # Apply plunge operator to right hand side
     apply!(P,s.b, coef_src)
@@ -59,7 +61,7 @@ function apply!(s::FE_SmoothProjectionSolver, destarg, src, coef_dest, coef_src)
     AD = inv(D)
     # Project Dx2 onto the orthogonal complement of D^(-1)V_mid
     apply!(D,s.x1,s.x2)
-    ## apply!(MatrixOperator(s.Q'),s.syv,s.x1)
+    ## apply!(MantrixOperator(s.Q'),s.syv,s.x1)
     ## apply!(MatrixOperator(s.Q),s.x3,s.syv)
     ## for i = 1:length(s.x1)
     ##     s.x1[i] = s.x1[i]- s.x3[i]
@@ -76,7 +78,7 @@ function apply!(s::FE_SmoothProjectionSolver, destarg, src, coef_dest, coef_src)
     apply!(A, s.b, s.x2)
     apply!(At, s.x1, coef_src-s.b)
     for i = 1:length(coef_dest)
-        coef_dest[i] = s.x1[i]/s.scaling + s.x2[i]
+        coef_dest[i] = s.x1[i] + s.x2[i]
     end
 
 end
