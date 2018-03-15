@@ -67,9 +67,6 @@ unsafe_eval_element(s::ExtensionFrame, idx::Int, x) =
 
 grid(f::ExtensionFrame) = subgrid(grid(basis(f)),domain(f))
 
-BasisFunctions.default_oversampling(f::ExtensionFrame) = length(subgrid(BasisFunctions.oversampled_grid(basis(f), BasisFunctions.default_oversampling(basis(f))), domain(f)))/length(basis(f))
-
-
 """
 Make an ExtensionFrame, but match tensor product domains with tensor product sets
 in a suitable way.
@@ -130,7 +127,7 @@ dot(span::Span, domain::Interval, f1::Function, f2::Function; options...) =
 #     dot(dict, firstelement(domain), f1, f2; options...) +
 #     dot(dict, secondelement(domain), f1, f2; options...)
 
-continuous_approximation_operator(span::ExtensionSpan; solver = ContinuousDirectSolver, options...) = solver(span; options...)
+#continuous_approximation_operator(span::ExtensionSpan; solver = ContinuousDirectSolver, options...) = solver(span; options...)
 
 #################
 ## Gram operators extended

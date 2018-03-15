@@ -81,14 +81,14 @@ function FE_BestSolver(op::AbstractOperator; scaling=NaN, verbose= false, option
         R = estimate_plunge_rank(op)
         if R < size(op, 2)/2
             verbose && println("Estimated plunge rank $R smaller than $(size(op,2))/2 -> projection solver ")
-            FE_ProjectionSolver(op; scaling=scaling, verbose=verbose,options...)
+            AZSolver(op; scaling=scaling, verbose=verbose,options...)
         else
             verbose && println("Estimated plunge rank $R greater than $(size(op,2))/2 -> direct solver ")
-            FE_DirectSolver(op; verbose=verbose,options...)
+            DirectSolver(op; verbose=verbose,options...)
         end
     else
         # Don't bother with a fast algorithm if there is no fast transform
-        FE_DirectSolver(op, scaling; verbose=verbose, options...)
+        DirectSolver(op, scaling; verbose=verbose, options...)
     end
 end
 
@@ -132,7 +132,7 @@ end
 
 default_frame_solver(domain, basis) = FE_BestSolver
 
-default_frame_solver(domain::Domain, basis::Dictionary{S,SVector{N,BigFloat}}) where {S,N} = FE_DirectSolver
-default_frame_solver(domain::Domain, basis::Dictionary{S,SVector{N,Complex{BigFloat}}}) where {S,N} = FE_DirectSolver
-default_frame_solver(domain::Domain, basis::Dictionary{BigFloat}) = FE_DirectSolver
-default_frame_solver(domain::Domain, basis::Dictionary{Complex{BigFloat}}) = FE_DirectSolver
+default_frame_solver(domain::Domain, basis::Dictionary{S,SVector{N,BigFloat}}) where {S,N} = DirectSolver
+default_frame_solver(domain::Domain, basis::Dictionary{S,SVector{N,Complex{BigFloat}}}) where {S,N} = DirectSolver
+default_frame_solver(domain::Domain, basis::Dictionary{BigFloat}) = DirectSolver
+default_frame_solver(domain::Domain, basis::Dictionary{Complex{BigFloat}}) = DirectSolver

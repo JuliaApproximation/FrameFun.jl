@@ -1,3 +1,7 @@
 BasisFunctions
 StaticArrays
 Plots
+GR
+Interact
+Reactive
+IJulia

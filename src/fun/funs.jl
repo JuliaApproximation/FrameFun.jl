@@ -36,7 +36,7 @@ for op in (:ctranspose, :∫, :∂x, :∂y, :∂z, :∫∂x, :∫∂y, :∫∂z,
     @eval $op(fun::DictFun{S,T}, args...) where {S,T} = DictFun{S,T}($op(fun.expansion, args...))
 end
 
-for op in (:ExtensionFrame, :basis)
+for op in (:ExtensionFrame, :basis, :basisspan)
     @eval $op(fun::DictFun) = $op(fun, dictionary(fun))
 end
 
@@ -61,7 +61,7 @@ domain(fun::DictFun, set::ExtensionFrame) = domain(set)
 basis(fun::DictFun, set::ExtensionFrame) = basis(set)
 
 function matrix(fun::DictFun; options...)
-    op = oversampled_evaluation_operator(basis(fun),domain(fun);  options...)[1]
+    op = oversampled_evaluation_operator(Span(basis(fun)),domain(fun);  options...)[1]
     matrix(op)
 end
 
@@ -144,3 +144,23 @@ function residual(f::Function, F::DictFun ;  options...)
     rhs = project(dest(op),f)
     norm(op*coefficients(F)-rhs)
 end
+
+function relresidual(f::Function, F::DictFun ;  options...)
+    op = oversampled_evaluation_operator(span(basis(F)),domain(F); options...)[1]
+    rhs = project(dest(op),f)
+
+
+    norm(op*coefficients(F)-rhs)/norm(rhs)
+end
+
+function residualmax(f::Function, F::DictFun ;  options...)
+    op = oversampled_evaluation_operator(span(basis(F)),domain(F); options...)[1]
+    rhs = project(dest(op),f)
+
+
+    maximum(abs(op*coefficients(F)-rhs))
+end
+
+    
+
+    

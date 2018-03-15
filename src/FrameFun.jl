@@ -142,6 +142,9 @@ export characteristic
 
 export FeFun, FeFunNd
 
+# from approximation
+export DirectSolver, AZSolver, AZSmoothSolver, TridiagonalSolver
+
 include("subgrid.jl")
 
 #include("domains/boundingbox.jl")
@@ -156,7 +159,8 @@ include("fun/funs.jl")
 include("approximation/fe_solvers.jl")
 include("approximation/continuous_solver.jl")
 include("approximation/lowranksolver.jl")
-include("approximation/fastsolver.jl")
+include("approximation/azsolver.jl")
+include("approximation/tridiagonalsolver.jl")
 include("approximation/smoothsolver.jl")
 include("approximation/fe_approx.jl")
 

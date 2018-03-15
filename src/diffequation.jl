@@ -34,12 +34,12 @@ struct NeumannBC
     end
 end
 
-BoundaryCondition(S :: Span, D::Domain) = BoundaryCondition(S,IdentityOperator(S),boundary(grid(S),D),default_boundary_condition)
-BoundaryCondition(S :: Span, diff::AbstractOperator, D::Domain) = BoundaryCondition(S,diff,boundary(grid(S),D),default_boundary_condition)
-BoundaryCondition(S :: Span, diff::AbstractOperator, D::Domain, dRhs::Function) = BoundaryCondition(S,diff,boundary(grid(S),D),dRhs)
-default_boundary_condition(x) = 0
-default_boundary_condition(x,y) = 0
-default_boundary_condition(x,y,z) = 0
+# BoundaryCondition(S :: Span, D::Domain) = BoundaryCondition(S,IdentityOperator(S),boundary(grid(S),D),default_boundary_condition)
+# BoundaryCondition(S :: Span, diff::AbstractOperator, D::Domain) = BoundaryCondition(S,diff,boundary(grid(S),D),default_boundary_condition)
+# BoundaryCondition(S :: Span, diff::AbstractOperator, D::Domain, dRhs::Function) = BoundaryCondition(S,diff,boundary(grid(S),D),dRhs)
+# default_boundary_condition(x) = 0
+# default_boundary_condition(x,y) = 0
+# default_boundary_condition(x,y,z) = 0
 
 function operator(BC :: DirichletBC, S::Span, G::AbstractGrid, D::Domain)
     G = subgrid(G,BC.D)
@@ -82,7 +82,7 @@ struct DiffEquation
     end
 end
 
-DiffEquation(S::Span, D::Domain, Diff::AbstractOperator, DRhs::Function, BC::BoundaryCondition, sampling_factor=2) = DiffEquation(S,D,Diff,DRhs,(BC,), sampling_factor)
+# DiffEquation(S::Span, D::Domain, Diff::AbstractOperator, DRhs::Function, BC::BoundaryCondition, sampling_factor=2) = DiffEquation(S,D,Diff,DRhs,(BC,), sampling_factor)
 
 function boundarygrid(D::DiffEquation)
     G, lB = oversampled_grid(D.D,dictionary(D.S),D.sampling_factor)
@@ -131,7 +131,7 @@ function rhs(D::DiffEquation; incboundary = false, options...)
     MultiArray(rhs)
 end
 
-function solve(D::DiffEquation; solver=FE_ProjectionSolver, options...)
+function solve(D::DiffEquation; solver=AZSolver, options...)
     G, lB = oversampled_grid(D.D,dictionary(D.S),D.sampling_factor)
     Adiff= inv_diagonal(D.Diff)
     b = rhs(D; options...)

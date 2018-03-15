@@ -45,8 +45,8 @@ end
 
 # This breaks mappeddomain in for grids
 
-## indomain_broadcast(grid, d::DerivedDomain) = indomain_broadcast(grid, superdomain(d))
-## indomain_broadcast!(result, grid, d::DerivedDomain) = indomain_broadcast!(result, grid, superdomain(d))
+## indomain_broadcast(grid, d::DerivedDomain) = indomain_broadcast(grid, source(d))
+## indomain_broadcast!(result, grid, d::DerivedDomain) = indomain_broadcast!(result, grid, souce(d))
 
 # Check whether a value is in an interval, up to 10 times machine precision
 in(x::Number, a::T, b::T) where {T <: AbstractFloat} = (a-10eps(T) <= x <= b+10eps(T))
@@ -77,7 +77,7 @@ boundingbox(c::Ball) = cube((c.center[1]-c.radius,c.center[2]-c.radius,c.center[
 
 boundingbox(d::ProductDomain) = cartesianproduct(map(boundingbox, elements(d))...)
 
-boundingbox(d::DerivedDomain) = boundingbox(superdomain(d))
+boundingbox(d::DerivedDomain) = boundingbox(source(d))
 
 boundingbox(d::DifferenceDomain) = boundingbox(d.d1)
 
@@ -110,13 +110,13 @@ Domains.superdomain(d::MappedDomain) = Domains.source(d)
 
 # Now here is a problem: how do we compute a bounding box, without extra knowledge
 # of the map? We can only do this for some maps.
-boundingbox(d::MappedDomain) = mapped_boundingbox(boundingbox(superdomain(d)), forward_map(d))
+boundingbox(d::MappedDomain) = mapped_boundingbox(boundingbox(source(d)), forward_map(d))
 
 function mapped_boundingbox(box::Interval, fmap)
-    l,r = box[1]
+    l,r = (leftendpoint(box),rightendpoint(box))
     ml = fmap*l
     mr = fmap*r
-    BBox(min(ml,mr), max(ml,mr))
+    boundingbox(min(ml,mr), max(ml,mr))
 end
 
 # In general, we can at least map all the corners of the bounding box of the
@@ -195,10 +195,10 @@ normal(x,d::DifferenceDomain) = abs(dist(x,d.d1))<abs(dist(x,d.d2)) ? normal(x,d
 
 dist(x, t::ProductDomain) = minimum(map(dist,x,elements(t)))
 
-dist(x, d::MappedDomain) = dist(inverse_map(d)*x,superdomain(d))
+dist(x, d::MappedDomain) = dist(inverse_map(d)*x,source(d))
 
 function normal(x, d::MappedDomain)
-    x = applymap(inverse_map(d),normal(inverse_map(d)*x,superdomain(d)))
+    x = applymap(inverse_map(d),normal(inverse_map(d)*x,source(d)))
     x0 = apply_inverse(inverse_map(d),zeros(size(x)))
    (x-x0)/norm(x-x0)
 end

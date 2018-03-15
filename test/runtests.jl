@@ -6,3 +6,11 @@ include("test_suite_adaptive.jl")
 include("test_suite_gram.jl")
 include("test_suite_domains.jl")
 include("test_plots.jl")
+
+
+
+include("test_notebooks.jl")
+
+println("Create README.md")
+run(`jupyter nbconvert --execute --to markdown --output README.md README.ipynb`)
+println("All tests succeeded!!!")
