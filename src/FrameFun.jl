@@ -115,6 +115,9 @@ export dist, normal
 export ExtensionFrame, basis, domain, extensionframe
 export Gram, DualGram, MixedGram
 
+# from frames/weighted_sum_frame.jl
+export WeightedSumFrame, weightfunctions
+
 # from DiffEquation.jl
 export DirichletBC, NeumannBC, DiffEquation, solve
 
@@ -151,6 +154,7 @@ include("subgrid.jl")
 include("domains/extensions.jl")
 
 include("frames/extensionframe.jl")
+include("frames/weighted_sum_frame.jl")
 
 include("fun/basisdomains.jl")
 include("fun/funs.jl")
