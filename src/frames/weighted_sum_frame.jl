@@ -11,4 +11,4 @@ WeightedSumFrame(weightfunctions,frame::Dictionary) = MultiDict(map(x->WeightedD
 
 superdict(f::WeightedSumFrame) = superdict(element(f,1))
 weightfunctions(f::WeightedSumFrame) = map(weightfunction,elements(f))
-name(f::WeightedSumFrame) = "Frame consisting of " * string(length(weightfunctions(f))) * " weighted copies of " name(superdict(f))
+name(f::WeightedSumFrame) = "Frame consisting of " * string(length(weightfunctions(f))) * " weighted copies of " * name(superdict(f))
