@@ -98,7 +98,9 @@ function apply!{G <: MaskedGrid}(op::Restriction, dest::GridSet{G}, src, coef_de
 end
 
 
-function boundary_mask(grid, domain)
+boundary_mask(grid, domain) = _boundary_mask(grid, domain, Val{dimension(domain)})
+
+function _boundary_mask(grid,domain,::Type{Val{2}})
     mask = zeros(Bool,size(grid)...)
     for i in 2:size(grid,1)-1
         for j in 2:size(grid,2)-1
@@ -107,6 +109,35 @@ function boundary_mask(grid, domain)
                 !reduce(&,true,map(x->indomain(x,domain),neighbours))
                 if !reduce(&,true,map(x->indomain(x,domain),neighbours))
                     mask[i,j] = true
+                end
+            end
+        end
+    end
+    mask
+end
+
+function _boundary_mask(grid,domain,::Type{Val{3}})
+    mask = zeros(Bool,size(grid)...)
+    for i in 2:size(grid,1)-1
+        for j in 2:size(grid,2)-1
+            for k in 2:size(grid,3)-1
+                if Domains.indomain(grid[i,j,k], domain)
+                    neighbours = [grid[i-1,j-1,k-1],grid[i-1,j-1,k  ],grid[i-1,j-1,k+1],
+                                  grid[i-1,j  ,k-1],grid[i-1,j  ,k  ],grid[i-1,j  ,k+1],
+                                  grid[i-1,j+1,k-1],grid[i-1,j+1,k  ],grid[i-1,j+1,k+1],
+
+                                  grid[i,j-1,k-1],grid[i,j-1,k  ],grid[i,j-1,k+1],
+                                  grid[i,j  ,k-1],                grid[i,j  ,k+1],
+                                  grid[i,j+1,k-1],grid[i,j+1,k  ],grid[i,j+1,k+1],
+
+                                  grid[i+1,j-1,k-1],grid[i+1,j-1,k  ],grid[i+1,j-1,k+1],
+                                  grid[i+1,j  ,k-1],grid[i+1,j  ,k  ],grid[i+1,j  ,k+1],
+                                  grid[i+1,j+1,k-1],grid[i+1,j+1,k  ],grid[i+1,j+1,k+1],
+                    ]
+                    !reduce(&,true,map(x->indomain(x,domain),neighbours))
+                    if !reduce(&,true,map(x->indomain(x,domain),neighbours))
+                        mask[i,j,k] = true
+                    end
                 end
             end
         end

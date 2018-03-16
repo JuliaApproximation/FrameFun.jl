@@ -12,6 +12,10 @@ function create_indices(B, i1, i2)
 #     [(i,j) for i in i1 for j in i2]
 end
 
+function create_indices(B, i1, i2, i3)
+    [linear_index(B,(i,j,k)) for i in i1 for j in i2 for k in i3]
+end
+
 """
 The linear index of the spline elements of B that are non-zero in x.
 """
