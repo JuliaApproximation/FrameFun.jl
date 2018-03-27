@@ -117,6 +117,7 @@ export Gram, DualGram, MixedGram
 
 # from frames/weighted_sum_frame.jl
 export WeightedSumFrame, weightfunctions
+export hassuperdict
 
 # from DiffEquation.jl
 export DirichletBC, NeumannBC, DiffEquation, solve
