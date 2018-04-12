@@ -29,20 +29,21 @@ end
 # These are for the assignment to indices in the function below.
 convert(::Type{NTuple{N,Int}},i::CartesianIndex{N}) where {N} = ntuple(k->i[k],N)
 
-function MaskedGrid(supergrid::AbstractGrid, domain::Domain)
-    mask = in.(supergrid, domain)
-    I = eltype(eachindex(supergrid))
+MaskedGrid(supergrid::AbstractGrid, domain::Domain) =
+    MaskedGrid(supergrid, in.(supergrid, domain))
+
+function MaskedGrid(supergrid::AbstractGrid, mask::Array{Bool})
+    I= eltype(eachindex(supergrid))
     indices = Array{I}(sum(mask))
     i = 1
     for m in eachindex(supergrid)
-        if mask[m]
-            indices[i] = m
-            i += 1
-        end
+       if mask[m]
+           indices[i] = m
+           i += 1
+       end
     end
     MaskedGrid(supergrid, mask, indices)
 end
-
 
 length(g::MaskedGrid) = g.M
 
@@ -97,6 +98,78 @@ function apply!{G <: MaskedGrid}(op::Restriction, dest::GridBasis{G}, src, coef_
 end
 
 
+boundary_mask(grid, domain) = _boundary_mask(grid, domain, Val{dimension(domain)})
+
+function _boundary_mask(grid,domain,::Type{Val{2}})
+    mask = zeros(Bool,size(grid)...)
+    for i in 2:size(grid,1)-1
+        for j in 2:size(grid,2)-1
+            if Domains.indomain(grid[i,j], domain)
+                neighbours = [grid[i-1,j-1],grid[i-1,j],grid[i-1,j+1],grid[i,j-1],grid[i,j+1],grid[i+1,j-1],grid[i+1,j],grid[i+1,j+1]]
+                !reduce(&,true,map(x->indomain(x,domain),neighbours))
+                if !reduce(&,true,map(x->indomain(x,domain),neighbours))
+                    mask[i,j] = true
+                end
+            end
+        end
+    end
+    mask
+end
+
+function _boundary_mask(grid,domain,::Type{Val{3}})
+    mask = zeros(Bool,size(grid)...)
+    for i in 2:size(grid,1)-1
+        for j in 2:size(grid,2)-1
+            for k in 2:size(grid,3)-1
+                if Domains.indomain(grid[i,j,k], domain)
+                    neighbours = [grid[i-1,j-1,k-1],grid[i-1,j-1,k  ],grid[i-1,j-1,k+1],
+                                  grid[i-1,j  ,k-1],grid[i-1,j  ,k  ],grid[i-1,j  ,k+1],
+                                  grid[i-1,j+1,k-1],grid[i-1,j+1,k  ],grid[i-1,j+1,k+1],
+
+                                  grid[i,j-1,k-1],grid[i,j-1,k  ],grid[i,j-1,k+1],
+                                  grid[i,j  ,k-1],                grid[i,j  ,k+1],
+                                  grid[i,j+1,k-1],grid[i,j+1,k  ],grid[i,j+1,k+1],
+
+                                  grid[i+1,j-1,k-1],grid[i+1,j-1,k  ],grid[i+1,j-1,k+1],
+                                  grid[i+1,j  ,k-1],grid[i+1,j  ,k  ],grid[i+1,j  ,k+1],
+                                  grid[i+1,j+1,k-1],grid[i+1,j+1,k  ],grid[i+1,j+1,k+1],
+                    ]
+                    !reduce(&,true,map(x->indomain(x,domain),neighbours))
+                    if !reduce(&,true,map(x->indomain(x,domain),neighbours))
+                        mask[i,j,k] = true
+                    end
+                end
+            end
+        end
+    end
+    mask
+end
+
+"""
+A Masked grid that contains the elements of grid that are on the boundary of the domain
+"""
+function boundary_grid(grid, domain)
+    mask = boundary_mask(grid, domain);
+    MaskedGrid(grid,mask);
+end
+
+# Returns the indices of the points of `from` in the grid `relativeto`.
+# It is assumed that all points of `from` are in `relativeto`
+function relative_indices(from::MaskedGrid, relativeto::MaskedGrid)
+    I = eltype(relativeto.indices)
+    support_index = Array{Int}(length(from))
+    index = 1
+    for (i_i,i) in enumerate(relativeto.indices)
+        if is_subindex(i, from)
+            support_index[index] = i_i
+            index += 1
+        end
+    end
+    support_index
+end
+
+restriction_operator(from::MaskedGrid,to::MaskedGrid) =
+    IndexRestrictionOperator(gridspace(from),gridspace(to), relative_indices(to,from))
 
 
 "Create a suitable subgrid that covers a given domain."
