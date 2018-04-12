@@ -5,6 +5,13 @@ If x ≈ i/N it return -i
 """
 interval_index(B::BSplineTranslatesBasis,x::Real) = round(x*length(B))≈x*length(B) ? -round(Int,x*length(B))-1 : ceil(Int,x*length(B))
 
+function BasisFunctions.support(B::BSplineTranslatesBasis, i)
+    start = (i-1)/length(B)
+    width = (degree(B)+1)/length(B)
+    stop  = start+width
+    stop <=1 ? (return [start,stop]) : (return [0.,stop-1.], [start,1.])
+end
+
 # convert 2D indices to linear index
 # TODO is it possible to generalize this function to ND
 function create_indices(B, i1, i2)
@@ -84,7 +91,7 @@ function support_indices(B::TensorProductDict, g::ProductGrid, index::Int)
 end
 
 """
-A grid that contains the points that are not evaluated to zero by the elements that overlap with boundary_grid.
+A grid that contains the points of `omega_grid` that are not evaluated to zero by the elements that overlap with boundary_grid.
 """
 function boundary_support_grid(B, boundary_grid::MaskedGrid, omega_grid::MaskedGrid)
     boundary_indices = boundary_element_indices(B,boundary_grid)
@@ -99,8 +106,10 @@ function boundary_support_grid(B, boundary_grid::MaskedGrid, omega_grid::MaskedG
     MaskedGrid(supergrid(omega_grid),mask)
 end
 
-
+"""
+An index extension operator from the elements of `B` the overlap with the boundary to the complete dictionary.
+"""
 function boundary_extension_operator(boundary::AbstractGrid, B::Dictionary)
     boundary_indices = boundary_element_indices(B,boundary)
-    IndexExtensionOperator(span(B[boundary_indices]),span(B), boundary_indices);
+    IndexExtensionOperator(Span(B[boundary_indices]),Span(B), boundary_indices)
 end
