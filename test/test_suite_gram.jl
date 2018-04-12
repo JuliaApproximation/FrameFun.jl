@@ -34,6 +34,9 @@ end
 
 function basis_test()
     @testset "Frame on entire domain (i.e, basis problem)" begin
+        B = ChebyshevBasis; n = 11; T = Float32;
+        basis = instantiate(B, n, T)
+        left(basis)
         for T in (Float32,Float64,), n in (10,11)
             tol = sqrt(eps(T))
             e = rand(T,n)
@@ -76,36 +79,43 @@ function test_basis_oversampling()
 end
 
 function test_discrete_gram()
+
     @testset "Testing discrete dual gram en mixed gram with oversampling" begin
-        for T in [Float64, BigFloat]
-            for n in [10,11], os in 1:4, B in [ChebyshevBasis, FourierBasis, BSplineTranslatesBasis]
-                e = map(T, rand(n))
-                b = instantiate(B,n,T)
-                d = interval(left(b), right(b))/2
-                frame = extensionframe(b,d)
-                Gomega = DiscreteGram(Span(frame); oversampling=os)
-                Eomega = evaluation_operator(Span(frame); oversampling=os)
-                N = BasisFunctions.discrete_gram_scaling(frame, os)
+        for B in [ChebyshevBasis, FourierBasis, BSplineTranslatesBasis]
+            b = instantiate(B, 1, Float64)
+            d = interval(left(b), right(b))/2
+            for T in [Float64, BigFloat]
+                for n in [10,11]
+                    e = map(T, rand(n))
+                    b = instantiate(B,n,T)
+                    for os in 1:4
 
-                basis_os = BasisFunctions.basis_oversampling(frame,os)
+                        frame = extensionframe(b,d)
+                        Gomega = DiscreteGram(Span(frame); oversampling=os)
+                        Eomega = evaluation_operator(Span(frame); oversampling=os)
+                        N = BasisFunctions.discrete_gram_scaling(frame, os)
 
-                @test (Eomega'Eomega)*e/N≈Gomega*e
+                        basis_os = BasisFunctions.basis_oversampling(frame,os)
 
-                GT = DiscreteDualGram(Span(b); oversampling=basis_os)
+                        @test (Eomega'Eomega)*e/N≈Gomega*e
 
-                ETomega = Eomega*GT
+                        GT = DiscreteDualGram(Span(b); oversampling=basis_os)
 
-                GTomega = GT*Gomega*GT
+                        ETomega = Eomega*GT
 
-                @test (ETomega'ETomega)*e/N≈GTomega*e
+                        GTomega = GT*Gomega*GT
 
-                GMomega = GT*Gomega
+                        @test (ETomega'ETomega)*e/N≈GTomega*e
 
-                @test (ETomega'Eomega)*e/N≈GMomega*e
+                        GMomega = GT*Gomega
 
-                @test DiscreteGram(Span(frame);oversampling=os)*e≈Gomega*e
-                @test DiscreteDualGram(Span(frame); oversampling=os)*e≈GTomega*e
-                @test DiscreteMixedGram(Span(frame); oversampling=os)*e≈GMomega*e
+                        @test (ETomega'Eomega)*e/N≈GMomega*e
+
+                        @test DiscreteGram(Span(frame);oversampling=os)*e≈Gomega*e
+                        @test DiscreteDualGram(Span(frame); oversampling=os)*e≈GTomega*e
+                        @test DiscreteMixedGram(Span(frame); oversampling=os)*e≈GMomega*e
+                    end
+                end
             end
         end
     end

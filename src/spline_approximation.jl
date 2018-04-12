@@ -32,7 +32,7 @@ function overlapping_spline_indices(B::BSplineTranslatesBasis, x::Real)
     [mod(init_index+i-2,length(B)) + 1 for i in 1:-1:2-no_elements]
 end
 
-function overlapping_spline_indices(B::TensorProductSet, x::SVector)
+function overlapping_spline_indices(B::TensorProductDict, x::SVector)
     index_sets = [overlapping_spline_indices(s,x[i]) for (i,s) in enumerate(elements(B))]
     create_indices(B,index_sets...)
 end
@@ -77,7 +77,7 @@ function support_indices(B::BSplineTranslatesBasis, g::AbstractEquispacedGrid, i
     end
 end
 
-function support_indices(B::TensorProductSet, g::ProductGrid, index::Int)
+function support_indices(B::TensorProductDict, g::ProductGrid, index::Int)
     cartindex = ind2sub(size(B),index)
     index_sets = [support_indices(s,element(g,i),cartindex[i]) for (i,s) in enumerate(elements(B))]
     create_indices(g,index_sets...)
@@ -100,7 +100,7 @@ function boundary_support_grid(B, boundary_grid::MaskedGrid, omega_grid::MaskedG
 end
 
 
-function boundary_extension_operator(boundary::AbstractGrid, B::FunctionSet)
+function boundary_extension_operator(boundary::AbstractGrid, B::Dictionary)
     boundary_indices = boundary_element_indices(B,boundary)
     IndexExtensionOperator(span(B[boundary_indices]),span(B), boundary_indices);
 end

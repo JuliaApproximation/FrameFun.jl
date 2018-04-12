@@ -32,7 +32,7 @@ convert(::Type{NTuple{N,Int}},i::CartesianIndex{N}) where {N} = ntuple(k->i[k],N
 MaskedGrid(supergrid::AbstractGrid, domain::Domain) =
     MaskedGrid(supergrid, in.(supergrid, domain))
 
-function MaskedGrid(supergrid::AbstractGrid, mask::Array{Bool})
+function MaskedGrid(supergrid::AbstractGrid, mask)
     I= eltype(eachindex(supergrid))
     indices = Array{I}(sum(mask))
     i = 1
