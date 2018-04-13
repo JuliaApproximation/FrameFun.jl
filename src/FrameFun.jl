@@ -1,5 +1,5 @@
 # FrameFun.jl
-
+__precompile__(true)
 module FrameFun
 
 using Base.Cartesian
