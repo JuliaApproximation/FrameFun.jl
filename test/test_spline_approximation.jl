@@ -1,6 +1,6 @@
 using BasisFunctions
 using FrameFun
-using FrameFun: overlapping_elements, boundary_support_grid, relative_indices, restriction_operator, boundary_element_indices
+using FrameFun: overlapping_elements, boundary_support_grid, relative_indices, restriction_operator, boundary_element_indices, az_selection_util_operators
 using Base.Test
 using StaticArrays
 using Domains

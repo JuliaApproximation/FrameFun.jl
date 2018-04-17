@@ -157,13 +157,14 @@ export DirectSolver, AZSolver, AZSmoothSolver, TridiagonalSolver
 
 include("subgrid.jl")
 
-include("approximation/splines/spline_approximation.jl")
 
 #include("domains/boundingbox.jl")
 include("domains/extensions.jl")
 
 include("frames/extensionframe.jl")
 include("frames/weighted_sum_frame.jl")
+
+include("approximation/splines/spline_approximation.jl")
 
 include("fun/basisdomains.jl")
 include("fun/funs.jl")
