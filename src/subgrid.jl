@@ -168,8 +168,15 @@ function relative_indices(from::MaskedGrid, relativeto::MaskedGrid)
     support_index
 end
 
-restriction_operator(from::MaskedGrid,to::MaskedGrid) =
+BasisFunctions.restriction_operator(from::MaskedGrid,to::MaskedGrid) =
     IndexRestrictionOperator(gridspace(from),gridspace(to), relative_indices(to,from))
+
+# function BasisFunctions.restriction_operator(dgs::DiscreteGridSpace, grid::AbstractGrid, domain::Domain)
+#     sg = subgrid(grid, domain)
+#     IndexRestrictionOperator(dgs, gridspace(sg), sg.indices)
+# end
+
+
 
 
 "Create a suitable subgrid that covers a given domain."

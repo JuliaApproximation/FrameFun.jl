@@ -1,6 +1,6 @@
 using BasisFunctions
 using FrameFun
-using FrameFun: interval_index, overlapping_spline_indices, support_indices, boundary_support_grid, relative_indices, restriction_operator, boundary_element_indices
+using FrameFun: overlapping_elements, boundary_support_grid, relative_indices, restriction_operator, boundary_element_indices
 using Base.Test
 using StaticArrays
 using Domains
@@ -14,42 +14,36 @@ function delimit(s::AbstractString)
     println("############")
 end
 delimit("Spline approximation")
-@testset begin
-    # 1D
-    B = BSplineTranslatesBasis(10,1)
-    x = [1e-4,.23,.94]
-    @test interval_index.(B,x) == [1,3,10]
-    indices = FrameFun.overlapping_spline_indices.(B,x)
-    @test reduce(&,true,[B[i].(x[j]) for j in 1:length(x) for i in indices[j]].>0)
-    # ND
-    B = BSplineTranslatesBasis(10,3)⊗BSplineTranslatesBasis(15,5)
-
-    x = [SVector(1e-4,1e-5),SVector(.23,.94)]
-    indices = overlapping_spline_indices.(B,x)
-
-    @test reduce(&,true,[B[i].(x[j]...) for j in 1:length(x) for i in indices[j]].>0)
-
-
-    # Select the points that are in the support of the function
-    B = BSplineTranslatesBasis(10,3)⊗BSplineTranslatesBasis(15,5)
-    g = BasisFunctions.grid(B)
-    set = [1,length(B)-1]
-    indices = support_indices.(B,g,set)
-    @which support_indices(B,g,set[1])
-    @test reduce(&,true,[B[set[j]](x...) for j in 1:length(set) for x in [g[i] for i in indices[j]]] .> 0)
-
-
+@testset "Util" begin
+    # center = @SVector [.5,.5]
+    # domain  = disk(.3,center)
+    # N1 = 40; N2 = 40;
+    # degr1 = 2; degr2 = 3;
+    degree = [2,3]
+    init = [40,40]
+    i = 1
+    oversampling = 2
     center = @SVector [.5,.5]
     domain  = disk(.3,center)
-    N1 = 40; N2 = 40;
-    degr1 = 2; degr2 = 3;
-    B1 = BSplineTranslatesBasis(N1,degr1);
-    g1 = BasisFunctions.oversampled_grid(B1,2)
-    B2 = BSplineTranslatesBasis(N2,degr2);
-    g2 = BasisFunctions.oversampled_grid(B2,2)
-    B = B1⊗B2;
-    g = g1×g2;
-    omega_grid = FrameFun.subgrid(g, domain);
+    T = Float64
+    platform=bspline_platform(T, init, degree, oversampling)
+    fplatform = extension_frame_platform(platform, domain)
+
+    B = superdict(primal(fplatform, i))
+    S, R = az_selection_util_operators(fplatform, i)
+    @test size(S)==(306, 1600)
+    @test size(R)==(186, 1808)
+
+    omega_grid = grid(sampler(fplatform, 1))
+    g = supergrid(omega_grid)
+
+    # B1 = BSplineTranslatesBasis(N1,degr1);
+    # g1 = BasisFunctions.oversampled_grid(B1,2)
+    # B2 = BSplineTranslatesBasis(N2,degr2);
+    # g2 = BasisFunctions.oversampled_grid(B2,2)
+    # B = B1⊗B2;
+    # g = g1×g2;
+    # omega_grid = FrameFun.subgrid(g, domain);
 
     g1 = boundary_grid(g, domain);
     g2 = boundary_support_grid(B,g1,omega_grid)
@@ -58,5 +52,38 @@ delimit("Spline approximation")
     @test relative_indices(g1,omega_grid)==[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 31, 32, 33, 34, 35, 36, 37, 56, 57, 58, 59, 60, 83, 84, 85, 86, 87, 112, 113, 114, 115, 116, 145, 146, 147, 148, 179, 180, 181, 182, 215, 216, 217, 218, 253, 254, 255, 292, 293, 294, 331, 332, 333, 334, 373, 374, 375, 416, 417, 418, 459, 460, 461, 504, 505, 506, 549, 550, 551, 596, 597, 642, 643, 688, 689, 690, 735, 736, 737, 784, 785, 832, 833, 880, 881, 928, 929, 976, 977, 1024, 1025, 1072, 1073, 1074, 1119, 1120, 1121, 1166, 1167, 1212, 1213, 1258, 1259, 1260, 1303, 1304, 1305, 1348, 1349, 1350, 1391, 1392, 1393, 1434, 1435, 1436, 1475, 1476, 1477, 1478, 1515, 1516, 1517, 1554, 1555, 1556, 1591, 1592, 1593, 1594, 1627, 1628, 1629, 1630, 1661, 1662, 1663, 1664, 1693, 1694, 1695, 1696, 1697, 1722, 1723, 1724, 1725, 1726, 1749, 1750, 1751, 1752, 1753, 1772, 1773, 1774, 1775, 1776, 1777, 1778, 1791, 1792, 1793, 1794, 1795, 1796, 1797, 1798, 1799, 1800, 1801, 1802, 1803, 1804, 1805, 1806, 1807, 1808]
 
     @test size(restriction_operator(omega_grid,g1))==(186, 1808)
-    @test size(boundary_extension_operator(g1, B))==(1600, 306)
+end
+
+@testset "Approximation" begin
+    init = [3,3]
+    degree = [1,3]
+    oversampling = 2
+    center = @SVector [.5,.5]
+    domain  = disk(.3,center)
+    i = 2
+    for T in [Float64, BigFloat]
+        center = @SVector [T(.5),T(.5)]
+        domain  = disk(T(.3),center)
+        platform=BasisFunctions.bspline_platform(T, init, degree, oversampling)
+        fplatform = extension_frame_platform(platform, domain)
+
+        P = primal(fplatform,i)
+        D = dual(fplatform,i)
+        S = sampler(fplatform, i)
+
+        EP = A(fplatform, i)
+        ED = Z(fplatform, i)
+
+        p = fplatform.parameter_sequence[i]
+        Pt = tensorproduct([BSplineTranslatesBasis(pi, di, T) for (pi, di) in zip(p, degree) ])
+        g = BasisFunctions.oversampled_grid(Pt, oversampling)
+        Ft = extensionframe(Pt, domain)
+        gO = FrameFun.subgrid(g, domain)
+        EPt = evaluation_operator(Span(Pt), gO)
+        EDt = EPt*DiscreteDualGram(Span(Pt),oversampling=oversampling)
+        e = map(T,rand(size(Pt)...))
+        @test EPt*e≈EP*e
+        @test EDt*e≈ED*e
+    end
+
 end

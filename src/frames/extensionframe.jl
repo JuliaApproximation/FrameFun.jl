@@ -151,3 +151,24 @@ function native_nodes(set1::Dictionary, set2::Dictionary, domain::Interval)
     @assert left(set2) ≈ left(set2)
     native_nodes(set1, domain)
 end
+
+
+##################
+# platform
+##################
+
+BasisFunctions.GridSamplingOperator(sampler::GridSamplingOperator, domain::Domain) =
+    GridSamplingOperator(gridspace(sampler), grid(sampler), domain)
+BasisFunctions.GridSamplingOperator(dgs::DiscreteGridSpace, grid::AbstractGrid, domain::Domain) =
+    GridSamplingOperator(gridspace(FrameFun.subgrid(grid, domain), coeftype(dgs)))
+
+
+extension_frame_sampler(platform, domain) = n->GridSamplingOperator(platform.sampler_generator(n), domain)
+
+function extension_frame_platform(platform::BasisFunctions.GenericPlatform, domain::Domain)
+    primal = n->extensionframe(platform.primal_generator(n), domain)
+    dual = n->extensionframe(platform.dual_generator(n), domain)
+    sampler = extension_frame_sampler(platform, domain)
+    BasisFunctions.GenericPlatform(primal = primal, dual = dual, sampler = sampler,
+        params = platform.parameter_sequence, name = "extension frame of " * platform.name)
+end

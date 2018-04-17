@@ -23,12 +23,12 @@ struct AZSolver{ELT} <: FE_Solver{ELT}
     plunge_op   ::  AbstractOperator # (A*Zt-I), store because it allocates memory
     b                                # Scratch for right hand size
     blinear     ::  Array{ELT,1}     # Scratch for linearized right hand side (necessary for svd inproducts)
-    x2                              
+    x2
     x1
     function AZSolver{ELT}(A::AbstractOperator, Zt::AbstractOperator; cutoff = default_cutoff(A), trunc = TruncatedSvdSolver, R = estimate_plunge_rank(A), verbose=false,options...) where ELT
         # Calculate (A*Zt-I)
         plunge_op = plunge_operator(A, Zt)
-        # Calculate low rank decomposition of (A*Zt-I)*A
+        # Calculate low rank INVERSE of (A*Zt-I)*A
         TS = trunc(plunge_op*A; cutoff=cutoff, R=R, verbose=verbose, options...)
         # Allocate scratch space
         b = zeros(dest(plunge_op))
@@ -78,7 +78,7 @@ function apply!(s::AZSolver, destset, srcset, coef_dest, coef_src)
     # Step 2:
     # Store A*x2 in b
     apply!(s.A, s.b, s.x2)
-    # Compute x1 =  Zt*(b-A*x2) 
+    # Compute x1 =  Zt*(b-A*x2)
     apply!(s.Zt, s.x1, coef_src-s.b)
     # Step 3:
     # x = x1 + x2

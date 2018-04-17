@@ -86,6 +86,8 @@ import BasisFunctions: Span, Span1d, Span2d
 
 import BasisFunctions: coefficient_type, coeftype, similar_span
 
+import BasisFunctions: overlapping_elements
+
 # about subgrids
 import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
     similar_subgrid
@@ -105,7 +107,7 @@ export ExpFun, ChebyFun, Fun, DictFun, sampling_grid, domain, abserror, maxerror
 export MaskedGrid, boundary_grid
 
 # from spline_approximation.jl
-export boundary_extension_operator, boundary_support_grid
+export boundary_extension_operator, boundary_support_gridex
 
 # from domains/boundingbox.jl
 export BoundingBox, BBox, BBox1, BBox2, BBox3, BBox4
@@ -117,6 +119,7 @@ export dist, normal
 # from frames/extensionframe.jl
 export ExtensionFrame, basis, domain, extensionframe
 export Gram, DualGram, MixedGram
+export extension_frame_platform
 
 # from frames/weighted_sum_frame.jl
 export WeightedSumFrame, weightfunctions
@@ -154,7 +157,7 @@ export DirectSolver, AZSolver, AZSmoothSolver, TridiagonalSolver
 
 include("subgrid.jl")
 
-include("spline_approximation.jl")
+include("approximation/splines/spline_approximation.jl")
 
 #include("domains/boundingbox.jl")
 include("domains/extensions.jl")
