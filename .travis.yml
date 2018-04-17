@@ -26,11 +26,11 @@ install:
 before_script:
   - julia -e 'Pkg.init()'
   - julia -e 'Pkg.clone("https://github.com/daanhb/BasisFunctions.jl")'
-  - julia -e 'Pkg.build("BasisFunctions")'
   - julia -e 'Pkg.clone("https://github.com/daanhb/Domains.jl")'
+  - ./.travis/setup.sh
+  - julia -e 'Pkg.build("BasisFunctions")'
   - julia -e 'Pkg.clone(pwd())'
   - julia -e 'Pkg.build("FrameFun")'
-  - ./.travis/setup.sh
 script:
   - julia --code-coverage=user test/runtests.jl
 after_success:
