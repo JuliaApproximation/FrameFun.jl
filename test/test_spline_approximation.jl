@@ -1,3 +1,4 @@
+module test_suite_applications
 using BasisFunctions
 using FrameFun
 using FrameFun: overlapping_elements, boundary_support_grid, relative_indices, restriction_operator, boundary_element_indices, az_selection_util_operators
@@ -32,18 +33,10 @@ delimit("Spline approximation")
     B = superdict(primal(fplatform, i))
     S, R = az_selection_util_operators(fplatform, i)
     @test size(S)==(306, 1600)
-    @test size(R)==(186, 1808)
+    @test size(R)==(988, 1808)
 
     omega_grid = grid(sampler(fplatform, 1))
     g = supergrid(omega_grid)
-
-    # B1 = BSplineTranslatesBasis(N1,degr1);
-    # g1 = BasisFunctions.oversampled_grid(B1,2)
-    # B2 = BSplineTranslatesBasis(N2,degr2);
-    # g2 = BasisFunctions.oversampled_grid(B2,2)
-    # B = B1⊗B2;
-    # g = g1×g2;
-    # omega_grid = FrameFun.subgrid(g, domain);
 
     g1 = boundary_grid(g, domain);
     g2 = boundary_support_grid(B,g1,omega_grid)
@@ -61,6 +54,7 @@ end
     center = @SVector [.5,.5]
     domain  = disk(.3,center)
     i = 2
+    # correct caclulation of the A and Z matrix
     for T in [Float64, BigFloat]
         center = @SVector [T(.5),T(.5)]
         domain  = disk(T(.3),center)
@@ -83,7 +77,45 @@ end
         EDt = EPt*DiscreteDualGram(Span(Pt),oversampling=oversampling)
         e = map(T,rand(size(Pt)...))
         @test EPt*e≈EP*e
-        @test EDt*e≈ED*e
+        @test EDt*e≈ED*e*length(Pt)
     end
 
+    f2d = (x,y) -> x*(y-1)^2
+    center = @SVector [.5,.5]
+    domain2d = disk(.3,center)
+    epsilon=1e-10
+    degree = [1,2]
+    init = [20,20]
+    oversampling = 2
+    platform = bspline_platform(Float64, init, degree, oversampling)
+    fplatform = extension_frame_platform(platform, domain2d)
+    i = 1
+    # Correct implementation of the az and azs Algorithm
+    s = sampler(fplatform, i)
+    a = A(fplatform, i)
+    z = Z(fplatform, i)
+    p = FrameFun.plunge_operator(a,z')
+    rd,sb = az_selection_util_operators(fplatform, i)
+    b = s*f2d
+    r = FrameFun.estimate_plunge_rank(a)
+    @test r==102
+    AZ = AZSolver(a,z',R=r,cutoff=epsilon)
+    AZS = AZSolver(a,z',rd', sb,cutoff=epsilon)
+    x = zeros(src(a))
+
+    apply!(AZ, x, b)
+    @test norm(a*x-b)+1≈ 1
+    apply!(AZS, x, b)
+    @test norm(a*x-b)+1≈ 1
+    x = AZS*b
+    @test norm(a*x-b)+1≈ 1
+    x =  FrameFun.az_solve(a, z', rd', sb, b,cutoff=epsilon)
+    @test norm(a*x-b)+1≈ 1
+    x = FrameFun.az_solve(a, z', b, cutoff=epsilon, R=r)
+    @test norm(a*x-b)+1≈ 1
+    x = FrameFun.az_solve(fplatform, i, f2d; cutoff=epsilon)
+    @test norm(a*x-b)+1≈ 1
+    x = FrameFun.azs_solve(fplatform, i, f2d; cutoff=epsilon)
+    @test norm(a*x-b)+1≈ 1
+end
 end

@@ -25,7 +25,8 @@ struct AZSolver{ELT} <: FE_Solver{ELT}
     blinear     ::  Array{ELT,1}     # Scratch for linearized right hand side (necessary for svd inproducts)
     x2
     x1
-    function AZSolver{ELT}(A::AbstractOperator, Zt::AbstractOperator; cutoff = default_cutoff(A), trunc = TruncatedSvdSolver, R = estimate_plunge_rank(A), verbose=false,options...) where ELT
+    function AZSolver{ELT}(A::AbstractOperator, Zt::AbstractOperator;
+            cutoff = default_cutoff(A), trunc = TruncatedSvdSolver, R = estimate_plunge_rank(A), verbose=false,options...) where ELT
         # Calculate (A*Zt-I)
         plunge_op = plunge_operator(A, Zt)
         # Calculate low rank INVERSE of (A*Zt-I)*A
@@ -38,33 +39,61 @@ struct AZSolver{ELT} <: FE_Solver{ELT}
         # Construct AZSolver object
         new(TS, A, Zt, plunge_op, b,blinear,x1,x2)
     end
+
+    function AZSolver{ELT}(A::AbstractOperator, Zt::AbstractOperator, RD::AbstractOperator,  SB::IndexRestrictionOperator;
+            cutoff = default_cutoff(A), trunc = RestrictionSolver, verbose=false, options...) where ELT
+        # Calculate (A*Zt-I)
+        plunge_op = plunge_operator(A, Zt)
+        # Calculate low rank INVERSE of (A*Zt-I)*A
+        TS = trunc(plunge_op*A, RD, SB; cutoff=cutoff, verbose=verbose, options...)
+        # Allocate scratch space
+        b = zeros(dest(plunge_op))
+        blinear = zeros(ELT, length(dest(plunge_op)))
+        x1 = zeros(src(A))
+        x2 = zeros(src(A))
+        # Construct AZSolver object
+        new(TS, A, Zt, plunge_op, b,blinear,x1,x2)
+    end
 end
 
 # Set type of scratch space based on operator eltype.
-AZSolver(A::AbstractOperator, Zt::AbstractOperator, options...) =
+AZSolver(A::AbstractOperator, Zt::AbstractOperator; options...) =
     AZSolver{eltype(A)}(A, Zt; options...)
+
+AZSolver(A::AbstractOperator, Zt::AbstractOperator, RD::AbstractOperator, SB::AbstractOperator; options...) =
+    AZSolver{eltype(A)}(A, Zt, RD, SB; options...)
 
 # If no Zt is supplied, Zt=A' (up to scaling) by default.
 AZSolver(A::AbstractOperator; scaling=nothing, options...) =
     AZSolver{eltype(A)}(A, 1/scaling*A'; options...)
-
 
 function plunge_operator(A, Zt)
     I = IdentityOperator(dest(A))
     A*Zt - I
 end
 
-
 default_cutoff(A::AbstractOperator) = 10^(4/5*log10(eps(real(eltype(A)))))
 
 # Estimate for the rank of (A*Zt-I)*A when computing the low rank decomposition. If check fails, rank estimate is steadily increased.
-function estimate_plunge_rank(A::AbstractOperator)
-    nml=length(src(A))^2/length(dest(A))
-    N = dimension(src(A))
+@inline estimate_plunge_rank(A::AbstractOperator) =
+    estimate_plunge_rank(dictionary(src(A)), dictionary(dest(A)))
+
+@inline estimate_plunge_rank(src::ExtensionFrame, dest::Dictionary) =
+    estimate_plunge_rank(superdict(src), domain(src), dest)
+
+@inline estimate_plunge_rank(src::Dictionary, dest::Dictionary) =
+    default_estimate_plunge_rank(src, dest)
+
+@inline estimate_plunge_rank(src::Dictionary, domain::Domain, dest::Dictionary) =
+    default_estimate_plunge_rank(src, dest)
+
+function default_estimate_plunge_rank(src::Dictionary, dest::Dictionary)
+    nml=length(src)^2/length(dest)
+    N = dimension(src)
     if N==1
-        return min(round(Int, 9*log(nml)),length(src(A)))
+        return min(round(Int, 9*log(nml)),length(src))
     else
-        return min(round(Int, 9*log(nml)*nml^((N-1)/N)),length(src(A)))
+        return min(round(Int, 9*log(nml)*nml^((N-1)/N)),length(src))
     end
 end
 
@@ -85,4 +114,23 @@ function apply!(s::AZSolver, destset, srcset, coef_dest, coef_src)
     for i in eachindex(s.x1)
         coef_dest[i] = s.x1[i]+s.x2[i]
     end
+end
+
+
+# Function with equal functionality, but allocating memory
+function az_solve(A::AbstractOperator, Zt::AbstractOperator, b;
+        cutoff = default_cutoff(A), trunc = truncatedsvd_solve, verbose=false, options...)
+    P = plunge_operator(A, Zt)
+    x2 = trunc(P*A, P*b; cutoff=cutoff, verbose=verbose, options...)
+    x1 = Zt*(b-A*x2)
+    x1 + x2
+end
+
+# Function with equal functionality, but allocating memory
+function az_solve(A::AbstractOperator, Zt::AbstractOperator, RD::AbstractOperator, SB::AbstractOperator, b;
+        cutoff = default_cutoff(A), trunc = restriction_solve, verbose=false, options...)
+    P = plunge_operator(A, Zt)
+    x2 = trunc(P*A, RD, SB, P*b; cutoff=cutoff, verbose=verbose, options...)
+    x1 = Zt*(b-A*x2)
+    x1 + x2
 end

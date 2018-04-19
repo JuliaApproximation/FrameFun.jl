@@ -37,6 +37,23 @@ az_selection_util_operators(frame::ExtensionFrame, sampler::GridSamplingOperator
 
 function az_selection_util_operators(dict::Dictionary, omega::AbstractGrid, grid::AbstractGrid, domain::Domain)
     boundary = boundary_grid(grid, domain)
-    boundary_indices = FrameFun.boundary_element_indices(dict, boundary)
-    IndexRestrictionOperator(Span(dict), Span(dict[boundary_indices]), boundary_indices), restriction_operator(omega, boundary)
+    boundary_indices = boundary_element_indices(dict, boundary)
+    boundary_support = boundary_support_grid(dict, boundary, omega)
+    IndexRestrictionOperator(Span(dict), Span(dict[boundary_indices]), boundary_indices), restriction_operator(omega, boundary_support)
+end
+
+estimate_plunge_rank(src::BSplineTranslatesBasis, domain::Domain, dest::GridBasis) =
+    estimate_plunge_rank(src, domain, grid(dest))
+estimate_plunge_rank(src::BSplineTranslatesBasis, domain::Domain, grid::MaskedGrid) =
+    estimate_plunge_rank_bspline(src, domain, supergrid(grid))
+
+estimate_plunge_rank(src::TensorProductDict{N,DT,S,T}, domain::Domain, dest::GridBasis) where {N,DT<:NTuple{N1,BasisFunctions.BSplineTranslatesBasis} where {N1},S,T} =
+    estimate_plunge_rank(src, domain, grid(dest))
+
+estimate_plunge_rank(src::TensorProductDict{N,DT,S,T}, domain::Domain, grid::MaskedGrid) where {N,DT<:NTuple{N1,BasisFunctions.BSplineTranslatesBasis} where {N1},S,T} =
+    estimate_plunge_rank_bspline(src, domain, supergrid(grid))
+
+function estimate_plunge_rank_bspline(src, domain::Domain, grid::AbstractGrid)
+    boundary = boundary_grid(grid, domain)
+    length(boundary_element_indices(src, boundary))
 end

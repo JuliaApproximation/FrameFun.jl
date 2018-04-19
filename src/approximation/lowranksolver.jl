@@ -168,3 +168,72 @@ function apply!(s::ExactTruncatedSvdSolver, coef_dest, coef_src)
     A_mul_B!(s.y, s.V, s.sy)
     delinearize_coefficients!(dest(s), coef_dest, s.y)
 end
+
+"""
+A RestrictionSolver is a solver used specifically for B splines,
+taking advantage of the sparse structure.
+"""
+struct RestrictionSolver{ELT} <: FrameFun.FE_Solver{ELT}
+    A::Matrix{ELT}
+    # Mapping operator of dict to its boundary overlapping prolates
+    RD::AbstractOperator
+    # Selection operator for the collocation points in the support of the boundary overlapping prolates
+    SB::IndexRestrictionOperator
+
+    cutoff
+
+    scratch_A::Matrix{ELT}
+    scratch_b::Vector{ELT}
+    function RestrictionSolver{ELT}(A::AbstractOperator, RD::AbstractOperator, SB::AbstractOperator; cutoff=FrameFun.default_cutoff(A), options...) where {ELT}
+        new(matrix(SB*A*RD), RD, SB, cutoff, zeros(ELT,length(dest(SB)),length(src(RD))), zeros(ELT,length(dest(SB))))
+    end
+end
+
+src(t::RestrictionSolver) = dest(t.A)
+dest(t::RestrictionSolver) = src(t.A)
+inv(t::RestrictionSolver) = t.A
+
+RestrictionSolver(A::AbstractOperator, RD::AbstractOperator, SB::AbstractOperator; options...) =
+    RestrictionSolver{eltype(A)}(A, RD, SB; options...)
+
+function BasisFunctions.apply!(S::RestrictionSolver, x, b)
+    copy!(S.scratch_A, S.A)
+    apply!(S.SB, S.scratch_b, b)
+    y1, rr = LAPACK.gelsy!(S.scratch_A,S.scratch_b, S.cutoff)
+    apply!(S.RD, x, y1)
+end
+
+# Function with equal functionality, but allocating memory
+function truncatedsvd_solve(A::AbstractOperator, b; cutoff = default_cutoff(A), R = 5, growth_factor = 2, verbose = false, smallcoefficients=false,smalltol=10,options...)
+    finished=false
+    ELT = eltype(A)
+    R = min(R, size(A,2))
+    random_matrix = map(ELT, rand(size(A,2), R))
+    C = apply_multiple(A, random_matrix)
+    c = cond(C)
+    cold = cutoff
+    while (c < 1/cutoff) && (R<size(A,2)) && (c>cold*10)
+        verbose && println("c : $c\t cold : $cold\t cutoff : $cutoff")
+        verbose && println("Solver truncated at R = ", R, " dof out of ",size(A,2))
+        R0 = R
+        R = min(round(Int,growth_factor*R),size(A,2))
+        extra_random_matrix = map(ELT, rand(size(A,2), R-R0))
+        Cextra = apply_multiple(A, extra_random_matrix)
+        random_matrix = [random_matrix extra_random_matrix]
+        # Extra condition: condition number has to increase by a significant amount each step, otherwise, possibly well conditioned.
+        # cold = c
+        C = [C Cextra]
+        c = cond(C)
+    end
+    verbose && println("c : $c\t cold : $cold\t cutoff : $cutoff")
+    verbose && println("Solver truncated at R = ", R, " dof out of ",size(A,2))
+
+
+    y, rr = LAPACK.gelsy!(C,b,cutoff)
+    x1 = random_matrix*y;
+    reshape(x1, size(src(A))...)
+end
+
+# Function with equal functionality, but allocating memory
+restriction_solve(A, RD, SB, b; cutoff=FrameFun.default_cutoff(A), options...) =
+    RD*LAPACK.gelsy!(matrix(SB*A*RD),SB*b,cutoff)[1]

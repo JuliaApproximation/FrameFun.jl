@@ -107,7 +107,7 @@ export ExpFun, ChebyFun, Fun, DictFun, sampling_grid, domain, abserror, maxerror
 export MaskedGrid, boundary_grid
 
 # from spline_approximation.jl
-export boundary_extension_operator, boundary_support_gridex
+
 
 # from domains/boundingbox.jl
 export BoundingBox, BBox, BBox1, BBox2, BBox3, BBox4

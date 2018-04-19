@@ -171,14 +171,6 @@ end
 BasisFunctions.restriction_operator(from::MaskedGrid,to::MaskedGrid) =
     IndexRestrictionOperator(gridspace(from),gridspace(to), relative_indices(to,from))
 
-# function BasisFunctions.restriction_operator(dgs::DiscreteGridSpace, grid::AbstractGrid, domain::Domain)
-#     sg = subgrid(grid, domain)
-#     IndexRestrictionOperator(dgs, gridspace(sg), sg.indices)
-# end
-
-
-
-
 "Create a suitable subgrid that covers a given domain."
 function subgrid(grid::AbstractEquispacedGrid, domain::AbstractInterval)
     a = leftendpoint(domain)
@@ -290,10 +282,5 @@ end
 function boundary{G,M,N}(g::MaskedGrid{G,M},dom::EuclideanDomain{N})
     boundary(supergrid(g),dom)
 end
-
-# function evaluation_operator{G <: AbstractSubGrid}(s::Dictionary, d::DiscreteGridSpace{G})
-#     d2 = DiscreteGridSpace(grid(grid(d)), eltype(s))
-#     restriction_operator(d2, d) * evaluation_operator(s, d2)
-# end
 
 has_extension{G <: AbstractSubGrid}(dg::DiscreteGridSpace{G}) = true

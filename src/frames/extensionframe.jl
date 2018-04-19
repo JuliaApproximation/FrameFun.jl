@@ -172,3 +172,20 @@ function extension_frame_platform(platform::BasisFunctions.GenericPlatform, doma
     BasisFunctions.GenericPlatform(primal = primal, dual = dual, sampler = sampler,
         params = platform.parameter_sequence, name = "extension frame of " * platform.name)
 end
+
+function az_solve(platform::BasisFunctions.Platform, i, f; cutoff = -1)
+    a = A(platform, i)
+    z = Z(platform, i)
+    s = sampler(platform, i)
+    cutoff < 0 && (cutoff = default_cutoff(a))
+    az_solve(a, z', s*f, cutoff=cutoff, R=estimate_plunge_rank(a))
+end
+
+function azs_solve(platform::BasisFunctions.Platform, i, f; cutoff = -1)
+    a = A(platform, i)
+    z = Z(platform, i)
+    s = sampler(platform, i)
+    rd,sb = az_selection_util_operators(platform, i)
+    cutoff < 0 && (cutoff = default_cutoff(a))
+    az_solve(a, z', rd', sb, s*f,cutoff=cutoff)
+end
