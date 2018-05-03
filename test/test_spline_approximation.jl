@@ -1,7 +1,7 @@
 module test_suite_applications
 using BasisFunctions
 using FrameFun
-using FrameFun: overlapping_elements, boundary_support_grid, relative_indices, restriction_operator, boundary_element_indices, az_selection_util_operators
+using FrameFun: overlapping_elements, boundary_support_grid, relative_indices, restriction_operator, boundary_element_indices, FrameFun.spline_util_restriction_operators
 using Base.Test
 using StaticArrays
 using Domains
@@ -31,11 +31,11 @@ delimit("Spline approximation")
     fplatform = extension_frame_platform(platform, domain)
 
     B = superdict(primal(fplatform, i))
-    S, R = az_selection_util_operators(fplatform, i)
-    @test size(S)==(306, 1600)
-    @test size(R)==(988, 1808)
+    S, R = spline_util_restriction_operators(fplatform, i)
+    @test size(S)==(476, 1600)
+    @test size(R)==(988 , 1808)
 
-    omega_grid = grid(sampler(fplatform, 1))
+    omega_grid = BasisFunctions.grid(sampler(fplatform, 1))
     g = supergrid(omega_grid)
 
     g1 = boundary_grid(g, domain);
@@ -65,8 +65,8 @@ end
         D = dual(fplatform,i)
         S = sampler(fplatform, i)
 
-        EP = A(fplatform, i)
-        ED = Z(fplatform, i)
+        EP = BasisFunctions.A(fplatform, i)
+        ED = BasisFunctions.Z(fplatform, i)
 
         p = fplatform.parameter_sequence[i]
         Pt = tensorproduct([BSplineTranslatesBasis(pi, di, T) for (pi, di) in zip(p, degree) ])
@@ -80,6 +80,8 @@ end
         @test EDt*e≈ED*e*length(Pt)
     end
 
+    # Correct implementation of the az and azs Algorithm
+    # for irregular domain
     f2d = (x,y) -> x*(y-1)^2
     center = @SVector [.5,.5]
     domain2d = disk(.3,center)
@@ -90,17 +92,16 @@ end
     platform = bspline_platform(Float64, init, degree, oversampling)
     fplatform = extension_frame_platform(platform, domain2d)
     i = 1
-    # Correct implementation of the az and azs Algorithm
     s = sampler(fplatform, i)
-    a = A(fplatform, i)
-    z = Z(fplatform, i)
+    a = BasisFunctions.A(fplatform, i)
+    z = BasisFunctions.Z(fplatform, i)
     p = FrameFun.plunge_operator(a,z')
-    rd,sb = az_selection_util_operators(fplatform, i)
+    rd,sb = spline_util_restriction_operators(fplatform, i)
     b = s*f2d
     r = FrameFun.estimate_plunge_rank(a)
     @test r==102
     AZ = AZSolver(a,z',R=r,cutoff=epsilon)
-    AZS = AZSolver(a,z',rd', sb,cutoff=epsilon)
+    AZS = AZSSolver(a,z',rd', sb,cutoff=epsilon)
     x = zeros(src(a))
 
     apply!(AZ, x, b)
@@ -109,13 +110,70 @@ end
     @test norm(a*x-b)+1≈ 1
     x = AZS*b
     @test norm(a*x-b)+1≈ 1
-    x =  FrameFun.az_solve(a, z', rd', sb, b,cutoff=epsilon)
-    @test norm(a*x-b)+1≈ 1
     x = FrameFun.az_solve(a, z', b, cutoff=epsilon, R=r)
     @test norm(a*x-b)+1≈ 1
     x = FrameFun.az_solve(fplatform, i, f2d; cutoff=epsilon)
     @test norm(a*x-b)+1≈ 1
     x = FrameFun.azs_solve(fplatform, i, f2d; cutoff=epsilon)
     @test norm(a*x-b)+1≈ 1
+
+    # For tensor domain
+    i = 2
+    platform  = bspline_platform(Float64, [4,4], [1,1], 2)
+    fun = (x,y)->1+x+y
+    mid = .25
+    dom = interval(0,.5)^2
+    fplatform = extension_frame_platform(platform, dom)
+    p = primal(platform, i);
+    s = sampler(platform, i);
+    BR,DMZ_R = FrameFun.spline_util_restriction_operators(fplatform, i)
+    A = BasisFunctions.A(fplatform, i);
+    Z = BasisFunctions.Z(fplatform, i);
+    r = FrameFun.estimate_plunge_rank(A)
+    @test r==16
+    S = sampler(fplatform, i)
+    boundary = FrameFun.boundary_grid(BasisFunctions.grid(s), dom)
+    dx = BasisFunctions.stepsize(elements(BasisFunctions.grid(s))[1])
+    split_domain = interval(mid-dx/2,mid+dx/2)×interval(0,1)
+    split_grid = FrameFun.subgrid(boundary, split_domain);
+    DMZsplit = FrameFun.boundary_support_grid(p, split_grid, boundary)
+    BRsplit, DMZ_Rsplit = FrameFun._spline_util_restriction_operators(p, BasisFunctions.grid(S), DMZsplit)
+    left_over = boundary-DMZsplit
+    boundary1, boundary2 = split(left_over)
+    BR1, DMZ_R1 = FrameFun._spline_util_restriction_operators(p, BasisFunctions.grid(S), boundary1)
+    BR2, DMZ_R2 = FrameFun._spline_util_restriction_operators(p, BasisFunctions.grid(S), boundary2)
+
+
+    b = S*fun
+    AZSS = FrameFun.AZSSolver(A, Z', BR', DMZ_R)
+    x = AZSS*b
+    @test 1+norm(A*x-b)≈1
+    AZSDCS = FrameFun.AZSDCSolver(A, Z', BRsplit', BR1', BR2', DMZ_Rsplit, DMZ_R1, DMZ_R2)
+    x = AZSDCS*b
+    @test 1+norm(A*x-b)≈1
+    AZS = FrameFun.AZSolver(A, Z')
+    x = AZS*b
+    @test 1+norm(A*x-b)≈1
+
+    x = FrameFun.az_solve(A, Z', b)
+    @test 1+norm(A*x-b)≈1
+    x = FrameFun.azs_solve(A, Z', BR', DMZ_R, b)
+    @test 1+norm(A*x-b)≈1
+    x = FrameFun.azsdc_solve(A, Z', BRsplit', BR1', BR2', DMZ_Rsplit, DMZ_R1, DMZ_R2, b)
+    @test 1+norm(A*x-b)≈1
+
+    x = FrameFun.az_solve(fplatform, i, fun)
+    @test 1+norm(A*x-b)≈1
+    x = FrameFun.azs_solve(fplatform, i, fun)
+    @test 1+norm(A*x-b)≈1
+    x = FrameFun.azsdc_solve(fplatform, i, fun, 1, [0,.5])
+    @test 1+norm(A*x-b)≈1
+
+    op = FrameFun.AZSSolver(fplatform, i)
+    x = op*b;@test 1+norm(A*x-b)≈1
+    op = FrameFun.AZSolver(fplatform, i)
+    x = op*b;@test 1+norm(A*x-b)≈1
+    op = FrameFun.AZSDCSolver(fplatform, i, 1, [.0,.5])
+    x = op*b;@test 1+norm(A*x-b)≈1
 end
 end

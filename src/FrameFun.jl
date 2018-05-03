@@ -63,7 +63,7 @@ import BasisFunctions: coefficients, dictionary,
     transform_operator_pre, transform_operator_post, evaluation_operator, interpolation_operator,
     differentiation_operator, antidifferentiation_operator, approximation_operator,
     extend, extension_size, extension_operator, restriction_operator,
-    default_approximation_operator, has_extension, wrap_operator
+    default_approximation_operator, has_extension, wrap_operator, grid_evaluation_operator
 
 import BasisFunctions: superdict, similar_dictionary,
     promote_domaintype, promote_domainsubtype
@@ -90,7 +90,7 @@ import BasisFunctions: overlapping_elements
 
 # about subgrids
 import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
-    similar_subgrid
+    similar_subgrid, mask, subindices
 
 import BasisFunctions: Gram, DualGram, MixedGram, DiscreteGram, DiscreteDualGram, DiscreteMixedGram
 import BasisFunctions: dual
@@ -153,7 +153,7 @@ export characteristic
 export FeFun, FeFunNd
 
 # from approximation
-export DirectSolver, AZSolver, AZSmoothSolver, TridiagonalSolver
+export DirectSolver, AZSolver, AZSmoothSolver, TridiagonalSolver, AZSSolver, AZSDCSolver
 
 include("subgrid.jl")
 

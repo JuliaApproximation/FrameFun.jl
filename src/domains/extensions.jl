@@ -11,7 +11,7 @@ broadcast(::typeof(in), grid, d::Domain) = indomain_broadcast(grid, d)
 
 # # Default methods for evaluation on a grid: the default is to call eval on the domain with
 # # points as arguments. Domains that have faster grid evaluation routines may define their own version.
-indomain_broadcast(grid, d::Domain) = indomain_broadcast!(zeros(Bool, size(grid)), grid, d)
+indomain_broadcast(grid, d::Domain) = indomain_broadcast!(BitArray(size(grid)), grid, d)
 # TODO: use BitArray here
 
 function indomain_broadcast!(result, grid, domain::Domain)

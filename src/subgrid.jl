@@ -3,6 +3,33 @@
 # See also the file grid/subgrid.jl in BasisFunctions for the definition of
 # AbstractSubGrid and IndexSubGrid.
 
+# struct MaskedGridSubIndices{N}
+#     mask::BitArray{N}
+#     L::Int
+#
+#     MaskedGridSubIndices{N}(mask::BitArray{N}) where {N}= new{N}(mask, sum(mask))
+# end
+# MaskedGridSubIndices(mask::BitArray{N}) where {N} = MaskedGridSubIndices{N}(mask)
+#
+#
+#
+# @generated function Base.start(indices::MaskedGridSubIndices{N}) where{N}
+#     startargs = fill(1, N)
+#     stopargs =
+# 	:(CartesianRange(CartesianIndex{$N}($(startargs...)), CartesianIndex{$N}(size(indices.mask))), (1,CartesianIndex{$N}($(startargs...))))
+# end
+#
+# function Base.next(indices::FrameFun.MaskedGridSubIndices{N}, state) where {N}
+#     iter_state = state[2][2]
+#     idx, iter_state = next(state[1], iter_state)
+#     while !indices.mask[idx]
+#         idx, iter_state = next(state[1], iter_state)
+#     end
+#     idx, (state[1], (state[2][1]+1, iter_state))
+# end
+#
+# Base.done(I::MaskedGridSubIndices{N}, state) where {N} = done(state[1], state[2][2]) | state[2][1] > I.L
+
 """
 A MaskedGrid is a subgrid of another grid that is defined by a mask.
 The mask is true or false for each point in the supergrid. The set of points
@@ -19,6 +46,8 @@ struct MaskedGrid{G,M,I,T} <: AbstractSubGrid{T}
 end
 # TODO: In MaskedGrid, perhaps we should not be storing pointers to the points of the underlying grid, but
 # rather the points themselves. In that case we wouldn't need to specialize on the type of grid (parameter G can go).
+
+
 
 function MaskedGrid(supergrid::AbstractGrid{T}, mask, indices) where {T}
 	@assert size(supergrid) == size(mask)
@@ -48,6 +77,10 @@ end
 length(g::MaskedGrid) = g.M
 
 size(g::MaskedGrid) = (length(g),)
+
+mask(g::MaskedGrid) = g.mask
+
+subindices(g::MaskedGrid) = g.indices
 
 similar_subgrid(g::MaskedGrid, g2::AbstractGrid) = MaskedGrid(g2, g.mask, g.indices)
 
@@ -97,69 +130,112 @@ function apply!{G <: MaskedGrid}(op::Restriction, dest::GridBasis{G}, src, coef_
     coef_dest
 end
 
+struct NBIndexList{N}
+    index::NTuple{N,Int}
+    size::NTuple{N,Int}
+end
+NBIndexList(index::Base.CartesianIndex{N}, size) where {N}  = NBIndexList(index.I, size)
+NBIndexList(index::Int, size)  = NBIndexList((index,), size)
 
-boundary_mask(grid, domain) = _boundary_mask(grid, domain, Val{dimension(domain)})
-
-function _boundary_mask(grid,domain,::Type{Val{2}})
-    mask = zeros(Bool,size(grid)...)
-    for i in 2:size(grid,1)-1
-        for j in 2:size(grid,2)-1
-            if Domains.indomain(grid[i,j], domain)
-                neighbours = [grid[i-1,j-1],grid[i-1,j],grid[i-1,j+1],grid[i,j-1],grid[i,j+1],grid[i+1,j-1],grid[i+1,j],grid[i+1,j+1]]
-                !reduce(&,true,map(x->indomain(x,domain),neighbours))
-                if !reduce(&,true,map(x->indomain(x,domain),neighbours))
-                    mask[i,j] = true
+@generated function Base.start(l::NBIndexList{N}) where {N}
+	startargs = fill(-1, N)
+    stopargs = fill(1, N)
+	:(CartesianRange(CartesianIndex{$N}($(startargs...)), CartesianIndex{$N}($(stopargs...))), CartesianIndex{$N}($(startargs...)))
+end
+@generated function Base.next(l::NBIndexList{N}, state) where {N}
+    t = Expr(:tuple, [:(if 1<=idx[$i]+l.index[$i]<=l.size[$i];idx[$i]+l.index[$i];elseif idx[$i]+l.index[$i]==0;l.size[$i];else; 1 ;end) for i in 1:N]...)
+    return quote
+        iter = state[1]
+        iter_state = state[2]
+        idx, iter_next_state = next(iter, iter_state)
+        (sum(abs.(idx.I)) == 0) && ((idx, iter_next_state) = next(iter, iter_next_state))
+        $t,(iter, iter_next_state)
+    end
+end
+function Base.done(g::NBIndexList{N}, state) where {N}
+    iter = state[1]
+    iter_state = state[2]
+    done(iter, iter_state)
+end
+function boundary_mask(grid, domain)
+    S = size(grid)
+    m = zeros(Bool, S...)
+    t = true
+    for i in eachindex(grid)
+        if Domains.indomain(grid[i], domain)
+            t = true
+            for bi in NBIndexList(i, S)
+                if !Domains.indomain(grid[bi], domain)
+                    t = false
+                    break
                 end
             end
+            m[i] = !t
         end
     end
-    mask
+    m
 end
 
-function _boundary_mask(grid,domain,::Type{Val{3}})
-    mask = zeros(Bool,size(grid)...)
-    for i in 2:size(grid,1)-1
-        for j in 2:size(grid,2)-1
-            for k in 2:size(grid,3)-1
-                if Domains.indomain(grid[i,j,k], domain)
-                    neighbours = [grid[i-1,j-1,k-1],grid[i-1,j-1,k  ],grid[i-1,j-1,k+1],
-                                  grid[i-1,j  ,k-1],grid[i-1,j  ,k  ],grid[i-1,j  ,k+1],
-                                  grid[i-1,j+1,k-1],grid[i-1,j+1,k  ],grid[i-1,j+1,k+1],
+collect_neighbours!(mask::BitArray{N}, start_index, grid::MaskedGrid) where {N} =  collect_neighbours!(mask, start_index, BitArray(grid.mask))
+collect_neighbours!(mask::BitArray{N}, start_index::CartesianIndex{N}, left_over::BitArray{N}) where {N} =  collect_neighbours!(mask, start_index.I, left_over)
+function collect_neighbours!(mask::BitArray{N}, index::NTuple{N,Int}, left_over::BitArray{N}) where {N}
+    mask[index...] = true
+    left_over[index...] = false
 
-                                  grid[i,j-1,k-1],grid[i,j-1,k  ],grid[i,j-1,k+1],
-                                  grid[i,j  ,k-1],                grid[i,j  ,k+1],
-                                  grid[i,j+1,k-1],grid[i,j+1,k  ],grid[i,j+1,k+1],
+    for i in FrameFun.NBIndexList(index, size(left_over))
+        if left_over[i...]
+            mask[i...] = true
+            left_over[i...] = false
+            collect_neighbours!(mask, i, left_over)
+        end
+    end
+end
 
-                                  grid[i+1,j-1,k-1],grid[i+1,j-1,k  ],grid[i+1,j-1,k+1],
-                                  grid[i+1,j  ,k-1],grid[i+1,j  ,k  ],grid[i+1,j  ,k+1],
-                                  grid[i+1,j+1,k-1],grid[i+1,j+1,k  ],grid[i+1,j+1,k+1],
-                    ]
-                    !reduce(&,true,map(x->indomain(x,domain),neighbours))
-                    if !reduce(&,true,map(x->indomain(x,domain),neighbours))
-                        mask[i,j,k] = true
-                    end
-                end
+import Base:-, split
+function -(m1::MaskedGrid, m2::MaskedGrid)
+    @assert supergrid(m1)==supergrid(m2)
+    MaskedGrid(supergrid(m1), m1.mask .& (.!m2.mask))
+end
+
+function split(m::MaskedGrid)
+    L = length(m)
+    s = supergrid(m)
+    index = 0
+    r = Array{AbstractGrid}(0)
+    mask_total = BitArray(size(s)...)
+    mask_total[:] = 0
+    mask = BitArray(size(s)...)
+    while index < L
+        for i in subindices(m)
+            if !mask_total[i]
+                mask = BitArray(size(s)...)
+                mask[:] = 0
+                collect_neighbours!(mask, i, m)
+                index += sum(mask)
+                mask_total = mask_total .| mask
+                push!(r, MaskedGrid(s, mask))
             end
         end
     end
-    mask
+    r
 end
 
 """
 A Masked grid that contains the elements of grid that are on the boundary of the domain
 """
-function boundary_grid(grid, domain)
+function boundary_grid(grid::AbstractGrid, domain::Domains.Domain)
     mask = boundary_mask(grid, domain);
     MaskedGrid(grid,mask);
 end
 
 # Returns the indices of the points of `from` in the grid `relativeto`.
-# It is assumed that all points of `from` are in `relativeto`
-function relative_indices(from::MaskedGrid, relativeto::MaskedGrid)
-    I = eltype(relativeto.indices)
+# It is assumed that all points of `from` are in `relativeto` and that the supergrids of both grids are equal.
+function relative_indices(from::MaskedGrid, relativeto::Union{IndexSubGrid,MaskedGrid})
+    # @assert (supergrid(from)) == (supergrid(relativeto))
+    @assert length(supergrid(from)) == length(supergrid(relativeto))
     support_index = Array{Int}(length(from))
     index = 1
-    for (i_i,i) in enumerate(relativeto.indices)
+    for (i_i,i) in enumerate(subindices(relativeto))
         if is_subindex(i, from)
             support_index[index] = i_i
             index += 1
@@ -168,7 +244,7 @@ function relative_indices(from::MaskedGrid, relativeto::MaskedGrid)
     support_index
 end
 
-BasisFunctions.restriction_operator(from::MaskedGrid,to::MaskedGrid) =
+BasisFunctions.restriction_operator(from::Union{IndexSubGrid,MaskedGrid},to::MaskedGrid) =
     IndexRestrictionOperator(gridspace(from),gridspace(to), relative_indices(to,from))
 
 "Create a suitable subgrid that covers a given domain."

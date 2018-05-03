@@ -86,6 +86,16 @@ function extensionframe(domain::ProductDomain, basis::TensorProductDict)
     tensorproduct(ExtensionFrames...)
 end
 
+const TensorProductExtensionFrameDict{N,N1,S,T} = TensorProductDict{N,NTuple{N1,DT},S,T} where {N,N1,DT<:ExtensionFrame,S,T}
+const TensorProductExtensionFrameSpan{A,S,T,D <: TensorProductExtensionFrameDict} = Span{A,S,T,D}
+# TODO remove need of this function
+function flatten(dict::TensorProductExtensionFrameDict)
+    basis = tensorproduct([superdict(dicti) for dicti in elements(dict)]...)
+    domain = Domains.ProductDomain([FrameFun.domain(dicti) for dicti in elements(dict)]...)
+    ExtensionFrame(domain, basis)
+end
+flatten(s::TensorProductExtensionFrameSpan) = Span(flatten(dictionary(s)))
+
 extensionframe(domain::Domain, basis::Dictionary) = ExtensionFrame(domain, basis)
 extensionframe(basis::Dictionary, domain::Domain) = extensionframe(domain, basis)
 extensionspan(span::Span, domain::Domain) = Span(extensionframe(domain, dictionary(span)))
@@ -153,6 +163,11 @@ function native_nodes(set1::Dictionary, set2::Dictionary, domain::Interval)
 end
 
 
+grid_evaluation_operator(s::TensorProductExtensionFrameSpan, dgs::DiscreteGridSpace, grid::AbstractGrid; options...) =
+    grid_evaluation_operator(flatten(s), dgs, grid; options...)
+grid_evaluation_operator(s::TensorProductExtensionFrameSpan, dgs::DiscreteGridSpace, grid::AbstractSubGrid; options...) =
+    grid_evaluation_operator(flatten(s), dgs, grid; options...)
+
 ##################
 # platform
 ##################
@@ -169,23 +184,6 @@ function extension_frame_platform(platform::BasisFunctions.GenericPlatform, doma
     primal = n->extensionframe(platform.primal_generator(n), domain)
     dual = n->extensionframe(platform.dual_generator(n), domain)
     sampler = extension_frame_sampler(platform, domain)
-    BasisFunctions.GenericPlatform(primal = primal, dual = dual, sampler = sampler,
+    BasisFunctions.GenericPlatform(super_platform=platform, primal = primal, dual = dual, sampler = sampler,
         params = platform.parameter_sequence, name = "extension frame of " * platform.name)
-end
-
-function az_solve(platform::BasisFunctions.Platform, i, f; cutoff = -1)
-    a = A(platform, i)
-    z = Z(platform, i)
-    s = sampler(platform, i)
-    cutoff < 0 && (cutoff = default_cutoff(a))
-    az_solve(a, z', s*f, cutoff=cutoff, R=estimate_plunge_rank(a))
-end
-
-function azs_solve(platform::BasisFunctions.Platform, i, f; cutoff = -1)
-    a = A(platform, i)
-    z = Z(platform, i)
-    s = sampler(platform, i)
-    rd,sb = az_selection_util_operators(platform, i)
-    cutoff < 0 && (cutoff = default_cutoff(a))
-    az_solve(a, z', rd', sb, s*f,cutoff=cutoff)
 end

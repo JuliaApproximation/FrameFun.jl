@@ -174,34 +174,149 @@ A RestrictionSolver is a solver used specifically for B splines,
 taking advantage of the sparse structure.
 """
 struct RestrictionSolver{ELT} <: FrameFun.FE_Solver{ELT}
+    Aop::AbstractOperator
+
     A::Matrix{ELT}
     # Mapping operator of dict to its boundary overlapping prolates
-    RD::AbstractOperator
+    BE::AbstractOperator
     # Selection operator for the collocation points in the support of the boundary overlapping prolates
-    SB::IndexRestrictionOperator
+    GR::AbstractOperator
 
     cutoff
 
-    scratch_A::Matrix{ELT}
-    scratch_b::Vector{ELT}
-    function RestrictionSolver{ELT}(A::AbstractOperator, RD::AbstractOperator, SB::AbstractOperator; cutoff=FrameFun.default_cutoff(A), options...) where {ELT}
-        new(matrix(SB*A*RD), RD, SB, cutoff, zeros(ELT,length(dest(SB)),length(src(RD))), zeros(ELT,length(dest(SB))))
+    scratch_b::Array{ELT}
+    scratch_b_linear::Vector{ELT}
+    scratch_y1_native::Array{ELT}
+    y1::Vector{ELT}
+    function RestrictionSolver{ELT}(A::AbstractOperator, BE::AbstractOperator, GR::AbstractOperator; cutoff=FrameFun.default_cutoff(A), options...) where {ELT}
+        new(A, truncated_svd(matrix(GR*A*BE),cutoff), BE, GR, cutoff, zeros(ELT,size(dest(GR))...), zeros(ELT, length(dest(GR))), zeros(ELT, size(src(BE))...), zeros(ELT, length(src(BE))))
     end
 end
 
-src(t::RestrictionSolver) = dest(t.A)
-dest(t::RestrictionSolver) = src(t.A)
-inv(t::RestrictionSolver) = t.A
+src(t::RestrictionSolver) = dest(t.Aop)
+dest(t::RestrictionSolver) = src(t.Aop)
+inv(t::RestrictionSolver) = t.Aop
 
-RestrictionSolver(A::AbstractOperator, RD::AbstractOperator, SB::AbstractOperator; options...) =
-    RestrictionSolver{eltype(A)}(A, RD, SB; options...)
+RestrictionSolver(A::AbstractOperator, BE::AbstractOperator, GR::AbstractOperator; options...) =
+    RestrictionSolver{eltype(A)}(A, BE, GR; options...)
 
-function BasisFunctions.apply!(S::RestrictionSolver, x, b)
-    copy!(S.scratch_A, S.A)
-    apply!(S.SB, S.scratch_b, b)
-    y1, rr = LAPACK.gelsy!(S.scratch_A,S.scratch_b, S.cutoff)
-    apply!(S.RD, x, y1)
+function BasisFunctions.apply!(S::RestrictionSolver, x, b::Vector)
+    apply!(S.GR, S.scratch_b, b)
+
+    A_mul_B!(S.y1, S.A, S.scratch_b)
+    # y1, rr = LAPACK.gelsy!(S.scratch_A,S.scratch_b, S.cutoff)
+    apply!(S.BE, x, S.y1)
 end
+
+# function BasisFunctions.apply!(S::RestrictionSolver, x, b)
+#     copy!(S.scratch_A, S.A)
+#     apply!(S.GR, S.scratch_b, b)
+#     BasisFunctions.linearize_coefficients!(dest(S.GR), S.scratch_b_linear, S.scratch_b)
+#     y1, rr = LAPACK.gelsy!(S.scratch_A,S.scratch_b_linear, S.cutoff)
+#     BasisFunctions.delinearize_coefficients!(src(S.BE), S.scratch_y1_native, y1)
+#     apply!(S.BE, x, S.scratch_y1_native)
+# end
+
+
+"""
+A DivideAndConquerSolver is a solver used specifically for B splines,
+taking advantage of the sparse structure.
+"""
+struct DivideAndConquerSolver{ELT} <: FrameFun.FE_Solver{ELT}
+    A::AbstractOperator{ELT}
+    # Small problem between A1 and A2
+    A0::Matrix{ELT}
+    A1::Matrix{ELT}
+    A2::Matrix{ELT}
+    # Mapping operator of dict to its boundary overlapping prolates
+    BE0::AbstractOperator
+    BE1::AbstractOperator
+    BE2::AbstractOperator
+    # Selection operator for the collocation points in the support of the boundary overlapping prolates
+    GR0::AbstractOperator
+    GR1::AbstractOperator
+    GR2::AbstractOperator
+
+    cutoff
+
+    scratch_b0::Array{ELT}
+    scratch_b1::Array{ELT}
+    scratch_b2::Array{ELT}
+
+    # x0::Array{ELT}
+    x1::Array{ELT}
+    # x2::Array{ELT}
+
+    y0::Array{ELT}
+    y1::Array{ELT}
+    y2::Array{ELT}
+
+    bnew::Array{ELT}
+
+    function DivideAndConquerSolver{ELT}(
+        A::AbstractOperator,
+        BE0::AbstractOperator, BE1::AbstractOperator, BE2::AbstractOperator,
+        GR0::AbstractOperator, GR1::AbstractOperator, GR2::AbstractOperator;
+        cutoff=FrameFun.default_cutoff(A), options...) where {ELT}
+
+        new(A, truncated_svd(matrix(GR0*A*BE0), cutoff), truncated_svd(matrix(GR1*A*BE1), cutoff), truncated_svd(matrix(GR2*A*BE2), cutoff),
+        BE0, BE1, BE2,
+        GR0, GR1, GR2,
+        cutoff,
+        zeros(ELT, length(dest(GR0))), zeros(ELT, length(dest(GR1))), zeros(ELT, length(dest(GR2))),
+        zeros(ELT, size(dest(BE0))...), #zeros(ELT, size(dest(BE1))...), zeros(ELT, size(dest(BE1))...),
+        zeros(ELT, length(src(BE0))), zeros(ELT, length(src(BE1))), zeros(ELT, length(src(BE2))),
+        zeros(ELT, size(dest(A))...))
+    end
+end
+
+function truncated_svd(A, cutoff)
+    USV = LAPACK.gesdd!('S',A)
+    S = USV[2]
+    maxind = findlast(S.>(maximum(S)*cutoff))
+    Sinv = 1./S[1:maxind]
+    USV[3][1:maxind,:]'*(Sinv.*USV[1][:,1:maxind]')
+end
+
+src(t::DivideAndConquerSolver) = dest(t.A)
+dest(t::DivideAndConquerSolver) = src(t.A)
+inv(t::DivideAndConquerSolver) = t.A
+
+DivideAndConquerSolver( A::AbstractOperator,
+                        BE0::AbstractOperator, BE1::AbstractOperator, BE2::AbstractOperator,
+                        GR0::AbstractOperator, GR1::AbstractOperator, GR2::AbstractOperator
+                        ; options...) =
+    DivideAndConquerSolver{eltype(A)}(A, BE0, BE1, BE2, GR0, GR1, GR2; options...)
+
+function BasisFunctions.apply!(S::DivideAndConquerSolver, x, b::Vector)
+
+    apply!(S.GR0, S.scratch_b0, b)
+
+    A_mul_B!(S.y0, S.A0, S.scratch_b0)
+    apply!(S.BE0, x, S.y0)
+
+    apply!(S.A, S.bnew, x)
+    for i in 1:length(S.bnew)
+        S.bnew[i] = b[i] - S.bnew[i]
+    end
+
+    apply!(S.GR1, S.scratch_b1, S.bnew)
+    A_mul_B!(S.y1, S.A1, S.scratch_b1)
+    apply!(S.BE1, S.x1, S.y1)
+
+    for i in 1:length(S.x1)
+        x[i] = x[i] + S.x1[i]
+    end
+
+    apply!(S.GR2, S.scratch_b2, S.bnew)
+    A_mul_B!(S.y2, S.A2, S.scratch_b2)
+    apply!(S.BE2, S.x1, S.y2)
+
+    for i in 1:length(S.x1)
+        x[i] = x[i] + S.x1[i]
+    end
+end
+
 
 # Function with equal functionality, but allocating memory
 function truncatedsvd_solve(A::AbstractOperator, b; cutoff = default_cutoff(A), R = 5, growth_factor = 2, verbose = false, smallcoefficients=false,smalltol=10,options...)
@@ -229,11 +344,45 @@ function truncatedsvd_solve(A::AbstractOperator, b; cutoff = default_cutoff(A), 
     verbose && println("Solver truncated at R = ", R, " dof out of ",size(A,2))
 
 
-    y, rr = LAPACK.gelsy!(C,b,cutoff)
+    y, rr = LAPACK.gelsy!(C,b[:],cutoff)
     x1 = random_matrix*y;
     reshape(x1, size(src(A))...)
 end
 
 # Function with equal functionality, but allocating memory
-restriction_solve(A, RD, SB, b; cutoff=FrameFun.default_cutoff(A), options...) =
-    RD*LAPACK.gelsy!(matrix(SB*A*RD),SB*b,cutoff)[1]
+restriction_solve(A, BE, GR, b::Vector; cutoff=FrameFun.default_cutoff(A), options...) =
+    BE*LAPACK.gelsy!(matrix(GR*A*BE),GR*b,cutoff)[1]
+
+# restriction_solve(A, BE, GR, b; cutoff=FrameFun.default_cutoff(A), options...) =
+#     BE*reshape(LAPACK.gelsy!(matrix(GR*A*BE),(GR*b)[:],cutoff)[1], size(src(BE)))
+
+
+function divideandconqer_solve(A, BE0, BE1, BE2, GR0, GR1, GR2, b::Vector;  cutoff=FrameFun.default_cutoff(A), options...)
+
+
+    x0 = BE0*LAPACK.gelsy!(matrix(GR0*A*BE0), GR0*b, cutoff)[1]
+    Lb = length(b)::Int
+    Lx = length(x0)::Int
+
+    bnew = zeros(size(dest(A)))
+
+    # bnew = A*x0
+    apply!(A, bnew, x0)
+    bnew .= b .- bnew
+    # for i in 1:Lb
+    #     bnew[i] = b[i] - bnew[i]
+    # end
+    x1 = BE1*LAPACK.gelsy!(matrix(GR1*A*BE1), GR1*bnew, cutoff)[1]
+    x0 .= x0 .+ x1
+    # for i in 1:Lx
+    #     x0[i] = x0[i] + x1[i]
+    # end
+
+    x1 = BE2*LAPACK.gelsy!(matrix(GR2*A*BE2), GR2*bnew, cutoff)[1]
+    x0 .= x0 .+ x1
+    # for i in 1:Lx
+    #     x0[i] = x0[i] + x1[i]
+    # end
+
+    x0
+end
