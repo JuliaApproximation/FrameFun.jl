@@ -61,7 +61,9 @@ convert(::Type{NTuple{N,Int}},i::CartesianIndex{N}) where {N} = ntuple(k->i[k],N
 MaskedGrid(supergrid::AbstractGrid, domain::Domain) =
     MaskedGrid(supergrid, in.(supergrid, domain))
 
-function MaskedGrid(supergrid::AbstractGrid, mask)
+MaskedGrid(supergrid::AbstractGrid, mask) = MaskedGrid(supergrid, mask, subindices(supergrid, mask))
+
+function subindices(supergrid, mask::BitArray)
     I= eltype(eachindex(supergrid))
     indices = Array{I}(sum(mask))
     i = 1
@@ -71,7 +73,7 @@ function MaskedGrid(supergrid::AbstractGrid, mask)
            i += 1
        end
     end
-    MaskedGrid(supergrid, mask, indices)
+    indices
 end
 
 length(g::MaskedGrid) = g.M
@@ -157,9 +159,22 @@ function Base.done(g::NBIndexList{N}, state) where {N}
     iter_state = state[2]
     done(iter, iter_state)
 end
-function boundary_mask(grid, domain)
+
+"""
+A Masked grid that contains the elements of grid that are on the boundary of the domain
+"""
+function boundary_grid(grid::AbstractGrid, domain::Domains.Domain)
+    mask = boundary_mask(grid, domain);
+    MaskedGrid(grid,mask);
+end
+
+boundary_grid(grid::MaskedGrid, domain::Domains.Domain) = boundary_grid(supergrid(grid), domain)
+
+
+function boundary_mask(grid::AbstractGrid, domain::Domains.Domain)
     S = size(grid)
-    m = zeros(Bool, S...)
+    m = BitArray(S...)#zeros(Bool, S...)
+    m[:] = 0
     t = true
     for i in eachindex(grid)
         if Domains.indomain(grid[i], domain)
@@ -217,18 +232,41 @@ function split(m::MaskedGrid)
             end
         end
     end
-    r
+    if length(r) == 1
+        return [m]
+    else
+        return r
+    end
 end
 
-"""
-A Masked grid that contains the elements of grid that are on the boundary of the domain
-"""
-function boundary_grid(grid::AbstractGrid, domain::Domains.Domain)
-    mask = boundary_mask(grid, domain);
-    MaskedGrid(grid,mask);
+function split_in_IndexGrids(m::MaskedGrid)
+    L = length(m)
+    s = supergrid(m)
+    index = 0
+    r = IndexSubGrid[]
+    mask_total = BitArray(size(s)...)
+    mask_total[:] = 0
+    mask = BitArray(size(s)...)
+    while index < L
+        for i in subindices(m)
+            if !mask_total[i]
+                mask = BitArray(size(s)...)
+                mask[:] = 0
+                collect_neighbours!(mask, i, m)
+                index += sum(mask)
+                mask_total = mask_total .| mask
+
+                push!(r, IndexSubGrid(s, subindices(s,mask)))
+            end
+        end
+    end
+    if length(r) == 1
+        return [m]
+    else
+        return r
+    end
 end
 
-# Returns the indices of the points of `from` in the grid `relativeto`.
 # It is assumed that all points of `from` are in `relativeto` and that the supergrids of both grids are equal.
 function relative_indices(from::MaskedGrid, relativeto::Union{IndexSubGrid,MaskedGrid})
     # @assert (supergrid(from)) == (supergrid(relativeto))
@@ -243,9 +281,6 @@ function relative_indices(from::MaskedGrid, relativeto::Union{IndexSubGrid,Maske
     end
     support_index
 end
-
-BasisFunctions.restriction_operator(from::Union{IndexSubGrid,MaskedGrid},to::MaskedGrid) =
-    IndexRestrictionOperator(gridspace(from),gridspace(to), relative_indices(to,from))
 
 "Create a suitable subgrid that covers a given domain."
 function subgrid(grid::AbstractEquispacedGrid, domain::AbstractInterval)
@@ -360,3 +395,8 @@ function boundary{G,M,N}(g::MaskedGrid{G,M},dom::EuclideanDomain{N})
 end
 
 has_extension{G <: AbstractSubGrid}(dg::DiscreteGridSpace{G}) = true
+
+function BasisFunctions.grid_restriction_operator(src::Span, dest::Span, src_grid::G, dest_grid::MaskedGrid{G,M,I,T}; options...) where {G<:AbstractGrid,M,I,T}
+    @assert supergrid(dest_grid) == src_grid
+    IndexRestrictionOperator(src, dest, subindices(dest_grid))
+end

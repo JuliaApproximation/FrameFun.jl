@@ -37,8 +37,8 @@ struct AZSolver{ELT} <: FE_Solver{ELT}
     end
 end
 
-function AZSolver(A::AbstractOperator, Zt::AbstractOperator, util_operators::AbstractOperator...;
-        use_plunge=true, options...)
+function AZSolver(A::AbstractOperator{ELT}, Zt::AbstractOperator{ELT}, util_operators::AbstractOperator{ELT}...;
+        use_plunge=true, options...) where {ELT}
     plunge_op = nothing
     OP = A
     if use_plunge
@@ -49,8 +49,8 @@ function AZSolver(A::AbstractOperator, Zt::AbstractOperator, util_operators::Abs
     _AZSolver(A::AbstractOperator, Zt::AbstractOperator, OP, util_operators...; plunge_op=plunge_op, options...)
 end
 
-function _AZSolver(A::AbstractOperator, Zt::AbstractOperator, OP::AbstractOperator, util_operators::AbstractOperator...;
-        cutoff = default_cutoff(A), TRUNC=TruncatedSvdSolver, R = estimate_plunge_rank(A), verbose=false, options...)
+function _AZSolver(A::AbstractOperator{ELT}, Zt::AbstractOperator{ELT}, OP::AbstractOperator{ELT}, util_operators::AbstractOperator{ELT}...;
+        cutoff = default_cutoff(A), TRUNC=TruncatedSvdSolver, R = estimate_plunge_rank(A), verbose=false, options...) where {ELT}
     # Calculate low rank INVERSE of (A*Zt-I)*A
     TS = TRUNC(OP, util_operators...; cutoff=cutoff, R=R, verbose=verbose, options...)
     AZSolver(TS, A, Zt; options...)
@@ -71,8 +71,8 @@ AZSDCSolver(A::AbstractOperator, Zt::AbstractOperator,
     AZSolver(A, Zt, RD0, RD1, RD2, EF0, EF1, EF2; use_plunge=use_plunge, TRUNC=TRUNC, options...)
 
 # If no Zt is supplied, Zt=A' (up to scaling) by default.
-AZSolver(A::AbstractOperator; scaling=nothing, options...) =
-    AZSolver{eltype(A)}(A, 1/scaling*A'; options...)
+AZSolver(A::AbstractOperator{ELT}; scaling=nothing, options...) where {ELT} =
+    AZSolver(A, ELT(1)/ELT(scaling)*A'; options...)
 
 function plunge_operator(A, Zt)
     I = IdentityOperator(dest(A))
@@ -145,7 +145,7 @@ function AZSSolver(platform::BasisFunctions.Platform, i; options...)
 end
 
 
-function AZSDCSolver(fplatform::BasisFunctions.Platform, i, dim, range; options...)
+function AZSDCSolver(fplatform::BasisFunctions.Platform, i, dim::Int, range; options...)
     platform = fplatform.super_platform
     # The grid on Gamma
     gamma = grid(sampler(platform, i))
@@ -168,30 +168,39 @@ function AZSDCSolver(fplatform::BasisFunctions.Platform, i, dim, range; options.
 end
 
 # Function with equal functionality, but allocating memory
-function az_solve(A::AbstractOperator, Zt::AbstractOperator, b, util_operators...; use_plunge=true,
+function az_solve(b, A::AbstractOperator, Zt::AbstractOperator, util_operators::AbstractOperator...; use_plunge=true,
         cutoff = default_cutoff(A), trunc = truncatedsvd_solve, verbose=false, options...)
     op = A
     if use_plunge
         P = plunge_operator(A, Zt)
-        x2 = trunc(P*A, util_operators..., P*b; cutoff=cutoff, verbose=verbose, options...)
+        x2 = trunc(P*b, P*A, util_operators...; cutoff=cutoff, verbose=verbose, options...)
     else
-        x2 = trunc(A, util_operators..., b ; cutoff=cutoff, verbose=verbose, options...)
+        x2 = trunc(b, A, util_operators... ; cutoff=cutoff, verbose=verbose, options...)
     end
     x1 = Zt*(b-A*x2)
     x1 + x2
 end
 
 # Function with equal functionality, but allocating memory
-azs_solve(A::AbstractOperator, Zt::AbstractOperator, RD::AbstractOperator, SB::AbstractOperator, b;
+azs_solve(b, A::AbstractOperator, Zt::AbstractOperator, RD::AbstractOperator, SB::AbstractOperator;
         trunc = restriction_solve, use_plunge=false, options...) =
-    az_solve(A, Zt, b, RD, SB; trunc=trunc, use_plunge=use_plunge, options...)
+    az_solve(b, A, Zt, RD, SB; trunc=trunc, use_plunge=use_plunge, options...)
 
 # Function with equal functionality, but allocating memory
-azsdc_solve(A::AbstractOperator, Zt::AbstractOperator,
+azsdc_solve(b, A::AbstractOperator, Zt::AbstractOperator,
         RD0::AbstractOperator, RD1::AbstractOperator, RD2::AbstractOperator,
-        EF0::AbstractOperator, EF1::AbstractOperator, EF2::AbstractOperator, b;
+        EF0::AbstractOperator, EF1::AbstractOperator, EF2::AbstractOperator;
         trunc = divideandconqer_solve, use_plunge=false, options...) =
-    az_solve(A, Zt, b, RD0, RD1, RD2, EF0, EF1, EF2; trunc=trunc, use_plunge=use_plunge, options...)
+    az_solve(b, A, Zt, RD0, RD1, RD2, EF0, EF1, EF2; trunc=trunc, use_plunge=use_plunge, options...)
+
+
+azsdcN_solve(b, A::AbstractOperator, Zt::AbstractOperator,
+        A0::Vector{OP1}, GR0::Vector{OP2},
+        A1::Vector{OP3}, GR1::Vector{OP4};
+        trunc = divideandconqerN_solve, use_plunge=false, options...) where {OP1<:AbstractOperator, OP2<:AbstractOperator, OP3<:AbstractOperator, OP4<:AbstractOperator}=
+    az_solve(b, A, Zt, A0..., GR0..., A1..., GR1...;
+    divideandconqerN_op_lengths=[length(A0), length(GR0), length(A1), length(GR1)],
+    trunc=trunc, use_plunge=use_plunge, options...)
 
 
 function az_solve(platform::BasisFunctions.Platform, i, f::Function; R=0, options...)
@@ -199,7 +208,7 @@ function az_solve(platform::BasisFunctions.Platform, i, f::Function; R=0, option
     zt = Zt(platform, i)
     s = sampler(platform, i)
     (R == 0) && (R=estimate_plunge_rank(a))
-    az_solve(a, zt, s*f; R=R, options...)
+    az_solve(s*f, a, zt; R=R, options...)
 end
 
 function azs_solve(platform::BasisFunctions.Platform, i, f::Function; R=0, options...)
@@ -208,10 +217,10 @@ function azs_solve(platform::BasisFunctions.Platform, i, f::Function; R=0, optio
     s = sampler(platform, i)
     rd,sb = spline_util_restriction_operators(platform, i)
     (R == 0) && (R=estimate_plunge_rank(a))
-    azs_solve(a, zt, rd', sb, s*f; R=R, options...)
+    azs_solve(s*f, a, zt, rd', sb; R=R, options...)
 end
 
-function azsdc_solve(fplatform::BasisFunctions.Platform, i, f, dim, range; R=0, options...)
+function azsdc_solve(fplatform::BasisFunctions.Platform, i, f::Function, dim::Int, range; R=0, options...)
     platform = fplatform.super_platform
     a = A(fplatform, i)
     zt = Zt(fplatform, i)
@@ -228,12 +237,24 @@ function azsdc_solve(fplatform::BasisFunctions.Platform, i, f, dim, range; R=0, 
     (R == 0) && (R=estimate_plunge_rank(a))
 
     ops = FrameFun.divide_and_conquer_restriction_operators(omega, gamma, p, dom, dim, range; options...)
+
     if length(ops) == 2
         frame_res, grid_res = ops
         warn("going over to azs_solve")
-        azs_solve(a, zt, frame_res', grid_res, S*f; R=R, options...)
+        azs_solve(S*f, a, zt, frame_res', grid_res; R=R, options...)
     else
         frame_res0, frame_res1, frame_res2, grid_res0, grid_res1, grid_res2 = ops
-        azsdc_solve(a, zt, frame_res0', frame_res1', frame_res2', grid_res0, grid_res1, grid_res2, S*f; R=R, options...)
+        azsdc_solve(S*f, a, zt, frame_res0', frame_res1', frame_res2', grid_res0, grid_res1, grid_res2; R=R, options...)
     end
+end
+
+function azsdcN_solve(fplatform::BasisFunctions.Platform, i, f::Function, ranges; R=0, options...)
+    platform = fplatform.super_platform
+    a = A(fplatform, i)
+    zt = Zt(fplatform, i)
+    S = sampler(fplatform, i)
+
+    (R == 0) && (R=estimate_plunge_rank(a))
+    ops = FrameFun.divide_and_conquer_N_util_operators(fplatform, i, ranges; options...)
+    azsdcN_solve(S*f, a, zt, ops...; options...)
 end

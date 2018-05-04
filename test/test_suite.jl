@@ -93,13 +93,13 @@ function test_1d_cases()
     println()
     println("Testing \t solver = $solver, \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = Float64 ")
     verbose && println("N\t T\t Complex?\t abserror\t time\t\t \memory   ")
-    
+
     for n in [FE.default_frame_n(D, Basis)]
 
         # There is some symmetry around T=2, test smaller and larger values
         for T in (1.9,)
             for func in (f,g)
-                
+
                 B = Basis(n, -T, T)
                 F = @timed( Fun(func, B, D; solver=solver) )
                 error = abserror(func, F[1])
@@ -142,7 +142,7 @@ function test_1d_cases()
             end
         end
     end
-    
+
 end
 
 function test_bigfloat()

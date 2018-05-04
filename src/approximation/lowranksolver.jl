@@ -289,7 +289,6 @@ DivideAndConquerSolver( A::AbstractOperator,
     DivideAndConquerSolver{eltype(A)}(A, BE0, BE1, BE2, GR0, GR1, GR2; options...)
 
 function BasisFunctions.apply!(S::DivideAndConquerSolver, x, b::Vector)
-
     apply!(S.GR0, S.scratch_b0, b)
 
     A_mul_B!(S.y0, S.A0, S.scratch_b0)
@@ -319,7 +318,7 @@ end
 
 
 # Function with equal functionality, but allocating memory
-function truncatedsvd_solve(A::AbstractOperator, b; cutoff = default_cutoff(A), R = 5, growth_factor = 2, verbose = false, smallcoefficients=false,smalltol=10,options...)
+function truncatedsvd_solve(b::Vector, A::AbstractOperator; cutoff = default_cutoff(A), R = 5, growth_factor = 2, verbose = false, smallcoefficients=false,smalltol=10,options...)
     finished=false
     ELT = eltype(A)
     R = min(R, size(A,2))
@@ -350,16 +349,16 @@ function truncatedsvd_solve(A::AbstractOperator, b; cutoff = default_cutoff(A), 
 end
 
 # Function with equal functionality, but allocating memory
-restriction_solve(A, BE, GR, b::Vector; cutoff=FrameFun.default_cutoff(A), options...) =
+restriction_solve(b::Vector, A::AbstractOperator, BE::IndexExtensionOperator,
+        GR::IndexRestrictionOperator; cutoff=FrameFun.default_cutoff(A), options...) =
     BE*LAPACK.gelsy!(matrix(GR*A*BE),GR*b,cutoff)[1]
 
 # restriction_solve(A, BE, GR, b; cutoff=FrameFun.default_cutoff(A), options...) =
 #     BE*reshape(LAPACK.gelsy!(matrix(GR*A*BE),(GR*b)[:],cutoff)[1], size(src(BE)))
 
 
-function divideandconqer_solve(A, BE0, BE1, BE2, GR0, GR1, GR2, b::Vector;  cutoff=FrameFun.default_cutoff(A), options...)
-
-
+function divideandconqer_solve(b::Vector, A::AbstractOperator, BE0::IndexExtensionOperator, BE1::IndexExtensionOperator, BE2::IndexExtensionOperator,
+        GR0::IndexRestrictionOperator, GR1::IndexRestrictionOperator, GR2::IndexRestrictionOperator;  cutoff=FrameFun.default_cutoff(A), options...)
     x0 = BE0*LAPACK.gelsy!(matrix(GR0*A*BE0), GR0*b, cutoff)[1]
     Lb = length(b)::Int
     Lx = length(x0)::Int
@@ -384,5 +383,47 @@ function divideandconqer_solve(A, BE0, BE1, BE2, GR0, GR1, GR2, b::Vector;  cuto
     #     x0[i] = x0[i] + x1[i]
     # end
 
+    x0
+end
+
+function divideandconqerN_solve(b::Vector, A, ops::AbstractOperator...; divideandconqerN_op_lengths=nothing, options...)
+    A0 = Array{CompositeOperator}(divideandconqerN_op_lengths[1])
+    G0 = Array{IndexRestrictionOperator}(divideandconqerN_op_lengths[2])
+    A1 = Array{CompositeOperator}(divideandconqerN_op_lengths[3])
+    G1 = Array{IndexRestrictionOperator}(divideandconqerN_op_lengths[4])
+    i = 1
+    for ARRAY in (A0, G0, A1, G1)
+        for j in 1:length(ARRAY)
+            ARRAY[j] = ops[i]
+            i += 1
+        end
+    end
+    divideandconqerN_solve(b, A, A0, G0, A1, G1; options...)
+end
+
+function divideandconqerN_solve(b::Vector, A, A0::Vector{OP1}, GR0::Vector{OP2},
+        A1::Vector{OP3}, GR1::Vector{OP4};
+        cutoff=FrameFun.default_cutoff(A), options...) where {OP1<:AbstractOperator, OP2<:IndexRestrictionOperator, OP3<:AbstractOperator, OP4<:IndexRestrictionOperator}
+    omega = BasisFunctions.grid(dest(A))
+    gamma = supergrid(omega)
+    omega_restriction = restriction_operator(gridspace(gamma), gridspace(omega))
+    b_ext = omega_restriction'b
+    x0 = zeros(src(A))
+    for (gr,a) in zip(GR0,A0)
+        y0 = LAPACK.gelsy!(matrix(a), gr*b_ext, cutoff)[1]
+        x0[a.operators[1].subindices] .+= y0
+    end
+
+    bnew = similar(b)
+    apply!(A, bnew, x0)
+
+    for (i_i,i) in enumerate(subindices(omega))
+        b_ext[i] -= bnew[i_i]
+    end
+
+    for (gr,a) in zip(GR1,A1)
+        y0 = LAPACK.gelsy!(matrix(a), gr*b_ext, cutoff)[1]
+        x0[a.operators[1].subindices] .+= y0
+    end
     x0
 end

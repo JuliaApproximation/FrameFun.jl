@@ -5,9 +5,9 @@
 Index of elements of `B` that overlap with `boundary`.
 """
 function boundary_element_indices(B, boundary::AbstractGrid)
-    s = Set{Int}()
+    s = Set{CartesianIndex{dimension(B)}}()
     for x in boundary
-        push!(s,overlapping_elements(B,x)...)
+        push!(s,BasisFunctions.overlapping_elements(B,x)...)
     end
     collect(s)
 end
@@ -16,17 +16,35 @@ end
 """
 A grid that contains the points of `omega_grid` that are not evaluated to zero by the elements that overlap with boundary_grid.
 """
-function boundary_support_grid(B, boundary_grid::MaskedGrid, omega_grid::Union{MaskedGrid,IndexSubGrid})
-    boundary_indices = boundary_element_indices(B,boundary_grid)
-    s = Set{Int}()
+function boundary_support_grid(B, boundary_grid::Union{MaskedGrid}, omega_grid::Union{MaskedGrid,IndexSubGrid})
+    boundary_indices = FrameFun.boundary_element_indices(B,boundary_grid)
+    s = Set{CartesianIndex{dimension(B)}}()
     for i in boundary_indices
         push!(s,BasisFunctions.support_indices(B,supergrid(omega_grid),i)...)
     end
     a = collect(s)
-    m = zeros(Bool,size(mask(omega_grid)))
+    m = BitArray(size(FrameFun.mask(omega_grid)))#zeros(Bool,)
+    m[:] = 0
     m[a] = true
-    m .= m .& mask(omega_grid)
+    m .= m .& FrameFun.mask(omega_grid)
     MaskedGrid(supergrid(omega_grid),m)
+end
+
+
+function FrameFun.boundary_support_grid(B, boundary_grid::IndexSubGrid, omega_grid::MaskedGrid)
+    boundary_indices = FrameFun.boundary_element_indices(B,boundary_grid)
+    s = Set{CartesianIndex{dimension(B)}}()
+    for i in boundary_indices
+        push!(s,BasisFunctions.support_indices(B,supergrid(omega_grid),i)...)
+    end
+    a = collect(s)
+    b = CartesianIndex{dimension(B)}[]
+    for ai in a
+        if is_subindex(ai, omega_grid)
+            push!(b,ai)
+        end
+    end
+    IndexSubGrid(supergrid(boundary_grid), b)
 end
 
 spline_util_restriction_operators(platform::BasisFunctions.GenericPlatform, i) =
@@ -55,10 +73,15 @@ spline_util_restriction_operators(dict::Dictionary, omega::AbstractGrid, boundar
     _spline_util_restriction_operators(dict, omega, boundary_support_grid(dict, boundary, omega))
 
 
-function _spline_util_restriction_operators(dict::Dictionary, omega::AbstractGrid, DMZ::AbstractGrid)
+function BasisFunctions.grid_restriction_operator(src::Span, dest::Span, src_grid::Union{IndexSubGrid,MaskedGrid}, dest_grid::MaskedGrid)
+    @assert supergrid(src_grid) == supergrid(dest_grid)
+    IndexRestrictionOperator(src, dest, FrameFun.relative_indices(dest_grid,src_grid))
+end
+
+function _spline_util_restriction_operators(dict::Dictionary, grid::AbstractGrid, DMZ::AbstractGrid)
     boundary_indices = FrameFun.boundary_element_indices(dict, DMZ)
     frame_restriction = IndexRestrictionOperator(Span(dict), Span(dict[boundary_indices]), boundary_indices)
-    grid_restriction = restriction_operator(omega, DMZ)
+    grid_restriction = BasisFunctions.restriction_operator(gridspace(grid), gridspace(DMZ))
     frame_restriction, grid_restriction
 end
 
@@ -66,13 +89,13 @@ end
 Frame restriction operator and grid restriction operator.
 
 The former restricts `dict` to the elements that overlap with the boundary and
-the latter restricts `omega` to the points in the span of the dict elements that
+the latter restricts `grid` to the points in the span of the dict elements that
 overlap with a region defined as the span of the dict elements that overlap with the boundary.
 """
-function _spline_util_restriction_operators(dict::Dictionary, omega::AbstractGrid, boundary::AbstractGrid, DMZ::AbstractGrid)
+function _spline_util_restriction_operators(dict::Dictionary, grid::AbstractGrid, boundary::AbstractGrid, DMZ::AbstractGrid)
     boundary_indices = FrameFun.boundary_element_indices(dict, boundary)
     frame_restriction = IndexRestrictionOperator(Span(dict), Span(dict[boundary_indices]), boundary_indices)
-    grid_restriction = restriction_operator(omega, DMZ)
+    grid_restriction = BasisFunctions.restriction_operator(gridspace(grid), gridspace(DMZ))
     frame_restriction, grid_restriction
 end
 
@@ -157,4 +180,114 @@ function divide_and_conquer_restriction_operators(omega::AbstractGrid, gamma::Ab
         warn("No grid splitting possible")
         BR, DMZ_R = _spline_util_restriction_operators(basis, omega, DMZ)
     end
+end
+
+
+function split_DMZ(DMZ::AbstractGrid, basis, gamma, ranges; options...)
+    split_grid = intersect_DMZ(DMZ::AbstractGrid, basis, gamma::AbstractGrid, ranges; options...)
+    split_grid_DMZ = FrameFun.boundary_support_grid(basis, split_grid, DMZ)
+    left_over = DMZ - split_grid_DMZ
+    if length(left_over) == 0
+        return [DMZ], AbstractGrid[]
+    end
+    FrameFun.split_in_IndexGrids(split_grid_DMZ), FrameFun.split_in_IndexGrids(left_over)
+end
+
+
+function intersect_DMZ(DMZ::AbstractGrid, basis, gamma::AbstractGrid, ranges; verbose=false, factor=3, shift=false, options...)
+    domain_grid = domain_grid_Nd(basis, ranges, factor, shift)
+    split_domain = split_domain_Nd(gamma, domain_grid)
+    verbose && println(split_domain)
+
+    # The grid on the intersection of split_domain and the boundary
+    split_grid = FrameFun.subgrid(DMZ, split_domain)
+    if length(split_grid) == 0
+        error("check your mids for splitting the domain.")
+    end
+    split_grid
+end
+
+
+
+domain_grid_Nd(basis, ranges, factor, shift=false) = [domain_grid_1d(d, basis, ranges, factor, shift) for d in 1:length(ranges)]
+
+function domain_grid_1d(d, basis, ranges, factor, shift=false)
+    basis_coarseness = BasisFunctions.support_length_of_compact_function(element(basis, d))
+    mid = mean(ranges[d])
+    shift && (mid = mid + basis_coarseness*factor/2)
+    e = mid; es = [e]
+    e = mid - factor*basis_coarseness
+    while e>minimum(ranges[d]) + .5basis_coarseness
+        push!(es, e)
+        e = e - factor*basis_coarseness
+    end
+    e = mid + factor*basis_coarseness
+    while e<maximum(ranges[d]) - .5basis_coarseness
+        push!(es, e)
+        e = e + factor*basis_coarseness
+    end
+
+    tuple(es...)
+end
+
+
+
+function split_domain_1d(gamma, dim, mid)
+    a = leftendpoint(gamma); b = rightendpoint(gamma)
+    dx = BasisFunctions.stepsize(elements(gamma)[dim])
+    D = length(dx)
+    if dim ==1
+        split_domain = interval(mid-dx/2,mid+dx/2)×Domains.ProductDomain([interval(a[i],b[i]) for i in 2:length(a)]...)
+    elseif dim==D
+        split_domain = ProductDomain([interval(a[i],b[i]) for i in 1:length(a)-1]...)×interval(mid-dx/2,mid+dx/2)
+    else
+        split_domain = ProductDomain([interval(a[i],b[i]) for i in 1:dim-1]...)×interval(mid-dx/2,mid+dx/2)×ProductDomain([interval(a[i],b[i]) for i in dim+1:length(a)]...)
+    end
+    split_domain
+end
+
+split_domain_Nd(gamma, mids::Vector{ELT}) where {ELT<:Real} = UnionDomain([split_domain_1d(gamma, d, mids[d]) for d in 1:length(mids)]...)
+
+split_domain_Nd(gamma, mids::Vector{NTuple{N,ELT}}) where {N,ELT<:Real} = UnionDomain([       UnionDomain([split_domain_1d(gamma, d, x) for x in mids[d]]...) for d in 1:length(mids)]...)
+
+
+function divide_and_conquer_N_util_operators(fplatform::BasisFunctions.Platform, i, ranges)
+    platform = fplatform.super_platform
+    basis = primal(platform, i)
+    S = sampler(fplatform, i)
+    s = sampler(platform, i)
+    domain = FrameFun.domain(primal(fplatform, i))
+    gamma = BasisFunctions.grid(s)
+    omega = BasisFunctions.grid(S)
+    FrameFun.divide_and_conquer_N_util_operators(omega, gamma, basis, domain, ranges)
+end
+
+
+# The grid on the boundary of omega
+divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, domain::Domains.Domain, ranges::AbstractVector) =
+    divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, FrameFun.boundary_support_grid(basis, boundary_grid(gamma, domain), omega)::AbstractGrid, ranges::AbstractVector)
+
+function divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, DMZ::AbstractGrid, ranges::AbstractVector)
+    DMZs, GRs = FrameFun.split_DMZ(DMZ, basis, gamma, ranges)
+    A0 = Array{CompositeOperator}(length(DMZs))
+    GR0 = Array{IndexRestrictionOperator}(length(DMZs))
+    # FE0 = Array{IndexExtensionOperator}(length(DMZs))
+    for (i,dmz) in enumerate(DMZs)
+        frame_restriction, grid_restriction = FrameFun._spline_util_restriction_operators(basis, gamma, dmz)
+        A0[i] = (GridSamplingOperator(gridspace(dmz))*basis)*frame_restriction'
+        GR0[i] = grid_restriction
+        # FE0[i] = frame_restriction'
+    end
+
+    A1 = Vector{CompositeOperator}(length(GRs))
+    GR1 = Vector{IndexRestrictionOperator}(length(GRs))
+    # FE1 = Vector{IndexExtensionOperator}(length(GRs))
+    for (i,gr) in enumerate(GRs)
+        dmz = FrameFun.boundary_support_grid(basis, gr, DMZ)
+        frame_restriction, grid_restriction = FrameFun._spline_util_restriction_operators(basis, gamma, gr, dmz)
+        A1[i] = (GridSamplingOperator(gridspace(dmz))*basis)*frame_restriction'
+        GR1[i] = grid_restriction
+        # FE1[i] = frame_restriction'
+    end
+    A0, GR0, A1, GR1
 end

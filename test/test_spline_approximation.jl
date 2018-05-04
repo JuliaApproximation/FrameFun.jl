@@ -110,7 +110,7 @@ end
     @test norm(a*x-b)+1≈ 1
     x = AZS*b
     @test norm(a*x-b)+1≈ 1
-    x = FrameFun.az_solve(a, z', b, cutoff=epsilon, R=r)
+    x = FrameFun.az_solve(b, a, z', cutoff=epsilon, R=r)
     @test norm(a*x-b)+1≈ 1
     x = FrameFun.az_solve(fplatform, i, f2d; cutoff=epsilon)
     @test norm(a*x-b)+1≈ 1
@@ -130,7 +130,7 @@ end
     A = BasisFunctions.A(fplatform, i);
     Z = BasisFunctions.Z(fplatform, i);
     r = FrameFun.estimate_plunge_rank(A)
-    @test r==16
+    @test r==12
     S = sampler(fplatform, i)
     boundary = FrameFun.boundary_grid(BasisFunctions.grid(s), dom)
     dx = BasisFunctions.stepsize(elements(BasisFunctions.grid(s))[1])
@@ -155,11 +155,11 @@ end
     x = AZS*b
     @test 1+norm(A*x-b)≈1
 
-    x = FrameFun.az_solve(A, Z', b)
+    x = FrameFun.az_solve(b, A, Z')
     @test 1+norm(A*x-b)≈1
-    x = FrameFun.azs_solve(A, Z', BR', DMZ_R, b)
+    x = FrameFun.azs_solve(b, A, Z', BR', DMZ_R)
     @test 1+norm(A*x-b)≈1
-    x = FrameFun.azsdc_solve(A, Z', BRsplit', BR1', BR2', DMZ_Rsplit, DMZ_R1, DMZ_R2, b)
+    x = FrameFun.azsdc_solve(b, A, Z', BRsplit', BR1', BR2', DMZ_Rsplit, DMZ_R1, DMZ_R2)
     @test 1+norm(A*x-b)≈1
 
     x = FrameFun.az_solve(fplatform, i, fun)
@@ -168,6 +168,10 @@ end
     @test 1+norm(A*x-b)≈1
     x = FrameFun.azsdc_solve(fplatform, i, fun, 1, [0,.5])
     @test 1+norm(A*x-b)≈1
+    x = FrameFun.azsdcN_solve(fplatform, i, fun, [[0,.5],[0,.5]])
+    @test 1+norm(A*x-b)≈1
+
+
 
     op = FrameFun.AZSSolver(fplatform, i)
     x = op*b;@test 1+norm(A*x-b)≈1
