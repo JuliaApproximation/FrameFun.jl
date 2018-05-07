@@ -259,13 +259,15 @@ function azsdc_solve(fplatform::BasisFunctions.Platform, i, f::Function, dim::In
     end
 end
 
-function azsdcN_solve(fplatform::BasisFunctions.Platform, i, f::Function, ranges; R=0, options...)
+function azsdcN_solve(fplatform::BasisFunctions.Platform, i, f::Function, ranges; recur=nothing, R=0, options...)
     platform = fplatform.super_platform
     a = A(fplatform, i)
     zt = Zt(fplatform, i)
     S = sampler(fplatform, i)
+    D = dimension(src(a))
+    (recur==nothing) && (recur = D==3? 2:1)
 
     (R == 0) && (R=estimate_plunge_rank(a))
-    ops = FrameFun.divide_and_conquer_N_util_operators(fplatform, i, ranges; options...)
+    ops = FrameFun.divide_and_conquer_N_util_operators(fplatform, i, ranges; recur=recur, options...)
     azsdcN_solve(S*f, a, zt, ops...; options...)
 end

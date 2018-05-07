@@ -483,6 +483,5 @@ function divideandconqerN_solve(b::Vector, A,
         y0 = LAPACK.gelsy!(matrix(a), gr*b_ext, cutoff)[1]
         x0[a.operators[1].subindices] .+= y0
     end
-
     x0
 end

@@ -267,10 +267,11 @@ end
 divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, domain::Domains.Domain, ranges::AbstractVector; options...) =
     divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, FrameFun.boundary_support_grid(basis, boundary_grid(gamma, domain), omega)::AbstractGrid, ranges::AbstractVector; options...)
 
-function FrameFun.divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, DMZ::AbstractGrid, ranges::AbstractVector; recur=1, options...)
+function FrameFun.divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, DMZ::AbstractGrid, ranges::AbstractVector; recur=nothing, options...)
     DMZs, GRs = FrameFun.split_DMZ(DMZ, basis, gamma, ranges; options...)
     OP = GridSamplingOperator(gridspace(gamma))*basis
     ops = []
+    (recur == nothing) && (recur = dimension(basis)==3 ? 2 :1 )
     if recur >= 1
         ops = push!(ops, FrameFun.util_operators(OP, DMZ, DMZs, GRs, gamma, basis)...)
     end
