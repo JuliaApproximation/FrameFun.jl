@@ -31,7 +31,7 @@ function boundary_support_grid(B, boundary_grid::Union{MaskedGrid}, omega_grid::
 end
 
 
-function FrameFun.boundary_support_grid(B, boundary_grid::IndexSubGrid, omega_grid::MaskedGrid)
+function boundary_support_grid(B, boundary_grid::IndexSubGrid, omega_grid::MaskedGrid)
     boundary_indices = FrameFun.boundary_element_indices(B,boundary_grid)
     s = Set{CartesianIndex{dimension(B)}}()
     for i in boundary_indices
@@ -194,8 +194,8 @@ function split_DMZ(DMZ::AbstractGrid, basis, gamma, ranges; options...)
 end
 
 
-function intersect_DMZ(DMZ::AbstractGrid, basis, gamma::AbstractGrid, ranges; verbose=false, factor=3, shift=false, options...)
-    domain_grid = domain_grid_Nd(basis, ranges, factor, shift)
+function intersect_DMZ(DMZ::AbstractGrid, basis, gamma::AbstractGrid, ranges; verbose=false, factor=3, options...)
+    domain_grid = domain_grid_Nd(basis, ranges, factor; options...)
     split_domain = split_domain_Nd(gamma, domain_grid)
     verbose && println(split_domain)
 
@@ -209,9 +209,9 @@ end
 
 
 
-domain_grid_Nd(basis, ranges, factor, shift=false) = [domain_grid_1d(d, basis, ranges, factor, shift) for d in 1:length(ranges)]
+domain_grid_Nd(basis, ranges, factor; options...) = [domain_grid_1d(d, basis, ranges, factor; options...) for d in 1:dimension(basis)]
 
-function domain_grid_1d(d, basis, ranges, factor, shift=false)
+function domain_grid_1d(d, basis, ranges, factor; shift=false)
     basis_coarseness = BasisFunctions.support_length_of_compact_function(element(basis, d))
     mid = mean(ranges[d])
     shift && (mid = mid + basis_coarseness*factor/2)
@@ -251,7 +251,7 @@ split_domain_Nd(gamma, mids::Vector{ELT}) where {ELT<:Real} = UnionDomain([split
 split_domain_Nd(gamma, mids::Vector{NTuple{N,ELT}}) where {N,ELT<:Real} = UnionDomain([       UnionDomain([split_domain_1d(gamma, d, x) for x in mids[d]]...) for d in 1:length(mids)]...)
 
 
-function divide_and_conquer_N_util_operators(fplatform::BasisFunctions.Platform, i, ranges)
+function divide_and_conquer_N_util_operators(fplatform::BasisFunctions.Platform, i, ranges; options...)
     platform = fplatform.super_platform
     basis = primal(platform, i)
     S = sampler(fplatform, i)
@@ -259,19 +259,37 @@ function divide_and_conquer_N_util_operators(fplatform::BasisFunctions.Platform,
     domain = FrameFun.domain(primal(fplatform, i))
     gamma = BasisFunctions.grid(s)
     omega = BasisFunctions.grid(S)
-    FrameFun.divide_and_conquer_N_util_operators(omega, gamma, basis, domain, ranges)
+    FrameFun.divide_and_conquer_N_util_operators(omega, gamma, basis, domain, ranges; options...)
 end
 
 
 # The grid on the boundary of omega
-divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, domain::Domains.Domain, ranges::AbstractVector) =
-    divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, FrameFun.boundary_support_grid(basis, boundary_grid(gamma, domain), omega)::AbstractGrid, ranges::AbstractVector)
+divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, domain::Domains.Domain, ranges::AbstractVector; options...) =
+    divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, FrameFun.boundary_support_grid(basis, boundary_grid(gamma, domain), omega)::AbstractGrid, ranges::AbstractVector; options...)
 
-function divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, DMZ::AbstractGrid, ranges::AbstractVector)
-    DMZs, GRs = FrameFun.split_DMZ(DMZ, basis, gamma, ranges)
+function FrameFun.divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, DMZ::AbstractGrid, ranges::AbstractVector; recur=1, options...)
+    DMZs, GRs = FrameFun.split_DMZ(DMZ, basis, gamma, ranges; options...)
+    OP = GridSamplingOperator(gridspace(gamma))*basis
+    ops = []
+    if recur >= 1
+        ops = push!(ops, FrameFun.util_operators(OP, DMZ, DMZs, GRs, gamma, basis)...)
+    end
+    if recur >= 2
+        @assert length(DMZs)==1
+        try
+        SplitDMZs, SplitGRs = FrameFun.split_DMZ(DMZs[1], basis,  gamma, ranges; shift=true)
+        ops = push!(ops, FrameFun.util_operators(OP, DMZs[1], SplitDMZs, SplitGRs, gamma, basis)...)
+        catch
+            warn("no extra splitting was possible")
+        end
+    end
+    tuple(ops...)
+end
+
+
+function util_operators(OP, DMZ, DMZs, GRs, gamma, basis)
     A0 = Array{CompositeOperator}(length(DMZs))
     GR0 = Array{IndexRestrictionOperator}(length(DMZs))
-    OP = GridSamplingOperator(gridspace(gamma))*basis
     # FE0 = Array{IndexExtensionOperator}(length(DMZs))
     for (i,dmz) in enumerate(DMZs)
         frame_restriction, grid_restriction = FrameFun._spline_util_restriction_operators(basis, gamma, dmz)

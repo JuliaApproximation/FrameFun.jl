@@ -3,32 +3,6 @@
 # See also the file grid/subgrid.jl in BasisFunctions for the definition of
 # AbstractSubGrid and IndexSubGrid.
 
-# struct MaskedGridSubIndices{N}
-#     mask::BitArray{N}
-#     L::Int
-#
-#     MaskedGridSubIndices{N}(mask::BitArray{N}) where {N}= new{N}(mask, sum(mask))
-# end
-# MaskedGridSubIndices(mask::BitArray{N}) where {N} = MaskedGridSubIndices{N}(mask)
-#
-#
-#
-# @generated function Base.start(indices::MaskedGridSubIndices{N}) where{N}
-#     startargs = fill(1, N)
-#     stopargs =
-# 	:(CartesianRange(CartesianIndex{$N}($(startargs...)), CartesianIndex{$N}(size(indices.mask))), (1,CartesianIndex{$N}($(startargs...))))
-# end
-#
-# function Base.next(indices::FrameFun.MaskedGridSubIndices{N}, state) where {N}
-#     iter_state = state[2][2]
-#     idx, iter_state = next(state[1], iter_state)
-#     while !indices.mask[idx]
-#         idx, iter_state = next(state[1], iter_state)
-#     end
-#     idx, (state[1], (state[2][1]+1, iter_state))
-# end
-#
-# Base.done(I::MaskedGridSubIndices{N}, state) where {N} = done(state[1], state[2][2]) | state[2][1] > I.L
 
 """
 A MaskedGrid is a subgrid of another grid that is defined by a mask.
@@ -60,6 +34,9 @@ convert(::Type{NTuple{N,Int}},i::CartesianIndex{N}) where {N} = ntuple(k->i[k],N
 
 MaskedGrid(supergrid::AbstractGrid, domain::Domain) =
     MaskedGrid(supergrid, in.(supergrid, domain))
+
+# MaskedGrid(maskedgrid::MaskedGrid, domain::Domain) =
+#     MaskedGrid(supergrid(maskedgrid), mask(maskedgrid) .& in.(supergrid(maskedgrid), domain))
 
 MaskedGrid(supergrid::AbstractGrid, mask) = MaskedGrid(supergrid, mask, subindices(supergrid, mask))
 
@@ -191,7 +168,7 @@ function boundary_mask(grid::AbstractGrid, domain::Domains.Domain)
     m
 end
 
-collect_neighbours!(mask::BitArray{N}, start_index, grid::MaskedGrid) where {N} =  collect_neighbours!(mask, start_index, BitArray(grid.mask))
+# collect_neighbours!(mask::BitArray{N}, start_index, grid::MaskedGrid) where {N} =  collect_neighbours!(mask, start_index, copy(grid.mask))
 collect_neighbours!(mask::BitArray{N}, start_index::CartesianIndex{N}, left_over::BitArray{N}) where {N} =  collect_neighbours!(mask, start_index.I, left_over)
 function collect_neighbours!(mask::BitArray{N}, index::NTuple{N,Int}, left_over::BitArray{N}) where {N}
     mask[index...] = true
@@ -213,8 +190,10 @@ function -(m1::MaskedGrid, m2::MaskedGrid)
 end
 
 function split(m::MaskedGrid)
+
     L = length(m)
     s = supergrid(m)
+    grid_mask = copy(m.mask)
     index = 0
     r = Array{AbstractGrid}(0)
     mask_total = BitArray(size(s)...)
@@ -225,7 +204,7 @@ function split(m::MaskedGrid)
             if !mask_total[i]
                 mask = BitArray(size(s)...)
                 mask[:] = 0
-                collect_neighbours!(mask, i, m)
+                collect_neighbours!(mask, i, grid_mask)
                 index += sum(mask)
                 mask_total = mask_total .| mask
                 push!(r, MaskedGrid(s, mask))
@@ -244,15 +223,15 @@ function split_in_IndexGrids(m::MaskedGrid)
     s = supergrid(m)
     index = 0
     r = IndexSubGrid[]
+    grid_mask = copy(m.mask)
     mask_total = BitArray(size(s)...)
     mask_total[:] = 0
-    mask = BitArray(size(s)...)
     while index < L
         for i in subindices(m)
             if !mask_total[i]
                 mask = BitArray(size(s)...)
                 mask[:] = 0
-                collect_neighbours!(mask, i, m)
+                collect_neighbours!(mask, i, grid_mask)
                 index += sum(mask)
                 mask_total = mask_total .| mask
 

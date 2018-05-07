@@ -203,6 +203,17 @@ azsdcN_solve(b, A::AbstractOperator, Zt::AbstractOperator,
     trunc=trunc, use_plunge=use_plunge, options...)
 
 
+azsdcN_solve(b, A::AbstractOperator, Zt::AbstractOperator,
+        A0::Vector{OP1}, GR0::Vector{OP2},
+        A1::Vector{OP3}, GR1::Vector{OP4},
+        A2::Vector{OP5}, GR2::Vector{OP6},
+        A3::Vector{OP7}, GR3::Vector{OP8};
+        trunc = divideandconqerN_solve, use_plunge=false, options...) where {OP1<:AbstractOperator, OP2<:AbstractOperator, OP3<:AbstractOperator, OP4<:AbstractOperator,  OP5<:AbstractOperator, OP6<:AbstractOperator, OP7<:AbstractOperator, OP8<:AbstractOperator}=
+    az_solve(b, A, Zt, A0..., GR0..., A1..., GR1..., A2..., GR2..., A3..., GR3...;
+    divideandconqerN_op_lengths=[length(A0), length(GR0), length(A1), length(GR1), length(A2), length(GR2), length(A3), length(GR3)],
+    trunc=trunc, use_plunge=use_plunge, options...)
+
+
 function az_solve(platform::BasisFunctions.Platform, i, f::Function; R=0, options...)
     a = A(platform, i)
     zt = Zt(platform, i)

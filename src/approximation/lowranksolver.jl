@@ -398,7 +398,22 @@ function divideandconqerN_solve(b::Vector, A, ops::AbstractOperator...; dividean
             i += 1
         end
     end
-    divideandconqerN_solve(b, A, A0, G0, A1, G1; options...)
+    if length(divideandconqerN_op_lengths) == 4
+        divideandconqerN_solve(b, A, A0, G0, A1, G1; options...)
+    else
+        A2 = Array{CompositeOperator}(divideandconqerN_op_lengths[1])
+        G2 = Array{IndexRestrictionOperator}(divideandconqerN_op_lengths[2])
+        A3 = Array{CompositeOperator}(divideandconqerN_op_lengths[3])
+        G3 = Array{IndexRestrictionOperator}(divideandconqerN_op_lengths[4])
+        i = 1
+        for ARRAY in (A2, G2, A3, G3)
+            for j in 1:length(ARRAY)
+                ARRAY[j] = ops[i]
+                i += 1
+            end
+        end
+        divideandconqerN_solve(b, A, A0, G0, A1, G1, A2, G2, A3, G3; options...)
+    end
 end
 
 function divideandconqerN_solve(b::Vector, A, A0::Vector{OP1}, GR0::Vector{OP2},
@@ -425,5 +440,49 @@ function divideandconqerN_solve(b::Vector, A, A0::Vector{OP1}, GR0::Vector{OP2},
         y0 = LAPACK.gelsy!(matrix(a), gr*b_ext, cutoff)[1]
         x0[a.operators[1].subindices] .+= y0
     end
+    x0
+end
+
+function divideandconqerN_solve(b::Vector, A,
+        A0::Vector{OP1}, GR0::Vector{OP2},
+        A1::Vector{OP3}, GR1::Vector{OP4},
+        A2::Vector{OP5}, GR2::Vector{OP6},
+        A3::Vector{OP7}, GR3::Vector{OP8};
+        cutoff=FrameFun.default_cutoff(A), options...) where {OP1<:AbstractOperator, OP2<:IndexRestrictionOperator, OP3<:AbstractOperator, OP4<:IndexRestrictionOperator, OP5<:AbstractOperator, OP6<:IndexRestrictionOperator, OP7<:AbstractOperator, OP8<:IndexRestrictionOperator}
+    omega = BasisFunctions.grid(dest(A))
+    gamma = supergrid(omega)
+    omega_restriction = restriction_operator(gridspace(gamma), gridspace(omega))
+    b_ext = omega_restriction'b
+    b_ext_copy = copy(b_ext)
+    x0 = zeros(src(A))
+
+    bnew = similar(b)
+
+    # split domain of split domain
+    for (gr,a) in zip(GR2,A2)
+        y0 = LAPACK.gelsy!(matrix(a), gr*b_ext, cutoff)[1]
+        x0[a.operators[1].subindices] .+= y0
+    end
+    apply!(A, bnew, x0)
+    for (i_i,i) in enumerate(subindices(omega))
+        b_ext[i] -= bnew[i_i]
+    end
+
+    # pieces of split domain
+    for (gr,a) in zip(GR3,A3)
+        y0 = LAPACK.gelsy!(matrix(a), gr*b_ext, cutoff)[1]
+        x0[a.operators[1].subindices] .+= y0
+    end
+    apply!(A, bnew, x0)
+    for (i_i,i) in enumerate(subindices(omega))
+        b_ext[i] = b_ext_copy[i] - bnew[i_i]
+    end
+
+    # pieces of domain
+    for (gr,a) in zip(GR1,A1)
+        y0 = LAPACK.gelsy!(matrix(a), gr*b_ext, cutoff)[1]
+        x0[a.operators[1].subindices] .+= y0
+    end
+
     x0
 end
