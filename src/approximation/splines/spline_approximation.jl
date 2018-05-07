@@ -271,10 +271,11 @@ function divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::Abstrac
     DMZs, GRs = FrameFun.split_DMZ(DMZ, basis, gamma, ranges)
     A0 = Array{CompositeOperator}(length(DMZs))
     GR0 = Array{IndexRestrictionOperator}(length(DMZs))
+    OP = GridSamplingOperator(gridspace(gamma))*basis
     # FE0 = Array{IndexExtensionOperator}(length(DMZs))
     for (i,dmz) in enumerate(DMZs)
         frame_restriction, grid_restriction = FrameFun._spline_util_restriction_operators(basis, gamma, dmz)
-        A0[i] = (GridSamplingOperator(gridspace(dmz))*basis)*frame_restriction'
+        A0[i] = grid_restriction*OP*frame_restriction'
         GR0[i] = grid_restriction
         # FE0[i] = frame_restriction'
     end
@@ -285,7 +286,7 @@ function divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::Abstrac
     for (i,gr) in enumerate(GRs)
         dmz = FrameFun.boundary_support_grid(basis, gr, DMZ)
         frame_restriction, grid_restriction = FrameFun._spline_util_restriction_operators(basis, gamma, gr, dmz)
-        A1[i] = (GridSamplingOperator(gridspace(dmz))*basis)*frame_restriction'
+        A1[i] = grid_restriction*OP*frame_restriction'
         GR1[i] = grid_restriction
         # FE1[i] = frame_restriction'
     end
