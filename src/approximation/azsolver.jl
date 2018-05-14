@@ -222,16 +222,15 @@ function az_solve(platform::BasisFunctions.Platform, i, f::Function; R=0, option
     az_solve(s*f, a, zt; R=R, options...)
 end
 
-function azs_solve(platform::BasisFunctions.Platform, i, f::Function; R=0, options...)
+function azs_solve(platform::BasisFunctions.Platform, i, f::Function; options...)
     a = A(platform, i)
     zt = Zt(platform, i)
     s = sampler(platform, i)
     rd,sb = spline_util_restriction_operators(platform, i)
-    (R == 0) && (R=estimate_plunge_rank(a))
-    azs_solve(s*f, a, zt, rd', sb; R=R, options...)
+    azs_solve(s*f, a, zt, rd', sb; options...)
 end
 
-function azsdc_solve(fplatform::BasisFunctions.Platform, i, f::Function, dim::Int, range; R=0, options...)
+function azsdc_solve(fplatform::BasisFunctions.Platform, i, f::Function, dim::Int, range; options...)
     platform = fplatform.super_platform
     a = A(fplatform, i)
     zt = Zt(fplatform, i)
@@ -245,21 +244,19 @@ function azsdc_solve(fplatform::BasisFunctions.Platform, i, f::Function, dim::In
     dom = domain(primal(fplatform, i))
     p = primal(platform, i)
 
-    (R == 0) && (R=estimate_plunge_rank(a))
-
     ops = FrameFun.divide_and_conquer_restriction_operators(omega, gamma, p, dom, dim, range; options...)
 
     if length(ops) == 2
         frame_res, grid_res = ops
         warn("going over to azs_solve")
-        azs_solve(S*f, a, zt, frame_res', grid_res; R=R, options...)
+        azs_solve(S*f, a, zt, frame_res', grid_res; options...)
     else
         frame_res0, frame_res1, frame_res2, grid_res0, grid_res1, grid_res2 = ops
-        azsdc_solve(S*f, a, zt, frame_res0', frame_res1', frame_res2', grid_res0, grid_res1, grid_res2; R=R, options...)
+        azsdc_solve(S*f, a, zt, frame_res0', frame_res1', frame_res2', grid_res0, grid_res1, grid_res2; options...)
     end
 end
 
-function azsdcN_solve(fplatform::BasisFunctions.Platform, i, f::Function, ranges; recur=nothing, R=0, options...)
+function azsdcN_solve(fplatform::BasisFunctions.Platform, i, f::Function, ranges; recur=nothing, options...)
     platform = fplatform.super_platform
     a = A(fplatform, i)
     zt = Zt(fplatform, i)
@@ -267,7 +264,29 @@ function azsdcN_solve(fplatform::BasisFunctions.Platform, i, f::Function, ranges
     D = dimension(src(a))
     (recur==nothing) && (recur = D==3? 2:1)
 
-    (R == 0) && (R=estimate_plunge_rank(a))
     ops = FrameFun.divide_and_conquer_N_util_operators(fplatform, i, ranges; recur=recur, options...)
     azsdcN_solve(S*f, a, zt, ops...; options...)
 end
+
+function az_tree_solve(fplatform::BasisFunctions.Platform, i, f::Function;
+        options...)
+    platform = fplatform.super_platform
+    a = A(fplatform, i)
+    zt = Zt(fplatform, i)
+    S = sampler(fplatform, i)
+
+    # The grid on Gamma
+    gamma = grid(sampler(platform, i))
+    # The grid on Omega
+    omega = grid(S)
+
+    dom = domain(primal(fplatform, i))
+    basis = primal(platform, i)
+
+    solver = DomainDecompositionSolver(basis, gamma, omega, dom; options...)
+    az_tree_solve(S*f, a, zt, solver; options...)
+end
+
+az_tree_solve(b::Vector, A::AbstractOperator, Zt::AbstractOperator, S::DomainDecompositionSolver;
+        trunc = domaindecomposition_solve, use_plunge=false, options...) =
+    az_solve(b, A, Zt, S; trunc=trunc, use_plunge=use_plunge, options...)

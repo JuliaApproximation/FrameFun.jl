@@ -8,6 +8,7 @@ using RecipesBase
 
 using Domains
 using BasisFunctions
+using Combinatorics: permutations
 
 ###############################
 ## Exhaustive list of imports
@@ -165,6 +166,7 @@ include("frames/extensionframe.jl")
 include("frames/weighted_sum_frame.jl")
 
 include("approximation/splines/spline_approximation.jl")
+include("approximation/splines/split_grid.jl")
 
 include("fun/basisdomains.jl")
 include("fun/funs.jl")

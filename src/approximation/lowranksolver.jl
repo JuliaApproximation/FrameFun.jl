@@ -485,3 +485,20 @@ function divideandconqerN_solve(b::Vector, A,
     end
     x0
 end
+
+struct DomainDecompositionSolver{ELT} <: FE_Solver{ELT}
+    tree    :: AbstractDomainDecompositionNode
+    basis   :: Dictionary
+    gamma   :: AbstractGrid
+    omega   :: AbstractGrid
+    domain  :: Domain
+end
+
+DomainDecompositionSolver(basis, gamma, omega, domain; options...) =
+    DomainDecompositionSolver{coeftype(basis)}(create_tree(basis, gamma, omega, domain; options...), basis, gamma, omega, domain)
+
+src(s::DomainDecompositionSolver) = extensionframe(s.basis, s.domain)
+dest(s::DomainDecompositionSolver{ELT}) where {ELT} = gridspace(s.omega, ELT)
+
+domaindecomposition_solve(b::Vector, A::AbstractOperator, s::DomainDecompositionSolver; options...) =
+    solve(b, A, s.tree, s.basis, s.gamma, s.omega; options...)

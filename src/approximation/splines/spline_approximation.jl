@@ -12,22 +12,36 @@ function boundary_element_indices(B, boundary::AbstractGrid)
     collect(s)
 end
 
+boundary_element_mask(B::Dictionary, boundary::AbstractGrid) =
+    boundary_element_mask!(BitArray(size(B)), B, boundary)
+
+function boundary_element_mask!(m::BitArray, B::Dictionary, boundary::AbstractGrid)
+    m[:]=0
+    for x in boundary
+        for i in BasisFunctions.overlapping_elements(B, x)
+            m[i] = true
+        end
+    end
+    m
+end
 
 """
 A grid that contains the points of `omega_grid` that are not evaluated to zero by the elements that overlap with boundary_grid.
 """
-function boundary_support_grid(B, boundary_grid::Union{MaskedGrid}, omega_grid::Union{MaskedGrid,IndexSubGrid})
-    boundary_indices = FrameFun.boundary_element_indices(B,boundary_grid)
-    s = Set{CartesianIndex{dimension(B)}}()
-    for i in boundary_indices
-        push!(s,BasisFunctions.support_indices(B,supergrid(omega_grid),i)...)
-    end
-    a = collect(s)
-    m = BitArray(size(FrameFun.mask(omega_grid)))#zeros(Bool,)
+function boundary_support_grid(basis, boundary_grid::Union{MaskedGrid}, omega_grid::Union{MaskedGrid,IndexSubGrid})
+    boundary_element_m = FrameFun.boundary_element_mask(basis, boundary_grid)
+    gamma = supergrid(omega_grid)
+    m = BitArray(size(gamma))
     m[:] = 0
-    m[a] = true
+    for i in eachindex(boundary_element_m)
+        if boundary_element_m[i]
+            for ii in BasisFunctions.support_indices(basis,gamma,i)
+                m[ii] = true
+            end
+        end
+    end
     m .= m .& FrameFun.mask(omega_grid)
-    MaskedGrid(supergrid(omega_grid),m)
+    MaskedGrid(gamma,m)
 end
 
 
@@ -206,50 +220,6 @@ function intersect_DMZ(DMZ::AbstractGrid, basis, gamma::AbstractGrid, ranges; ve
     end
     split_grid
 end
-
-
-
-domain_grid_Nd(basis, ranges, factor; options...) = [domain_grid_1d(d, basis, ranges, factor; options...) for d in 1:dimension(basis)]
-
-function domain_grid_1d(d, basis, ranges, factor; shift=false)
-    basis_coarseness = BasisFunctions.support_length_of_compact_function(element(basis, d))
-    mid = mean(ranges[d])
-    shift && (mid = mid + basis_coarseness*factor/2)
-    e = mid; es = [e]
-    e = mid - factor*basis_coarseness
-    while e>minimum(ranges[d]) + .5basis_coarseness
-        push!(es, e)
-        e = e - factor*basis_coarseness
-    end
-    e = mid + factor*basis_coarseness
-    while e<maximum(ranges[d]) - .5basis_coarseness
-        push!(es, e)
-        e = e + factor*basis_coarseness
-    end
-
-    tuple(es...)
-end
-
-
-
-function split_domain_1d(gamma, dim, mid)
-    a = leftendpoint(gamma); b = rightendpoint(gamma)
-    dx = BasisFunctions.stepsize(elements(gamma)[dim])
-    D = length(dx)
-    if dim ==1
-        split_domain = interval(mid-dx/2,mid+dx/2)×Domains.ProductDomain([interval(a[i],b[i]) for i in 2:length(a)]...)
-    elseif dim==D
-        split_domain = ProductDomain([interval(a[i],b[i]) for i in 1:length(a)-1]...)×interval(mid-dx/2,mid+dx/2)
-    else
-        split_domain = ProductDomain([interval(a[i],b[i]) for i in 1:dim-1]...)×interval(mid-dx/2,mid+dx/2)×ProductDomain([interval(a[i],b[i]) for i in dim+1:length(a)]...)
-    end
-    split_domain
-end
-
-split_domain_Nd(gamma, mids::Vector{ELT}) where {ELT<:Real} = UnionDomain([split_domain_1d(gamma, d, mids[d]) for d in 1:length(mids)]...)
-
-split_domain_Nd(gamma, mids::Vector{NTuple{N,ELT}}) where {N,ELT<:Real} = UnionDomain([       UnionDomain([split_domain_1d(gamma, d, x) for x in mids[d]]...) for d in 1:length(mids)]...)
-
 
 function divide_and_conquer_N_util_operators(fplatform::BasisFunctions.Platform, i, ranges; options...)
     platform = fplatform.super_platform
