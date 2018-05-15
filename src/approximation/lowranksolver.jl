@@ -494,6 +494,11 @@ struct DomainDecompositionSolver{ELT} <: FE_Solver{ELT}
     domain  :: Domain
 end
 
+DomainDecompositionSolver(fplatform::BasisFunctions.GenericPlatform, i; options...) =
+    DomainDecompositionSolver(primal(fplatform.super_platform, i), grid(sampler(fplatform.super_platform, i)),
+        grid(sampler(fplatform, i)), domain(primal(fplatform, i)); options...)
+
+
 DomainDecompositionSolver(basis, gamma, omega, domain; options...) =
     DomainDecompositionSolver{coeftype(basis)}(create_tree(basis, gamma, omega, domain; options...), basis, gamma, omega, domain)
 

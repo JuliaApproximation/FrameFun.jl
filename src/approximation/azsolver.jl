@@ -256,7 +256,7 @@ function azsdc_solve(fplatform::BasisFunctions.Platform, i, f::Function, dim::In
     end
 end
 
-function azsdcN_solve(fplatform::BasisFunctions.Platform, i, f::Function, ranges; recur=nothing, options...)
+function azsdcN_solve(fplatform::BasisFunctions.Platform, i, f::Function; recur=nothing, options...)
     platform = fplatform.super_platform
     a = A(fplatform, i)
     zt = Zt(fplatform, i)
@@ -264,7 +264,7 @@ function azsdcN_solve(fplatform::BasisFunctions.Platform, i, f::Function, ranges
     D = dimension(src(a))
     (recur==nothing) && (recur = D==3? 2:1)
 
-    ops = FrameFun.divide_and_conquer_N_util_operators(fplatform, i, ranges; recur=recur, options...)
+    ops = FrameFun.divide_and_conquer_N_util_operators(fplatform, i; recur=recur, options...)
     azsdcN_solve(S*f, a, zt, ops...; options...)
 end
 

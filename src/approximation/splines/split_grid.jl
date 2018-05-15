@@ -212,7 +212,7 @@ function domain_grid_Nd(basis::Dictionary, gamma::AbstractGrid, ranges::Domain; 
 end
 
 "The coordinates of places interesting for decomposing a domain in 1 dimension"
-function FrameFun.domain_grid_1d(d::Int, basis::Dictionary, gamma::AbstractGrid, ranges;
+function domain_grid_1d(d::Int, basis::Dictionary, gamma::AbstractGrid, ranges;
         shift::Bool=false, factor::Real=3, options...)
     basis_coarseness = BasisFunctions.support_length_of_compact_function(element(basis, d))
     grid_coarsness = BasisFunctions.stepsize(element(gamma, d))

@@ -145,8 +145,10 @@ function divide_and_conquer_restriction_operators(fplatform::BasisFunctions.Plat
 end
 
 # The grid on the boundary of omega
-divide_and_conquer_restriction_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, domain::Domains.Domain, dim::Int, range::AbstractVector) =
-    divide_and_conquer_restriction_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, FrameFun.boundary_support_grid(basis, boundary_grid(gamma, domain), omega)::AbstractGrid, dim::Int, range::AbstractVector)
+divide_and_conquer_restriction_operators(omega::AbstractGrid, gamma::AbstractGrid,
+        basis::Dictionary, domain::Domains.Domain, dim::Int, range::AbstractVector) =
+    divide_and_conquer_restriction_operators(omega::AbstractGrid, gamma::AbstractGrid,
+        basis::Dictionary, FrameFun.boundary_support_grid(basis, boundary_grid(gamma, domain), omega)::AbstractGrid, dim::Int, range::AbstractVector)
 
 function intersect_boundary(DMZ::AbstractGrid, gamma::AbstractGrid, dim::Int, range)
     a = leftendpoint(gamma); b = rightendpoint(gamma)
@@ -170,7 +172,8 @@ function intersect_boundary(DMZ::AbstractGrid, gamma::AbstractGrid, dim::Int, ra
     split_grid
 end
 
-function divide_and_conquer_restriction_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, DMZ::AbstractGrid, dim::Int, range::AbstractVector)
+function divide_and_conquer_restriction_operators(omega::AbstractGrid,
+        gamma::AbstractGrid, basis::Dictionary, DMZ::AbstractGrid, dim::Int, range::AbstractVector)
     split_grid = FrameFun.intersect_boundary(DMZ, gamma, dim, range)
     #  The points on the support of the functions overlapping with split_grid
     mid = FrameFun.boundary_support_grid(basis, split_grid, DMZ)
@@ -197,7 +200,7 @@ function divide_and_conquer_restriction_operators(omega::AbstractGrid, gamma::Ab
 end
 
 
-function split_DMZ(DMZ::AbstractGrid, basis, gamma, ranges; options...)
+function split_DMZ(DMZ::AbstractGrid, basis::Dictionary, gamma::AbstractGrid, ranges::Domain; options...)
     split_grid = intersect_DMZ(DMZ::AbstractGrid, basis, gamma::AbstractGrid, ranges; options...)
     split_grid_DMZ = FrameFun.boundary_support_grid(basis, split_grid, DMZ)
     left_over = DMZ - split_grid_DMZ
@@ -208,8 +211,8 @@ function split_DMZ(DMZ::AbstractGrid, basis, gamma, ranges; options...)
 end
 
 
-function intersect_DMZ(DMZ::AbstractGrid, basis, gamma::AbstractGrid, ranges; verbose=false, factor=3, options...)
-    domain_grid = domain_grid_Nd(basis, ranges, factor; options...)
+function intersect_DMZ(DMZ::AbstractGrid, basis::Dictionary, gamma::AbstractGrid, ranges::Domain; verbose=false, options...)
+    domain_grid = domain_grid_Nd(basis, gamma, ranges; options...)
     split_domain = split_domain_Nd(gamma, domain_grid)
     verbose && println(split_domain)
 
@@ -221,7 +224,7 @@ function intersect_DMZ(DMZ::AbstractGrid, basis, gamma::AbstractGrid, ranges; ve
     split_grid
 end
 
-function divide_and_conquer_N_util_operators(fplatform::BasisFunctions.Platform, i, ranges; options...)
+function divide_and_conquer_N_util_operators(fplatform::BasisFunctions.Platform, i; ranges=nothing, options...)
     platform = fplatform.super_platform
     basis = primal(platform, i)
     S = sampler(fplatform, i)
@@ -229,15 +232,16 @@ function divide_and_conquer_N_util_operators(fplatform::BasisFunctions.Platform,
     domain = FrameFun.domain(primal(fplatform, i))
     gamma = BasisFunctions.grid(s)
     omega = BasisFunctions.grid(S)
+    (ranges==nothing) && (ranges=domain)
     FrameFun.divide_and_conquer_N_util_operators(omega, gamma, basis, domain, ranges; options...)
 end
 
 
 # The grid on the boundary of omega
-divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, domain::Domains.Domain, ranges::AbstractVector; options...) =
-    divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, FrameFun.boundary_support_grid(basis, boundary_grid(gamma, domain), omega)::AbstractGrid, ranges::AbstractVector; options...)
+divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, domain::Domains.Domain, ranges::Domain; options...) =
+    divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, FrameFun.boundary_support_grid(basis, boundary_grid(gamma, domain), omega)::AbstractGrid, ranges::Domain; options...)
 
-function FrameFun.divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, DMZ::AbstractGrid, ranges::AbstractVector; recur=nothing, options...)
+function FrameFun.divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, DMZ::AbstractGrid, ranges::Domain; recur=nothing, options...)
     DMZs, GRs = FrameFun.split_DMZ(DMZ, basis, gamma, ranges; options...)
     OP = GridSamplingOperator(gridspace(gamma))*basis
     ops = []
