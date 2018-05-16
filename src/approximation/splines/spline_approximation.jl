@@ -172,7 +172,7 @@ function intersect_boundary(DMZ::AbstractGrid, gamma::AbstractGrid, dim::Int, ra
     split_grid
 end
 
-function divide_and_conquer_restriction_operators(omega::AbstractGrid,
+function FrameFun.divide_and_conquer_restriction_operators(omega::AbstractGrid,
         gamma::AbstractGrid, basis::Dictionary, DMZ::AbstractGrid, dim::Int, range::AbstractVector)
     split_grid = FrameFun.intersect_boundary(DMZ, gamma, dim, range)
     #  The points on the support of the functions overlapping with split_grid
@@ -188,14 +188,14 @@ function divide_and_conquer_restriction_operators(omega::AbstractGrid,
             warn("ratio between the separated grids is not distributed evenly: $(length(left)) and $(length(right))")
         end
 
-        BR0, DMZ_R0 = _spline_util_restriction_operators(basis, omega, mid)
-        BR1, DMZ_R1 = _spline_util_restriction_operators(basis, omega, left, leftDMZ)
-        BR2, DMZ_R2 = _spline_util_restriction_operators(basis, omega, right, rightDMZ)
+        BR0, DMZ_R0 = FrameFun._spline_util_restriction_operators(basis, omega, FrameFun.boundary_support_grid(basis, mid, DMZ))
+        BR1, DMZ_R1 = FrameFun._spline_util_restriction_operators(basis, omega, left, leftDMZ)
+        BR2, DMZ_R2 = FrameFun._spline_util_restriction_operators(basis, omega, right, rightDMZ)
 
         BR0, BR1, BR2, DMZ_R0, DMZ_R1, DMZ_R2
     else
         warn("No grid splitting possible")
-        BR, DMZ_R = _spline_util_restriction_operators(basis, omega, DMZ)
+        BR, DMZ_R = FrameFun._spline_util_restriction_operators(basis, omega, DMZ)
     end
 end
 
@@ -207,7 +207,7 @@ function split_DMZ(DMZ::AbstractGrid, basis::Dictionary, gamma::AbstractGrid, ra
     if length(left_over) == 0
         return [DMZ], AbstractGrid[]
     end
-    FrameFun.split_in_IndexGrids(split_grid_DMZ), FrameFun.split_in_IndexGrids(left_over)
+    FrameFun.split_in_IndexGrids(FrameFun.boundary_support_grid(basis, split_grid_DMZ, DMZ)), FrameFun.split_in_IndexGrids(left_over)
 end
 
 
