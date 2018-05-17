@@ -33,7 +33,7 @@ delimit("Spline approximation")
     B = superdict(primal(fplatform, i))
     S, R = spline_util_restriction_operators(fplatform, i)
     @test size(S)==(476, 1600)
-    @test size(R)==(982 , 1808)
+    @test size(R)==(988 , 1808)
 
     omega_grid = BasisFunctions.grid(sampler(fplatform, 1))
     g = supergrid(omega_grid)
