@@ -202,6 +202,10 @@ azsdcN_solve(b, A::AbstractOperator, Zt::AbstractOperator,
     divideandconqerN_op_lengths=[length(A0), length(GR0), length(A1), length(GR1)],
     trunc=trunc, use_plunge=use_plunge, options...)
 
+az_tree_solve(b, A::AbstractOperator, Zt::AbstractOperator, solver::DomainDecompositionSolver;
+        trunc=domaindecomposition_solve, use_plunge=false, options...) =
+    az_solve(b, A, Zt, solver; use_plunge=use_plunge ,trunc=trunc)
+
 
 azsdcN_solve(b, A::AbstractOperator, Zt::AbstractOperator,
         A0::Vector{OP1}, GR0::Vector{OP2},
@@ -287,6 +291,19 @@ function az_tree_solve(fplatform::BasisFunctions.Platform, i, f::Function;
     az_tree_solve(S*f, a, zt, solver; options...)
 end
 
-az_tree_solve(b::Vector, A::AbstractOperator, Zt::AbstractOperator, S::DomainDecompositionSolver;
-        trunc = domaindecomposition_solve, use_plunge=false, options...) =
-    az_solve(b, A, Zt, S; trunc=trunc, use_plunge=use_plunge, options...)
+# max_alloc(platform, i, fun) = *(max_system_size(platform, i, fun)...)*sizeof(Float64)/(1024)^3
+# function max_system_size(platform, i, fun::typeof(FrameFun.azs_solve))
+#     rd,sb = FrameFun.spline_util_restriction_operators(platform, i)
+#     ((size(sb,1), size(rd,1)))
+# end
+# function max_system_size(platform, i, fun::typeof(FrameFun.az_tree_solve))
+#     tree = FrameFun.DomainDecompositionSolver(platform, i).tree
+#     cs = FrameFun.leave_containers(tree)
+#     a = FrameFun.DomainDecompositionLeaf[]
+#     for c in cs
+#         for i in c.container
+#             push!(a, i)
+#         end
+#     end
+#     maximum(map(size, map(FrameFun.DMZ,a)))
+# end

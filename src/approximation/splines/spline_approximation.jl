@@ -16,7 +16,7 @@ boundary_element_mask(B::Dictionary, boundary::AbstractGrid) =
     boundary_element_mask!(BitArray(size(B)), B, boundary)
 
 function boundary_element_mask!(m::BitArray, B::Dictionary, boundary::AbstractGrid)
-    m[:]=0
+    m[:] = 0
     for x in boundary
         for i in BasisFunctions.overlapping_elements(B, x)
             m[i] = true
@@ -28,7 +28,7 @@ end
 """
 A grid that contains the points of `omega_grid` that are not evaluated to zero by the elements that overlap with boundary_grid.
 """
-function boundary_support_grid(basis, boundary_grid::Union{MaskedGrid}, omega_grid::Union{MaskedGrid,IndexSubGrid})
+function boundary_support_grid(basis, boundary_grid::Union{MaskedGrid,IndexSubGrid}, omega_grid::Union{MaskedGrid,IndexSubGrid})
     boundary_element_m = FrameFun.boundary_element_mask(basis, boundary_grid)
     gamma = supergrid(omega_grid)
     m = BitArray(size(gamma))
@@ -45,21 +45,21 @@ function boundary_support_grid(basis, boundary_grid::Union{MaskedGrid}, omega_gr
 end
 
 
-function boundary_support_grid(B, boundary_grid::IndexSubGrid, omega_grid::MaskedGrid)
-    boundary_indices = FrameFun.boundary_element_indices(B,boundary_grid)
-    s = Set{CartesianIndex{dimension(B)}}()
-    for i in boundary_indices
-        push!(s,BasisFunctions.support_indices(B,supergrid(omega_grid),i)...)
-    end
-    a = collect(s)
-    b = CartesianIndex{dimension(B)}[]
-    for ai in a
-        if is_subindex(ai, omega_grid)
-            push!(b,ai)
-        end
-    end
-    IndexSubGrid(supergrid(boundary_grid), b)
-end
+# function boundary_support_grid(B, boundary_grid::IndexSubGrid, omega_grid::MaskedGrid)
+#     boundary_indices = FrameFun.boundary_element_indices(B,boundary_grid)
+#     s = Set{CartesianIndex{dimension(B)}}()
+#     for i in boundary_indices
+#         push!(s,BasisFunctions.support_indices(B,supergrid(omega_grid),i)...)
+#     end
+#     a = collect(s)
+#     b = CartesianIndex{dimension(B)}[]
+#     for ai in a
+#         if is_subindex(ai, omega_grid)
+#             push!(b,ai)
+#         end
+#     end
+#     IndexSubGrid(supergrid(boundary_grid), b)
+# end
 
 spline_util_restriction_operators(platform::BasisFunctions.GenericPlatform, i) =
     spline_util_restriction_operators(primal(platform, i), sampler(platform, i))

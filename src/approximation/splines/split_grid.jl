@@ -213,12 +213,12 @@ end
 
 "The coordinates of places interesting for decomposing a domain in 1 dimension"
 function domain_grid_1d(d::Int, basis::Dictionary, gamma::AbstractGrid, ranges;
-        shift::Bool=false, factor::Real=3, options...)
+        shift::Bool=false, factor::Real=3, side_length=1000^(1/(dimension(basis)-1)), options...)
     basis_coarseness = BasisFunctions.support_length_of_compact_function(element(basis, d))
     grid_coarsness = BasisFunctions.stepsize(element(gamma, d))
-    step = max(factor*basis_coarseness, grid_coarsness*1000)
-    left = minimum(ranges[d]) + step
-    right = maximum(ranges[d]) - step
+    step = max(factor*basis_coarseness, grid_coarsness*side_length)
+    left = min(mean(ranges[d]),minimum(ranges[d]) + step)
+    right = max(mean(ranges[d]),maximum(ranges[d]) - step)
     N = floor(Int, max(0,(right-left)/(step)))
     if !shift
         if N == 0 || N == 1
@@ -343,8 +343,10 @@ function solve!(x0::Array{ELT}, A::AbstractOperator, b_ext::Array{ELT},
         gamma::AbstractGrid, omega::AbstractGrid, OP::AbstractOperator,
         depth::Int, b_ext_copy::Array{ELT}, bnew::Vector{ELT};
         cutoff=FrameFun.default_cutoff(OP)) where {ELT<:Number}
-    for i in 0:depth
-        for leaf in FrameFun.get_all_nodes(tree, i, depth)
+    to = 2^depth-1
+    for i in 0:to
+        n = 0
+        for leaf in FrameFun.get_nodes(tree, i)
             GR = restriction_operator(gridspace(gamma), gridspace(FrameFun.DMZ(leaf)))
             if FrameFun.grid(leaf) == nothing
                 boundary_indices = FrameFun.boundary_element_indices(basis, FrameFun.DMZ(leaf))
@@ -355,9 +357,11 @@ function solve!(x0::Array{ELT}, A::AbstractOperator, b_ext::Array{ELT},
             a = matrix(GR*OP*FR')
             # println(size(a))
             y0 = LAPACK.gelsy!(a, GR*b_ext, cutoff)[1]
+            # println( norm(GR*OP*FR'*y0- GR*b_ext ))
             x0[FR.subindices] .+= y0
+            n += 1
         end
-        if i < depth
+        if i < to && n > 0
             apply!(A, bnew, x0)
             for (i_i,i) in enumerate(subindices(omega))
                 b_ext[i] = b_ext_copy[i] - bnew[i_i]
