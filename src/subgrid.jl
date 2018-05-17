@@ -170,18 +170,32 @@ end
 
 # collect_neighbours!(mask::BitArray{N}, start_index, grid::MaskedGrid) where {N} =  collect_neighbours!(mask, start_index, copy(grid.mask))
 collect_neighbours!(mask::BitArray{N}, start_index::CartesianIndex{N}, left_over::BitArray{N}) where {N} =  collect_neighbours!(mask, start_index.I, left_over)
+
 function collect_neighbours!(mask::BitArray{N}, index::NTuple{N,Int}, left_over::BitArray{N}) where {N}
     mask[index...] = true
     left_over[index...] = false
 
-    for i in FrameFun.NBIndexList(index, size(left_over))
-        if left_over[i...]
-            mask[i...] = true
-            left_over[i...] = false
-            collect_neighbours!(mask, i, left_over)
+    indices = [index]
+    new_indices_mask = BitArray(size(mask))
+    new_indices_mask[:] = false
+    new_indices_mask[index...] = true
+    while sum(new_indices_mask) > 0
+        for i in CartesianRange(CartesianIndex(ones(Int,N)...),CartesianIndex(size(left_over)...))
+            if new_indices_mask[i]
+                new_indices_mask[i] = false
+                mask[i] = true
+                for nb in FrameFun.NBIndexList(i, size(left_over))
+                    if left_over[nb...]
+                        new_indices_mask[nb...] = true
+                        left_over[nb...] = false
+                    end
+                end
+            end
         end
     end
 end
+
+
 
 import Base:-, split
 function -(m1::MaskedGrid, m2::MaskedGrid)
