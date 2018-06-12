@@ -134,14 +134,14 @@ function apply!(s::AZSolver, destset, srcset, coef_dest, coef_src)
 end
 
 function AZSolver(platform::BasisFunctions.Platform, i; options...)
-    a = A(platform, i)
-    zt = Zt(platform, i)
+    a = AbstractOperator(A(platform, i))
+    zt = AbstractOperator(Zt(platform, i))
     AZSolver(a, zt; options...)
 end
 
 function AZSSolver(platform::BasisFunctions.Platform, i; options...)
     frame_restriction, grid_restriction = FrameFun.spline_util_restriction_operators(platform, i)
-    AZSSolver(A(platform, i), Zt(platform, i), frame_restriction', grid_restriction; options...)
+    AZSSolver(AbstractOperator(A(platform, i)), AbstractOperator(Zt(platform, i)), frame_restriction', grid_restriction; options...)
 end
 
 
@@ -163,7 +163,7 @@ function AZSDCSolver(fplatform::BasisFunctions.Platform, i, dim, range; options.
         AZSSolver(A(fplatform, i), Zt(fplatform, i), frame_restriction', grid_restriction; options...)
     else
         frame_res0, frame_res1, frame_res2, grid_res0, grid_res1, grid_res2 = ops
-        FrameFun.AZSDCSolver(A(fplatform, i), Zt(fplatform, i), frame_res0', frame_res1', frame_res2', grid_res0, grid_res1, grid_res2)
+        FrameFun.AZSDCSolver(AbstractOperator(A(fplatform, i)), AbstractOperator(Zt(fplatform, )i), frame_res0', frame_res1', frame_res2', grid_res0, grid_res1, grid_res2)
     end
 end
 
@@ -195,16 +195,16 @@ azsdc_solve(A::AbstractOperator, Zt::AbstractOperator,
 
 
 function az_solve(platform::BasisFunctions.Platform, i, f::Function; R=0, options...)
-    a = A(platform, i)
-    zt = Zt(platform, i)
+    a = AbstractOperator(A(platform, i))
+    zt = AbstractOperator(Zt(platform, i))
     s = sampler(platform, i)
     (R == 0) && (R=estimate_plunge_rank(a))
     az_solve(a, zt, s*f; R=R, options...)
 end
 
 function azs_solve(platform::BasisFunctions.Platform, i, f::Function; R=0, options...)
-    a = A(platform, i)
-    zt = Zt(platform, i)
+    a = AbstractOperator(A(platform, i))
+    zt = AbstractOperator(Zt(platform, i))
     s = sampler(platform, i)
     rd,sb = spline_util_restriction_operators(platform, i)
     (R == 0) && (R=estimate_plunge_rank(a))
@@ -213,8 +213,8 @@ end
 
 function azsdc_solve(fplatform::BasisFunctions.Platform, i, f, dim, range; R=0, options...)
     platform = fplatform.super_platform
-    a = A(fplatform, i)
-    zt = Zt(fplatform, i)
+    a = AbstractOperator(A(fplatform, i))
+    zt = AbstractOperator(Zt(fplatform, )i)
     S = sampler(fplatform, i)
 
     # The grid on Gamma

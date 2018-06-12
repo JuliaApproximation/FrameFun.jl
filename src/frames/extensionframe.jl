@@ -168,22 +168,37 @@ grid_evaluation_operator(s::TensorProductExtensionFrameSpan, dgs::DiscreteGridSp
 grid_evaluation_operator(s::TensorProductExtensionFrameSpan, dgs::DiscreteGridSpace, grid::AbstractSubGrid; options...) =
     grid_evaluation_operator(flatten(s), dgs, grid; options...)
 
+function BasisFunctions.DWTSamplingOperator(span::FrameFun.ExtensionSpan, oversampling::Int=1, recursion::Int=0)
+    S = BasisFunctions.GridSamplingOperator(gridspace(BasisFunctions.dwt_oversampled_grid(dictionary(span), oversampling, recursion), coeftype(span)))
+    new_oversampling = Int(length(supergrid(grid(S)))/length(span))>>recursion
+    E = extension_operator(gridspace(S), gridspace(supergrid(grid(S)), coeftype(span)))
+    W = BasisFunctions.WeightOperator(FrameFun.basisspan(span), new_oversampling, recursion)
+    BasisFunctions.DWTSamplingOperator(S, W*E)
+end
+
 ##################
 # platform
 ##################
 
-BasisFunctions.GridSamplingOperator(sampler::GridSamplingOperator, domain::Domain) =
+BasisFunctions.sampler(platform::Platform, sampler::GridSamplingOperator, domain::Domain) =
     GridSamplingOperator(gridspace(sampler), grid(sampler), domain)
 BasisFunctions.GridSamplingOperator(dgs::DiscreteGridSpace, grid::AbstractGrid, domain::Domain) =
     GridSamplingOperator(gridspace(FrameFun.subgrid(grid, domain), coeftype(dgs)))
 
+function BasisFunctions.sampler(platform::BasisFunctions.GenericPlatform{BasisFunctions.COLLOCATIONQUADRATUREMIX}, sampler::BasisFunctions.DWTSamplingOperator, domain::Domain)
+    S = BasisFunctions.sampler(platform, sampler.sampler, domain)
+    E = extension_operator(gridspace(S), gridspace(supergrid(grid(S)), coeftype(primal(platform, 1))))
+    BasisFunctions.DWTSamplingOperator(S,sampler.weight*E)
+end
 
-extension_frame_sampler(platform, domain) = n->GridSamplingOperator(platform.sampler_generator(n), domain)
+extension_frame_sampler(platform::Platform, domain::Domain) = n->sampler(platform, platform.sampler_generator(n), domain)
+dual_extension_frame_sampler(platform::Platform, domain::Domain) = n->sampler(platform, platform.dual_sampler_generator(n), domain)
 
-function extension_frame_platform(platform::BasisFunctions.GenericPlatform, domain::Domain)
+function extension_frame_platform(platform::BasisFunctions.GenericPlatform{ST}, domain::Domain) where ST
     primal = n->extensionframe(platform.primal_generator(n), domain)
     dual = n->extensionframe(platform.dual_generator(n), domain)
     sampler = extension_frame_sampler(platform, domain)
-    BasisFunctions.GenericPlatform(super_platform=platform, primal = primal, dual = dual, sampler = sampler,
+    dual_sampler = dual_extension_frame_sampler(platform, domain)
+    BasisFunctions.GenericPlatform(ST=ST,super_platform=platform, primal = primal, dual = dual, sampler = sampler,dual_sampler = dual_sampler,
         params = platform.parameter_sequence, name = "extension frame of " * platform.name)
 end
