@@ -25,18 +25,54 @@ function boundary_element_mask!(m::BitArray, B::Dictionary, boundary::AbstractGr
     m
 end
 
+struct ModCartesianRange{N}
+    size::NTuple{N,Int}
+    range::CartesianRange{CartesianIndex{N}}
+end
+Base.start(m::ModCartesianRange{N}) where {N} = start(m.range)
+@generated function Base.next(m::ModCartesianRange{N}, state) where N
+    t = Expr(:tuple, [:(if index[$i] < 1; index[$i]+m.size[$i];else; index[$i];end) for i in 1:N]...)
+    return quote
+        index, state = next(m.range, state)
+        $t, state
+    end
+end
+Base.done(m::ModCartesianRange{N}, state) where N= done(m.range,  state)
+
+"""
+A grid that contains the points of `omega_grid` that are not evaluated to zero by the elements that overlap with boundary_grid.
+But much slower than the new one, especially in multiple dimensions. 
+"""
+function boundary_support_grid_old(basis, boundary_grid::Union{MaskedGrid,IndexSubGrid}, omega_grid::Union{MaskedGrid,IndexSubGrid})
+    boundary_element_m = FrameFun.boundary_element_mask(basis, boundary_grid)
+    gamma = supergrid(omega_grid)
+    S = size(gamma)
+    m = BitArray(S)
+    m[:] = 0
+    for i in eachindex(boundary_element_m)
+        if boundary_element_m[i]
+            for ii in BasisFunctions.support_indices(basis,gamma,i)
+                m[ii] = true
+            end
+        end
+    end
+    m .= m .& FrameFun.mask(omega_grid)
+    MaskedGrid(gamma,m)
+end
+
 """
 A grid that contains the points of `omega_grid` that are not evaluated to zero by the elements that overlap with boundary_grid.
 """
 function boundary_support_grid(basis, boundary_grid::Union{MaskedGrid,IndexSubGrid}, omega_grid::Union{MaskedGrid,IndexSubGrid})
     boundary_element_m = FrameFun.boundary_element_mask(basis, boundary_grid)
     gamma = supergrid(omega_grid)
-    m = BitArray(size(gamma))
+    S = size(gamma)
+    m = BitArray(S)
     m[:] = 0
-    for i in eachindex(boundary_element_m)
+    for i in eachindex(basis)
         if boundary_element_m[i]
-            for ii in BasisFunctions.support_indices(basis,gamma,i)
-                m[ii] = true
+            for j in FrameFun.ModCartesianRange(S, BasisFunctions.support_index_range(basis, gamma, i))
+                m[j...] = true
             end
         end
     end
