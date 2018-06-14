@@ -4,8 +4,19 @@
 """
 Index of elements of `B` that overlap with `boundary`.
 """
-function boundary_element_indices(B, boundary::AbstractGrid)
+function boundary_element_indices(B::Dictionary, boundary::AbstractGrid)
     s = Set{CartesianIndex{dimension(B)}}()
+    for x in boundary
+        push!(s,BasisFunctions.overlapping_elements(B,x)...)
+    end
+    collect(s)
+end
+
+"""
+Index of elements of `B` that overlap with `boundary`.
+"""
+function FrameFun.boundary_element_indices(B::Dictionary1d, boundary::AbstractGrid)
+    s = Set{Int}()
     for x in boundary
         push!(s,BasisFunctions.overlapping_elements(B,x)...)
     end
@@ -41,7 +52,7 @@ Base.done(m::ModCartesianRange{N}, state) where N= done(m.range,  state)
 
 """
 A grid that contains the points of `omega_grid` that are not evaluated to zero by the elements that overlap with boundary_grid.
-But much slower than the new one, especially in multiple dimensions. 
+But much slower than the new one, especially in multiple dimensions.
 """
 function boundary_support_grid_old(basis, boundary_grid::Union{MaskedGrid,IndexSubGrid}, omega_grid::Union{MaskedGrid,IndexSubGrid})
     boundary_element_m = FrameFun.boundary_element_mask(basis, boundary_grid)
@@ -154,7 +165,7 @@ end
 
 estimate_plunge_rank(src::BSplineTranslatesBasis, domain::Domain, dest::GridBasis) =
     estimate_plunge_rank(src, domain, grid(dest))
-estimate_plunge_rank(src::BSplineTranslatesBasis, domain::Domain, grid::MaskedGrid) =
+estimate_plunge_rank(src::BSplineTranslatesBasis, domain::Domain, grid::Union{IndexSubGrid,MaskedGrid}) =
     estimate_plunge_rank_bspline(src, domain, supergrid(grid))
 
 estimate_plunge_rank(src::TensorProductDict{N,DT,S,T}, domain::Domain, dest::GridBasis) where {N,DT<:NTuple{N1,BasisFunctions.BSplineTranslatesBasis} where {N1},S,T} =
