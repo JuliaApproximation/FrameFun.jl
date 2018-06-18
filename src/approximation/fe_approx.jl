@@ -17,10 +17,10 @@
 function Fun(f::Function, basis::Dictionary, domain::Domain; options...)
     ELT = codomaintype(f, basis)
 
-    frame = extensionframe(domain, promote_domainsubtype(basis, real(ELT)))
-    A = approximation_operator(Span(frame,ELT); options...)
+    frame = extensionframe(domain, BasisFunctions.promote_coefficient_type(basis, ELT))
+    A = approximation_operator(frame; options...)
     coef = A * f
-    DictFun(domain, dictionary(dest(A)), coef)
+    DictFun(domain, dest(A), coef)
 end
 
 function fe_problem(basis, domain, sampling_factor; options...)
@@ -30,7 +30,7 @@ end
 
 function fe_solver(basis, domain; options...)
     frame = ExtensionFrame(domain, basis)
-    approximation_operator(Span(frame); options...)
+    approximation_operator(frame; options...)
 end
 
 # We assume f as a function is type stable.
@@ -45,16 +45,16 @@ function codomaintype(f::Function, basis)
     end
 end
 
-function oversampled_evaluation_operator(S::Span, D::Domain; sampling_factor=2, incboundary=false, options...)
-    B = primaryspan(S)
+function oversampled_evaluation_operator(S::Dictionary, D::Domain; sampling_factor=2, incboundary=false, options...)
+    B = primarydict(S)
     # Establish time domain grid
-    G, lB = oversampled_grid(D,dictionary(B),sampling_factor)
+    G, lB = oversampled_grid(D,B,sampling_factor)
 
-    op = grid_evaluation_operator(S,gridspace(B,G),G)
+    op = grid_evaluation_operator(S,gridbasis(B,G),G)
     # Add boundary points if necessary
     if incboundary
         BG = boundary(grid(lB), D)
-        op = [op; grid_evaluation_operator(S,gridspace(B,BG),BG)]
+        op = [op; grid_evaluation_operator(S,gridbasis(B,BG),BG)]
     end
     (op,scaling_factor(lB))
 end
@@ -63,8 +63,8 @@ scaling_factor(S::Dictionary) = length(S)
 scaling_factor(S::DerivedDict) = scaling_factor(superdict(S))
 scaling_factor(S::ChebyshevBasis) = length(S)/2
 
-function discrete_approximation_operator(set::ExtensionSpan; solver = default_frame_solver(domain(set), basisspan(set)), options...)
-    (op, scaling) = oversampled_evaluation_operator(basisspan(set),domain(set);options...)
+function discrete_approximation_operator(set::ExtensionFrame; solver = default_frame_solver(domain(set), basis(set)), options...)
+    (op, scaling) = oversampled_evaluation_operator(basis(set),domain(set);options...)
     solver(op; scaling=scaling, options...)
 end
 
@@ -72,6 +72,11 @@ primaryspan(span::Span) = span
 function primaryspan(span::BasisFunctions.MultiDictSpan)
     elements(span)[findmax(map(length,elements(span)))[2]]
 end
+primarydict(dict::Dictionary) = dict
+function primarydict(dict::BasisFunctions.MultiDict)
+    elements(dict)[findmax(map(length,elements(dict)))[2]]
+end
+
 
 struct FE_BestSolver
 end

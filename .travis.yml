@@ -27,9 +27,9 @@ before_script:
   - julia -e 'Pkg.init()'
   - julia -e 'Pkg.clone("https://github.com/daanhb/BasisFunctions.jl")'
   - julia -e 'Pkg.clone("https://github.com/daanhb/Domains.jl")'
+  - julia -e 'Pkg.clone(pwd())'
   - ./.travis/setup.sh
   - julia -e 'Pkg.build("BasisFunctions")'
-  - julia -e 'Pkg.clone(pwd())'
   - julia -e 'Pkg.build("FrameFun")'
 script:
   - julia --code-coverage=user test/runtests.jl

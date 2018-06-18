@@ -126,8 +126,11 @@ function _apply!(s::AZSolver, coef_dest, coef_src, plunge_op, A, Zt, b, blinear,
         b[i] = coef_src[i] - b[i]
     end
     # - We override b in place with coef_src - b to avoid allocating more memory
-    # s.b .= coef_src .- s.b
     # Compute x1 =  Zt*(b-A*x2)
+    # b .= coef_src .- b
+    for i in eachindex(b)
+        b[i] = coef_src[i] - b[i]
+    end
     apply!(Zt, x1, b)
     # Step 3:
     # x = x1 + x2

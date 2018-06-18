@@ -103,62 +103,62 @@ extensionspan(span::Span, domain::Domain) = Span(extensionframe(domain, dictiona
 left(d::ExtensionFrame, x...) = leftendpoint(domain(d))
 right(d::ExtensionFrame, x...) = rightendpoint(domain(d))
 
-DualGram(f::ExtensionSpan; options...) = wrap_operator(f, f, DualGram(basisspan(f); options...)*Gram(f; options...)*DualGram(basisspan(f); options...))
+DualGram(f::ExtensionFrame; options...) = wrap_operator(f, f, DualGram(basis(f); options...)*Gram(f; options...)*DualGram(basis(f); options...))
 
-MixedGram(f::ExtensionSpan; options...) = wrap_operator(f, f, DualGram(basisspan(f); options...)*Gram(f; options...))
+MixedGram(f::ExtensionFrame; options...) = wrap_operator(f, f, DualGram(basis(f); options...)*Gram(f; options...))
 
-DiscreteDualGram(f::ExtensionSpan; oversampling=BasisFunctions.default_oversampling(dictionary(f))) = wrap_operator(f, f, DiscreteDualGram(basisspan(f); oversampling=BasisFunctions.basis_oversampling(dictionary(f), oversampling))*DiscreteGram(f; oversampling=oversampling)*DiscreteDualGram(basisspan(f); oversampling=BasisFunctions.basis_oversampling(dictionary(f), oversampling)))
+DiscreteDualGram(f::ExtensionFrame; oversampling=BasisFunctions.default_oversampling(f)) = wrap_operator(f, f, DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))*DiscreteGram(f; oversampling=oversampling)*DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling)))
 
-DiscreteMixedGram(f::ExtensionSpan; oversampling=BasisFunctions.default_oversampling(dictionary(f))) = wrap_operator(f, f, DiscreteDualGram(basisspan(f); oversampling=BasisFunctions.basis_oversampling(dictionary(f), oversampling))*DiscreteGram(f; oversampling=oversampling))
+DiscreteMixedGram(f::ExtensionFrame; oversampling=BasisFunctions.default_oversampling(f)) = wrap_operator(f, f, DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))*DiscreteGram(f; oversampling=oversampling))
 
-BasisFunctions.discrete_dual_evaluation_operator(span::ExtensionSpan; oversampling=1, options...) =
-    BasisFunctions.grid_evaluation_operator(span, gridspace(span, BasisFunctions.oversampled_grid(dictionary(span), oversampling)), BasisFunctions.oversampled_grid(dictionary(span), oversampling); options...)*DiscreteDualGram(basisspan(span); oversampling=BasisFunctions.basis_oversampling(dictionary(span), oversampling))
+BasisFunctions.discrete_dual_evaluation_operator(dict::ExtensionFrame; oversampling=1, options...) =
+    BasisFunctions.grid_evaluation_operator(dict, gridbasis(dict, BasisFunctions.oversampled_grid(dict, oversampling)), BasisFunctions.oversampled_grid(dict, oversampling); options...)*DiscreteDualGram(basis(dict); oversampling=BasisFunctions.basis_oversampling(dict, oversampling))
 
 
 import BasisFunctions: dot
 import BasisFunctions: native_nodes
 
-native_nodes(basis::Dictionary, domain::Interval) =
-  BasisFunctions.clip_and_cut(native_nodes(basis), leftendpoint(domain), rightendpoint(domain))
+native_nodes(basis::Dictionary, domain::Domains.AbstractInterval) =
+    BasisFunctions.clip_and_cut(native_nodes(basis), infimum(domain), supremum(domain))
 
-dot(span::ExtensionSpan, f1::Function, f2::Function; options...)  =
-    dot(basisspan(span), domain(span), f1::Function, f2::Function; options...)
+dot(span::ExtensionFrame, f1::Function, f2::Function; options...)  =
+    dot(basis(span), domain(span), f1::Function, f2::Function; options...)
 
-dot(span::ExtensionSpan, f1::Int, f2::Function; options...) =
+dot(span::ExtensionFrame, f1::Int, f2::Function; options...) =
     dot(span, x->eval_element(basis(span), f1, x), f2; options...)
 
-dot(span::ExtensionSpan, f1::Int, f2::Int; options...) =
+dot(span::ExtensionFrame, f1::Int, f2::Int; options...) =
     dot(span, f1 ,x->eval_element(basis(span), f2, x); options...)
 
-dot(span::Span, domain::Interval, f1::Function, f2::Function; options...) =
-    dot(span, f1, f2, native_nodes(dictionary(span), domain); options...)
+dot(span::Dictionary, domain::Domains.AbstractInterval, f1::Function, f2::Function; options...) =
+    dot(span, f1, f2, native_nodes(span, domain); options...)
 # # TODO now we assume that domainunion contains sections that do not overlap
 # dot(dict::Dictionary, domain::DomainUnion, f1::Function, f2::Function; options...) =
 #     dot(dict, firstelement(domain), f1, f2; options...) +
 #     dot(dict, secondelement(domain), f1, f2; options...)
 
-#continuous_approximation_operator(span::ExtensionSpan; solver = ContinuousDirectSolver, options...) = solver(span; options...)
+#continuous_approximation_operator(span::ExtensionFrame; solver = ContinuousDirectSolver, options...) = solver(span; options...)
 
 #################
 ## Gram operators extended
 #################
-dual(span::ExtensionSpan; options...) = extensionspan(dual(basisspan(span); options...), domain(span))
+dual(span::ExtensionFrame; options...) = extensionframe(dual(basis(span); options...), domain(span))
 
-dot(frame1::ExtensionSpan, frame2::ExtensionSpan, f1::Int, f2::Int; options...) =
-    dot(frame1, frame2, x->eval_element(dictionary(frame1), f1, x), x->eval_element(dictionary(frame2), f2, x); options...)
+dot(frame1::ExtensionFrame, frame2::ExtensionFrame, f1::Int, f2::Int; options...) =
+    dot(frame1, frame2, x->eval_element(frame1, f1, x), x->eval_element(frame2, f2, x); options...)
 
 function dot(frame1::ExtensionFrame, frame2::ExtensionFrame, f1::Function, f2::Function; options...)
     d1 = domain(frame1); d2 = domain(frame2)
     @assert d1 == d2
-    dot(basisspan(frame1), basisspan(frame2), d1, f1, f2; options...)
+    dot(basis(frame1), basis(frame2), d1, f1, f2; options...)
 end
 
-dot(set1::ExtensionSpan, set2::ExtensionSpan, domain::Interval, f1::Function, f2::Function; options...) =
-    dot(set1, set2, f1, f2, native_nodes(dictionary(set1), dictionary(set2), domain); options...)
+dot(set1::Dictionary, set2::Dictionary, domain::Domains.AbstractInterval, f1::Function, f2::Function; options...) =
+    dot(set1, set2, f1, f2, native_nodes(set1, set2, domain); options...)
 
-function native_nodes(set1::Dictionary, set2::Dictionary, domain::Interval)
-    @assert left(set1) ≈ left(set2)
-    @assert left(set2) ≈ left(set2)
+function native_nodes(set1::Dictionary, set2::Dictionary, domain::Domains.AbstractInterval)
+    @assert infimum(support(set1) )≈ infimum(support((set2)))
+    @assert supremum(support((set2))) ≈ supremum(support((set2)))
     native_nodes(set1, domain)
 end
 
