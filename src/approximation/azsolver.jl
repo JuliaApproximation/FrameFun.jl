@@ -104,31 +104,35 @@ function default_estimate_plunge_rank(src::Dictionary, dest::Dictionary)
     end
 end
 
-function apply!(s::AZSolver, destset, srcset, coef_dest, coef_src)
+apply!(s::AZSolver, coef_dest, coef_src) = _apply!(s, coef_dest, coef_src,
+        s.plunge_op, s.A, s.Zt, s.b, s.blinear, s.TS, s.x1, s.x2)
+
+function _apply!(s::AZSolver, coef_dest, coef_src, plunge_op, A, Zt, b, blinear, TS, x1, x2)
     # Step 1:
-    if typeof(s.plunge_op) <: Void
+    if typeof(plunge_op) <: Void
         # Solve x2 = A*x=b
-        apply!(s.TS,s.x2,coef_src)
+        apply!(TS,x2,coef_src)
     else
         # Consruct (A*Zt-I)*b
-        apply!(s.plunge_op, s.b, coef_src)
+        apply!(plunge_op, b, coef_src)
         # Solve x2 = ((A*Zt-I)*A)^-1(A*Zt-I)*b
-        apply!(s.TS,s.x2,s.b)
+        apply!(TS,x2,b)
     end
     # Step 2:
     # Store A*x2 in s.b
-    apply!(s.A, s.b, s.x2)
+    apply!(A, b, x2)
     # Store b-A*x2 in s.b
-    for i in 1:length(s.b)
-        s.b[i] = coef_src[i] - s.b[i]
+    for i in 1:length(b)
+        b[i] = coef_src[i] - b[i]
     end
+    # - We override b in place with coef_src - b to avoid allocating more memory
     # s.b .= coef_src .- s.b
     # Compute x1 =  Zt*(b-A*x2)
-    apply!(s.Zt, s.x1, s.b)
+    apply!(Zt, x1, b)
     # Step 3:
     # x = x1 + x2
-    for i in 1:length(s.x1)
-        coef_dest[i] = s.x1[i] + s.x2[i]
+    for i in 1:length(x1)
+        coef_dest[i] = x1[i] + x2[i]
     end
     # coef_dest .= s.x1 .+ s.x2
 end
