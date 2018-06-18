@@ -78,33 +78,35 @@ inv(t::TruncatedSvdSolver) = t.A
 TruncatedSvdSolver(A::AbstractOperator; options...) =
     TruncatedSvdSolver{eltype(A)}(A::AbstractOperator; options...)
 
-# We don't need to (de)linearize coefficients when they are already vectors
-function apply!(s::TruncatedSvdSolver, coef_dest::Vector, coef_src::Vector)
-    # Applying the truncated SVD to P*Rhs
-    A_mul_B!(s.sy, s.Ut, coef_src)
-    for i =1:length(s.sy)
-        s.sy[i]=s.sy[i]*s.Sinv[i]
-    end
-    if s.smallcoefficients
-        s.sy[abs.(s.sy).>s.smalltol*maximum(abs.(coef_src))]=0
-    end
-    A_mul_B!(s.y, s.V, s.sy)
+apply!(s::TruncatedSvdSolver, coef_dest, coef_src) = _apply!(s, coef_dest, coef_src,
+    s.W, s.Ut, s.Sinv, s.V, s.y, s.sy, s.scratch_src, s.scratch_dest,
+    s.smallcoefficients, s.smalltol)
 
-    apply!(s.W, coef_dest, s.y)
+# We don't need to (de)linearize coefficients when they are already vectors
+function _apply!(s::TruncatedSvdSolver, coef_dest::Vector, coef_src::Vector,
+    W, Ut, Sinv, V, y, sy, scratch_src, scratch_dest, smallcoefficients, smalltol)
+
+    # Applying the truncated SVD to P*Rhs
+    A_mul_B!(sy, Ut, coef_src)
+    for i in 1:length(sy)
+        sy[i] = sy[i]*Sinv[i]
+    end
+    if smallcoefficients
+        M = maximum(abs.(coef_src))
+        sy[abs.(sy) .> smalltol*M] = 0
+    end
+    A_mul_B!(y, V, sy)
+    apply!(W, coef_dest, y)
 end
 
-function apply!(s::TruncatedSvdSolver, coef_dest, coef_src)
-    linearize_coefficients!(src(s), s.scratch_src, coef_src)
-    A_mul_B!(s.sy, s.Ut, s.scratch_src)
-    for i =1:length(s.sy)
-        s.sy[i]=s.sy[i]*s.Sinv[i]
-    end
-    if s.smallcoefficients
-        s.sy[abs.(s.sy).>s.smalltol*maximum(abs.(coef_src))]=0
-    end
-    A_mul_B!(s.y, s.V, s.sy)
-    apply!(s.W, s.scratch_dest, s.y)
-    delinearize_coefficients!(dest(s), coef_dest, s.scratch_dest)
+function _apply!(s::TruncatedSvdSolver, coef_dest, coef_src,
+    W, Ut, Sinv, V, y, sy, scratch_src, scratch_dest, smallcoefficients, smalltol)
+
+    linearize_coefficients!(src(s), scratch_src, coef_src)
+    # Call the implementation above for vectors
+    _apply!(s, scratch_dest, scratch_src, W, Ut, Sinv, V, y, sy,
+        scratch_src, scratch_dest, smallcoefficients, smalltol)
+    delinearize_coefficients!(dest(s), coef_dest, scratch_dest)
 end
 
 

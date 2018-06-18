@@ -23,8 +23,9 @@ struct AZSolver{ELT} <: FE_Solver{ELT}
     plunge_op   ::  AbstractOperator # (A*Zt-I), store because it allocates memory
     b                                # Scratch for right hand size
     blinear     ::  Array{ELT,1}     # Scratch for linearized right hand side (necessary for svd inproducts)
-    x2                              
+    x2
     x1
+
     function AZSolver{ELT}(A::AbstractOperator, Zt::AbstractOperator; cutoff = default_cutoff(A), trunc = TruncatedSvdSolver, R = estimate_plunge_rank(A), verbose=false,options...) where ELT
         # Calculate (A*Zt-I)
         plunge_op = plunge_operator(A, Zt)
@@ -68,21 +69,26 @@ function estimate_plunge_rank(A::AbstractOperator)
     end
 end
 
-function apply!(s::AZSolver, destset, srcset, coef_dest, coef_src)
+apply!(s::AZSolver, coef_dest, coef_src) = _apply!(s, coef_dest, coef_src,
+        s.plunge_op, s.A, s.Zt, s.b, s.blinear, s.TS, s.x1, s.x2)
+
+function _apply!(s::AZSolver, coef_dest, coef_src, plunge_op, A, Zt, b, blinear, TS, x1, x2)
     # Step 1:
     # Consruct (A*Zt-I)*b
-    apply!(s.plunge_op, s.b, coef_src)
-    BasisFunctions.linearize_coefficients!(dest(s.A), s.blinear, s.b)
+    apply!(plunge_op, b, coef_src)
+    BasisFunctions.linearize_coefficients!(dest(A), blinear, b)
     # Solve x2 = ((A*Zt-I)*A)^-1(A*Zt-I)*b
-    apply!(s.TS,s.x2,s.blinear)
+    apply!(TS, x2, blinear)
     # Step 2:
     # Store A*x2 in b
-    apply!(s.A, s.b, s.x2)
-    # Compute x1 =  Zt*(b-A*x2) 
-    apply!(s.Zt, s.x1, coef_src-s.b)
+    apply!(A, b, x2)
+    # Compute x1 =  Zt*(b-A*x2)
+    # - We override b in place with coef_src - b to avoid allocating more memory
+    b .= coef_src .- b
+    apply!(Zt, x1, b)
     # Step 3:
     # x = x1 + x2
-    for i in eachindex(s.x1)
-        coef_dest[i] = s.x1[i]+s.x2[i]
+    for i in eachindex(x1)
+        coef_dest[i] = x1[i]+x2[i]
     end
 end
