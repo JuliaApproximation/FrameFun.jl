@@ -1,112 +1,18 @@
 
-# Some of the util functions situated here can be located to more suitable locations.
-
-"""
-Index of elements of `B` that overlap with `boundary`.
-"""
-function boundary_element_indices(B::Dictionary, boundary::AbstractGrid)
-    s = Set{CartesianIndex{dimension(B)}}()
-    for x in boundary
-        push!(s,BasisFunctions.overlapping_elements(B,x)...)
-    end
-    collect(s)
-end
-
-"""
-Index of elements of `B` that overlap with `boundary`.
-"""
-function FrameFun.boundary_element_indices(B::Dictionary1d, boundary::AbstractGrid)
-    s = Set{Int}()
-    for x in boundary
-        push!(s,BasisFunctions.overlapping_elements(B,x)...)
-    end
-    collect(s)
-end
-
-boundary_element_mask(B::Dictionary, boundary::AbstractGrid) =
-    boundary_element_mask!(BitArray(size(B)), B, boundary)
-
-function boundary_element_mask!(m::BitArray, B::Dictionary, boundary::AbstractGrid)
-    m[:] = 0
-    for x in boundary
-        for i in BasisFunctions.overlapping_elements(B, x)
-            m[i] = true
-        end
-    end
-    m
-end
-
-struct ModCartesianRange{N}
-    size::NTuple{N,Int}
-    range::CartesianRange{CartesianIndex{N}}
-end
-Base.start(m::ModCartesianRange{N}) where {N} = start(m.range)
-@generated function Base.next(m::ModCartesianRange{N}, state) where N
-    t = Expr(:tuple, [:(if index[$i] < 1; index[$i]+m.size[$i];else; index[$i];end) for i in 1:N]...)
-    return quote
-        index, state = next(m.range, state)
-        $t, state
-    end
-end
-Base.done(m::ModCartesianRange{N}, state) where N= done(m.range,  state)
-
 """
 A grid that contains the points of `omega_grid` that are not evaluated to zero by the elements that overlap with boundary_grid.
-But much slower than the new one, especially in multiple dimensions.
 """
-function boundary_support_grid_old(basis, boundary_grid::Union{MaskedGrid,IndexSubGrid}, omega_grid::Union{MaskedGrid,IndexSubGrid})
-    boundary_element_m = FrameFun.boundary_element_mask(basis, boundary_grid)
+boundary_support_grid(basis, boundary_grid::Union{MaskedGrid,IndexSubGrid}, omega_grid::Union{MaskedGrid,IndexSubGrid}) =
+    boundary_support_grid(basis, basis, boundary_grid, omega_grid)
+
+function boundary_support_grid(basis::Dictionary, dual::Dictionary, boundary_grid::Union{MaskedGrid,IndexSubGrid}, omega_grid::Union{MaskedGrid,IndexSubGrid})
+    boundary_element_m = BasisFunctions.coefficient_index_mask_of_overlapping_elements(dual, boundary_grid)
     gamma = supergrid(omega_grid)
-    S = size(gamma)
-    m = BitArray(S)
-    m[:] = 0
-    for i in eachindex(boundary_element_m)
-        if boundary_element_m[i]
-            for ii in BasisFunctions.support_indices(basis,gamma,i)
-                m[ii] = true
-            end
-        end
-    end
+    BasisFunctions.grid_index_mask_in_element_support(basis, gamma, boundary_element_m)
     m .= m .& FrameFun.mask(omega_grid)
     MaskedGrid(gamma,m)
 end
 
-"""
-A grid that contains the points of `omega_grid` that are not evaluated to zero by the elements that overlap with boundary_grid.
-"""
-function boundary_support_grid(basis, boundary_grid::Union{MaskedGrid,IndexSubGrid}, omega_grid::Union{MaskedGrid,IndexSubGrid})
-    boundary_element_m = FrameFun.boundary_element_mask(basis, boundary_grid)
-    gamma = supergrid(omega_grid)
-    S = size(gamma)
-    m = BitArray(S)
-    m[:] = 0
-    for i in eachindex(basis)
-        if boundary_element_m[i]
-            for j in FrameFun.ModCartesianRange(S, BasisFunctions.support_index_range(basis, gamma, i))
-                m[j...] = true
-            end
-        end
-    end
-    m .= m .& FrameFun.mask(omega_grid)
-    MaskedGrid(gamma,m)
-end
-
-
-# function boundary_support_grid(B, boundary_grid::IndexSubGrid, omega_grid::MaskedGrid)
-#     boundary_indices = FrameFun.boundary_element_indices(B,boundary_grid)
-#     s = Set{CartesianIndex{dimension(B)}}()
-#     for i in boundary_indices
-#         push!(s,BasisFunctions.support_indices(B,supergrid(omega_grid),i)...)
-#     end
-#     a = collect(s)
-#     b = CartesianIndex{dimension(B)}[]
-#     for ai in a
-#         if is_subindex(ai, omega_grid)
-#             push!(b,ai)
-#         end
-#     end
-#     IndexSubGrid(supergrid(boundary_grid), b)
-# end
 
 spline_util_restriction_operators(platform::BasisFunctions.GenericPlatform, i) =
     spline_util_restriction_operators(primal(platform, i), sampler(platform, i))
@@ -159,9 +65,6 @@ function _spline_util_restriction_operators(dict::Dictionary, grid::AbstractGrid
     grid_restriction = BasisFunctions.restriction_operator(gridspace(grid), gridspace(DMZ))
     frame_restriction, grid_restriction
 end
-
-
-
 
 estimate_plunge_rank(src::BSplineTranslatesBasis, domain::Domain, dest::GridBasis) =
     estimate_plunge_rank(src, domain, grid(dest))

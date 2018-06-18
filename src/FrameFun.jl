@@ -87,7 +87,7 @@ import BasisFunctions: Span, Span1d, Span2d
 
 import BasisFunctions: coefficient_type, coeftype, similar_span
 
-import BasisFunctions: overlapping_elements
+import BasisFunctions: overlapping_elements, unique_overlapping_elements
 
 # about subgrids
 import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
