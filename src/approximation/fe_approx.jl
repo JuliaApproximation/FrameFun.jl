@@ -30,7 +30,7 @@ end
 
 function fe_solver(basis, domain; options...)
     frame = ExtensionFrame(domain, basis)
-    approximation_operator(Span(frame); options...)
+    approximation_operator(frame; options...)
 end
 
 # We assume f as a function is type stable.
