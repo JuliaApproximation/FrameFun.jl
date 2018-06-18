@@ -18,9 +18,9 @@ function Fun(f::Function, basis::Dictionary, domain::Domain; options...)
     ELT = codomaintype(f, basis)
 
     frame = extensionframe(domain, promote_domainsubtype(basis, real(ELT)))
-    A = approximation_operator(Span(frame,ELT); options...)
+    A = approximation_operator(frame; options...)
     coef = A * f
-    DictFun(domain, dictionary(dest(A)), coef)
+    DictFun(domain, dest(A), coef)
 end
 
 function fe_problem(basis, domain, sampling_factor; options...)
