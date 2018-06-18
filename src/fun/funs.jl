@@ -61,7 +61,7 @@ domain(fun::DictFun, set::ExtensionFrame) = domain(set)
 basis(fun::DictFun, set::ExtensionFrame) = basis(set)
 
 function matrix(fun::DictFun; options...)
-    op = oversampled_evaluation_operator(Span(basis(fun)),domain(fun);  options...)[1]
+    op = oversampled_evaluation_operator(basis(fun),domain(fun);  options...)[1]
     matrix(op)
 end
 
@@ -72,8 +72,8 @@ end
 
 # Delegate operator applications to the underlying expansion
 function (*)(op::AbstractOperator, fun::DictFun)
-    @assert src(op) == Span(basis(dictionary(fun)))
-    DictFun(domain(fun),dictionary(dest(op)),op*coefficients(fun))
+    @assert src(op) == basis(dictionary(fun))
+    DictFun(domain(fun),dest(op),op*coefficients(fun))
 end
 
 # Delegate all calling to the underlying expansion.
@@ -140,13 +140,13 @@ function L2error(f::Function, F::DictFun{S,T}; reltol = eps(real(T)), abstol = 0
 end
 
 function residual(f::Function, F::DictFun ;  options...)
-    op = oversampled_evaluation_operator(Span(basis(F)),domain(F); options...)[1]
+    op = oversampled_evaluation_operator(basis(F),domain(F); options...)[1]
     rhs = project(dest(op),f)
     norm(op*coefficients(F)-rhs)
 end
 
 function relresidual(f::Function, F::DictFun ;  options...)
-    op = oversampled_evaluation_operator(span(basis(F)),domain(F); options...)[1]
+    op = oversampled_evaluation_operator(basis(F),domain(F); options...)[1]
     rhs = project(dest(op),f)
 
 
@@ -154,13 +154,9 @@ function relresidual(f::Function, F::DictFun ;  options...)
 end
 
 function residualmax(f::Function, F::DictFun ;  options...)
-    op = oversampled_evaluation_operator(span(basis(F)),domain(F); options...)[1]
+    op = oversampled_evaluation_operator(basis(F),domain(F); options...)[1]
     rhs = project(dest(op),f)
 
 
     maximum(abs(op*coefficients(F)-rhs))
 end
-
-    
-
-    

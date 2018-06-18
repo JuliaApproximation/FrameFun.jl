@@ -43,7 +43,7 @@ end
 
 AZSmoothSolver(A::AbstractOperator, Zt::AbstractOperator; options...) =
     AZSmoothSolver{eltype(A)}(A, Zt; options...)
-    
+
 AZSmoothSolver(A::AbstractOperator; scaling=nothing, options...) =
         AZSmoothSolver{eltype(A)}(A, 1/scaling*A'; options...)
 
@@ -89,13 +89,13 @@ dc_index(b::FourierBasis) = 1
 
 # An index scaling operator, used to generate weights for the polynomial scaling algorithm.
 struct IdxnScalingOperator{ELT} <: AbstractOperator{ELT}
-    src     ::  Span
+    src     ::  Dictionary
     order   ::  Int
     scale   ::  Function
 end
 
-IdxnScalingOperator(span::Span; order=1, scale = default_scaling_function) =
-    IdxnScalingOperator{BasisFunctions.op_eltype(span,span)}(span, order, scale)
+IdxnScalingOperator(dict::Dictionary; order=1, scale = default_scaling_function) =
+    IdxnScalingOperator{BasisFunctions.op_eltype(dict,dict)}(dict, order, scale)
 
 dest(op::IdxnScalingOperator) = src(op)
 
@@ -107,8 +107,7 @@ is_diagonal(::IdxnScalingOperator) = true
 
 ctranspose(op::IdxnScalingOperator) = DiagonalOperator(src(op), conj(diagonal(op)))
 
-function apply_inplace!(op::IdxnScalingOperator, destspan::Span1d, srcspan, coef_srcdest)
-    dest = dictionary(destspan)
+function apply_inplace!(op::IdxnScalingOperator, dest::Dictionary1d, srcdict, coef_srcdest)
     ELT = eltype(op)
     for i in eachindex(dest)
         coef_srcdest[i] *= op.scale(ELT(BasisFunctions.value(native_index(dest,i))))^op.order
@@ -116,8 +115,7 @@ function apply_inplace!(op::IdxnScalingOperator, destspan::Span1d, srcspan, coef
     coef_srcdest
 end
 
-function apply_inplace!(op::IdxnScalingOperator, destspan::Span2d, srcspan, coef_srcdest)
-    dest = dictionary(destspan)
+function apply_inplace!(op::IdxnScalingOperator, dest::Dictionary2d, srcdict, coef_srcdest)
     ELT = eltype(op)
     for i in eachindex(coef_srcdest)
         ni = recursive_native_index(dest,i)

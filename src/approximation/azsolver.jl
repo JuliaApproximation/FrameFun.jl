@@ -47,7 +47,7 @@ AZSolver(A::AbstractOperator, Zt::AbstractOperator, options...) =
 
 # If no Zt is supplied, Zt=A' (up to scaling) by default.
 AZSolver(A::AbstractOperator; scaling=nothing, options...) =
-    AZSolver{eltype(A)}(A, 1/scaling*A'; options...)
+    AZSolver{eltype(A)}(A, eltype(A)(1)/eltype(A)(scaling)*A'; options...)
 
 
 function plunge_operator(A, Zt)
@@ -84,7 +84,10 @@ function _apply!(s::AZSolver, coef_dest, coef_src, plunge_op, A, Zt, b, blinear,
     apply!(A, b, x2)
     # Compute x1 =  Zt*(b-A*x2)
     # - We override b in place with coef_src - b to avoid allocating more memory
-    b .= coef_src .- b
+    # b .= coef_src .- b
+    for i in eachindex(b)
+        b[i] = coef_src[i] - b[i]
+    end
     apply!(Zt, x1, b)
     # Step 3:
     # x = x1 + x2
