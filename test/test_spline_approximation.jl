@@ -115,6 +115,8 @@ end
     @test norm(a*x-b)+1≈ 1
     x = FrameFun.azs_solve(fplatform, i, f2d; cutoff=epsilon)
     @test norm(a*x-b)+1≈ 1
+    x = FrameFun.az_tree_solve(fplatform, i, f2d; cutoff=epsilon)
+    @test norm(a*x-b)+1≈ 1
 
     # For tensor domain
     i = 2
@@ -169,7 +171,8 @@ end
     @test 1+norm(A*x-b)≈1
     x = FrameFun.azsdcN_solve(fplatform, i, fun)
     @test 1+norm(A*x-b)≈1
-
+    x = FrameFun.az_tree_solve(fplatform, i, fun)
+    @test 1+norm(A*x-b)≈1
 
 
     op = FrameFun.AZSSolver(fplatform, i)
@@ -178,5 +181,50 @@ end
     x = op*b;@test 1+norm(A*x-b)≈1
     op = FrameFun.AZSDCSolver(fplatform, i, 1, [.0,.5])
     x = op*b;@test 1+norm(A*x-b)≈1
+    op = FrameFun.DomainDecompositionSolver(fplatform, i)
+    x = op*b;@test 1+norm(A*x-b)≈1
+
+    # 1D f1d = identity
+    domain1d = interval(0,.5)
+    epsilon=1e-10
+    degree = 1
+    init = 20
+    oversampling = 2
+    platform = bspline_platform(Float64, init, degree, oversampling)
+    fplatform = extension_frame_platform(platform, domain1d)
+    i = 4
+    s = sampler(fplatform, i)
+    a = BasisFunctions.A(fplatform, i)
+    zt = BasisFunctions.Zt(fplatform, i)
+    p = FrameFun.plunge_operator(a,zt)
+    rd,sb = spline_util_restriction_operators(fplatform, i)
+    b = s*f1d
+    r = FrameFun.estimate_plunge_rank(a)
+    @test r==2
+    AZ = AZSolver(a,zt,R=r,cutoff=epsilon)
+    AZS = AZSSolver(a,zt,rd', sb,cutoff=epsilon)
+    x = zeros(src(a))
+
+    apply!(AZ, x, b)
+    @test norm(a*x-b)+1≈ 1
+    apply!(AZS, x, b)
+    @test norm(a*x-b)+1≈ 1
+    x = AZS*b
+    @test norm(a*x-b)+1≈ 1
+    x = FrameFun.az_solve(b, a, zt, cutoff=epsilon, R=r)
+    @test norm(a*x-b)+1≈ 1
+    x = FrameFun.az_solve(fplatform, i, f1d; cutoff=epsilon)
+    @test norm(a*x-b)+1≈ 1
+    x = FrameFun.azs_solve(fplatform, i, f1d; cutoff=epsilon)
+    @test norm(a*x-b)+1≈ 1
+    # warn("az tree not in 1D")
+    # x = FrameFun.az_tree_solve(fplatform, i, f1d; cutoff=epsilon)
+    # @test norm(a*x-b)+1≈ 1
+    op = FrameFun.AZSSolver(fplatform, i)
+    x = op*b;@test 1+norm(a*x-b)≈1
+    op = FrameFun.AZSolver(fplatform, i)
+    x = op*b;@test 1+norm(a*x-b)≈1
+
+
 end
 end

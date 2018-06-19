@@ -494,18 +494,21 @@ struct DomainDecompositionSolver{ELT} <: FE_Solver{ELT}
     gamma   :: AbstractGrid
     omega   :: AbstractGrid
     domain  :: Domain
+    A       :: AbstractOperator
 end
 
 DomainDecompositionSolver(fplatform::BasisFunctions.GenericPlatform, i; options...) =
     DomainDecompositionSolver(primal(fplatform.super_platform, i), grid(sampler(fplatform.super_platform, i)),
-        grid(sampler(fplatform, i)), domain(primal(fplatform, i)); options...)
+        grid(sampler(fplatform, i)), domain(primal(fplatform, i)), A(fplatform, i); options...)
 
 
-DomainDecompositionSolver(basis, gamma, omega, domain; options...) =
-    DomainDecompositionSolver{coeftype(basis)}(create_tree(basis, gamma, omega, domain; options...), basis, gamma, omega, domain)
+DomainDecompositionSolver(basis, gamma, omega, domain, A; options...) =
+    DomainDecompositionSolver{coeftype(basis)}(create_tree(basis, gamma, omega, domain; options...), basis, gamma, omega, domain, A)
 
 src(s::DomainDecompositionSolver) = extensionframe(s.basis, s.domain)
 dest(s::DomainDecompositionSolver{ELT}) where {ELT} = gridbasis(s.omega, ELT)
+
+apply(s::DomainDecompositionSolver, src) = domaindecomposition_solve(src, s.A, s)
 
 domaindecomposition_solve(b::Vector, A::AbstractOperator, s::DomainDecompositionSolver; options...) =
     solve(b, A, s.tree, s.basis, s.gamma, s.omega; options...)

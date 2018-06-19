@@ -294,7 +294,7 @@ function az_tree_solve(fplatform::BasisFunctions.Platform, i, f::Function;
     dom = domain(primal(fplatform, i))
     basis = primal(platform, i)
 
-    solver = DomainDecompositionSolver(basis, gamma, omega, dom; options...)
+    solver = DomainDecompositionSolver(basis, gamma, omega, dom, a; options...)
     az_tree_solve(S*f, a, zt, solver; options...)
 end
 

@@ -81,17 +81,16 @@ function estimate_plunge_rank_bspline(src, domain::Domain, grid::AbstractGrid)
     sum(BasisFunctions.coefficient_index_mask_of_overlapping_elements(src, boundary))
 end
 
-
-function divide_and_conquer_restriction_operators(fplatform::BasisFunctions.Platform, i, dim, range)
-    platform = fplatform.super_platform
-    basis = primal(platform, i)
-    S = sampler(fplatform, i)
-    s = sampler(platform, i)
-    domain = FrameFun.domain(primal(fplatform, i))
-    gamma = BasisFunctions.grid(s)
-    omega = BasisFunctions.grid(S)
-    FrameFun.divide_and_conquer_restriction_operators(omega, gamma, basis, domain, dim, range)
-end
+# function divide_and_conquer_restriction_operators(fplatform::BasisFunctions.Platform, i, dim, range)
+#     platform = fplatform.super_platform
+#     basis = primal(platform, i)
+#     S = sampler(fplatform, i)
+#     s = sampler(platform, i)
+#     domain = FrameFun.domain(primal(fplatform, i))
+#     gamma = BasisFunctions.grid(s)
+#     omega = BasisFunctions.grid(S)
+#     FrameFun.divide_and_conquer_restriction_operators(omega, gamma, basis, domain, dim, range)
+# end
 
 # The grid on the boundary of omega
 divide_and_conquer_restriction_operators(omega::AbstractGrid, gamma::AbstractGrid,
@@ -210,27 +209,22 @@ function FrameFun.divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma
     tuple(ops...)
 end
 
-
 function util_operators(OP, DMZ, DMZs, GRs, gamma, basis)
     A0 = Array{CompositeOperator}(length(DMZs))
     GR0 = Array{IndexRestrictionOperator}(length(DMZs))
-    # FE0 = Array{IndexExtensionOperator}(length(DMZs))
     for (i,dmz) in enumerate(DMZs)
         frame_restriction, grid_restriction = FrameFun._spline_util_restriction_operators(basis, gamma, dmz)
         A0[i] = grid_restriction*OP*frame_restriction'
         GR0[i] = grid_restriction
-        # FE0[i] = frame_restriction'
     end
 
     A1 = Vector{CompositeOperator}(length(GRs))
     GR1 = Vector{IndexRestrictionOperator}(length(GRs))
-    # FE1 = Vector{IndexExtensionOperator}(length(GRs))
     for (i,gr) in enumerate(GRs)
         dmz = FrameFun.boundary_support_grid(basis, gr, DMZ)
         frame_restriction, grid_restriction = FrameFun._spline_util_restriction_operators(basis, gamma, gr, dmz)
         A1[i] = grid_restriction*OP*frame_restriction'
         GR1[i] = grid_restriction
-        # FE1[i] = frame_restriction'
     end
     A0, GR0, A1, GR1
 end
