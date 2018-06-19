@@ -21,10 +21,10 @@ struct AZSolver{ELT} <: FE_Solver{ELT}
     A           ::  AbstractOperator # Store for application in step 2
     Zt          ::  AbstractOperator # Store for application in step 2
     plunge_op   ::  Union{Void,AbstractOperator} # (A*Zt-I), store because it allocates memory
-    b           ::  Array{ELT}                  # Scratch for right hand size
+    b                           # Scratch for right hand size
     blinear     ::  Array{ELT,1}     # Scratch for linearized right hand side (necessary for svd inproducts)
-    x2          ::  Array{ELT}
-    x1          ::  Array{ELT}
+    x2
+    x1
 
     function AZSolver{ELT}(trunc::FE_Solver, A::AbstractOperator, Zt::AbstractOperator; plunge_op = nothing, options...) where ELT
         # Allocate scratch space
@@ -32,7 +32,6 @@ struct AZSolver{ELT} <: FE_Solver{ELT}
         blinear = zeros(ELT, length(src(trunc)))
         x1 = zeros(src(A))
         x2 = zeros(src(A))
-        # Construct AZSolver object
         new(trunc, A, Zt, plunge_op, b, blinear, x1, x2)
     end
 end
@@ -83,7 +82,7 @@ default_cutoff(A::AbstractOperator) = 10^(4/5*log10(eps(real(eltype(A)))))
 
 # Estimate for the rank of (A*Zt-I)*A when computing the low rank decomposition. If check fails, rank estimate is steadily increased.
 @inline estimate_plunge_rank(A::AbstractOperator) =
-    estimate_plunge_rank(dictionary(src(A)), dictionary(dest(A)))
+    estimate_plunge_rank(src(A), dest(A))
 
 @inline estimate_plunge_rank(src::ExtensionFrame, dest::Dictionary) =
     estimate_plunge_rank(superdict(src), domain(src), dest)
@@ -107,25 +106,27 @@ end
 apply!(s::AZSolver, coef_dest, coef_src) = _apply!(s, coef_dest, coef_src,
         s.plunge_op, s.A, s.Zt, s.b, s.blinear, s.TS, s.x1, s.x2)
 
-function _apply!(s::AZSolver, coef_dest, coef_src, plunge_op, A, Zt, b, blinear, TS, x1, x2)
+function _apply!(s::AZSolver, coef_dest, coef_src, plunge_op::AbstractOperator, A, Zt, b, blinear, TS, x1, x2)
     # Step 1:
-    if typeof(plunge_op) <: Void
-        # Solve x2 = A*x=b
-        apply!(TS,x2,coef_src)
-    else
-        # Consruct (A*Zt-I)*b
-        apply!(plunge_op, b, coef_src)
-        # Solve x2 = ((A*Zt-I)*A)^-1(A*Zt-I)*b
-        apply!(TS,x2,b)
-    end
+    # Consruct (A*Zt-I)*b
+    apply!(plunge_op, b, coef_src)
+    # Solve x2 = ((A*Zt-I)*A)^-1(A*Zt-I)*b
+    apply!(TS,x2,b)
+    _apply2!(s, coef_dest, coef_src, A, Zt, b, x1, x2)
+end
+
+function _apply!(s::AZSolver, coef_dest, coef_src, plunge_op::Void, A, Zt, b, blinear, TS, x1, x2)
+    # Step 1:
+    # Solve x2 = A*x=b
+    apply!(TS,x2,coef_src)
+    _apply2!(s, coef_dest, coef_src, A, Zt, b, x1, x2)
+end
+
+function _apply2!(s::AZSolver, coef_dest, coef_src, A, Zt, b, x1, x2)
     # Step 2:
     # Store A*x2 in s.b
     apply!(A, b, x2)
     # Store b-A*x2 in s.b
-    for i in 1:length(b)
-        b[i] = coef_src[i] - b[i]
-    end
-    # - We override b in place with coef_src - b to avoid allocating more memory
     # Compute x1 =  Zt*(b-A*x2)
     # b .= coef_src .- b
     for i in eachindex(b)
@@ -134,10 +135,10 @@ function _apply!(s::AZSolver, coef_dest, coef_src, plunge_op, A, Zt, b, blinear,
     apply!(Zt, x1, b)
     # Step 3:
     # x = x1 + x2
-    for i in 1:length(x1)
+    # coef_dest .= s.x1 .+ s.x2
+    for i in eachindex(x1)
         coef_dest[i] = x1[i] + x2[i]
     end
-    # coef_dest .= s.x1 .+ s.x2
 end
 
 function AZSolver(platform::BasisFunctions.Platform, i; options...)

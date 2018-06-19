@@ -34,9 +34,6 @@ end
 
 function basis_test()
     @testset "Frame on entire domain (i.e, basis problem)" begin
-        B = ChebyshevBasis; n = 11; T = Float32;
-        basis = instantiate(B, n, T)
-        left(basis)
         for T in (Float32,Float64,), n in (10,11)
             tol = sqrt(eps(T))
             e = rand(T,n)
