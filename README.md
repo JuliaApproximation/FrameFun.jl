@@ -27,6 +27,12 @@ plot!(F,f,plot_ext=true, subplot=2)
 Plots.savefig(P,"images/lowprecision.png")
 ```
 
+    WARNING: Method definition infimum(Domains.Domain{T} where T) in module Domains at /Users/vincentcp/julia/Domains/src/generic/domain.jl:84 overwritten in module FrameFun at /Users/vincentcp/julia/FrameFun/src/domains/extensions.jl:86.
+    WARNING: Method definition supremum(Domains.Domain{T} where T) in module Domains at /Users/vincentcp/julia/Domains/src/generic/domain.jl:85 overwritten in module FrameFun at /Users/vincentcp/julia/FrameFun/src/domains/extensions.jl:88.
+    WARNING: Method definition infimum(Domains.ProductDomain{DD, S, T} where T where S where DD) in module Domains at /Users/vincentcp/julia/Domains/src/generic/productdomain.jl:108 overwritten in module FrameFun at /Users/vincentcp/julia/FrameFun/src/domains/extensions.jl:90.
+    WARNING: Method definition supremum(Domains.ProductDomain{DD, S, T} where T where S where DD) in module Domains at /Users/vincentcp/julia/Domains/src/generic/productdomain.jl:109 overwritten in module FrameFun at /Users/vincentcp/julia/FrameFun/src/domains/extensions.jl:92.
+
+
 ![](images/lowprecision.png)
 
 The bases support any AbstractFloat subtype, so high precision approximations are straightforward:
@@ -63,6 +69,9 @@ plot!(F,f,plot_ext=true,subplot=2,aspect_ratio=1)
 Plots.savefig(P,"images/deathstar.png")
 ```
 
+    Tuple{Int64, Int64}
+
+
 ![](images/deathstar.png)
 
 Even fractal domains are not a problem:
@@ -79,8 +88,3 @@ Plots.savefig(P,"images/mandelbrot")
 ```
 
 ![](images/mandelbrot.png)
-
-
-```julia
-
-```

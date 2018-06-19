@@ -83,26 +83,26 @@ boundingbox(d::DifferenceDomain) = boundingbox(d.d1)
 
 # Extra functions
 
-leftendpoint(d::Domain) = leftendpoint(boundingbox(d))
+infimum(d::Domain) = infimum(boundingbox(d))
 
-rightendpoint(d::Domain) = rightendpoint(boundingbox(d))
+supremum(d::Domain) = supremum(boundingbox(d))
 
-leftendpoint(box::ProductDomain) = SVector(map(leftendpoint,elements(box)))
+infimum(box::ProductDomain) = SVector(map(infimum,elements(box)))
 
-rightendpoint(box::ProductDomain) = SVector(map(rightendpoint,elements(box)))
+supremum(box::ProductDomain) = SVector(map(supremum,elements(box)))
 
 # TODO: improve when grids move into domains?
-equispaced_grid(d::Domain, ns) = cartesianproduct([PeriodicEquispacedGrid(ns[idx], leftendpoint(d)[idx], rightendpoint(d)[idx]) for idx = 1:dimension(boundingbox(d))]...)
+equispaced_grid(d::Domain, ns) = cartesianproduct([PeriodicEquispacedGrid(ns[idx], infimum(d)[idx], supremum(d)[idx]) for idx = 1:dimension(boundingbox(d))]...)
 
 function boundingbox(d::UnionDomain)
-    left = SVector(minimum(hcat(map(leftendpoint,elements(d))...),2)...)
-    right = SVector(maximum(hcat(map(rightendpoint,elements(d))...),2)...)
+    left = SVector(minimum(hcat(map(infimum,elements(d))...),2)...)
+    right = SVector(maximum(hcat(map(supremum,elements(d))...),2)...)
     boundingbox(left,right)
 end
 
 function boundingbox(d::IntersectionDomain)
-    left = SVector(maximum(hcat(map(leftendpoint,elements(d))...),2)...)
-    right = SVector(minimum(hcat(map(rightendpoint,elements(d))...),2)...)
+    left = SVector(maximum(hcat(map(infimum,elements(d))...),2)...)
+    right = SVector(minimum(hcat(map(supremum,elements(d))...),2)...)
     boundingbox(left,right)
 end
 
@@ -113,7 +113,7 @@ Domains.superdomain(d::MappedDomain) = Domains.source(d)
 boundingbox(d::MappedDomain) = mapped_boundingbox(boundingbox(source(d)), forward_map(d))
 
 function mapped_boundingbox(box::Interval, fmap)
-    l,r = (leftendpoint(box),rightendpoint(box))
+    l,r = (infimum(box),supremum(box))
     ml = fmap*l
     mr = fmap*r
     boundingbox(min(ml,mr), max(ml,mr))
@@ -123,7 +123,7 @@ end
 # underlying domain, and compute a bounding box for those points. This will be
 # correct for affine maps.
 function mapped_boundingbox(box::ProductDomain, fmap)
-    crn = corners(leftendpoint(box),rightendpoint(box))
+    crn = corners(infimum(box),supremum(box))
     mapped_corners = [fmap*crn[:,i] for i in 1:size(crn,2)]
     left = [minimum([mapped_corners[i][j] for i in 1:length(mapped_corners)]) for j in 1:size(crn,1)]
     right = [maximum([mapped_corners[i][j] for i in 1:length(mapped_corners)]) for j in 1:size(crn,1)]
@@ -171,9 +171,9 @@ end
 
 normal(x, d::UnitBall) = x/norm(x)
 
-dist(x, d::AbstractInterval) = min(rightendpoint(d)-x,x-leftendpoint(d))
+dist(x, d::AbstractInterval) = min(supremum(d)-x,x-infimum(d))
 
-normal(x, d::AbstractInterval) = abs(leftendpoint(d)-x) < abs(rightendpoint(d)-x) ? -1:1
+normal(x, d::AbstractInterval) = abs(infimum(d)-x) < abs(supremum(d)-x) ? -1:1
 
 dist(x, d::UnitBall) = 1-norm(x)
 

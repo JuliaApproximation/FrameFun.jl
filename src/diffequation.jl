@@ -34,21 +34,21 @@ struct NeumannBC
     end
 end
 
-# BoundaryCondition(S :: Span, D::Domain) = BoundaryCondition(S,IdentityOperator(S),boundary(grid(S),D),default_boundary_condition)
-# BoundaryCondition(S :: Span, diff::AbstractOperator, D::Domain) = BoundaryCondition(S,diff,boundary(grid(S),D),default_boundary_condition)
-# BoundaryCondition(S :: Span, diff::AbstractOperator, D::Domain, dRhs::Function) = BoundaryCondition(S,diff,boundary(grid(S),D),dRhs)
+# BoundaryCondition(S :: Dictionary, D::Domain) = BoundaryCondition(S,IdentityOperator(S),boundary(grid(S),D),default_boundary_condition)
+# BoundaryCondition(S :: Dictionary, diff::AbstractOperator, D::Domain) = BoundaryCondition(S,diff,boundary(grid(S),D),default_boundary_condition)
+# BoundaryCondition(S :: Dictionary, diff::AbstractOperator, D::Domain, dRhs::Function) = BoundaryCondition(S,diff,boundary(grid(S),D),dRhs)
 # default_boundary_condition(x) = 0
 # default_boundary_condition(x,y) = 0
 # default_boundary_condition(x,y,z) = 0
 
-function operator(BC :: DirichletBC, S::Span, G::AbstractGrid, D::Domain)
+function operator(BC :: DirichletBC, S::Dictionary, G::AbstractGrid, D::Domain)
     G = subgrid(G,BC.D)
-    BC.factor*grid_evaluation_operator(S,gridspace(G,coeftype(S)),G)
+    BC.factor*grid_evaluation_operator(S,gridbasis(G,coeftype(S)),G)
 end
 
-function operator(BC :: NeumannBC, S::Span2d, G::AbstractGrid, D::Domain2d)
+function operator(BC :: NeumannBC, S::Dictionary2d, G::AbstractGrid, D::Domain2d)
     G = subgrid(G,BC.D)
-    GE = grid_evaluation_operator(S,gridspace(G,coeftype(S)),G)
+    GE = grid_evaluation_operator(S,gridbasis(G,coeftype(S)),G)
     dx = Float64[]
     dy = Float64[]
     for i=1:length(G)
@@ -60,9 +60,9 @@ function operator(BC :: NeumannBC, S::Span2d, G::AbstractGrid, D::Domain2d)
     X + Y
 end
 
-function operator(BC :: NeumannBC, S::Span1d, G::AbstractGrid1d, D::Domain1d)
+function operator(BC :: NeumannBC, S::Dictionary1d, G::AbstractGrid1d, D::Domain1d)
     G = subgrid(G,BC.D)
-    GE = grid_evaluation_operator(S,gridspace(G,coeftype(S)),G)
+    GE = grid_evaluation_operator(S,gridbasis(G,coeftype(S)),G)
     dx = Float64[]
     for i=1:length(G)
         push!(dx, normal(G[i],D)[1])
@@ -71,21 +71,21 @@ function operator(BC :: NeumannBC, S::Span1d, G::AbstractGrid1d, D::Domain1d)
 end
 
 struct DiffEquation
-    S     :: Span
+    S     :: Dictionary
     D     :: Domain
     Diff  :: AbstractOperator
     DRhs   :: Function
     BCs    :: Tuple
     sampling_factor
-    function DiffEquation(S::Span, D::Domain,Diff::AbstractOperator, DRhs:: Function, BCs::Tuple, sampling_factor=2)
+    function DiffEquation(S::Dictionary, D::Domain,Diff::AbstractOperator, DRhs:: Function, BCs::Tuple, sampling_factor=2)
         new(S,D,Diff,DRhs,BCs, sampling_factor)
     end
 end
 
-# DiffEquation(S::Span, D::Domain, Diff::AbstractOperator, DRhs::Function, BC::BoundaryCondition, sampling_factor=2) = DiffEquation(S,D,Diff,DRhs,(BC,), sampling_factor)
+# DiffEquation(S::Dictionary, D::Domain, Diff::AbstractOperator, DRhs::Function, BC::BoundaryCondition, sampling_factor=2) = DiffEquation(S,D,Diff,DRhs,(BC,), sampling_factor)
 
 function boundarygrid(D::DiffEquation)
-    G, lB = oversampled_grid(D.D,dictionary(D.S),D.sampling_factor)
+    G, lB = oversampled_grid(D.D,D.S,D.sampling_factor)
     boundary(grid(lB),D.D)
 end
 
@@ -93,18 +93,18 @@ end
 function operator(D::DiffEquation; incboundary=false, options...)
     #problem = FE_DiscreteProblem(D.D,D.S,2)
     B = D.S
-    ADiff = inv_diagonal(D.Diff)
+    ADiff = pinv(D.Diff)
     ops = incboundary ? Array{AbstractOperator}(length(D.BCs)+2,1) : Array{AbstractOperator}(length(D.BCs)+1,1)
-    G, lB = oversampled_grid(D.D,dictionary(D.S),D.sampling_factor)
+    G, lB = oversampled_grid(D.D,D.S,D.sampling_factor)
 
-    op = grid_evaluation_operator(D.S,gridspace(G,coeftype(D.S)),G)
+    op = grid_evaluation_operator(D.S,gridbasis(G,coeftype(D.S)),G)
 
     cnt=1
     ops[cnt] = op*D.Diff*ADiff
     BG = boundarygrid(D)
     if incboundary
         cnt=cnt+1
-        ops[cnt] = grid_evaluation_operator(D.S,gridspace(BG,coeftype(D.S)),BG)
+        ops[cnt] = grid_evaluation_operator(D.S,gridbasis(BG,coeftype(D.S)),BG)
     end
     for i = 1:length(D.BCs)
         Ac = operator(D.BCs[i],D.S,BG,D.D)*ADiff
@@ -116,9 +116,9 @@ end
 function rhs(D::DiffEquation; incboundary = false, options...)
     op = operator(D; incboundary=incboundary, options...)
     rhs = Array{Array{coeftype(src(op)),1}}(0)
-    G, lB = oversampled_grid(D.D,dictionary(D.S),D.sampling_factor)
+    G, lB = oversampled_grid(D.D,D.S,D.sampling_factor)
 
-    op = grid_evaluation_operator(D.S,gridspace(G,coeftype(D.S)),G)
+    op = grid_evaluation_operator(D.S,gridbasis(G,coeftype(D.S)),G)
     push!(rhs,sample(G,D.DRhs, coeftype(src(op))))
     BG = boundarygrid(D)
 
@@ -132,11 +132,11 @@ function rhs(D::DiffEquation; incboundary = false, options...)
 end
 
 function solve(D::DiffEquation; solver=AZSolver, options...)
-    G, lB = oversampled_grid(D.D,dictionary(D.S),D.sampling_factor)
-    Adiff= inv_diagonal(D.Diff)
+    G, lB = oversampled_grid(D.D,D.S,D.sampling_factor)
+    Adiff= pinv(D.Diff)
     b = rhs(D; options...)
     OP = operator(D; options...)
     A = solver(OP; scaling=length(lB), options...)
     coef  = A * b
-    DictFun(D.D, dictionary(dest(A)), Adiff*coef)
+    DictFun(D.D, dest(A), Adiff*coef)
 end

@@ -66,8 +66,8 @@ function test_differential_equations_1d()
         BC = DirichletBC(x->0)
         # Set up Differential equation
         f(x) = x
-        Diff = differentiation_operator(Span(B))^2
-        DE = DiffEquation(Span(B), Dom, Diff, f, (BC,))
+        Diff = differentiation_operator(B)^2
+        DE = DiffEquation(B, Dom, Diff, f, (BC,))
         # Actually solve the differential equation
         F = solve(DE, solver=solver)
         sol(x) = x^3/6 - x/24
@@ -84,8 +84,8 @@ function test_differential_equations_1d()
         BC2 = NeumannBC(x->0, interval(-2.0,0.0))
         # Set up Differential equation
         f(x) = x
-        Diff = differentiation_operator(Span(B))^2
-        DE = DiffEquation(Span(B), Dom, Diff, f, (BC1,BC2))
+        Diff = differentiation_operator(B)^2
+        DE = DiffEquation(B, Dom, Diff, f, (BC1,BC2))
         # Actually solve the differential equation
         F = solve(DE, solver=solver)
         sol(x) = x^3/6 - x/2 -1/3
@@ -105,8 +105,8 @@ function test_differential_equations_2d()
         BC = DirichletBC(df,euclideanspace(Val{2}()))
         # Set up Differential equation
         f(x,y) = 0
-        Diff = differentiation_operator(Span(B),(2,0))+differentiation_operator(Span(B),(0,2))
-        DE = DiffEquation(Span(B),Dom,Diff, f, (BC,))
+        Diff = differentiation_operator(B,(2,0))+differentiation_operator(B,(0,2))
+        DE = DiffEquation(B,Dom,Diff, f, (BC,))
         # Actually solve the differential equation
         F = solve(DE, solver=solver)
         error = abserror(df,F)
@@ -122,8 +122,8 @@ function test_differential_equations_2d()
         BC = NeumannBC(df,euclideanspace(Val{2}()))
         # Set up Differential equation
         f(x,y) = 0
-        Diff = differentiation_operator(Span(B),(2,0))+differentiation_operator(Span(B),(0,2))
-        DE = DiffEquation(Span(B),Dom,Diff, f, (BC,))
+        Diff = differentiation_operator(B,(2,0))+differentiation_operator(B,(0,2))
+        DE = DiffEquation(B,Dom,Diff, f, (BC,))
         # Actually solve the differential equation
         F = solve(DE, solver=solver)
         # We should find a way to check the boundary condition more easily

@@ -65,8 +65,8 @@ function test_subgrids()
         end
         @test cnt == length(subgrid)
 
-        space = gridspace(grid)
-        subspace = gridspace(subgrid)
+        space = gridbasis(grid)
+        subspace = gridbasis(subgrid)
         R = restriction_operator(space, subspace)
         E = extension_operator(subspace, space)
 

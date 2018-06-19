@@ -36,7 +36,7 @@ import Base: broadcast
 ## - Imports from Domains
 import Domains: indomain, dimension
 # - for intervals
-import Domains: leftendpoint, rightendpoint
+import Domains: infimum, supremum
 # - for mapped domains
 import Domains: domain
 # - for composite structures
