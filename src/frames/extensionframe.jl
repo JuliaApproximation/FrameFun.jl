@@ -15,22 +15,17 @@ struct ExtensionFrame{S,T} <: DerivedDict{S,T}
     end
 end
 
-const ExtensionSpan{A,S,T,D <: ExtensionFrame} = Span{A,S,T,D}
 
 ExtensionFrame{S,T}(domain::Domain, basis::Dictionary{S,T}) =
     ExtensionFrame{S,T}(domain, basis)
 
 # superdict is the function for DerivedDict's to obtain the underlying set
 superdict(f::ExtensionFrame) = f.basis
-superspan(s::ExtensionSpan) = Span(superdict(dictionary(s)), coeftype(s))
 
 basis(f::ExtensionFrame) = f.basis
 domain(f::ExtensionFrame) = f.domain
 
 "The span of the basis of the given extension frame span."
-basisspan(s::ExtensionSpan) = Span(basis(s), coeftype(s))
-domain(s::ExtensionSpan) = domain(dictionary(s))
-basis(s::ExtensionSpan) = basis(dictionary(s))
 
 
 similar_dictionary(f::ExtensionFrame, dict::Dictionary) = ExtensionFrame(domain(f), dict)

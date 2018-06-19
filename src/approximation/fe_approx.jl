@@ -67,10 +67,6 @@ function discrete_approximation_operator(set::ExtensionFrame; solver = default_f
     solver(op; scaling=scaling, options...)
 end
 
-primaryspan(span::Span) = span
-function primaryspan(span::BasisFunctions.MultiDictSpan)
-    elements(span)[findmax(map(length,elements(span)))[2]]
-end
 primarydict(dict::Dictionary) = dict
 function primarydict(dict::BasisFunctions.MultiDict)
     elements(dict)[findmax(map(length,elements(dict)))[2]]

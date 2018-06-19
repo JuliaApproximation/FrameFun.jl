@@ -211,9 +211,4 @@ function boundary{G,M,N}(g::MaskedGrid{G,M},dom::EuclideanDomain{N})
     boundary(supergrid(g),dom)
 end
 
-# function evaluation_operator{G <: AbstractSubGrid}(s::Dictionary, d::DiscreteGridSpace{G})
-#     d2 = DiscreteGridSpace(grid(grid(d)), eltype(s))
-#     restriction_operator(d2, d) * evaluation_operator(s, d2)
-# end
-
-has_extension{G <: AbstractSubGrid}(dg::DiscreteGridSpace{G}) = true
+has_extension{G <: AbstractSubGrid}(dg::GridBasis{G}) = true
