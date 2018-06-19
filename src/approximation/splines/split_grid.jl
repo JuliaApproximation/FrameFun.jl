@@ -207,7 +207,7 @@ end
 # Used in split_domain_Nd
 function domain_grid_Nd(basis::Dictionary, gamma::AbstractGrid, ranges::Domain; options...)
     bb = boundingbox(ranges)
-    r = [(ai, bi) for (ai, bi) in zip(leftendpoint(bb), rightendpoint(bb))]
+    r = [(ai, bi) for (ai, bi) in zip(infimum(bb), supremum(bb))]
     [domain_grid_1d(d, basis, gamma, r; options...) for d in 1:dimension(basis)]
 end
 
@@ -333,8 +333,8 @@ end
 function solve(b::Vector, A::AbstractOperator, tree::AbstractDomainDecompositionNode,
         basis::Dictionary, gamma::AbstractGrid, omega::AbstractGrid; options...)
     x0 = zeros(basis)
-    b_ext = restriction_operator(gridspace(gamma), gridspace(omega))'*b
-    s = GridSamplingOperator(gridspace(gamma))
+    b_ext = restriction_operator(gridbasis(gamma), gridbasis(omega))'*b
+    s = GridSamplingOperator(gridbasis(gamma))
     solve!(x0, A, b_ext, tree, basis, gamma, omega, s*basis, depth(tree), copy(b_ext), zeros(length(b)))
 end
 
@@ -347,13 +347,13 @@ function solve!(x0::Array{ELT}, A::AbstractOperator, b_ext::Array{ELT},
     for i in 0:to
         n = 0
         for leaf in FrameFun.get_nodes(tree, i)
-            GR = restriction_operator(gridspace(gamma), gridspace(FrameFun.DMZ(leaf)))
+            GR = restriction_operator(gridbasis(gamma), gridbasis(FrameFun.DMZ(leaf)))
             if FrameFun.grid(leaf) == nothing
-                boundary_indices = FrameFun.boundary_element_indices(basis, FrameFun.DMZ(leaf))
+                boundary_indices = BasisFunctions.coefficient_indices_of_overlapping_elements(basis, FrameFun.DMZ(leaf))
             else
-                boundary_indices = FrameFun.boundary_element_indices(basis, FrameFun.grid(leaf))
+                boundary_indices = BasisFunctions.coefficient_indices_of_overlapping_elements(basis, FrameFun.grid(leaf))
             end
-            FR = IndexRestrictionOperator(Span(basis), Span(basis[boundary_indices]), boundary_indices)
+            FR = IndexRestrictionOperator(basis, basis[boundary_indices], boundary_indices)
             a = matrix(GR*OP*FR')
             # println(size(a))
             y0 = LAPACK.gelsy!(a, GR*b_ext, cutoff)[1]

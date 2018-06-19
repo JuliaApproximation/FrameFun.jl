@@ -1,7 +1,7 @@
 module test_suite_applications
 using BasisFunctions
 using FrameFun
-using FrameFun: overlapping_elements, boundary_support_grid, relative_indices, restriction_operator, boundary_element_indices, FrameFun.spline_util_restriction_operators
+using FrameFun: FrameFun.spline_util_restriction_operators, boundary_support_grid, relative_indices, restriction_operator
 using Base.Test
 using StaticArrays
 using Domains
@@ -43,7 +43,7 @@ delimit("Spline approximation")
 
     @test relative_indices(g1,omega_grid)==[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 31, 32, 33, 34, 35, 36, 37, 56, 57, 58, 59, 60, 83, 84, 85, 86, 87, 112, 113, 114, 115, 116, 145, 146, 147, 148, 179, 180, 181, 182, 215, 216, 217, 218, 253, 254, 255, 292, 293, 294, 331, 332, 333, 334, 373, 374, 375, 416, 417, 418, 459, 460, 461, 504, 505, 506, 549, 550, 551, 596, 597, 642, 643, 688, 689, 690, 735, 736, 737, 784, 785, 832, 833, 880, 881, 928, 929, 976, 977, 1024, 1025, 1072, 1073, 1074, 1119, 1120, 1121, 1166, 1167, 1212, 1213, 1258, 1259, 1260, 1303, 1304, 1305, 1348, 1349, 1350, 1391, 1392, 1393, 1434, 1435, 1436, 1475, 1476, 1477, 1478, 1515, 1516, 1517, 1554, 1555, 1556, 1591, 1592, 1593, 1594, 1627, 1628, 1629, 1630, 1661, 1662, 1663, 1664, 1693, 1694, 1695, 1696, 1697, 1722, 1723, 1724, 1725, 1726, 1749, 1750, 1751, 1752, 1753, 1772, 1773, 1774, 1775, 1776, 1777, 1778, 1791, 1792, 1793, 1794, 1795, 1796, 1797, 1798, 1799, 1800, 1801, 1802, 1803, 1804, 1805, 1806, 1807, 1808]
 
-    @test size(restriction_operator(gridspace(omega_grid),gridspace(g1)))==(186, 1808)
+    @test size(restriction_operator(gridbasis(omega_grid),gridbasis(g1)))==(186, 1808)
 end
 
 @testset "Approximation" begin
@@ -65,15 +65,15 @@ end
         S = sampler(fplatform, i)
 
         EP = BasisFunctions.A(fplatform, i)
-        ED = BasisFunctions.Z(fplatform, i)
+        ED = BasisFunctions.Zt(fplatform, i)'
 
         p = fplatform.parameter_sequence[i]
         Pt = tensorproduct([BSplineTranslatesBasis(pi, di, T) for (pi, di) in zip(p, degree) ])
         g = BasisFunctions.oversampled_grid(Pt, oversampling)
         Ft = extensionframe(Pt, domain)
         gO = FrameFun.subgrid(g, domain)
-        EPt = evaluation_operator(Span(Pt), gO)
-        EDt = EPt*DiscreteDualGram(Span(Pt),oversampling=oversampling)
+        EPt = evaluation_operator(Pt, gO)
+        EDt = EPt*DiscreteDualGram(Pt,oversampling=oversampling)
         e = map(T,rand(size(Pt)...))
         @test EPt*e≈EP*e
         @test EDt*e≈ED*e*length(Pt)
@@ -93,14 +93,14 @@ end
     i = 1
     s = sampler(fplatform, i)
     a = BasisFunctions.A(fplatform, i)
-    z = BasisFunctions.Z(fplatform, i)
-    p = FrameFun.plunge_operator(a,z')
+    zt = BasisFunctions.Zt(fplatform, i)
+    p = FrameFun.plunge_operator(a,zt)
     rd,sb = spline_util_restriction_operators(fplatform, i)
     b = s*f2d
     r = FrameFun.estimate_plunge_rank(a)
     @test r==102
-    AZ = AZSolver(a,z',R=r,cutoff=epsilon)
-    AZS = AZSSolver(a,z',rd', sb,cutoff=epsilon)
+    AZ = AZSolver(a,zt,R=r,cutoff=epsilon)
+    AZS = AZSSolver(a,zt,rd', sb,cutoff=epsilon)
     x = zeros(src(a))
 
     apply!(AZ, x, b)
@@ -109,7 +109,7 @@ end
     @test norm(a*x-b)+1≈ 1
     x = AZS*b
     @test norm(a*x-b)+1≈ 1
-    x = FrameFun.az_solve(b, a, z', cutoff=epsilon, R=r)
+    x = FrameFun.az_solve(b, a, zt, cutoff=epsilon, R=r)
     @test norm(a*x-b)+1≈ 1
     x = FrameFun.az_solve(fplatform, i, f2d; cutoff=epsilon)
     @test norm(a*x-b)+1≈ 1
@@ -127,7 +127,7 @@ end
     s = sampler(platform, i);
     BR,DMZ_R = FrameFun.spline_util_restriction_operators(fplatform, i)
     A = BasisFunctions.A(fplatform, i);
-    Z = BasisFunctions.Z(fplatform, i);
+    Zt = BasisFunctions.Zt(fplatform, i);
     r = FrameFun.estimate_plunge_rank(A)
     @test r==12
     S = sampler(fplatform, i)
@@ -144,21 +144,21 @@ end
 
 
     b = S*fun
-    AZSS = FrameFun.AZSSolver(A, Z', BR', DMZ_R)
+    AZSS = FrameFun.AZSSolver(A, Zt, BR', DMZ_R)
     x = AZSS*b
     @test 1+norm(A*x-b)≈1
-    AZSDCS = FrameFun.AZSDCSolver(A, Z', BRsplit', BR1', BR2', DMZ_Rsplit, DMZ_R1, DMZ_R2)
+    AZSDCS = FrameFun.AZSDCSolver(A, Zt, BRsplit', BR1', BR2', DMZ_Rsplit, DMZ_R1, DMZ_R2)
     x = AZSDCS*b
     @test 1+norm(A*x-b)≈1
-    AZS = FrameFun.AZSolver(A, Z')
+    AZS = FrameFun.AZSolver(A, Zt)
     x = AZS*b
     @test 1+norm(A*x-b)≈1
 
-    x = FrameFun.az_solve(b, A, Z')
+    x = FrameFun.az_solve(b, A, Zt)
     @test 1+norm(A*x-b)≈1
-    x = FrameFun.azs_solve(b, A, Z', BR', DMZ_R)
+    x = FrameFun.azs_solve(b, A, Zt, BR', DMZ_R)
     @test 1+norm(A*x-b)≈1
-    x = FrameFun.azsdc_solve(b, A, Z', BRsplit', BR1', BR2', DMZ_Rsplit, DMZ_R1, DMZ_R2)
+    x = FrameFun.azsdc_solve(b, A, Zt, BRsplit', BR1', BR2', DMZ_Rsplit, DMZ_R1, DMZ_R2)
     @test 1+norm(A*x-b)≈1
 
     x = FrameFun.az_solve(fplatform, i, fun)

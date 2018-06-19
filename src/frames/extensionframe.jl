@@ -15,23 +15,14 @@ struct ExtensionFrame{S,T} <: DerivedDict{S,T}
     end
 end
 
-const ExtensionSpan{A,S,T,D <: ExtensionFrame} = Span{A,S,T,D}
-
 ExtensionFrame{S,T}(domain::Domain, basis::Dictionary{S,T}) =
     ExtensionFrame{S,T}(domain, basis)
 
 # superdict is the function for DerivedDict's to obtain the underlying set
 superdict(f::ExtensionFrame) = f.basis
-superspan(s::ExtensionSpan) = Span(superdict(dictionary(s)), coeftype(s))
 
 basis(f::ExtensionFrame) = f.basis
 domain(f::ExtensionFrame) = f.domain
-
-"The span of the basis of the given extension frame span."
-basisspan(s::ExtensionSpan) = Span(basis(s), coeftype(s))
-domain(s::ExtensionSpan) = domain(dictionary(s))
-basis(s::ExtensionSpan) = basis(dictionary(s))
-
 
 similar_dictionary(f::ExtensionFrame, dict::Dictionary) = ExtensionFrame(domain(f), dict)
 
@@ -87,18 +78,16 @@ function extensionframe(domain::ProductDomain, basis::TensorProductDict)
 end
 
 const TensorProductExtensionFrameDict{N,N1,S,T} = TensorProductDict{N,NTuple{N1,DT},S,T} where {N,N1,DT<:ExtensionFrame,S,T}
-const TensorProductExtensionFrameSpan{A,S,T,D <: TensorProductExtensionFrameDict} = Span{A,S,T,D}
+
 # TODO remove need of this function
 function flatten(dict::TensorProductExtensionFrameDict)
     basis = tensorproduct([superdict(dicti) for dicti in elements(dict)]...)
     domain = Domains.ProductDomain([FrameFun.domain(dicti) for dicti in elements(dict)]...)
     ExtensionFrame(domain, basis)
 end
-flatten(s::TensorProductExtensionFrameSpan) = Span(flatten(dictionary(s)))
 
 extensionframe(domain::Domain, basis::Dictionary) = ExtensionFrame(domain, basis)
 extensionframe(basis::Dictionary, domain::Domain) = extensionframe(domain, basis)
-extensionspan(span::Span, domain::Domain) = Span(extensionframe(domain, dictionary(span)))
 
 left(d::ExtensionFrame, x...) = leftendpoint(domain(d))
 right(d::ExtensionFrame, x...) = rightendpoint(domain(d))
@@ -163,15 +152,15 @@ function native_nodes(set1::Dictionary, set2::Dictionary, domain::Domains.Abstra
 end
 
 
-grid_evaluation_operator(s::TensorProductExtensionFrameSpan, dgs::DiscreteGridSpace, grid::AbstractGrid; options...) =
+grid_evaluation_operator(s::TensorProductExtensionFrameDict, dgs::GridBasis, grid::AbstractGrid; options...) =
     grid_evaluation_operator(flatten(s), dgs, grid; options...)
-grid_evaluation_operator(s::TensorProductExtensionFrameSpan, dgs::DiscreteGridSpace, grid::AbstractSubGrid; options...) =
+grid_evaluation_operator(s::TensorProductExtensionFrameDict, dgs::GridBasis, grid::AbstractSubGrid; options...) =
     grid_evaluation_operator(flatten(s), dgs, grid; options...)
 
-function BasisFunctions.DWTSamplingOperator(span::FrameFun.ExtensionSpan, oversampling::Int=1, recursion::Int=0)
-    S = BasisFunctions.GridSamplingOperator(gridspace(BasisFunctions.dwt_oversampled_grid(dictionary(span), oversampling, recursion), coeftype(span)))
+function BasisFunctions.DWTSamplingOperator(span::FrameFun.ExtensionFrame, oversampling::Int=1, recursion::Int=0)
+    S = BasisFunctions.GridSamplingOperator(gridbasis(BasisFunctions.dwt_oversampled_grid(dictionary(span), oversampling, recursion), coeftype(span)))
     new_oversampling = Int(length(supergrid(grid(S)))/length(span))>>recursion
-    E = extension_operator(gridspace(S), gridspace(supergrid(grid(S)), coeftype(span)))
+    E = extension_operator(gridbasis(S), gridbasis(supergrid(grid(S)), coeftype(span)))
     W = BasisFunctions.WeightOperator(FrameFun.basisspan(span), new_oversampling, recursion)
     BasisFunctions.DWTSamplingOperator(S, W*E)
 end
@@ -181,13 +170,13 @@ end
 ##################
 
 BasisFunctions.sampler(platform::Platform, sampler::GridSamplingOperator, domain::Domain) =
-    GridSamplingOperator(gridspace(sampler), grid(sampler), domain)
-BasisFunctions.GridSamplingOperator(dgs::DiscreteGridSpace, grid::AbstractGrid, domain::Domain) =
-    GridSamplingOperator(gridspace(FrameFun.subgrid(grid, domain), coeftype(dgs)))
+    GridSamplingOperator(gridbasis(sampler), grid(sampler), domain)
+BasisFunctions.GridSamplingOperator(dgs::GridBasis, grid::AbstractGrid, domain::Domain) =
+    GridSamplingOperator(gridbasis(FrameFun.subgrid(grid, domain), coeftype(dgs)))
 
 function BasisFunctions.sampler(platform::BasisFunctions.GenericPlatform, sampler::BasisFunctions.DWTSamplingOperator, domain::Domain)
     S = BasisFunctions.sampler(platform, sampler.sampler, domain)
-    E = extension_operator(gridspace(S), gridspace(supergrid(grid(S)), coeftype(primal(platform, 1))))
+    E = extension_operator(gridbasis(S), gridbasis(supergrid(grid(S)), coeftype(primal(platform, 1))))
     BasisFunctions.DWTSamplingOperator(S,sampler.weight*E)
 end
 

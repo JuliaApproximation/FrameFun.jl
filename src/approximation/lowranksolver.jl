@@ -423,7 +423,7 @@ function divideandconqerN_solve(b::Vector, A, A0::Vector{OP1}, GR0::Vector{OP2},
         cutoff=FrameFun.default_cutoff(A), options...) where {OP1<:AbstractOperator, OP2<:IndexRestrictionOperator, OP3<:AbstractOperator, OP4<:IndexRestrictionOperator}
     omega = BasisFunctions.grid(dest(A))
     gamma = supergrid(omega)
-    omega_restriction = restriction_operator(gridspace(gamma), gridspace(omega))
+    omega_restriction = restriction_operator(gridbasis(gamma), gridbasis(omega))
     b_ext = omega_restriction'b
     x0 = zeros(src(A))
     for (gr,a) in zip(GR0,A0)
@@ -453,7 +453,7 @@ function divideandconqerN_solve(b::Vector, A,
         cutoff=FrameFun.default_cutoff(A), options...) where {OP1<:AbstractOperator, OP2<:IndexRestrictionOperator, OP3<:AbstractOperator, OP4<:IndexRestrictionOperator, OP5<:AbstractOperator, OP6<:IndexRestrictionOperator, OP7<:AbstractOperator, OP8<:IndexRestrictionOperator}
     omega = BasisFunctions.grid(dest(A))
     gamma = supergrid(omega)
-    omega_restriction = restriction_operator(gridspace(gamma), gridspace(omega))
+    omega_restriction = restriction_operator(gridbasis(gamma), gridbasis(omega))
     b_ext = omega_restriction'b
     b_ext_copy = copy(b_ext)
     x0 = zeros(src(A))
@@ -505,7 +505,7 @@ DomainDecompositionSolver(basis, gamma, omega, domain; options...) =
     DomainDecompositionSolver{coeftype(basis)}(create_tree(basis, gamma, omega, domain; options...), basis, gamma, omega, domain)
 
 src(s::DomainDecompositionSolver) = extensionframe(s.basis, s.domain)
-dest(s::DomainDecompositionSolver{ELT}) where {ELT} = gridspace(s.omega, ELT)
+dest(s::DomainDecompositionSolver{ELT}) where {ELT} = gridbasis(s.omega, ELT)
 
 domaindecomposition_solve(b::Vector, A::AbstractOperator, s::DomainDecompositionSolver; options...) =
     solve(b, A, s.tree, s.basis, s.gamma, s.omega; options...)

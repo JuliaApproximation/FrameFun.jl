@@ -1,4 +1,3 @@
-
 """
 A grid that contains the points of `omega_grid` that are not evaluated to zero by the elements that overlap with boundary_grid.
 """
@@ -8,7 +7,7 @@ boundary_support_grid(basis, boundary_grid::Union{MaskedGrid,IndexSubGrid}, omeg
 function boundary_support_grid(basis::Dictionary, dual::Dictionary, boundary_grid::Union{MaskedGrid,IndexSubGrid}, omega_grid::Union{MaskedGrid,IndexSubGrid})
     boundary_element_m = BasisFunctions.coefficient_index_mask_of_overlapping_elements(dual, boundary_grid)
     gamma = supergrid(omega_grid)
-    BasisFunctions.grid_index_mask_in_element_support(basis, gamma, boundary_element_m)
+    m = BasisFunctions.grid_index_mask_in_element_support(basis, gamma, boundary_element_m)
     m .= m .& FrameFun.mask(omega_grid)
     MaskedGrid(gamma,m)
 end
@@ -40,15 +39,15 @@ spline_util_restriction_operators(dict::Dictionary, omega::AbstractGrid, boundar
     _spline_util_restriction_operators(dict, omega, boundary_support_grid(dict, boundary, omega))
 
 
-function BasisFunctions.grid_restriction_operator(src::Span, dest::Span, src_grid::Union{IndexSubGrid,MaskedGrid}, dest_grid::MaskedGrid)
+function BasisFunctions.grid_restriction_operator(src::Dictionary, dest::Dictionary, src_grid::Union{IndexSubGrid,MaskedGrid}, dest_grid::MaskedGrid)
     @assert supergrid(src_grid) == supergrid(dest_grid)
     IndexRestrictionOperator(src, dest, FrameFun.relative_indices(dest_grid,src_grid))
 end
 
 function _spline_util_restriction_operators(dict::Dictionary, grid::AbstractGrid, DMZ::AbstractGrid)
-    boundary_indices = FrameFun.boundary_element_indices(dict, DMZ)
-    frame_restriction = IndexRestrictionOperator(Span(dict), Span(dict[boundary_indices]), boundary_indices)
-    grid_restriction = BasisFunctions.restriction_operator(gridspace(grid), gridspace(DMZ))
+    boundary_indices = BasisFunctions.coefficient_indices_of_overlapping_elements(dict, DMZ)
+    frame_restriction = IndexRestrictionOperator(dict, dict[boundary_indices], boundary_indices)
+    grid_restriction = BasisFunctions.restriction_operator(gridbasis(grid), gridbasis(DMZ))
     frame_restriction, grid_restriction
 end
 
@@ -60,9 +59,9 @@ the latter restricts `grid` to the points in the span of the dict elements that
 overlap with a region defined as the span of the dict elements that overlap with the boundary.
 """
 function _spline_util_restriction_operators(dict::Dictionary, grid::AbstractGrid, boundary::AbstractGrid, DMZ::AbstractGrid)
-    boundary_indices = FrameFun.boundary_element_indices(dict, boundary)
-    frame_restriction = IndexRestrictionOperator(Span(dict), Span(dict[boundary_indices]), boundary_indices)
-    grid_restriction = BasisFunctions.restriction_operator(gridspace(grid), gridspace(DMZ))
+    boundary_indices = BasisFunctions.coefficient_indices_of_overlapping_elements(dict, boundary)
+    frame_restriction = IndexRestrictionOperator(dict, dict[boundary_indices], boundary_indices)
+    grid_restriction = BasisFunctions.restriction_operator(gridbasis(grid), gridbasis(DMZ))
     frame_restriction, grid_restriction
 end
 
@@ -79,7 +78,7 @@ estimate_plunge_rank(src::TensorProductDict{N,DT,S,T}, domain::Domain, grid::Mas
 
 function estimate_plunge_rank_bspline(src, domain::Domain, grid::AbstractGrid)
     boundary = boundary_grid(grid, domain)
-    length(boundary_element_indices(src, boundary))
+    sum(BasisFunctions.coefficient_index_mask_of_overlapping_elements(src, boundary))
 end
 
 
@@ -193,7 +192,7 @@ divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::AbstractGrid, ba
 
 function FrameFun.divide_and_conquer_N_util_operators(omega::AbstractGrid, gamma::AbstractGrid, basis::Dictionary, DMZ::AbstractGrid, ranges::Domain; recur=nothing, options...)
     DMZs, GRs = FrameFun.split_DMZ(DMZ, basis, gamma, ranges; options...)
-    OP = GridSamplingOperator(gridspace(gamma))*basis
+    OP = GridSamplingOperator(gridbasis(gamma))*basis
     ops = []
     (recur == nothing) && (recur = dimension(basis)==3 ? 2 :1 )
     if recur >= 1

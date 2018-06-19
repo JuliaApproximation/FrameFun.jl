@@ -394,9 +394,9 @@ function boundary{G,M,N}(g::MaskedGrid{G,M},dom::EuclideanDomain{N})
     boundary(supergrid(g),dom)
 end
 
-has_extension{G <: AbstractSubGrid}(dg::DiscreteGridSpace{G}) = true
+has_extension{G <: AbstractSubGrid}(dg::GridBasis{G}) = true
 
-function BasisFunctions.grid_restriction_operator(src::Span, dest::Span, src_grid::G, dest_grid::MaskedGrid{G,M,I,T}; options...) where {G<:AbstractGrid,M,I,T}
+function BasisFunctions.grid_restriction_operator(src::Dictionary, dest::Dictionary, src_grid::G, dest_grid::MaskedGrid{G,M,I,T}; options...) where {G<:AbstractGrid,M,I,T}
     @assert supergrid(dest_grid) == src_grid
     IndexRestrictionOperator(src, dest, subindices(dest_grid))
 end
