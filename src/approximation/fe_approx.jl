@@ -16,12 +16,7 @@
 
 function Fun(f::Function, basis::Dictionary, domain::Domain; options...)
     ELT = codomaintype(f, basis)
-
-<<<<<<< HEAD
-    frame = extensionframe(domain, promote_domainsubtype(basis, real(ELT)))
-=======
     frame = extensionframe(domain, BasisFunctions.promote_coefficient_type(basis, ELT))
->>>>>>> 426a12a50a8ee10881726113472c21d0c0a07f03
     A = approximation_operator(frame; options...)
     coef = A * f
     DictFun(domain, dest(A), coef)
