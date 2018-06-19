@@ -80,7 +80,7 @@ end
 struct FE_BestSolver
 end
 
-function FE_BestSolver(op::AbstractOperator; scaling=NaN, verbose= false, options...)
+function FE_BestSolver(op::DictionaryOperator; scaling=NaN, verbose= false, options...)
     if has_transform(src(op))
         R = estimate_plunge_rank(op)
         if R < size(op, 2)/2

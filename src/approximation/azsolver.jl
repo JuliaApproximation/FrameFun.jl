@@ -17,16 +17,16 @@ This is the solution.
 
 """
 struct AZSolver{ELT} <: FE_Solver{ELT}
-    TS          ::  AbstractOperator # The low rank decomposition of (A*Zt-I)*A
-    A           ::  AbstractOperator # Store for application in step 2
-    Zt          ::  AbstractOperator # Store for application in step 2
-    plunge_op   ::  AbstractOperator # (A*Zt-I), store because it allocates memory
+    TS          ::  DictionaryOperator # The low rank decomposition of (A*Zt-I)*A
+    A           ::  DictionaryOperator # Store for application in step 2
+    Zt          ::  DictionaryOperator # Store for application in step 2
+    plunge_op   ::  DictionaryOperator # (A*Zt-I), store because it allocates memory
     b                                # Scratch for right hand size
     blinear     ::  Array{ELT,1}     # Scratch for linearized right hand side (necessary for svd inproducts)
     x2
     x1
 
-    function AZSolver{ELT}(A::AbstractOperator, Zt::AbstractOperator; cutoff = default_cutoff(A), trunc = TruncatedSvdSolver, R = estimate_plunge_rank(A), verbose=false,options...) where ELT
+    function AZSolver{ELT}(A::DictionaryOperator, Zt::DictionaryOperator; cutoff = default_cutoff(A), trunc = TruncatedSvdSolver, R = estimate_plunge_rank(A), verbose=false,options...) where ELT
         # Calculate (A*Zt-I)
         plunge_op = plunge_operator(A, Zt)
         # Calculate low rank decomposition of (A*Zt-I)*A
@@ -42,11 +42,11 @@ struct AZSolver{ELT} <: FE_Solver{ELT}
 end
 
 # Set type of scratch space based on operator eltype.
-AZSolver(A::AbstractOperator, Zt::AbstractOperator, options...) =
+AZSolver(A::DictionaryOperator, Zt::DictionaryOperator, options...) =
     AZSolver{eltype(A)}(A, Zt; options...)
 
 # If no Zt is supplied, Zt=A' (up to scaling) by default.
-AZSolver(A::AbstractOperator; scaling=nothing, options...) =
+AZSolver(A::DictionaryOperator; scaling=nothing, options...) =
     AZSolver{eltype(A)}(A, eltype(A)(1)/eltype(A)(scaling)*A'; options...)
 
 
@@ -56,10 +56,10 @@ function plunge_operator(A, Zt)
 end
 
 
-default_cutoff(A::AbstractOperator) = 10^(4/5*log10(eps(real(eltype(A)))))
+default_cutoff(A::DictionaryOperator) = 10^(4/5*log10(eps(real(eltype(A)))))
 
 # Estimate for the rank of (A*Zt-I)*A when computing the low rank decomposition. If check fails, rank estimate is steadily increased.
-function estimate_plunge_rank(A::AbstractOperator)
+function estimate_plunge_rank(A::DictionaryOperator)
     nml=length(src(A))^2/length(dest(A))
     N = dimension(src(A))
     if N==1

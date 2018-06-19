@@ -1,7 +1,7 @@
 # fe_solvers.jl
 
 
-abstract type FE_Solver{ELT} <: AbstractOperator{ELT} end
+abstract type FE_Solver{ELT} <: DictionaryOperator{ELT} end
 
 op(s::FE_Solver) = s.A
 
@@ -18,17 +18,17 @@ src(s::FE_Solver) = dest(op(s))
 dest(s::FE_Solver) = src(op(s))
 
 struct DirectSolver{ELT} <: FE_Solver{ELT}
-    A      ::  AbstractOperator
+    A      ::  DictionaryOperator
     QR      ::  Factorization
 
     src_scratch :: Vector{ELT}
 
-    function DirectSolver{ELT}(A::AbstractOperator) where ELT
+    function DirectSolver{ELT}(A::DictionaryOperator) where ELT
         new(A, qrfact(matrix(A),Val{true}), zeros(ELT, length(dest(A))))
     end
 end
 
-DirectSolver{ELT}(A::AbstractOperator{ELT}; options...) =
+DirectSolver{ELT}(A::DictionaryOperator{ELT}; options...) =
     DirectSolver{eltype(A)}(A)
 
 function apply!(s::DirectSolver, coef_dest, coef_src::MultiArray)

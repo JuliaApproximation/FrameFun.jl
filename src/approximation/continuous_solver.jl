@@ -11,22 +11,22 @@ end
 continuous_normalization(set::Span; options...) = DualGram(set; options...)
 continuous_normalization(frame::ExtensionSpan; options...) = DualGram(basisspan(frame); options...)
 
-immutable ContinuousSolverPlan{T} <: AbstractOperator{T}
+immutable ContinuousSolverPlan{T} <: DictionaryOperator{T}
     src                     :: Span
     dest                    :: Span
     mixedgramsolver         :: FE_Solver
-    normalizationofb        :: AbstractOperator
+    normalizationofb        :: DictionaryOperator
 
     scratch                 :: Vector{T}
-    mixedgram               :: AbstractOperator
-    ContinuousSolverPlan{T}(src::Span, dest::Span, mixedgramsolver::FE_Solver, normalizationofb::AbstractOperator) where {T} =
+    mixedgram               :: DictionaryOperator
+    ContinuousSolverPlan{T}(src::Span, dest::Span, mixedgramsolver::FE_Solver, normalizationofb::DictionaryOperator) where {T} =
         new(src, dest, mixedgramsolver, normalizationofb, zeros(T, length(src)), op(mixedgramsolver))
 end
 
-ContinuousSolverPlan(solver::FE_Solver{T}, normalization::AbstractOperator) where {T} =
+ContinuousSolverPlan(solver::FE_Solver{T}, normalization::DictionaryOperator) where {T} =
     ContinuousSolverPlan(src(solver), dest(solver), solver, normalization)
 
-ContinuousSolverPlan(src::Span, dest::Span, solver::FE_Solver{T}, normalization::AbstractOperator) where {T} =
+ContinuousSolverPlan(src::Span, dest::Span, solver::FE_Solver{T}, normalization::DictionaryOperator) where {T} =
     ContinuousSolverPlan{T}(src, dest, solver, normalization)
 
 function apply!(s::ContinuousSolverPlan, coef_dest, coef_src)

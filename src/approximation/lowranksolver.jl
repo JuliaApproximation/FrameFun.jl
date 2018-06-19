@@ -8,7 +8,7 @@ For tensor product operators it returns a decomposition of the linearized system
 """
 struct TruncatedSvdSolver{ELT} <: FE_Solver{ELT}
     # Keep the original operator
-    A          ::  AbstractOperator
+    A          ::  DictionaryOperator
     # Random matrix
     W           ::  MultiplicationOperator
     # Decomposition
@@ -24,7 +24,7 @@ struct TruncatedSvdSolver{ELT} <: FE_Solver{ELT}
     smalltol :: Float64
 
 
-    function TruncatedSvdSolver{ELT}(A::AbstractOperator; cutoff = default_cutoff(A), R = 5, growth_factor = 2, verbose = false, smallcoefficients=false,smalltol=10,options...) where ELT
+    function TruncatedSvdSolver{ELT}(A::DictionaryOperator; cutoff = default_cutoff(A), R = 5, growth_factor = 2, verbose = false, smallcoefficients=false,smalltol=10,options...) where ELT
         finished=false
         USV = ()
         R = min(R, size(A,2))
@@ -75,8 +75,8 @@ src(t::TruncatedSvdSolver) = dest(t.A)
 dest(t::TruncatedSvdSolver) = src(t.A)
 inv(t::TruncatedSvdSolver) = t.A
 
-TruncatedSvdSolver(A::AbstractOperator; options...) =
-    TruncatedSvdSolver{eltype(A)}(A::AbstractOperator; options...)
+TruncatedSvdSolver(A::DictionaryOperator; options...) =
+    TruncatedSvdSolver{eltype(A)}(A::DictionaryOperator; options...)
 
 apply!(s::TruncatedSvdSolver, coef_dest, coef_src) = _apply!(s, coef_dest, coef_src,
     s.W, s.Ut, s.Sinv, s.V, s.y, s.sy, s.scratch_src, s.scratch_dest,
@@ -118,7 +118,7 @@ For tensor product operators it returns a decomposition of the linearized system
 """
 struct ExactTruncatedSvdSolver{ELT} <: FE_Solver{ELT}
     # Keep the original operator
-    A          ::  AbstractOperator
+    A          ::  DictionaryOperator
     # Decomposition
     Ut          ::  Array{ELT,2}
     Sinv        ::  Array{ELT,1}
@@ -128,7 +128,7 @@ struct ExactTruncatedSvdSolver{ELT} <: FE_Solver{ELT}
     sy          ::  Array{ELT,1}
     scratch_src ::  Array{ELT,1}
 
-    function ExactTruncatedSvdSolver{ELT}(A::AbstractOperator; cutoff = default_cutoff(A), verbose = false,options...) where ELT
+    function ExactTruncatedSvdSolver{ELT}(A::DictionaryOperator; cutoff = default_cutoff(A), verbose = false,options...) where ELT
         C = matrix(A)
         m = maximum(abs.(C))
         USV = LAPACK.gesdd!('S',C)
@@ -148,8 +148,8 @@ src(t::ExactTruncatedSvdSolver) = dest(t.A)
 dest(t::ExactTruncatedSvdSolver) = src(t.A)
 inv(t::ExactTruncatedSvdSolver) = t.A
 
-ExactTruncatedSvdSolver(A::AbstractOperator; options...) =
-    ExactTruncatedSvdSolver{eltype(A)}(A::AbstractOperator; options...)
+ExactTruncatedSvdSolver(A::DictionaryOperator; options...) =
+    ExactTruncatedSvdSolver{eltype(A)}(A::DictionaryOperator; options...)
 
 # We don't need to (de)linearize coefficients when they are already vectors
 function apply!(s::ExactTruncatedSvdSolver, coef_dest::Vector, coef_src::Vector)

@@ -6,10 +6,10 @@ is isolated using a projection operator. This algorithm contains an extra smooth
 
 """
 struct AZSmoothSolver{ELT} <: FE_Solver{ELT}
-    TS :: AbstractOperator
-    A     ::  AbstractOperator
-    Zt    ::  AbstractOperator
-    plunge_op   ::  AbstractOperator    # store the operator because it allocates memory
+    TS :: DictionaryOperator
+    A     ::  DictionaryOperator
+    Zt    ::  DictionaryOperator
+    plunge_op   ::  DictionaryOperator    # store the operator because it allocates memory
     b     ::  Array{ELT,1}
     blinear     ::  Array{ELT,1}
     syv         ::  Array{ELT,1}
@@ -17,9 +17,9 @@ struct AZSmoothSolver{ELT} <: FE_Solver{ELT}
     x1          ::  Array{ELT}
     x3          ::  Array{ELT}
     Q          ::  Array{ELT,2}
-    D           ::  AbstractOperator
+    D           ::  DictionaryOperator
 
-    function AZSmoothSolver{ELT}(A::AbstractOperator, Zt::AbstractOperator; cutoff = default_cutoff(A), cutoffv=sqrt(cutoff), R = estimate_plunge_rank(A), verbose=false,  options...) where ELT
+    function AZSmoothSolver{ELT}(A::DictionaryOperator, Zt::DictionaryOperator; cutoff = default_cutoff(A), cutoffv=sqrt(cutoff), R = estimate_plunge_rank(A), verbose=false,  options...) where ELT
         plunge_op = plunge_operator(A, Zt)
         # Create Random matrices
         TS1 = TruncatedSvdSolver(plunge_op*A; cutoff = cutoff, verbose=verbose,R=R,options...)
@@ -41,10 +41,10 @@ struct AZSmoothSolver{ELT} <: FE_Solver{ELT}
     end
 end
 
-AZSmoothSolver(A::AbstractOperator, Zt::AbstractOperator; options...) =
+AZSmoothSolver(A::DictionaryOperator, Zt::DictionaryOperator; options...) =
     AZSmoothSolver{eltype(A)}(A, Zt; options...)
 
-AZSmoothSolver(A::AbstractOperator; scaling=nothing, options...) =
+AZSmoothSolver(A::DictionaryOperator; scaling=nothing, options...) =
         AZSmoothSolver{eltype(A)}(A, 1/scaling*A'; options...)
 
 function apply!(s::AZSmoothSolver, destarg, src, coef_dest, coef_src)
@@ -88,7 +88,7 @@ dc_index(b::ChebyshevBasis) = 1
 dc_index(b::FourierBasis) = 1
 
 # An index scaling operator, used to generate weights for the polynomial scaling algorithm.
-struct IdxnScalingOperator{ELT} <: AbstractOperator{ELT}
+struct IdxnScalingOperator{ELT} <: DictionaryOperator{ELT}
     src     ::  Dictionary
     order   ::  Int
     scale   ::  Function
