@@ -16,7 +16,6 @@
 
 function Fun(f::Function, basis::Dictionary, domain::Domain; options...)
     ELT = codomaintype(f, basis)
-
     frame = extensionframe(domain, BasisFunctions.promote_coefficient_type(basis, ELT))
     A = approximation_operator(frame; options...)
     coef = A * f
