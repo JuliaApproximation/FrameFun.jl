@@ -29,7 +29,7 @@ catch y
             travis = (ENV["TRAVIS"]=="TRUE")
         end
         if travis
-            warn("Our of memory")
+            warn("Travis is out of memory!!")
         else rethrow(y)
         end
     else
