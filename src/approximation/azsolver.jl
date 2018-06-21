@@ -17,16 +17,16 @@ This is the solution.
 
 """
 struct AZSolver{ELT} <: FE_Solver{ELT}
-    TS          ::  AbstractOperator # The low rank decomposition of (A*Zt-I)*A
-    A           ::  AbstractOperator # Store for application in step 2
-    Zt          ::  AbstractOperator # Store for application in step 2
-    plunge_op   ::  Union{Void,AbstractOperator} # (A*Zt-I), store because it allocates memory
-    b                           # Scratch for right hand size
+    TS          ::  DictionaryOperator # The low rank decomposition of (A*Zt-I)*A
+    A           ::  DictionaryOperator # Store for application in step 2
+    Zt          ::  DictionaryOperator # Store for application in step 2
+    plunge_op   ::  Union{Void,DictionaryOperator} # (A*Zt-I), store because it allocates memory
+    b                                # Scratch for right hand size
     blinear     ::  Array{ELT,1}     # Scratch for linearized right hand side (necessary for svd inproducts)
     x2
     x1
 
-    function AZSolver{ELT}(trunc::FE_Solver, A::AbstractOperator, Zt::AbstractOperator; plunge_op = nothing, options...) where ELT
+    function AZSolver{ELT}(trunc::FE_Solver, A::DictionaryOperator, Zt::DictionaryOperator; plunge_op = nothing, options...) where ELT
         # Allocate scratch space
         b = zeros(src(trunc))
         blinear = zeros(ELT, length(src(trunc)))
@@ -36,7 +36,7 @@ struct AZSolver{ELT} <: FE_Solver{ELT}
     end
 end
 
-function AZSolver(A::AbstractOperator{ELT}, Zt::AbstractOperator{ELT}, util_operators::AbstractOperator{ELT}...;
+function AZSolver(A::DictionaryOperator{ELT}, Zt::DictionaryOperator{ELT}, util_operators::DictionaryOperator{ELT}...;
         use_plunge=true, options...) where {ELT}
     plunge_op = nothing
     OP = A
@@ -45,10 +45,10 @@ function AZSolver(A::AbstractOperator{ELT}, Zt::AbstractOperator{ELT}, util_oper
         plunge_op = plunge_operator(A, Zt)
         OP = plunge_op*A
     end
-    _AZSolver(A::AbstractOperator, Zt::AbstractOperator, OP, util_operators...; plunge_op=plunge_op, options...)
+    _AZSolver(A::DictionaryOperator, Zt::DictionaryOperator, OP, util_operators...; plunge_op=plunge_op, options...)
 end
 
-function _AZSolver(A::AbstractOperator{ELT}, Zt::AbstractOperator{ELT}, OP::AbstractOperator{ELT}, util_operators::AbstractOperator{ELT}...;
+function _AZSolver(A::DictionaryOperator{ELT}, Zt::DictionaryOperator{ELT}, OP::DictionaryOperator{ELT}, util_operators::DictionaryOperator{ELT}...;
         cutoff = default_cutoff(A), TRUNC=TruncatedSvdSolver, R = estimate_plunge_rank(A), verbose=false, options...) where {ELT}
     # Calculate low rank INVERSE of (A*Zt-I)*A
     TS = TRUNC(OP, util_operators...; cutoff=cutoff, R=R, verbose=verbose, options...)
@@ -56,21 +56,21 @@ function _AZSolver(A::AbstractOperator{ELT}, Zt::AbstractOperator{ELT}, OP::Abst
 end
 
 # Set type of scratch space based on operator eltype.
-AZSolver(trunc::FE_Solver{ELT}, A::AbstractOperator{ELT}, Zt::AbstractOperator{ELT}; options...) where {ELT} =
+AZSolver(trunc::FE_Solver{ELT}, A::DictionaryOperator{ELT}, Zt::DictionaryOperator{ELT}; options...) where {ELT} =
     AZSolver{eltype(A)}(trunc, A, Zt; options...)
 
-AZSSolver(A::AbstractOperator, Zt::AbstractOperator, RD::AbstractOperator, EF::AbstractOperator;
+AZSSolver(A::DictionaryOperator, Zt::DictionaryOperator, RD::DictionaryOperator, EF::DictionaryOperator;
         TRUNC = RestrictionSolver, use_plunge=false, options...) =
     AZSolver(A, Zt, RD, EF; use_plunge=use_plunge, TRUNC=TRUNC, options...)
 
-AZSDCSolver(A::AbstractOperator, Zt::AbstractOperator,
-        RD0::AbstractOperator, RD1::AbstractOperator, RD2::AbstractOperator,
-        EF0::AbstractOperator, EF1::AbstractOperator, EF2::AbstractOperator;
+AZSDCSolver(A::DictionaryOperator, Zt::DictionaryOperator,
+        RD0::DictionaryOperator, RD1::DictionaryOperator, RD2::DictionaryOperator,
+        EF0::DictionaryOperator, EF1::DictionaryOperator, EF2::DictionaryOperator;
         TRUNC = DivideAndConquerSolver, use_plunge=false, options...) =
     AZSolver(A, Zt, RD0, RD1, RD2, EF0, EF1, EF2; use_plunge=use_plunge, TRUNC=TRUNC, options...)
 
 # If no Zt is supplied, Zt=A' (up to scaling) by default.
-AZSolver(A::AbstractOperator{ELT}; scaling=nothing, options...) where {ELT} =
+AZSolver(A::DictionaryOperator{ELT}; scaling=nothing, options...) where {ELT} =
     AZSolver(A, ELT(1)/ELT(scaling)*A'; options...)
 
 function plunge_operator(A, Zt)
@@ -78,10 +78,10 @@ function plunge_operator(A, Zt)
     A*Zt - I
 end
 
-default_cutoff(A::AbstractOperator) = 10^(4/5*log10(eps(real(eltype(A)))))
+default_cutoff(A::DictionaryOperator) = 10^(4/5*log10(eps(real(eltype(A)))))
 
 # Estimate for the rank of (A*Zt-I)*A when computing the low rank decomposition. If check fails, rank estimate is steadily increased.
-@inline estimate_plunge_rank(A::AbstractOperator) =
+@inline estimate_plunge_rank(A::DictionaryOperator) =
     estimate_plunge_rank(src(A), dest(A))
 
 @inline estimate_plunge_rank(src::ExtensionFrame, dest::Dictionary) =
@@ -106,7 +106,7 @@ end
 apply!(s::AZSolver, coef_dest, coef_src) = _apply!(s, coef_dest, coef_src,
         s.plunge_op, s.A, s.Zt, s.b, s.blinear, s.TS, s.x1, s.x2)
 
-function _apply!(s::AZSolver, coef_dest, coef_src, plunge_op::AbstractOperator, A, Zt, b, blinear, TS, x1, x2)
+function _apply!(s::AZSolver, coef_dest, coef_src, plunge_op::DictionaryOperator, A, Zt, b, blinear, TS, x1, x2)
     # Step 1:
     # Consruct (A*Zt-I)*b
     apply!(plunge_op, b, coef_src)
@@ -176,7 +176,7 @@ function AZSDCSolver(fplatform::BasisFunctions.Platform, i, dim::Int, range; opt
 end
 
 # Function with equal functionality, but allocating memory
-function az_solve(b, A::AbstractOperator, Zt::AbstractOperator, util_operators::AbstractOperator...; use_plunge=true,
+function az_solve(b, A::DictionaryOperator, Zt::DictionaryOperator, util_operators::DictionaryOperator...; use_plunge=true,
         cutoff = default_cutoff(A), trunc = truncatedsvd_solve, verbose=false, options...)
     if use_plunge
         P = plunge_operator(A, Zt)
@@ -189,37 +189,37 @@ function az_solve(b, A::AbstractOperator, Zt::AbstractOperator, util_operators::
 end
 
 # Function with equal functionality, but allocating memory
-azs_solve(b, A::AbstractOperator, Zt::AbstractOperator, RD::AbstractOperator, SB::AbstractOperator;
+azs_solve(b, A::DictionaryOperator, Zt::DictionaryOperator, RD::DictionaryOperator, SB::DictionaryOperator;
         trunc = restriction_solve, use_plunge=false, options...) =
     az_solve(b, A, Zt, RD, SB; trunc=trunc, use_plunge=use_plunge, options...)
 
 # Function with equal functionality, but allocating memory
-azsdc_solve(b, A::AbstractOperator, Zt::AbstractOperator,
-        RD0::AbstractOperator, RD1::AbstractOperator, RD2::AbstractOperator,
-        EF0::AbstractOperator, EF1::AbstractOperator, EF2::AbstractOperator;
+azsdc_solve(b, A::DictionaryOperator, Zt::DictionaryOperator,
+        RD0::DictionaryOperator, RD1::DictionaryOperator, RD2::DictionaryOperator,
+        EF0::DictionaryOperator, EF1::DictionaryOperator, EF2::DictionaryOperator;
         trunc = divideandconqer_solve, use_plunge=false, options...) =
     az_solve(b, A, Zt, RD0, RD1, RD2, EF0, EF1, EF2; trunc=trunc, use_plunge=use_plunge, options...)
 
 
-azsdcN_solve(b, A::AbstractOperator, Zt::AbstractOperator,
+azsdcN_solve(b, A::DictionaryOperator, Zt::DictionaryOperator,
         A0::Vector{OP1}, GR0::Vector{OP2},
         A1::Vector{OP3}, GR1::Vector{OP4};
-        trunc = divideandconqerN_solve, use_plunge=false, options...) where {OP1<:AbstractOperator, OP2<:AbstractOperator, OP3<:AbstractOperator, OP4<:AbstractOperator}=
+        trunc = divideandconqerN_solve, use_plunge=false, options...) where {OP1<:DictionaryOperator, OP2<:DictionaryOperator, OP3<:DictionaryOperator, OP4<:DictionaryOperator}=
     az_solve(b, A, Zt, A0..., GR0..., A1..., GR1...;
     divideandconqerN_op_lengths=[length(A0), length(GR0), length(A1), length(GR1)],
     trunc=trunc, use_plunge=use_plunge, options...)
 
-az_tree_solve(b, A::AbstractOperator, Zt::AbstractOperator, solver::DomainDecompositionSolver;
+az_tree_solve(b, A::DictionaryOperator, Zt::DictionaryOperator, solver::DomainDecompositionSolver;
         trunc=domaindecomposition_solve, use_plunge=false, options...) =
     az_solve(b, A, Zt, solver; use_plunge=use_plunge ,trunc=trunc)
 
 
-azsdcN_solve(b, A::AbstractOperator, Zt::AbstractOperator,
+azsdcN_solve(b, A::DictionaryOperator, Zt::DictionaryOperator,
         A0::Vector{OP1}, GR0::Vector{OP2},
         A1::Vector{OP3}, GR1::Vector{OP4},
         A2::Vector{OP5}, GR2::Vector{OP6},
         A3::Vector{OP7}, GR3::Vector{OP8};
-        trunc = divideandconqerN_solve, use_plunge=false, options...) where {OP1<:AbstractOperator, OP2<:AbstractOperator, OP3<:AbstractOperator, OP4<:AbstractOperator,  OP5<:AbstractOperator, OP6<:AbstractOperator, OP7<:AbstractOperator, OP8<:AbstractOperator}=
+        trunc = divideandconqerN_solve, use_plunge=false, options...) where {OP1<:DictionaryOperator, OP2<:DictionaryOperator, OP3<:DictionaryOperator, OP4<:DictionaryOperator,  OP5<:DictionaryOperator, OP6<:DictionaryOperator, OP7<:DictionaryOperator, OP8<:DictionaryOperator}=
     az_solve(b, A, Zt, A0..., GR0..., A1..., GR1..., A2..., GR2..., A3..., GR3...;
     divideandconqerN_op_lengths=[length(A0), length(GR0), length(A1), length(GR1), length(A2), length(GR2), length(A3), length(GR3)],
     trunc=trunc, use_plunge=use_plunge, options...)

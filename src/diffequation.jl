@@ -13,7 +13,7 @@ will hold.
 
 struct BoundaryCondition
     S      :: Dictionary
-    diff   :: AbstractOperator
+    diff   :: DictionaryOperator
     DG     :: AbstractGrid
 end
 
@@ -35,8 +35,8 @@ struct NeumannBC
 end
 
 # BoundaryCondition(S :: Dictionary, D::Domain) = BoundaryCondition(S,IdentityOperator(S),boundary(grid(S),D),default_boundary_condition)
-# BoundaryCondition(S :: Dictionary, diff::AbstractOperator, D::Domain) = BoundaryCondition(S,diff,boundary(grid(S),D),default_boundary_condition)
-# BoundaryCondition(S :: Dictionary, diff::AbstractOperator, D::Domain, dRhs::Function) = BoundaryCondition(S,diff,boundary(grid(S),D),dRhs)
+# BoundaryCondition(S :: Dictionary, diff::DictionaryOperator, D::Domain) = BoundaryCondition(S,diff,boundary(grid(S),D),default_boundary_condition)
+# BoundaryCondition(S :: Dictionary, diff::DictionaryOperator, D::Domain, dRhs::Function) = BoundaryCondition(S,diff,boundary(grid(S),D),dRhs)
 # default_boundary_condition(x) = 0
 # default_boundary_condition(x,y) = 0
 # default_boundary_condition(x,y,z) = 0
@@ -73,16 +73,16 @@ end
 struct DiffEquation
     S     :: Dictionary
     D     :: Domain
-    Diff  :: AbstractOperator
+    Diff  :: DictionaryOperator
     DRhs   :: Function
     BCs    :: Tuple
     sampling_factor
-    function DiffEquation(S::Dictionary, D::Domain,Diff::AbstractOperator, DRhs:: Function, BCs::Tuple, sampling_factor=2)
+    function DiffEquation(S::Dictionary, D::Domain,Diff::DictionaryOperator, DRhs:: Function, BCs::Tuple, sampling_factor=2)
         new(S,D,Diff,DRhs,BCs, sampling_factor)
     end
 end
 
-# DiffEquation(S::Dictionary, D::Domain, Diff::AbstractOperator, DRhs::Function, BC::BoundaryCondition, sampling_factor=2) = DiffEquation(S,D,Diff,DRhs,(BC,), sampling_factor)
+# DiffEquation(S::Dictionary, D::Domain, Diff::DictionaryOperator, DRhs::Function, BC::BoundaryCondition, sampling_factor=2) = DiffEquation(S,D,Diff,DRhs,(BC,), sampling_factor)
 
 function boundarygrid(D::DiffEquation)
     G, lB = oversampled_grid(D.D,D.S,D.sampling_factor)
@@ -94,7 +94,7 @@ function operator(D::DiffEquation; incboundary=false, options...)
     #problem = FE_DiscreteProblem(D.D,D.S,2)
     B = D.S
     ADiff = pinv(D.Diff)
-    ops = incboundary ? Array{AbstractOperator}(length(D.BCs)+2,1) : Array{AbstractOperator}(length(D.BCs)+1,1)
+    ops = incboundary ? Array{DictionaryOperator}(length(D.BCs)+2,1) : Array{DictionaryOperator}(length(D.BCs)+1,1)
     G, lB = oversampled_grid(D.D,D.S,D.sampling_factor)
 
     op = grid_evaluation_operator(D.S,gridbasis(G,coeftype(D.S)),G)

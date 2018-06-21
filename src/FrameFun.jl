@@ -83,7 +83,7 @@ import BasisFunctions: postprocess, plotgrid
 
 import BasisFunctions: flatten
 
-import BasisFunctions: Span, Span1d, Span2d
+import BasisFunctions: Span
 
 import BasisFunctions: coefficient_type, coeftype, similar_span
 

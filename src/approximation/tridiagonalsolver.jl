@@ -11,7 +11,7 @@ struct FE_TridiagonalSolver{ELT} <: FrameFun.FE_Solver{ELT}
     Ut :: Array{ELT,2}
     V :: Array{ELT,2}
     Sinv :: Array{ELT,1}
-    A     ::  AbstractOperator
+    A     ::  DictionaryOperator
     b
     blinear     ::  Array{ELT,1}
     x2
@@ -19,7 +19,7 @@ struct FE_TridiagonalSolver{ELT} <: FrameFun.FE_Solver{ELT}
     y
     y2
     scaling
-    function FE_TridiagonalSolver{ELT}(A::AbstractOperator, scaling; cutoff = default_cutoff(A), irange = estimate_plunge_range(A,scaling,estimate_plunge_rank(A)), verbose=false,options...) where ELT
+    function FE_TridiagonalSolver{ELT}(A::DictionaryOperator, scaling; cutoff = default_cutoff(A), irange = estimate_plunge_range(A,scaling,estimate_plunge_rank(A)), verbose=false,options...) where ELT
         R = estimate_plunge_rank(A)
         finished = false
         V=[]
@@ -49,7 +49,7 @@ struct FE_TridiagonalSolver{ELT} <: FrameFun.FE_Solver{ELT}
     end
 end
 
-FE_TridiagonalSolver(A::AbstractOperator; scaling=nothing, options...) =
+FE_TridiagonalSolver(A::DictionaryOperator; scaling=nothing, options...) =
     FE_TridiagonalSolver{eltype(A)}(A, scaling; options...)
     
 function estimate_plunge_range(A,L,C)

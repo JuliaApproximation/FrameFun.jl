@@ -5,36 +5,18 @@ A WeightedSumFrame is the union of a finite number of copies of a single frame,
 each weighted by function.
 """
 
-const WeightedSumFrame{S,T} = MultiDict{AbstractVector{WeightedDict{S,T}},S,T}
-
-WeightedSumFrame(weightfunctions,frame::Dictionary) = MultiDict(map(x->WeightedDict(frame,x),weightfunctions))
-
-function hassuperdict(f::WeightedSumFrame)
-    superdict = superdict(element(f,1))
-    hassuperdict = true
-    for wdict in elements(f)
-        if superdict(wdict) != superdict
-            hassuperdict = false
-        end
-    end
-    hassuperdict
+struct WeightedSumPlatform <: BasisFunctions.Platform
+    weights :: Vector{Function}
+    P :: Platform
 end
 
-function superdict(f::WeightedSumFrame)
-    if hassuperdict
-        return superdict(element(f,1))
-    else
-        error("Error: This weighted sum frame does not have a superdict")
-        return
-    end
-end
+weight(P::WeightedSumPlatform, i) = weights[i]
 
-function name(f::WeightedSumFrame)
-    if hassuperdict
-        return "Frame consisting of " * string(numelements(f)) * " weighted copies of " * name(superdict(f))
-    else
-        return "Weight sum frame with " * string(numelements(f)) * "constituent frames"
-    end
-end
+primal(P::WeightedSumPlatform, i) = MultiDict([P.weights[j]*primal(P.P,i) for j=1:length(P.weights)])
 
-weightfunctions(f::WeightedSumFrame) = map(weightfunction,elements(f))
+function dual(P::WeightedSumPlatform, i)
+    norm = (x...)->1/sum(map(w->abs(w(x...))^2,P.weights))
+    MultiDict([((x...)->(P.weights[j](x...)/norm(x...)))*dual(P.P,i) for j=1:length(P.weights)])
+end
+sampler(P::WeightedSumPlatform,i) = sampler(P.P,i)
+dual_sampler(P::WeightedSumPlatform,i) = dual_sampler(P.P,i)

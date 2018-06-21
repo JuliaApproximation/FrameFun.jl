@@ -71,7 +71,7 @@ function sampling_grid(fun::DictFun; sampling_factor=2)
 end
 
 # Delegate operator applications to the underlying expansion
-function (*)(op::AbstractOperator, fun::DictFun)
+function (*)(op::DictionaryOperator, fun::DictFun)
     @assert src(op) == basis(dictionary(fun))
     DictFun(domain(fun),dest(op),op*coefficients(fun))
 end
