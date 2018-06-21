@@ -198,9 +198,9 @@ function collect_neighbours!(mask::BitArray{N}, index::NTuple{N,Int}, left_over:
                 new_indices_mask[i] = false
                 mask[i] = true
                 for nb in FrameFun.NBIndexList(i, size(left_over))
-                    if left_over[nb...]
-                        new_indices_mask[nb...] = true
-                        left_over[nb...] = false
+                    if left_over[nb]
+                        new_indices_mask[nb] = true
+                        left_over[nb] = false
                     end
                 end
             end

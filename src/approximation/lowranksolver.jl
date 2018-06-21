@@ -176,13 +176,13 @@ A RestrictionSolver is a solver used specifically for B splines,
 taking advantage of the sparse structure.
 """
 struct RestrictionSolver{ELT} <: FrameFun.FE_Solver{ELT}
-    Aop::AbstractOperator
+    Aop::DictionaryOperator
 
     A::Matrix{ELT}
     # Mapping operator of dict to its boundary overlapping prolates
-    BE::AbstractOperator
+    BE::DictionaryOperator
     # Selection operator for the collocation points in the support of the boundary overlapping prolates
-    GR::AbstractOperator
+    GR::DictionaryOperator
 
     cutoff
 
@@ -190,7 +190,7 @@ struct RestrictionSolver{ELT} <: FrameFun.FE_Solver{ELT}
     scratch_b_linear::Vector{ELT}
     scratch_y1_native::Array{ELT}
     y1::Vector{ELT}
-    function RestrictionSolver{ELT}(A::AbstractOperator, BE::AbstractOperator, GR::AbstractOperator; cutoff=FrameFun.default_cutoff(A), options...) where {ELT}
+    function RestrictionSolver{ELT}(A::DictionaryOperator, BE::DictionaryOperator, GR::DictionaryOperator; cutoff=FrameFun.default_cutoff(A), options...) where {ELT}
         new(A, truncated_svd(matrix(GR*A*BE),cutoff), BE, GR, cutoff, zeros(ELT,size(dest(GR))...), zeros(ELT, length(dest(GR))), zeros(ELT, size(src(BE))...), zeros(ELT, length(src(BE))))
     end
 end
@@ -199,7 +199,7 @@ src(t::RestrictionSolver) = dest(t.Aop)
 dest(t::RestrictionSolver) = src(t.Aop)
 inv(t::RestrictionSolver) = t.Aop
 
-RestrictionSolver(A::AbstractOperator, BE::AbstractOperator, GR::AbstractOperator; options...) =
+RestrictionSolver(A::DictionaryOperator, BE::DictionaryOperator, GR::DictionaryOperator; options...) =
     RestrictionSolver{eltype(A)}(A, BE, GR; options...)
 
 function BasisFunctions.apply!(S::RestrictionSolver, x, b::Vector)
@@ -225,19 +225,19 @@ A DivideAndConquerSolver is a solver used specifically for B splines,
 taking advantage of the sparse structure.
 """
 struct DivideAndConquerSolver{ELT} <: FrameFun.FE_Solver{ELT}
-    A::AbstractOperator{ELT}
+    A::DictionaryOperator{ELT}
     # Small problem between A1 and A2
     A0::Matrix{ELT}
     A1::Matrix{ELT}
     A2::Matrix{ELT}
     # Mapping operator of dict to its boundary overlapping prolates
-    BE0::AbstractOperator
-    BE1::AbstractOperator
-    BE2::AbstractOperator
+    BE0::DictionaryOperator
+    BE1::DictionaryOperator
+    BE2::DictionaryOperator
     # Selection operator for the collocation points in the support of the boundary overlapping prolates
-    GR0::AbstractOperator
-    GR1::AbstractOperator
-    GR2::AbstractOperator
+    GR0::DictionaryOperator
+    GR1::DictionaryOperator
+    GR2::DictionaryOperator
 
     cutoff
 
@@ -256,9 +256,9 @@ struct DivideAndConquerSolver{ELT} <: FrameFun.FE_Solver{ELT}
     bnew::Array{ELT}
 
     function DivideAndConquerSolver{ELT}(
-        A::AbstractOperator,
-        BE0::AbstractOperator, BE1::AbstractOperator, BE2::AbstractOperator,
-        GR0::AbstractOperator, GR1::AbstractOperator, GR2::AbstractOperator;
+        A::DictionaryOperator,
+        BE0::DictionaryOperator, BE1::DictionaryOperator, BE2::DictionaryOperator,
+        GR0::DictionaryOperator, GR1::DictionaryOperator, GR2::DictionaryOperator;
         cutoff=FrameFun.default_cutoff(A), options...) where {ELT}
 
         new(A, truncated_svd(matrix(GR0*A*BE0), cutoff), truncated_svd(matrix(GR1*A*BE1), cutoff), truncated_svd(matrix(GR2*A*BE2), cutoff),
@@ -284,9 +284,9 @@ src(t::DivideAndConquerSolver) = dest(t.A)
 dest(t::DivideAndConquerSolver) = src(t.A)
 inv(t::DivideAndConquerSolver) = t.A
 
-DivideAndConquerSolver( A::AbstractOperator,
-                        BE0::AbstractOperator, BE1::AbstractOperator, BE2::AbstractOperator,
-                        GR0::AbstractOperator, GR1::AbstractOperator, GR2::AbstractOperator
+DivideAndConquerSolver( A::DictionaryOperator,
+                        BE0::DictionaryOperator, BE1::DictionaryOperator, BE2::DictionaryOperator,
+                        GR0::DictionaryOperator, GR1::DictionaryOperator, GR2::DictionaryOperator
                         ; options...) =
     DivideAndConquerSolver{eltype(A)}(A, BE0, BE1, BE2, GR0, GR1, GR2; options...)
 
@@ -320,7 +320,7 @@ end
 
 
 # Function with equal functionality, but allocating memory
-function truncatedsvd_solve(b::Vector, A::AbstractOperator; cutoff = default_cutoff(A), R = 5, growth_factor = 2, verbose = false, smallcoefficients=false,smalltol=10,options...)
+function truncatedsvd_solve(b::Vector, A::DictionaryOperator; cutoff = default_cutoff(A), R = 5, growth_factor = 2, verbose = false, smallcoefficients=false,smalltol=10,options...)
     finished=false
     ELT = eltype(A)
     R = min(R, size(A,2))
@@ -351,7 +351,7 @@ function truncatedsvd_solve(b::Vector, A::AbstractOperator; cutoff = default_cut
 end
 
 # Function with equal functionality, but allocating memory
-restriction_solve(b::Vector, A::AbstractOperator, BE::IndexExtensionOperator,
+restriction_solve(b::Vector, A::DictionaryOperator, BE::IndexExtensionOperator,
         GR::IndexRestrictionOperator; cutoff=FrameFun.default_cutoff(A), options...) =
     BE*LAPACK.gelsy!(matrix(GR*A*BE),GR*b,cutoff)[1]
 
@@ -359,7 +359,7 @@ restriction_solve(b::Vector, A::AbstractOperator, BE::IndexExtensionOperator,
 #     BE*reshape(LAPACK.gelsy!(matrix(GR*A*BE),(GR*b)[:],cutoff)[1], size(src(BE)))
 
 
-function divideandconqer_solve(b::Vector, A::AbstractOperator, BE0::IndexExtensionOperator, BE1::IndexExtensionOperator, BE2::IndexExtensionOperator,
+function divideandconqer_solve(b::Vector, A::DictionaryOperator, BE0::IndexExtensionOperator, BE1::IndexExtensionOperator, BE2::IndexExtensionOperator,
         GR0::IndexRestrictionOperator, GR1::IndexRestrictionOperator, GR2::IndexRestrictionOperator;  cutoff=FrameFun.default_cutoff(A), options...)
     x0 = BE0*LAPACK.gelsy!(matrix(GR0*A*BE0), GR0*b, cutoff)[1]
     Lb = length(b)::Int
@@ -388,7 +388,7 @@ function divideandconqer_solve(b::Vector, A::AbstractOperator, BE0::IndexExtensi
     x0
 end
 
-function divideandconqerN_solve(b::Vector, A, ops::AbstractOperator...; divideandconqerN_op_lengths=nothing, options...)
+function divideandconqerN_solve(b::Vector, A, ops::DictionaryOperator...; divideandconqerN_op_lengths=nothing, options...)
     A0 = Array{CompositeOperator}(divideandconqerN_op_lengths[1])
     G0 = Array{IndexRestrictionOperator}(divideandconqerN_op_lengths[2])
     A1 = Array{CompositeOperator}(divideandconqerN_op_lengths[3])
@@ -420,7 +420,7 @@ end
 
 function divideandconqerN_solve(b::Vector, A, A0::Vector{OP1}, GR0::Vector{OP2},
         A1::Vector{OP3}, GR1::Vector{OP4};
-        cutoff=FrameFun.default_cutoff(A), options...) where {OP1<:AbstractOperator, OP2<:IndexRestrictionOperator, OP3<:AbstractOperator, OP4<:IndexRestrictionOperator}
+        cutoff=FrameFun.default_cutoff(A), options...) where {OP1<:DictionaryOperator, OP2<:IndexRestrictionOperator, OP3<:DictionaryOperator, OP4<:IndexRestrictionOperator}
     omega = BasisFunctions.grid(dest(A))
     gamma = supergrid(omega)
     omega_restriction = restriction_operator(gridbasis(gamma), gridbasis(omega))
@@ -450,7 +450,7 @@ function divideandconqerN_solve(b::Vector, A,
         A1::Vector{OP3}, GR1::Vector{OP4},
         A2::Vector{OP5}, GR2::Vector{OP6},
         A3::Vector{OP7}, GR3::Vector{OP8};
-        cutoff=FrameFun.default_cutoff(A), options...) where {OP1<:AbstractOperator, OP2<:IndexRestrictionOperator, OP3<:AbstractOperator, OP4<:IndexRestrictionOperator, OP5<:AbstractOperator, OP6<:IndexRestrictionOperator, OP7<:AbstractOperator, OP8<:IndexRestrictionOperator}
+        cutoff=FrameFun.default_cutoff(A), options...) where {OP1<:DictionaryOperator, OP2<:IndexRestrictionOperator, OP3<:DictionaryOperator, OP4<:IndexRestrictionOperator, OP5<:DictionaryOperator, OP6<:IndexRestrictionOperator, OP7<:DictionaryOperator, OP8<:IndexRestrictionOperator}
     omega = BasisFunctions.grid(dest(A))
     gamma = supergrid(omega)
     omega_restriction = restriction_operator(gridbasis(gamma), gridbasis(omega))
@@ -494,7 +494,7 @@ struct DomainDecompositionSolver{ELT} <: FE_Solver{ELT}
     gamma   :: AbstractGrid
     omega   :: AbstractGrid
     domain  :: Domain
-    A       :: AbstractOperator
+    A       :: DictionaryOperator
 end
 
 DomainDecompositionSolver(fplatform::BasisFunctions.GenericPlatform, i; options...) =
@@ -510,5 +510,5 @@ dest(s::DomainDecompositionSolver{ELT}) where {ELT} = gridbasis(s.omega, ELT)
 
 BasisFunctions.apply(s::DomainDecompositionSolver, src) = domaindecomposition_solve(src, s.A, s)
 
-domaindecomposition_solve(b::Vector, A::AbstractOperator, s::DomainDecompositionSolver; options...) =
+domaindecomposition_solve(b::Vector, A::DictionaryOperator, s::DomainDecompositionSolver; options...) =
     solve(b, A, s.tree, s.basis, s.gamma, s.omega; options...)

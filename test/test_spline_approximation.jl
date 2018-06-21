@@ -184,7 +184,8 @@ end
     op = FrameFun.DomainDecompositionSolver(fplatform, i)
     x = op*b;@test 1+norm(A*x-b)≈1
 
-    # 1D f1d = identity
+    # 1D
+    f1d = identity
     domain1d = interval(0,.5)
     epsilon=1e-10
     degree = 1

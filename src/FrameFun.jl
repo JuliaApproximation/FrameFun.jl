@@ -85,9 +85,7 @@ import BasisFunctions: flatten
 
 import BasisFunctions: Span
 
-import BasisFunctions: coefficient_type, coeftype, similar_span
-
-import BasisFunctions: overlapping_elements, unique_overlapping_elements
+import BasisFunctions: coefficient_type, coeftype
 
 # about subgrids
 import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
@@ -97,6 +95,8 @@ import BasisFunctions: Gram, DualGram, MixedGram, DiscreteGram, DiscreteDualGram
 import BasisFunctions: dual
 
 import BasisFunctions: discrete_approximation_operator, continuous_approximation_operator
+
+import BasisFunctions: primal, dual, Zt, A, sampler, dual_sampler
 
 ###############################
 ## Exhaustive list of exports
@@ -108,7 +108,6 @@ export ExpFun, ChebyFun, Fun, DictFun, sampling_grid, domain, abserror, maxerror
 export MaskedGrid, boundary_grid
 
 # from spline_approximation.jl
-
 
 # from domains/boundingbox.jl
 export BoundingBox, BBox, BBox1, BBox2, BBox3, BBox4
@@ -152,6 +151,9 @@ export polardomain
 export characteristic
 
 export FeFun, FeFunNd
+
+# from diffequation.jl
+export operator
 
 # from approximation
 export DirectSolver, AZSolver, AZSmoothSolver, TridiagonalSolver, AZSSolver, AZSDCSolver
