@@ -508,7 +508,7 @@ DomainDecompositionSolver(basis, gamma, omega, domain, A; options...) =
 src(s::DomainDecompositionSolver) = extensionframe(s.basis, s.domain)
 dest(s::DomainDecompositionSolver{ELT}) where {ELT} = gridbasis(s.omega, ELT)
 
-apply(s::DomainDecompositionSolver, src) = domaindecomposition_solve(src, s.A, s)
+BasisFunctions.apply(s::DomainDecompositionSolver, src) = domaindecomposition_solve(src, s.A, s)
 
 domaindecomposition_solve(b::Vector, A::AbstractOperator, s::DomainDecompositionSolver; options...) =
     solve(b, A, s.tree, s.basis, s.gamma, s.omega; options...)

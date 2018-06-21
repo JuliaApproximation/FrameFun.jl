@@ -3,6 +3,129 @@ import AbstractTrees: children, printnode
 import Base: start, done, next
 import BasisFunctions: grid
 
+function split_grids(primal::Dictionary1d, dual::Dictionary1d, grid::AbstractEquispacedGrid,
+        leftendpoints, rightendpoints, min_no_gridpoints::Int, dim::Int,
+        mids::Vector{G1}, others::Vector{G2}) where {G1<:AbstractGrid, G2<:AbstractGrid}
+    mid_doms, other_doms = split_domains(primal, dual, grid, leftendpoints, rightendpoints, min_no_gridpoints, dim)
+    r1 = [FrameFun.subgrid(mid, mid_dom) for mid in mids for mid_dom in mid_doms]
+    r2 = [FrameFun.subgrid(mid, other_dom) for mid in mids for other_dom in other_doms]
+    if length(others) > 0
+        r3 = [FrameFun.subgrid(other, mid_dom) for other in others for mid_dom in mid_doms]
+        r4 = [FrameFun.subgrid(other, other_dom) for other in others for  other_dom in other_doms]
+    else
+        r3 = AbstractGrid[]
+        r4 = AbstractGrid[]
+    end
+    r1, r2, r3, r3
+end
+
+function split_domains(primal::Dictionary1d, dual::Dictionary1d, grid::AbstractEquispacedGrid, leftendpoints, rightendpoints, min_no_gridpoints::Int, dim::Int)
+    mid, other = split_interval_limits(primal, dual, grid, leftendpoints[dim], rightendpoints[dim], min_no_gridpoints)
+
+    if length(leftendpoints) == 1
+        [interval(mid[2i-1], mid[2i]) for i in 1:length(mid)>>1],
+            [interval(other[2i-1], other[2i]) for i in 1:length(other)>>1]
+    else
+        [box(mid[2i-1], mid[2i], leftendpoints, rightendpoints, dim) for i in 1:length(mid)>>1],
+            [box(other[2i-1], other[2i], leftendpoints, rightendpoints, dim) for i in 1:length(other)>>1]
+    end
+end
+
+function box(left, right, leftendpoints, rightendpoints, dim)
+    a = copy(leftendpoints)
+    b = copy(rightendpoints)
+    a[dim] = left
+    b[dim] = right
+    cube(a, b)
+end
+
+
+
+function split_interval_limits(primal::Dictionary{S}, dual::Dictionary{S}, grid::AbstractEquispacedGrid, leftendpoint::S, rightendpoint::S, min_no_gridpoints::Int) where {S<:Real}
+    w = DMZ_width(primal, dual)
+    dx = stepsize(grid)
+    x0 = grid[1]
+    _split_interval_limits(w, x0, dx, leftendpoint, rightendpoint, min_no_gridpoints)
+end
+
+function _split_interval_limits(dmz_width::T, x0::T, grid_coarsness::T, leftendpoint::T, rightendpoint::T, min_no_gridpoints::Int)::NTuple{2,Vector{T}} where {T<:Real}
+    r = _raster(dmz_width, x0, grid_coarsness, min_no_gridpoints, leftendpoint, rightendpoint)
+    if r == 0
+        return [leftendpoint, rightendpoint], T[]
+    end
+    mid_domain_limits(dmz_width, grid_coarsness, leftendpoint, rightendpoint, r), other_domain_limits(grid_coarsness, leftendpoint, rightendpoint, r)
+end
+
+function mid_domain_limits(dmz_width::T, dx::T, leftendpoint::T, rightendpoint::T, raster::NTuple{N,T})::Vector{T} where {N, T<:Real}
+    width2 = dmz_width/T(2)
+    R = length(raster)
+    r = zeros(T,2R)
+    dx2 = dx/T(2)
+    # to be on the safe side
+    w = width2+dx2
+    r[1] = max(leftendpoint, raster[1]-w)
+    r[2] = min(rightendpoint, raster[1]+w)
+    if R==1
+        return r
+    end
+    r[2R-1] = raster[R]-w
+    r[2R] = raster[R]+w
+    for i in 2:R-1
+        r[2i] = raster[i]-w
+        r[2i+1] = raster[i]+w
+    end
+    r
+end
+
+function other_domain_limits(dx::T, leftendpoint::T, rightendpoint::T, raster::NTuple{N,T})::Vector{T} where {N, T<:Real}
+    R = length(raster)
+    r = zeros(T,2R+2)
+    dx2 = dx/2
+    r[1] = leftendpoint
+    r[end] = rightendpoint
+    for i in 1:R
+        r[2i] = raster[i]-dx2
+        r[2i+1] = raster[i]+dx2
+    end
+    r
+end
+
+
+DMZ_width(primal::Dictionary1d) = DMZ_width(primal, primal)
+DMZ_width(primal::Dictionary1d, dual::Dictionary1d) =
+# large enough such that other_domains don't overlap -> primal
+# and large enough such that the coefficients corresponding to these regions can be solved correctly -> dual basis
+    BasisFunctions.support_length_of_compact_function(primal)+2BasisFunctions.support_length_of_compact_function(primal)
+
+
+_raster(DMZ_width::T, x0::T, grid_coarsness::T, min_no_gridpoints::Int, leftendpoint::T, rightendpoint::T) where {T<:Real}=
+    _calibrate(_raster(_margin(DMZ_width, grid_coarsness, min_no_gridpoints), leftendpoint, rightendpoint), x0, grid_coarsness)
+
+function _raster(step::T, leftendpoint::T, rightendpoint::T) where {T<:Real}
+    left = leftendpoint + step
+    right = rightendpoint - step
+    N = floor(Int, max(0,(right-left)/(step)))
+    if N == 0
+        return ()
+    end
+    if N == 1
+        return tuple((left+right)/2)
+    end
+    return tuple(linspace(left,right,N)...)
+end
+
+
+_calibrate(raster::NTuple{N,T}, x0::T, grid_coarsness::T) where {N,T<:Real} =
+    tuple([round((x-x0)/grid_coarsness)*grid_coarsness+x0 for x in raster]...)
+
+
+_margin(DMZ_width::T, grid_coarsness::T, min_no_gridpoints::Int) where {T<:Real} =
+# just to be on the save side
+    max(2DMZ_width, grid_coarsness*min_no_gridpoints+DMZ_width)
+
+
+
+
 "The node of a tree containing the domain composition of a grid"
 abstract type AbstractDomainDecompositionNode end
 

@@ -69,6 +69,8 @@ is_subindex(i, g::MaskedGrid) = g.mask[i]
 
 unsafe_getindex(g::MaskedGrid, idx) = unsafe_getindex(g.supergrid, g.indices[idx])
 
+getindex(g::AbstractGrid, idx::BitArray) = MaskedGrid(g, idx)
+
 
 # Efficient extension operator
 function apply!{G <: MaskedGrid}(op::Extension, dest, src::GridBasis{G}, coef_dest, coef_src)
@@ -123,6 +125,17 @@ NBIndexList(index::Int, size)  = NBIndexList((index,), size)
 end
 @generated function Base.next(l::NBIndexList{N}, state) where {N}
     t = Expr(:tuple, [:(if 1<=idx[$i]+l.index[$i]<=l.size[$i];idx[$i]+l.index[$i];elseif idx[$i]+l.index[$i]==0;l.size[$i];else; 1 ;end) for i in 1:N]...)
+    return quote
+        iter = state[1]
+        iter_state = state[2]
+        idx, iter_next_state = next(iter, iter_state)
+        (sum(abs.(idx.I)) == 0) && ((idx, iter_next_state) = next(iter, iter_next_state))
+        CartesianIndex($t),(iter, iter_next_state)
+    end
+end
+
+@generated function Base.next(l::NBIndexList{1}, state)
+    t = :(if 1<=idx[1]+l.index[1]<=l.size[1];idx[1]+l.index[1];elseif idx[1]+l.index[1]==0;l.size[1];else; 1 ;end)
     return quote
         iter = state[1]
         iter_state = state[2]
