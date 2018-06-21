@@ -15,13 +15,29 @@ delimit("Notebooks")
 run(`examples/test_notebooks.sh`)
 
 FILE = open("notebookscripts")
-for LINE in eachline(FILE)
-    println("Run $(LINE)")
-    include(LINE)
-    # Following makes things slow but deletes dependencies between notebooks.
-    # workspace()
+try
+    for LINE in eachline(FILE)
+        println("Run $(LINE)")
+        include(LINE)
+        # Following makes things slow but deletes dependencies between notebooks.
+        # workspace()
+    end
+catch y
+    if isa(y, OutOfMemoryError)
+        travis==false
+        try
+            travis = (ENV["TRAVIS"]=="TRUE")
+        end
+        if travis
+            warn("Our of memory")
+        else rethrow(y)
+        end
+    else
+        rethrow(y)
+    end
+finally
+    close(FILE)
+    run(`examples/test_notebooks_after.sh`)
 end
-close(FILE)
-run(`examples/test_notebooks_after.sh`)
 
 end

@@ -26,7 +26,8 @@ struct AZSolver{ELT} <: FE_Solver{ELT}
     x2
     x1
 
-    function AZSolver{ELT}(trunc::FE_Solver, A::DictionaryOperator, Zt::DictionaryOperator; plunge_op = nothing, options...) where ELT
+    function AZSolver{ELT}(trunc::FE_Solver, A::DictionaryOperator, Zt::DictionaryOperator, plunge_op::Union{Void,DictionaryOperator};
+            options...) where ELT
         # Allocate scratch space
         b = zeros(src(trunc))
         blinear = zeros(ELT, length(src(trunc)))
@@ -36,38 +37,10 @@ struct AZSolver{ELT} <: FE_Solver{ELT}
     end
 end
 
-function AZSolver(A::DictionaryOperator{ELT}, Zt::DictionaryOperator{ELT}, util_operators::DictionaryOperator{ELT}...;
-        use_plunge=true, options...) where {ELT}
-    plunge_op = nothing
-    OP = A
-    if use_plunge
-        # Calculate (A*Zt-I)
-        plunge_op = plunge_operator(A, Zt)
-        OP = plunge_op*A
-    end
-    _AZSolver(A::DictionaryOperator, Zt::DictionaryOperator, OP, util_operators...; plunge_op=plunge_op, options...)
-end
-
-function _AZSolver(A::DictionaryOperator{ELT}, Zt::DictionaryOperator{ELT}, OP::DictionaryOperator{ELT}, util_operators::DictionaryOperator{ELT}...;
-        cutoff = default_cutoff(A), TRUNC=TruncatedSvdSolver, R = estimate_plunge_rank(A), verbose=false, options...) where {ELT}
-    # Calculate low rank INVERSE of (A*Zt-I)*A
-    TS = TRUNC(OP, util_operators...; cutoff=cutoff, R=R, verbose=verbose, options...)
-    AZSolver(TS, A, Zt; options...)
-end
-
 # Set type of scratch space based on operator eltype.
-AZSolver(trunc::FE_Solver{ELT}, A::DictionaryOperator{ELT}, Zt::DictionaryOperator{ELT}; options...) where {ELT} =
-    AZSolver{eltype(A)}(trunc, A, Zt; options...)
-
-AZSSolver(A::DictionaryOperator, Zt::DictionaryOperator, RD::DictionaryOperator, EF::DictionaryOperator;
-        TRUNC = RestrictionSolver, use_plunge=false, options...) =
-    AZSolver(A, Zt, RD, EF; use_plunge=use_plunge, TRUNC=TRUNC, options...)
-
-AZSDCSolver(A::DictionaryOperator, Zt::DictionaryOperator,
-        RD0::DictionaryOperator, RD1::DictionaryOperator, RD2::DictionaryOperator,
-        EF0::DictionaryOperator, EF1::DictionaryOperator, EF2::DictionaryOperator;
-        TRUNC = DivideAndConquerSolver, use_plunge=false, options...) =
-    AZSolver(A, Zt, RD0, RD1, RD2, EF0, EF1, EF2; use_plunge=use_plunge, TRUNC=TRUNC, options...)
+AZSolver(trunc::FE_Solver{ELT}, A::DictionaryOperator{ELT}, Zt::DictionaryOperator{ELT}, plunge_op::Union{Void,DictionaryOperator}=nothing;
+        options...) where {ELT} =
+    AZSolver{eltype(A)}(trunc, A, Zt, plunge_op; options...)
 
 # If no Zt is supplied, Zt=A' (up to scaling) by default.
 AZSolver(A::DictionaryOperator{ELT}; scaling=nothing, options...) where {ELT} =
@@ -76,6 +49,27 @@ AZSolver(A::DictionaryOperator{ELT}; scaling=nothing, options...) where {ELT} =
 function plunge_operator(A, Zt)
     I = IdentityOperator(dest(A))
     A*Zt - I
+end
+
+function AZSolver(A::DictionaryOperator{ELT}, Zt::DictionaryOperator{ELT};
+        cutoff = default_cutoff(A), TRUNC=TruncatedSvdSolver, R = estimate_plunge_rank(A), verbose=false, options...) where {ELT}
+    # Calculate (A*Zt-I)
+    plunge_op = plunge_operator(A, Zt)
+    TS = TRUNC(plunge_op*A; cutoff=cutoff, R=R, verbose=verbose, options...)
+    AZSolver(TS, A, Zt, plunge_op; options...)
+end
+
+function AZSSolver(A::DictionaryOperator, Zt::DictionaryOperator, RD::DictionaryOperator, EF::DictionaryOperator; options...)
+    TS = RestrictionSolver(A, RD, EF; options...)
+    AZSolver(TS, A, Zt; options...)
+end
+
+function AZSDCSolver(A::DictionaryOperator, Zt::DictionaryOperator,
+        RD0::DictionaryOperator, RD1::DictionaryOperator, RD2::DictionaryOperator,
+        EF0::DictionaryOperator, EF1::DictionaryOperator, EF2::DictionaryOperator;
+        options...)
+    TS = DivideAndConquerSolver(A, RD0, RD1, RD2, EF0, EF1, EF2; options...)
+    AZSolver(TS, A, Zt; options...)
 end
 
 default_cutoff(A::DictionaryOperator) = 10^(4/5*log10(eps(real(eltype(A)))))
