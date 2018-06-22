@@ -23,18 +23,7 @@ try
         # workspace()
     end
 catch y
-    if isa(y, OutOfMemoryError)
-        travis==false
-        try
-            travis = (ENV["TRAVIS"]=="TRUE")
-        end
-        if travis
-            warn("Travis is out of memory!!")
-        else rethrow(y)
-        end
-    else
-        rethrow(y)
-    end
+    rethrow(y)
 finally
     close(FILE)
     run(`examples/test_notebooks_after.sh`)
