@@ -16,7 +16,7 @@ Can be done fast if Zt and A are fast.
 This is the solution.
 
 """
-struct AZSolver{ELT} <: FE_Solver{ELT}
+struct AZSolver{ELT,AFIRST<:Union{Val{false},Val{true}}} <: FE_Solver{ELT}
     TS          ::  DictionaryOperator # The low rank decomposition of (A*Zt-I)*A
     A           ::  DictionaryOperator # Store for application in step 2
     Zt          ::  DictionaryOperator # Store for application in step 2
@@ -26,8 +26,8 @@ struct AZSolver{ELT} <: FE_Solver{ELT}
     x2
     x1
 
-    function AZSolver{ELT}(trunc::FE_Solver, A::DictionaryOperator, Zt::DictionaryOperator, plunge_op::Union{Void,DictionaryOperator};
-            options...) where ELT
+    function AZSolver{ELT,AFIRST}(trunc::FE_Solver, A::DictionaryOperator, Zt::DictionaryOperator, plunge_op::Union{Void,DictionaryOperator};
+            options...) where {ELT,AFIRST}
         # Allocate scratch space
         b = zeros(src(trunc))
         blinear = zeros(ELT, length(src(trunc)))
@@ -39,8 +39,8 @@ end
 
 # Set type of scratch space based on operator eltype.
 AZSolver(trunc::FE_Solver{ELT}, A::DictionaryOperator{ELT}, Zt::DictionaryOperator{ELT}, plunge_op::Union{Void,DictionaryOperator}=nothing;
-        options...) where {ELT} =
-    AZSolver{eltype(A)}(trunc, A, Zt, plunge_op; options...)
+        afirst=true, options...) where {ELT} =
+    AZSolver{eltype(A),Val{afirst}}(trunc, A, Zt, plunge_op; options...)
 
 # If no Zt is supplied, Zt=A' (up to scaling) by default.
 AZSolver(A::DictionaryOperator{ELT}; scaling=nothing, options...) where {ELT} =
@@ -100,7 +100,7 @@ end
 apply!(s::AZSolver, coef_dest, coef_src) = _apply!(s, coef_dest, coef_src,
         s.plunge_op, s.A, s.Zt, s.b, s.blinear, s.TS, s.x1, s.x2)
 
-function _apply!(s::AZSolver, coef_dest, coef_src, plunge_op::DictionaryOperator, A, Zt, b, blinear, TS, x1, x2)
+function _apply!(s::AZSolver{ELT,Val{true}}, coef_dest, coef_src, plunge_op::DictionaryOperator, A, Zt, b, blinear, TS, x1, x2) where {ELT}
     # Step 1:
     # Consruct (A*Zt-I)*b
     apply!(plunge_op, b, coef_src)
@@ -109,14 +109,14 @@ function _apply!(s::AZSolver, coef_dest, coef_src, plunge_op::DictionaryOperator
     _apply2!(s, coef_dest, coef_src, A, Zt, b, x1, x2)
 end
 
-function _apply!(s::AZSolver, coef_dest, coef_src, plunge_op::Void, A, Zt, b, blinear, TS, x1, x2)
+function _apply!(s::AZSolver{ELT,Val{true}}, coef_dest, coef_src, plunge_op::Void, A, Zt, b, blinear, TS, x1, x2) where {ELT}
     # Step 1:
     # Solve x2 = A*x=b
     apply!(TS,x2,coef_src)
     _apply2!(s, coef_dest, coef_src, A, Zt, b, x1, x2)
 end
 
-function _apply2!(s::AZSolver, coef_dest, coef_src, A, Zt, b, x1, x2)
+function _apply2!(s::AZSolver{ELT,Val{true}}, coef_dest, coef_src, A, Zt, b, x1, x2) where {ELT}
     # Step 2:
     # Store A*x2 in s.b
     apply!(A, b, x2)
@@ -135,15 +135,47 @@ function _apply2!(s::AZSolver, coef_dest, coef_src, A, Zt, b, x1, x2)
     end
 end
 
+function _apply!(s::AZSolver{ELT,Val{false}}, coef_dest, coef_src, plunge_op, A, Zt, b, blinear, TS, x1, x2) where {ELT}
+    # Step 1:
+    # Compute x2 =  Zt*b
+    apply!(Zt, x2, coef_src)
+    _apply2!(s, coef_dest, coef_src, plunge_op, A, Zt, b, blinear, TS, x1, x2)
+end
+
+function _apply2!(s::AZSolver{ELT,Val{false}}, coef_dest, coef_src, plunge_op::Void, A, Zt, b, blinear, TS, x1, x2) where {ELT}
+    # Step 2:
+    # Store A*x2 in s.b
+    apply!(A, b, x2)
+    # Store b-A*x2 in s.b
+    for i in eachindex(b)
+        b[i] = coef_src[i] - b[i]
+    end
+    # Solve x2 = A*x=(b-A*x2)
+    apply!(TS,x1,b)
+    # Step 3:
+    # x = x1 + x2
+    for i in eachindex(x1)
+        coef_dest[i] = x1[i] + x2[i]
+    end
+end
+
 function AZSolver(platform::BasisFunctions.Platform, i; options...)
     a = A(platform, i)
     zt = Zt(platform, i)
     AZSolver(a, zt; options...)
 end
 
-function AZSSolver(platform::BasisFunctions.Platform, i; options...)
-    frame_restriction, grid_restriction = FrameFun.spline_util_restriction_operators(platform, i)
-    AZSSolver(A(platform, i), Zt(platform, i), frame_restriction', grid_restriction; options...)
+function AZSSolver(fplatform::BasisFunctions.Platform, i; options...)
+    a = BasisFunctions.A(fplatform, i; options...)
+    zt = BasisFunctions.Zt(fplatform, i; options...)
+    platform = fplatform.super_platform
+    s = BasisFunctions.sampler(fplatform, i)
+    omega = grid(s)
+    gamma = supergrid(omega)
+    domain = FrameFun.domain(src(a))
+    frame_restriction, grid_restriction = azselection_restriction_operators(primal(platform, i), gamma, omega, domain)
+    # frame_restriction, grid_restriction = FrameFun.spline_util_restriction_operators(platform, i)
+    AZSSolver(a, zt, frame_restriction', grid_restriction; options...)
 end
 
 

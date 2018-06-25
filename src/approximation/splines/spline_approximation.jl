@@ -1,3 +1,28 @@
+
+azselection_restriction_operators(primal::Union{BasisFunctions.WaveletBasis,BasisFunctions.WaveletTensorDict}, gamma::AbstractGrid, omega::AbstractGrid, domain::Domains.Domain) =
+    azselection_restriction_operators(primal, BasisFunctions.wavelet_dual(primal), gamma, omega, domain)
+
+azselection_restriction_operators(primal::Dictionary, gamma::AbstractGrid, omega::AbstractGrid, domain::Domains.Domain) =
+    azselection_restriction_operators(primal, primal, gamma, omega, domain)
+
+
+"""
+Grid restriction and dictionary restriction operators to restrict the system when approximating with compact frame elements.
+
+`primal` and `dual` should be the not restricted basis, `gamma` the (oversampled) grid of `primal`, `omega` is `gamma` restricted to `domain`
+"""
+function azselection_restriction_operators(primal::Dictionary, dual::Dictionary, gamma::AbstractGrid, omega::AbstractGrid, domain::Domains.Domain)
+    bound = FrameFun.boundary_grid(gamma, domain)
+    boundary_coefficient_mask = BasisFunctions.coefficient_index_mask_of_overlapping_elements(dual, bound)
+    boundary_grid_mask = BasisFunctions.grid_index_mask_in_element_support(primal, gamma, boundary_coefficient_mask)
+    boundary_grid_mask .= boundary_grid_mask .& FrameFun.mask(omega)
+    DMZ = gamma[boundary_grid_mask]
+    system_coefficient_mask = BasisFunctions.coefficient_index_mask_of_overlapping_elements(primal, DMZ)
+    gr = restriction_operator(gridbasis(omega, coeftype(primal)), gridbasis(DMZ, coeftype(primal)))
+    dr = restriction_operator(primal, system_coefficient_mask)
+    dr, gr
+end
+
 """
 A grid that contains the points of `omega_grid` that are not evaluated to zero by the elements that overlap with boundary_grid.
 """
