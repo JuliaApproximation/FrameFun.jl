@@ -1,7 +1,8 @@
 module test_suite_applications
 using BasisFunctions
 using FrameFun
-using FrameFun: FrameFun.spline_util_restriction_operators, boundary_support_grid, relative_indices, restriction_operator
+using FrameFun: boundary_support_grid, relative_indices, restriction_operator, azselection_restriction_operators
+using WaveletsCopy: cdf24, db3
 using Base.Test
 using StaticArrays
 using Domains
@@ -31,7 +32,7 @@ delimit("Spline approximation")
     fplatform = extension_frame_platform(platform, domain)
 
     B = superdict(primal(fplatform, i))
-    S, R = spline_util_restriction_operators(fplatform, i)
+    S, R = azselection_restriction_operators(fplatform, i)
     @test size(S)==(476, 1600)
     @test size(R)==(988 , 1808)
 
@@ -46,7 +47,7 @@ delimit("Spline approximation")
     @test size(restriction_operator(gridbasis(omega_grid),gridbasis(g1)))==(186, 1808)
 end
 
-@testset "Approximation" begin
+@testset "Spline approximation" begin
     init = [3,3]
     degree = [1,3]
     oversampling = 2
@@ -95,7 +96,7 @@ end
     a = BasisFunctions.A(fplatform, i)
     zt = BasisFunctions.Zt(fplatform, i)
     p = FrameFun.plunge_operator(a,zt)
-    rd,sb = spline_util_restriction_operators(fplatform, i)
+    rd,sb = azselection_restriction_operators(fplatform, i)
     b = s*f2d
     r = FrameFun.estimate_plunge_rank(a)
     @test r==102
@@ -127,7 +128,7 @@ end
     fplatform = extension_frame_platform(platform, dom)
     p = primal(platform, i);
     s = sampler(platform, i);
-    BR,DMZ_R = FrameFun.spline_util_restriction_operators(fplatform, i)
+    BR,DMZ_R = azselection_restriction_operators(fplatform, i)
     A = BasisFunctions.A(fplatform, i);
     Zt = BasisFunctions.Zt(fplatform, i);
     r = FrameFun.estimate_plunge_rank(A)
@@ -198,7 +199,7 @@ end
     a = BasisFunctions.A(fplatform, i)
     zt = BasisFunctions.Zt(fplatform, i)
     p = FrameFun.plunge_operator(a,zt)
-    rd,sb = spline_util_restriction_operators(fplatform, i)
+    rd,sb = azselection_restriction_operators(fplatform, i)
     b = s*f1d
     r = FrameFun.estimate_plunge_rank(a)
     @test r==2
@@ -226,6 +227,60 @@ end
     op = FrameFun.AZSolver(fplatform, i)
     x = op*b;@test 1+norm(a*x-b)≈1
 
+
+end
+
+@testset "Scaling approximation" begin
+    # For tensor domain
+    i = 2
+    os = 1; fun = (x,y)->1.;
+    platform = scaling_platform([4,5], [cdf24,cdf24], 1<<os)
+    dom = interval(0,.5)^2
+    fplatform = extension_frame_platform(platform, dom)
+    p = primal(platform, i);
+    s = sampler(platform, i);
+    A = BasisFunctions.A(fplatform, i);
+    Zt = BasisFunctions.Zt(fplatform, i);
+    S = sampler(fplatform, i)
+    BR,DMZ_R = azselection_restriction_operators(fplatform, i)
+
+    b = S*fun
+    AZSS = FrameFun.AZSSolver(A, Zt, BR', DMZ_R;afirst=false)
+    x = AZSS*b
+    @test 1+norm(A*x-b)≈1
+
+    op = FrameFun.AZSSolver(fplatform, i;afirst=false)
+    x = op*b;@test 1+norm(A*x-b)≈1
+
+    x = FrameFun.azs_solve(b, A, Zt, BR', DMZ_R;afirst=false)
+    @test 1+norm(A*x-b)≈1
+
+    x = FrameFun.azs_solve(fplatform, i, fun;afirst=false)
+    @test 1+norm(A*x-b)≈1
+
+    # # 1D
+    f1d = identity
+    domain1d = interval(0,.5)
+    epsilon=1e-10
+    platform = scaling_platform(4, db3, 1<<os)
+    fplatform = extension_frame_platform(platform, domain1d)
+    i = 2
+    s = sampler(fplatform, i)
+    a = BasisFunctions.A(fplatform, i)
+    zt = BasisFunctions.Zt(fplatform, i)
+    rd,sb = azselection_restriction_operators(fplatform, i)
+    b = s*f1d
+    AZS = AZSSolver(a,zt,rd', sb,cutoff=epsilon,afirst=false)
+    x = zeros(src(a))
+
+    apply!(AZS, x, b)
+    @test norm(a*x-b)+1≈ 1
+    x = AZS*b
+    @test norm(a*x-b)+1≈ 1
+    x = FrameFun.azs_solve(fplatform, i, f1d; cutoff=epsilon,afirst=false)
+    @test norm(a*x-b)+1≈ 1
+    op = FrameFun.AZSSolver(fplatform, i, afirst=false)
+    x = op*b;@test 1+norm(a*x-b)≈1
 
 end
 end

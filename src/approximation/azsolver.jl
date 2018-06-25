@@ -203,14 +203,19 @@ end
 
 # Function with equal functionality, but allocating memory
 function az_solve(b, A::DictionaryOperator, Zt::DictionaryOperator, util_operators::DictionaryOperator...; use_plunge=true,
-        cutoff = default_cutoff(A), trunc = truncatedsvd_solve, verbose=false, options...)
-    if use_plunge
-        P = plunge_operator(A, Zt)
-        x2 = trunc(P*b, P*A, util_operators...; cutoff=cutoff, verbose=verbose, options...)
+        cutoff = default_cutoff(A), trunc = truncatedsvd_solve, verbose=false, afirst=true, options...)
+    if afirst
+        if use_plunge
+            P = plunge_operator(A, Zt)
+            x2 = trunc(P*b, P*A, util_operators...; cutoff=cutoff, verbose=verbose, options...)
+        else
+            x2 = trunc(b, A, util_operators... ; cutoff=cutoff, verbose=verbose, options...)
+        end
+        x1 = Zt*(b-A*x2)
     else
-        x2 = trunc(b, A, util_operators... ; cutoff=cutoff, verbose=verbose, options...)
+        x1 = Zt*b
+        x2 = trunc(b-A*x1, A, util_operators... ; cutoff=cutoff, verbose=verbose, options...)
     end
-    x1 = Zt*(b-A*x2)
     x1 + x2
 end
 
@@ -259,13 +264,23 @@ function az_solve(platform::BasisFunctions.Platform, i, f::Function; R=0, option
     az_solve(s*f, a, zt; R=R, options...)
 end
 
-function azs_solve(platform::BasisFunctions.Platform, i, f::Function; options...)
-    a = A(platform, i)
-    zt = Zt(platform, i)
-    s = sampler(platform, i)
-    rd,sb = spline_util_restriction_operators(platform, i)
-    azs_solve(s*f, a, zt, rd', sb; options...)
+function azs_solve(fplatform::BasisFunctions.Platform, i, f::Function; options...)
+    # a = A(fplatform, i)
+    # zt = Zt(fplatform, i)
+    # s = sampler(fplatform, i)
+    # rd,sb = spline_util_restriction_operators(fplatform, i)
+    a = A(fplatform, i; options...)
+    zt = Zt(fplatform, i; options...)
+    platform = fplatform.super_platform
+    s = sampler(fplatform, i)
+    omega = grid(s)
+    gamma = supergrid(omega)
+    domain = FrameFun.domain(src(a))
+    frame_restriction, grid_restriction = azselection_restriction_operators(primal(platform, i), gamma, omega, domain)
+    azs_solve(s*f, a, zt, frame_restriction', grid_restriction; options...)
 end
+
+
 
 function azsdc_solve(fplatform::BasisFunctions.Platform, i, f::Function, dim::Int, range; options...)
     platform = fplatform.super_platform

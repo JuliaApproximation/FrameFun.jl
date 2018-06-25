@@ -1,4 +1,13 @@
 
+function azselection_restriction_operators(fplatform::BasisFunctions.GenericPlatform, i; options...)
+    platform = fplatform.super_platform
+    s = sampler(fplatform, i)
+    omega = grid(s)
+    gamma = supergrid(omega)
+    domain = FrameFun.domain(primal(fplatform, i))
+    azselection_restriction_operators(primal(platform, i), gamma, omega, domain)
+end
+
 azselection_restriction_operators(primal::Union{BasisFunctions.WaveletBasis,BasisFunctions.WaveletTensorDict}, gamma::AbstractGrid, omega::AbstractGrid, domain::Domains.Domain) =
     azselection_restriction_operators(primal, BasisFunctions.wavelet_dual(primal), gamma, omega, domain)
 
@@ -93,15 +102,15 @@ end
 estimate_plunge_rank(src::BSplineTranslatesBasis, domain::Domain, dest::GridBasis) =
     estimate_plunge_rank(src, domain, grid(dest))
 estimate_plunge_rank(src::BSplineTranslatesBasis, domain::Domain, grid::Union{IndexSubGrid,MaskedGrid}) =
-    estimate_plunge_rank_bspline(src, domain, supergrid(grid))
+    estimate_plunge_rank_spline(src, domain, supergrid(grid))
 
 estimate_plunge_rank(src::TensorProductDict{N,DT,S,T}, domain::Domain, dest::GridBasis) where {N,DT<:NTuple{N1,BasisFunctions.BSplineTranslatesBasis} where {N1},S,T} =
     estimate_plunge_rank(src, domain, grid(dest))
 
 estimate_plunge_rank(src::TensorProductDict{N,DT,S,T}, domain::Domain, grid::MaskedGrid) where {N,DT<:NTuple{N1,BasisFunctions.BSplineTranslatesBasis} where {N1},S,T} =
-    estimate_plunge_rank_bspline(src, domain, supergrid(grid))
+    estimate_plunge_rank_spline(src, domain, supergrid(grid))
 
-function estimate_plunge_rank_bspline(src, domain::Domain, grid::AbstractGrid)
+function estimate_plunge_rank_spline(src, domain::Domain, grid::AbstractGrid)
     boundary = boundary_grid(grid, domain)
     sum(BasisFunctions.coefficient_index_mask_of_overlapping_elements(src, boundary))
 end
