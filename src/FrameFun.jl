@@ -33,10 +33,10 @@ import Base: promote, promote_rule, convert, promote_eltype
 
 import Base: broadcast
 
+import Base: minimum, maximum
+
 ## - Imports from Domains
 import Domains: indomain, dimension
-# - for intervals
-import Domains: infimum, supremum
 # - for mapped domains
 import Domains: domain
 # - for composite structures
@@ -91,7 +91,7 @@ import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
     similar_subgrid
 
 import BasisFunctions: Gram, DualGram, MixedGram, DiscreteGram, DiscreteDualGram, DiscreteMixedGram
-import BasisFunctions: dual
+import BasisFunctions: dual, primal, sampler, dual_sampler
 
 import BasisFunctions: discrete_approximation_operator, continuous_approximation_operator
 

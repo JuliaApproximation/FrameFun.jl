@@ -143,6 +143,6 @@ dot(set1::Dictionary, set2::Dictionary, domain::Domains.AbstractInterval, f1::Fu
 
 function native_nodes(set1::Dictionary, set2::Dictionary, domain::Domains.AbstractInterval)
     @assert infimum(support(set1) )≈ infimum(support((set2)))
-    @assert supremum(support((set2))) ≈ supremum(support((set2)))
+    @assert supremum(support((set1))) ≈ supremum(support((set2)))
     native_nodes(set1, domain)
 end

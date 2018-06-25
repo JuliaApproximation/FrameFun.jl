@@ -48,7 +48,7 @@ function computemandelbrotgrid(grid, maxiter, threshold)
 end
 
 function indomain_broadcast(grid::ProductGrid, m::Mandelbrot)
-    if (map(x->infimum(support(x)), elements(grid)) ≈ infimum(boundingbox(m))) && (map(x->supremum(support(x)),elements(grid)) ≈ supremum(boundingbox(m)))
+    if (infimum(support(grid)) ≈ minimum(boundingbox(m))) && (supremum(support(grid)) ≈ maximum(boundingbox(m)))
         if haskey(m.maskcache, size(grid,1))
             mask = m.maskcache[size(grid,1)]
         else # compute mask and cache it
