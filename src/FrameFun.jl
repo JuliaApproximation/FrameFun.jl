@@ -1,5 +1,5 @@
 # FrameFun.jl
-
+__precompile__(true)
 module FrameFun
 
 using Base.Cartesian
@@ -8,6 +8,7 @@ using RecipesBase
 
 using Domains
 using BasisFunctions
+using Combinatorics: permutations
 
 ###############################
 ## Exhaustive list of imports
@@ -63,7 +64,7 @@ import BasisFunctions: coefficients, dictionary,
     transform_operator_pre, transform_operator_post, evaluation_operator, interpolation_operator,
     differentiation_operator, antidifferentiation_operator, approximation_operator,
     extend, extension_size, extension_operator, restriction_operator,
-    default_approximation_operator, has_extension, wrap_operator
+    default_approximation_operator, has_extension, wrap_operator, grid_evaluation_operator
 
 import BasisFunctions: superdict, similar_dictionary,
     promote_domaintype, promote_domainsubtype
@@ -84,16 +85,18 @@ import BasisFunctions: flatten
 
 import BasisFunctions: Span
 
-import BasisFunctions: coefficient_type, coeftype, similar_span
+import BasisFunctions: coefficient_type, coeftype
 
 # about subgrids
 import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
-    similar_subgrid
+    similar_subgrid, mask, subindices
 
 import BasisFunctions: Gram, DualGram, MixedGram, DiscreteGram, DiscreteDualGram, DiscreteMixedGram
 import BasisFunctions: dual, primal, sampler, dual_sampler
 
 import BasisFunctions: discrete_approximation_operator, continuous_approximation_operator
+
+import BasisFunctions: primal, dual, Zt, A, sampler, dual_sampler
 
 ###############################
 ## Exhaustive list of exports
@@ -102,7 +105,9 @@ import BasisFunctions: discrete_approximation_operator, continuous_approximation
 export ExpFun, ChebyFun, Fun, DictFun, sampling_grid, domain, abserror, maxerror, L2error
 
 # from subgrid.jl
-export MaskedGrid
+export MaskedGrid, boundary_grid
+
+# from spline_approximation.jl
 
 # from domains/boundingbox.jl
 export BoundingBox, BBox, BBox1, BBox2, BBox3, BBox4
@@ -114,6 +119,7 @@ export dist, normal
 # from frames/extensionframe.jl
 export ExtensionFrame, basis, domain, extensionframe
 export Gram, DualGram, MixedGram
+export extension_frame_platform
 
 # from frames/weighted_sum_frame.jl
 export WeightedSumFrame, weightfunctions
@@ -146,16 +152,23 @@ export characteristic
 
 export FeFun, FeFunNd
 
+# from diffequation.jl
+export operator
+
 # from approximation
-export DirectSolver, AZSolver, AZSmoothSolver, TridiagonalSolver
+export DirectSolver, AZSolver, AZSmoothSolver, TridiagonalSolver, AZSSolver, AZSDCSolver
 
 include("subgrid.jl")
+
 
 #include("domains/boundingbox.jl")
 include("domains/extensions.jl")
 
 include("frames/extensionframe.jl")
 include("frames/weighted_sum_frame.jl")
+
+include("approximation/splines/spline_approximation.jl")
+include("approximation/splines/split_grid.jl")
 
 include("fun/basisdomains.jl")
 include("fun/funs.jl")

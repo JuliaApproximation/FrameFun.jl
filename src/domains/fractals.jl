@@ -18,7 +18,7 @@ function mandelbrot(maxiter = 1000, threshold = 1000.0)
     M2 = 200
     mask1 = computemandelbrotgrid(equispaced_grid(box, (M1,M1)), maxiter, threshold)
     mask2 = computemandelbrotgrid(equispaced_grid(box, (M2,M2)), maxiter, threshold)
-    cache = Dict{Int,Array{Bool,2}}()
+    cache = Dict{Int,BitArray{2}}()
     cache[M1] = mask1
     cache[M2] = mask2
     Mandelbrot(maxiter, threshold, cache, box)
@@ -38,7 +38,8 @@ function mandelbrotiteration(x, maxiter, threshold)
 end
 
 function computemandelbrotgrid(grid, maxiter, threshold)
-    mask = zeros(Bool, size(grid))
+    mask = BitArray(size(grid))
+    fill!(mask,0)
     for i_2 = 1:size(grid, 2)
         for i_1 = 1:size(grid, 1)
             mask[i_1,i_2] = mandelbrotiteration(grid[i_1,i_2], maxiter, threshold)
@@ -90,7 +91,7 @@ function juliaset(c = -0.122565+0.744866im, maxiter = 1000)
 
     mask1 = computejuliasetgrid(equispaced_grid(box, (100,100)), c, maxiter)
     mask2 = computejuliasetgrid(equispaced_grid(box, (200,200)), c, maxiter)
-    cache = Dict{Int,Array{Bool,2}}()
+    cache = Dict{Int,BitArray{2}}()
     cache[100] = mask1
     cache[200] = mask2
     JuliaSet(c, maxiter, cache, box)
@@ -108,7 +109,8 @@ end
 
 function computejuliasetgrid(grid, c, maxiter)
     m = size(grid)
-    mask = zeros(Bool, m)
+    mask = BitArray(m)
+    fill!(mask, 0)
     for i_2 = 1:m[2]
         for i_1 = 1:m[1]
             a,b = grid[i_1,i_2]

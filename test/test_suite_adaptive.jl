@@ -1,5 +1,5 @@
 module test_suite
-
+srand(1234)
 using Domains
 using BasisFunctions
 using FrameFun

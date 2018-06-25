@@ -15,13 +15,18 @@ delimit("Notebooks")
 run(`examples/test_notebooks.sh`)
 
 FILE = open("notebookscripts")
-for LINE in eachline(FILE)
-    println("Run $(LINE)")
-    include(LINE)
-    # Following makes things slow but deletes dependencies between notebooks.
-    # workspace()
+try
+    for LINE in eachline(FILE)
+        println("Run $(LINE)")
+        include(LINE)
+        # Following makes things slow but deletes dependencies between notebooks.
+        # workspace()
+    end
+catch y
+    rethrow(y)
+finally
+    close(FILE)
+    run(`examples/test_notebooks_after.sh`)
 end
-close(FILE)
-run(`examples/test_notebooks_after.sh`)
 
 end

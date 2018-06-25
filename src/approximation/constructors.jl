@@ -147,6 +147,12 @@ function fun_greedy(f::Function, set::Dictionary, domain::FrameFun.Domain;
     F
 end
 
+function FourierFun(f::Function, ELT = Float64; T=ELT(2), Omega=interval(-ELT(-1),ELT(1)), Gamma=T*Omega, options...)
+  B = FourierBasis(1, leftendpoint(Omega), rightendpoint(Omega), ELT)
+  D = Omega
+  frame = extensionframe(B, Gamma)
+end
+
 # Allows following notation
 # f2 = cos(f1) with f1 a DictFun.
 for f in (:cos, :sin, :tan, :sinh, :cosh, :tanh,

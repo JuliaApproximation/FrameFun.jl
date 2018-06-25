@@ -76,6 +76,7 @@ function test_basis_oversampling()
 end
 
 function test_discrete_gram()
+
     @testset "Testing discrete dual gram en mixed gram with oversampling" begin
         for T in [Float64, BigFloat]
             for n in [10,11], os in 1:4, B in [ChebyshevBasis, FourierBasis, BSplineTranslatesBasis]
@@ -86,23 +87,14 @@ function test_discrete_gram()
                 Gomega = DiscreteGram(frame; oversampling=os)
                 Eomega = evaluation_operator(frame; oversampling=os)
                 N = BasisFunctions.discrete_gram_scaling(frame, os)
-
                 basis_os = BasisFunctions.basis_oversampling(frame,os)
-
                 @test (Eomega'Eomega)*e/N≈Gomega*e
-
                 GT = DiscreteDualGram(b; oversampling=basis_os)
-
                 ETomega = Eomega*GT
-
                 GTomega = GT*Gomega*GT
-
                 @test (ETomega'ETomega)*e/N≈GTomega*e
-
                 GMomega = GT*Gomega
-
                 @test (ETomega'Eomega)*e/N≈GMomega*e
-
                 @test DiscreteGram(frame;oversampling=os)*e≈Gomega*e
                 @test DiscreteDualGram(frame; oversampling=os)*e≈GTomega*e
                 @test DiscreteMixedGram(frame; oversampling=os)*e≈GMomega*e

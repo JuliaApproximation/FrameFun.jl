@@ -15,7 +15,6 @@ struct ExtensionFrame{S,T} <: DerivedDict{S,T}
     end
 end
 
-
 ExtensionFrame{S,T}(domain::Domain, basis::Dictionary{S,T}) =
     ExtensionFrame{S,T}(domain, basis)
 
@@ -24,9 +23,6 @@ superdict(f::ExtensionFrame) = f.basis
 
 basis(f::ExtensionFrame) = f.basis
 domain(f::ExtensionFrame) = f.domain
-
-"The span of the basis of the given extension frame span."
-
 
 similar_dictionary(f::ExtensionFrame, dict::Dictionary) = ExtensionFrame(domain(f), dict)
 
@@ -81,9 +77,17 @@ function extensionframe(domain::ProductDomain, basis::TensorProductDict)
     tensorproduct(ExtensionFrames...)
 end
 
+const TensorProductExtensionFrameDict{N,N1,S,T} = TensorProductDict{N,NTuple{N1,DT},S,T} where {N,N1,DT<:ExtensionFrame,S,T}
+
+# TODO remove need of this function
+function flatten(dict::TensorProductExtensionFrameDict)
+    basis = tensorproduct([superdict(dicti) for dicti in elements(dict)]...)
+    domain = Domains.ProductDomain([FrameFun.domain(dicti) for dicti in elements(dict)]...)
+    ExtensionFrame(domain, basis)
+end
+
 extensionframe(domain::Domain, basis::Dictionary) = ExtensionFrame(domain, basis)
 extensionframe(basis::Dictionary, domain::Domain) = extensionframe(domain, basis)
-extensionspan(span::Span, domain::Domain) = Span(extensionframe(domain, dictionary(span)))
 
 left(d::ExtensionFrame, x...) = leftendpoint(domain(d))
 right(d::ExtensionFrame, x...) = rightendpoint(domain(d))
@@ -145,4 +149,45 @@ function native_nodes(set1::Dictionary, set2::Dictionary, domain::Domains.Abstra
     @assert infimum(support(set1) )≈ infimum(support((set2)))
     @assert supremum(support((set1))) ≈ supremum(support((set2)))
     native_nodes(set1, domain)
+end
+
+
+grid_evaluation_operator(s::TensorProductExtensionFrameDict, dgs::GridBasis, grid::AbstractGrid; options...) =
+    grid_evaluation_operator(flatten(s), dgs, grid; options...)
+grid_evaluation_operator(s::TensorProductExtensionFrameDict, dgs::GridBasis, grid::AbstractSubGrid; options...) =
+    grid_evaluation_operator(flatten(s), dgs, grid; options...)
+
+function BasisFunctions.DWTSamplingOperator(span::FrameFun.ExtensionFrame, oversampling::Int=1, recursion::Int=0)
+    S = BasisFunctions.GridSamplingOperator(gridbasis(BasisFunctions.dwt_oversampled_grid(dictionary(span), oversampling, recursion), coeftype(span)))
+    new_oversampling = Int(length(supergrid(grid(S)))/length(span))>>recursion
+    E = extension_operator(gridbasis(S), gridbasis(supergrid(grid(S)), coeftype(span)))
+    W = BasisFunctions.WeightOperator(FrameFun.basisspan(span), new_oversampling, recursion)
+    BasisFunctions.DWTSamplingOperator(S, W*E)
+end
+
+##################
+# platform
+##################
+
+BasisFunctions.sampler(platform::Platform, sampler::GridSamplingOperator, domain::Domain) =
+    GridSamplingOperator(gridbasis(sampler), grid(sampler), domain)
+BasisFunctions.GridSamplingOperator(dgs::GridBasis, grid::AbstractGrid, domain::Domain) =
+    GridSamplingOperator(gridbasis(FrameFun.subgrid(grid, domain), coeftype(dgs)))
+
+function BasisFunctions.sampler(platform::BasisFunctions.GenericPlatform, sampler::BasisFunctions.DWTSamplingOperator, domain::Domain)
+    S = BasisFunctions.sampler(platform, sampler.sampler, domain)
+    E = extension_operator(gridbasis(S), gridbasis(supergrid(grid(S)), coeftype(primal(platform, 1))))
+    BasisFunctions.DWTSamplingOperator(S,sampler.weight*E)
+end
+
+extension_frame_sampler(platform::Platform, domain::Domain) = n->sampler(platform, platform.sampler_generator(n), domain)
+dual_extension_frame_sampler(platform::Platform, domain::Domain) = n->sampler(platform, platform.dual_sampler_generator(n), domain)
+
+function extension_frame_platform(platform::BasisFunctions.GenericPlatform, domain::Domain)
+    primal = n->extensionframe(platform.primal_generator(n), domain)
+    dual = n->platform.dual_generator(n)
+    sampler = extension_frame_sampler(platform, domain)
+    dual_sampler = dual_extension_frame_sampler(platform, domain)
+    BasisFunctions.GenericPlatform(super_platform=platform, primal = primal, dual = dual, sampler = sampler,dual_sampler = dual_sampler,
+        params = platform.parameter_sequence, name = "extension frame of " * platform.name)
 end
