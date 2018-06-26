@@ -170,9 +170,9 @@ end
 ##################
 
 BasisFunctions.sampler(platform::Platform, sampler::GridSamplingOperator, domain::Domain) =
-    GridSamplingOperator(gridbasis(sampler), grid(sampler), domain)
-BasisFunctions.GridSamplingOperator(dgs::GridBasis, grid::AbstractGrid, domain::Domain) =
-    GridSamplingOperator(gridbasis(FrameFun.subgrid(grid, domain), coeftype(dgs)))
+    GridSamplingOperator(gridbasis(sampler), grid(sampler), domain, sampler.scaling)
+BasisFunctions.GridSamplingOperator(dgs::GridBasis, grid::AbstractGrid, domain::Domain, scaling) =
+    GridSamplingOperator(gridbasis(FrameFun.subgrid(grid, domain), coeftype(dgs)), scaling=scaling)
 
 function BasisFunctions.sampler(platform::BasisFunctions.GenericPlatform, sampler::BasisFunctions.DWTSamplingOperator, domain::Domain)
     S = BasisFunctions.sampler(platform, sampler.sampler, domain)
