@@ -40,7 +40,7 @@ for op in (:ExtensionFrame, :basis, :basisspan)
     @eval $op(fun::DictFun) = $op(fun, dictionary(fun))
 end
 
-domain(fun::DictFun) = domain(dictionary(fun))
+domain(fun::DictFun) = domain(fun, dictionary(fun))
 
 for op in (:+, :-, :*)
     @eval $op(fun1::DictFun,fun2::DictFun) = DictFun($op(fun1.expansion,fun2.expansion))
@@ -59,6 +59,10 @@ ExtensionFrame(fun::DictFun, set::ExtensionFrame) = set
 domain(fun::DictFun, set::ExtensionFrame) = domain(set)
 
 basis(fun::DictFun, set::ExtensionFrame) = basis(set)
+
+basis(fun::DictFun, dict::Dictionary) = dict
+
+domain(fun::DictFun, dict::Dictionary) = support(dict)
 
 function matrix(fun::DictFun; options...)
     op = oversampled_evaluation_operator(basis(fun),domain(fun);  options...)[1]

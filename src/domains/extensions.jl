@@ -83,13 +83,13 @@ boundingbox(d::DifferenceDomain) = boundingbox(d.d1)
 
 # Extra functions
 
-infimum(d::Domain) = infimum(boundingbox(d))
+minimum(d::Domain) = minimum(boundingbox(d))
 
-supremum(d::Domain) = supremum(boundingbox(d))
+maximum(d::Domain) = maximum(boundingbox(d))
 
-infimum(box::ProductDomain) = SVector(map(infimum,elements(box)))
+minimum(box::ProductDomain) = SVector(map(minimum,elements(box)))
 
-supremum(box::ProductDomain) = SVector(map(supremum,elements(box)))
+maximum(box::ProductDomain) = SVector(map(maximum,elements(box)))
 
 # TODO: improve when grids move into domains?
 equispaced_grid(d::Domain, ns) = cartesianproduct([PeriodicEquispacedGrid(ns[idx], infimum(d)[idx], supremum(d)[idx]) for idx = 1:dimension(boundingbox(d))]...)
@@ -113,7 +113,7 @@ Domains.superdomain(d::MappedDomain) = Domains.source(d)
 boundingbox(d::MappedDomain) = mapped_boundingbox(boundingbox(source(d)), forward_map(d))
 
 function mapped_boundingbox(box::Interval, fmap)
-    l,r = (infimum(box),supremum(box))
+    l,r = (minimum(box),maximum(box))
     ml = fmap*l
     mr = fmap*r
     boundingbox(min(ml,mr), max(ml,mr))
@@ -123,7 +123,7 @@ end
 # underlying domain, and compute a bounding box for those points. This will be
 # correct for affine maps.
 function mapped_boundingbox(box::ProductDomain, fmap)
-    crn = corners(infimum(box),supremum(box))
+    crn = corners(minimum(box),maximum(box))
     mapped_corners = [fmap*crn[:,i] for i in 1:size(crn,2)]
     left = [minimum([mapped_corners[i][j] for i in 1:length(mapped_corners)]) for j in 1:size(crn,1)]
     right = [maximum([mapped_corners[i][j] for i in 1:length(mapped_corners)]) for j in 1:size(crn,1)]
@@ -171,9 +171,9 @@ end
 
 normal(x, d::UnitBall) = x/norm(x)
 
-dist(x, d::AbstractInterval) = min(supremum(d)-x,x-infimum(d))
+dist(x, d::AbstractInterval) = min(maximum(d)-x,x-minimum(d))
 
-normal(x, d::AbstractInterval) = abs(infimum(d)-x) < abs(supremum(d)-x) ? -1:1
+normal(x, d::AbstractInterval) = abs(minimum(d)-x) < abs(maximum(d)-x) ? -1:1
 
 dist(x, d::UnitBall) = 1-norm(x)
 

@@ -17,7 +17,7 @@ end
 
 FunctionSpace(basis::Dictionary{S,T}) where {S,T} = FunctionSpace{S,T}(basis)
 FunctionSpace(basis::Dictionary, dom::Domain) =
-    FunctionSpace(rescale(basis, infimum(dom), supremum(dom)))
+    FunctionSpace(rescale(basis, boundingbox(dom)))
 
 # place somewhere else?
 FourierSpace(left::Real=0,right::Real=1) =
@@ -25,7 +25,7 @@ FourierSpace(left::Real=0,right::Real=1) =
 ChebyshevSpace(left::Real=-1,right::Real=1) =
     FunctionSpace(ChebyshevBasis(0), interval(left,right))
 # place somewhere else?
-boundingbox(f::Dictionary) = boundingbox(infimum(support(f)), supremum(support(f)))
+boundingbox(f::Dictionary) = boundingbox(support(f))
 
 boundingbox(space::FunctionSpace) = boundingbox(space.basis)
 

@@ -147,7 +147,7 @@ dot(set1::Dictionary, set2::Dictionary, domain::Domains.AbstractInterval, f1::Fu
 
 function native_nodes(set1::Dictionary, set2::Dictionary, domain::Domains.AbstractInterval)
     @assert infimum(support(set1) )≈ infimum(support((set2)))
-    @assert supremum(support((set2))) ≈ supremum(support((set2)))
+    @assert supremum(support((set1))) ≈ supremum(support((set2)))
     native_nodes(set1, domain)
 end
 
@@ -170,9 +170,9 @@ end
 ##################
 
 BasisFunctions.sampler(platform::Platform, sampler::GridSamplingOperator, domain::Domain) =
-    GridSamplingOperator(gridbasis(sampler), grid(sampler), domain)
-BasisFunctions.GridSamplingOperator(dgs::GridBasis, grid::AbstractGrid, domain::Domain) =
-    GridSamplingOperator(gridbasis(FrameFun.subgrid(grid, domain), coeftype(dgs)))
+    GridSamplingOperator(gridbasis(sampler), grid(sampler), domain, sampler.scaling)
+BasisFunctions.GridSamplingOperator(dgs::GridBasis, grid::AbstractGrid, domain::Domain, scaling) =
+    GridSamplingOperator(gridbasis(FrameFun.subgrid(grid, domain), coeftype(dgs)), scaling=scaling)
 
 function BasisFunctions.sampler(platform::BasisFunctions.GenericPlatform, sampler::BasisFunctions.DWTSamplingOperator, domain::Domain)
     S = BasisFunctions.sampler(platform, sampler.sampler, domain)
