@@ -501,7 +501,6 @@ DomainDecompositionSolver(fplatform::BasisFunctions.GenericPlatform, i; options.
     DomainDecompositionSolver(primal(fplatform.super_platform, i), grid(sampler(fplatform.super_platform, i)),
         grid(sampler(fplatform, i)), domain(primal(fplatform, i)), A(fplatform, i); options...)
 
-
 DomainDecompositionSolver(basis, gamma, omega, domain, A; options...) =
     DomainDecompositionSolver{coeftype(basis)}(create_tree(basis, gamma, omega, domain; options...), basis, gamma, omega, domain, A)
 
@@ -512,3 +511,40 @@ BasisFunctions.apply(s::DomainDecompositionSolver, src) = domaindecomposition_so
 
 domaindecomposition_solve(b::Vector, A::DictionaryOperator, s::DomainDecompositionSolver; options...) =
     solve(b, A, s.tree, s.basis, s.gamma, s.omega; options...)
+
+function decomposition_solve(b::Vector, A::DictionaryOperator, cart_indices, classified_indices; cutoff=default_cutoff(A), options...)
+    bins = unique(classified_indices)
+    # assign sequence numbers to each of the bins.
+    seq_nr = assign_sequence_nro(bins)
+
+    primal = basis(src(A))
+    omega = grid(dest(A))
+    g = supergrid(omega)
+
+    x1 = zeros(primal)
+    b_ =  copy(b)
+    t = similar(x1)
+
+    for d in 1:length(bins[1])+1
+        # first solve all parts with a low sequence number
+        bpart = bins[find(seq_nr.==d)]
+        # Each of the parts with an equal sequence number can be solved independently
+        for i in 1:size(bpart,1)
+            mo = cart_indices[find(classified_indices.==bpart[i,:])]
+            xx, yy = FrameFun._azselection_restriction_operators(primal, g, omega, mo)
+            op = yy*A*xx'
+            a = matrix(op)
+            y = LAPACK.gelsy!(a, yy*b_, cutoff)[1]
+            # x1 = x1 + xx'*y
+            apply!(xx', t, y)
+            x1 .+= t
+        end
+        # Remove the solved part after all parts with equal seq number are dealt with.
+        if d!=length(bins[1])+1
+            # b_ = b-A*x1
+            apply!(A, b_, x1)
+            b_ .= b .- b_
+        end
+    end
+    x1
+end

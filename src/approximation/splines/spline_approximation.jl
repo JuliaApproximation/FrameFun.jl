@@ -1,3 +1,65 @@
+SYSTEM_SIZE=2000
+
+"""
+Number of basis elements overlapping with a point.
+"""
+no_overlapping_elements(dict::Dictionary) = ceil(Int,BasisFunctions.support_length_of_compact_function(dict)*length(dict))
+
+"""
+Assign a sequence number to each element in bin.
+
+Elements with all numbers even are to be solved first and are assigned 1.
+Elements with all numbers odd are to be solved last.
+"""
+function assign_sequence_nro(bins)
+    L = length(bins)
+    M = length(bins[1])
+    seq = Array{Int}(L)
+    a = Array{Bool}(M)
+    b = Array{Int}(M)
+    for i in 1:L
+        b .= bins[i]
+        a .= iseven.(b)
+        seq[i] = M+1-sum(a)
+    end
+    seq
+end
+
+"""
+Clasifies the coefficient indices activated in `coefficient_mask` in `depth` dimensions.
+"""
+function classified_indices(coefficient_mask::AbstractArray{Bool}, primal::TensorProductDict, gamma::ProductGrid, depth::Int)
+    sprimal = size(primal)
+    # The cartesian indices of the activated coefficients
+    cart_indices = [CartesianIndex(ind2sub(sprimal, i) ) for i in find(coefficient_mask)]
+    cart_indices_matrix = zeros(Int,length(cart_indices), depth)
+    for i in 1:depth
+        # Transfrom one dimensian of the cartesian indices to an array
+        cart_indices_matrix[:,i] .= getindex.(cart_indices,i)
+        # Determin the space between two coefficient regions in the ith dimension
+        # Take into account the spacing of the collocation points and the width
+        # or the primal and the dual basis.
+        # (it scales, but other methods may be better)
+        g1d = element(gamma,i)
+        primal1d = element(primal, i)
+        dual1d = BasisFunctions.wavelet_dual(primal1d)
+        OS = cld(length(g1d),length(primal1d))
+        no_samples_in_1d = cld(SYSTEM_SIZE,OS*no_overlapping_elements(dual1d))
+        no_coeffs_in_1d_other = ceil(Int, fld(no_samples_in_1d, OS)^(1/(max(1,depth-1))))
+        no_coeffs_in_1d_mid = ceil(Int, no_overlapping_elements(primal1d)^(1/(max(1,depth-1))))
+
+        # Divide all coefficients in a single dimension in an even n.o. partitions (m).
+        m = cld(length(primal1d),max(no_coeffs_in_1d_mid, no_coeffs_in_1d_other))
+        m = isodd(m) ? m+1 : m
+        # +1 to be on the save side.
+        m = (length(primal1d)+1)/m
+        # Reuse the array to minimize allocation
+        cart_indices_matrix[:,i] .= Int.(cld.(cart_indices_matrix[:,i], m))
+    end
+    # Create a vector instead of a matrix.
+    # Then reducing dimensions is not necessary in methods using this output.
+    cart_indices, [tuple(cart_indices_matrix[i,:]...) for i in 1:size(cart_indices,1)]
+end
 
 function azselection_restriction_operators(fplatform::BasisFunctions.GenericPlatform, i; options...)
     platform = fplatform.super_platform
@@ -20,12 +82,20 @@ Grid restriction and dictionary restriction operators to restrict the system whe
 
 `primal` and `dual` should be the not restricted basis, `gamma` the (oversampled) grid of `primal`, `omega` is `gamma` restricted to `domain`
 """
-function azselection_restriction_operators(primal::Dictionary, dual::Dictionary, gamma::AbstractGrid, omega::AbstractGrid, domain::Domains.Domain)
+function azselection_restriction_operators(primal::Dictionary, dual::Dictionary, gamma::AbstractGrid, omega::MaskedGrid, domain::Domains.Domain)
     bound = FrameFun.boundary_grid(gamma, domain)
-    boundary_coefficient_mask = BasisFunctions.coefficient_index_mask_of_overlapping_elements(dual, bound)
-    boundary_grid_mask = BasisFunctions.grid_index_mask_in_element_support(primal, gamma, boundary_coefficient_mask)
-    boundary_grid_mask .= boundary_grid_mask .& FrameFun.mask(omega)
-    DMZ = gamma[boundary_grid_mask]
+    coefficient_mask = BasisFunctions.coefficient_index_mask_of_overlapping_elements(dual, bound)
+    _azselection_restriction_operators(primal, gamma, omega, coefficient_mask)
+end
+
+function _azselection_restriction_operators(primal::Dictionary, gamma::AbstractGrid, omega::AbstractGrid, coefficient_mask)
+    grid_mask = BasisFunctions.grid_index_mask_in_element_support(primal, gamma, coefficient_mask)
+    grid_mask .= grid_mask .& FrameFun.mask(omega)
+    __azselection_restriction_operators(primal, gamma, omega, grid_mask)
+end
+
+function __azselection_restriction_operators(primal::Dictionary, gamma::AbstractGrid, omega::AbstractGrid, grid_mask)
+    DMZ = gamma[grid_mask]
     system_coefficient_mask = BasisFunctions.coefficient_index_mask_of_overlapping_elements(primal, DMZ)
     gr = restriction_operator(gridbasis(omega, coeftype(primal)), gridbasis(DMZ, coeftype(primal)))
     dr = restriction_operator(primal, system_coefficient_mask)
@@ -46,7 +116,6 @@ function boundary_support_grid(basis::Dictionary, dual::Dictionary, boundary_gri
     MaskedGrid(gamma,m)
 end
 
-
 spline_util_restriction_operators(platform::BasisFunctions.GenericPlatform, i) =
     spline_util_restriction_operators(primal(platform, i), sampler(platform, i))
 
@@ -64,14 +133,12 @@ spline_util_restriction_operators(dict::Dictionary, omega::AbstractGrid, grid::A
 
 """
 Frame restriction operator and grid restriction operator.
-
 The former restricts `dict` to the elements that overlap with the boundary and
 the latter restricts `omega` to the points in the span of the dict elements that
 overlap with the boundary.
 """
 spline_util_restriction_operators(dict::Dictionary, omega::AbstractGrid, boundary::AbstractGrid) =
     _spline_util_restriction_operators(dict, omega, boundary_support_grid(dict, boundary, omega))
-
 
 function BasisFunctions.grid_restriction_operator(src::Dictionary, dest::Dictionary, src_grid::Union{IndexSubGrid,MaskedGrid}, dest_grid::MaskedGrid)
     @assert supergrid(src_grid) == supergrid(dest_grid)
@@ -114,17 +181,6 @@ function estimate_plunge_rank_spline(src, domain::Domain, grid::AbstractGrid)
     boundary = boundary_grid(grid, domain)
     sum(BasisFunctions.coefficient_index_mask_of_overlapping_elements(src, boundary))
 end
-
-# function divide_and_conquer_restriction_operators(fplatform::BasisFunctions.Platform, i, dim, range)
-#     platform = fplatform.super_platform
-#     basis = primal(platform, i)
-#     S = sampler(fplatform, i)
-#     s = sampler(platform, i)
-#     domain = FrameFun.domain(primal(fplatform, i))
-#     gamma = BasisFunctions.grid(s)
-#     omega = BasisFunctions.grid(S)
-#     FrameFun.divide_and_conquer_restriction_operators(omega, gamma, basis, domain, dim, range)
-# end
 
 # The grid on the boundary of omega
 divide_and_conquer_restriction_operators(omega::AbstractGrid, gamma::AbstractGrid,

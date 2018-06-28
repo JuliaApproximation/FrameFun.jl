@@ -202,19 +202,19 @@ function AZSDCSolver(fplatform::BasisFunctions.Platform, i, dim::Int, range; opt
 end
 
 # Function with equal functionality, but allocating memory
-function az_solve(b, A::DictionaryOperator, Zt::DictionaryOperator, util_operators::DictionaryOperator...; use_plunge=true,
+function az_solve(b, A::DictionaryOperator, Zt::DictionaryOperator, util...; use_plunge=true,
         cutoff = default_cutoff(A), trunc = truncatedsvd_solve, verbose=false, afirst=true, options...)
     if afirst
         if use_plunge
             P = plunge_operator(A, Zt)
-            x2 = trunc(P*b, P*A, util_operators...; cutoff=cutoff, verbose=verbose, options...)
+            x2 = trunc(P*b, P*A, util...; cutoff=cutoff, verbose=verbose, options...)
         else
-            x2 = trunc(b, A, util_operators... ; cutoff=cutoff, verbose=verbose, options...)
+            x2 = trunc(b, A, util... ; cutoff=cutoff, verbose=verbose, options...)
         end
         x1 = Zt*(b-A*x2)
     else
         x1 = Zt*b
-        x2 = trunc(b-A*x1, A, util_operators... ; cutoff=cutoff, verbose=verbose, options...)
+        x2 = trunc(b-A*x1, A, util... ; cutoff=cutoff, verbose=verbose, options...)
     end
     x1 + x2
 end
@@ -264,11 +264,7 @@ function az_solve(platform::BasisFunctions.Platform, i, f::Function; R=0, option
     az_solve(s*f, a, zt; R=R, options...)
 end
 
-function azs_solve(fplatform::BasisFunctions.Platform, i, f::Function; options...)
-    # a = A(fplatform, i)
-    # zt = Zt(fplatform, i)
-    # s = sampler(fplatform, i)
-    # rd,sb = spline_util_restriction_operators(fplatform, i)
+function azs_solve_new(fplatform::BasisFunctions.Platform, i, f::Function; options...)
     a = A(fplatform, i; options...)
     zt = Zt(fplatform, i; options...)
     platform = fplatform.super_platform
@@ -280,6 +276,13 @@ function azs_solve(fplatform::BasisFunctions.Platform, i, f::Function; options..
     azs_solve(s*f, a, zt, frame_restriction', grid_restriction; options...)
 end
 
+function azs_solve(fplatform::BasisFunctions.Platform, i, f::Function; options...)
+    a = A(fplatform, i)
+    zt = Zt(fplatform, i)
+    s = sampler(fplatform, i)
+    rd,sb = spline_util_restriction_operators(fplatform, i)
+    azs_solve(s*f, a, zt, rd', sb; options...)
+end
 
 
 function azsdc_solve(fplatform::BasisFunctions.Platform, i, f::Function, dim::Int, range; options...)
@@ -339,19 +342,24 @@ function az_tree_solve(fplatform::BasisFunctions.Platform, i, f::Function;
     az_tree_solve(S*f, a, zt, solver; options...)
 end
 
-# max_alloc(platform, i, fun) = *(max_system_size(platform, i, fun)...)*sizeof(Float64)/(1024)^3
-# function max_system_size(platform, i, fun::typeof(FrameFun.azs_solve))
-#     rd,sb = FrameFun.spline_util_restriction_operators(platform, i)
-#     ((size(sb,1), size(rd,1)))
-# end
-# function max_system_size(platform, i, fun::typeof(FrameFun.az_tree_solve))
-#     tree = FrameFun.DomainDecompositionSolver(platform, i).tree
-#     cs = FrameFun.leave_containers(tree)
-#     a = FrameFun.DomainDecompositionLeaf[]
-#     for c in cs
-#         for i in c.container
-#             push!(a, i)
-#         end
-#     end
-#     maximum(map(size, map(FrameFun.DMZ,a)))
-# end
+function az_decomposition_solve(fplatform::BasisFunctions.Platform, i, f::Function;
+        depth=nothing, options...)
+    platform = fplatform.super_platform
+    a = A(fplatform, i)
+    zt = Zt(fplatform, i)
+    S = sampler(fplatform, i)
+
+    # The grid on Gamma
+    gamma = grid(sampler(platform, i))
+    # The grid on Omega
+    omega = grid(S)
+
+    dom = domain(primal(fplatform, i))
+    basis = primal(platform, i)
+    (depth==nothing) && (depth=dimension(basis))
+    dual = BasisFunctions.wavelet_dual(basis)
+    bound = FrameFun.boundary_grid(gamma, dom)
+    boundary_coefficient_mask = BasisFunctions.coefficient_index_mask_of_overlapping_elements(dual, bound)
+    cart_indices, c_indices = classified_indices(boundary_coefficient_mask, basis, gamma, depth)
+    az_solve(S*f, a, zt, cart_indices, c_indices; trunc=decomposition_solve, options...)
+end
