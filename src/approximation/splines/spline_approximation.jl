@@ -82,7 +82,7 @@ Grid restriction and dictionary restriction operators to restrict the system whe
 
 `primal` and `dual` should be the not restricted basis, `gamma` the (oversampled) grid of `primal`, `omega` is `gamma` restricted to `domain`
 """
-function azselection_restriction_operators(primal::Dictionary, dual::Dictionary, gamma::AbstractGrid, omega::MaskedGrid, domain::Domains.Domain)
+function azselection_restriction_operators(primal::Dictionary, dual::Dictionary, gamma::AbstractGrid, omega::Union{MaskedGrid,IndexSubGrid}, domain::Domains.Domain)
     bound = FrameFun.boundary_grid(gamma, domain)
     coefficient_mask = BasisFunctions.coefficient_index_mask_of_overlapping_elements(dual, bound)
     _azselection_restriction_operators(primal, gamma, omega, coefficient_mask)

@@ -361,5 +361,5 @@ function az_decomposition_solve(fplatform::BasisFunctions.Platform, i, f::Functi
     bound = FrameFun.boundary_grid(gamma, dom)
     boundary_coefficient_mask = BasisFunctions.coefficient_index_mask_of_overlapping_elements(dual, bound)
     cart_indices, c_indices = classified_indices(boundary_coefficient_mask, basis, gamma, depth)
-    az_solve(S*f, a, zt, cart_indices, c_indices; trunc=decomposition_solve, options...)
+    az_solve(S*f, a, zt, cart_indices, c_indices; trunc=decomposition_solve, use_plunge=false,options...)
 end

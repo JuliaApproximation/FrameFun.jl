@@ -255,7 +255,7 @@ end
     x = FrameFun.azs_solve(b, A, Zt, BR', DMZ_R;afirst=false)
     @test 1+norm(A*x-b)≈1
 
-    x = FrameFun.azs_solve(fplatform, i, fun;afirst=false)
+    x = FrameFun.azs_solve_new(fplatform, i, fun;afirst=false)
     @test 1+norm(A*x-b)≈1
 
     # # 1D
