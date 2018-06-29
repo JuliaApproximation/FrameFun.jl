@@ -221,8 +221,8 @@ end
 
 # Function with equal functionality, but allocating memory
 azs_solve(b, A::DictionaryOperator, Zt::DictionaryOperator, RD::DictionaryOperator, SB::DictionaryOperator;
-        trunc = restriction_solve, use_plunge=false, options...) =
-    az_solve(b, A, Zt, RD, SB; trunc=trunc, use_plunge=use_plunge, options...)
+        trunc = restriction_solve, use_plunge=false, info=false, options...) =
+    info ? restriction_info(b, A, RD, SB): az_solve(b, A, Zt, RD, SB; trunc=trunc, use_plunge=use_plunge, options...)
 
 # Function with equal functionality, but allocating memory
 azsdc_solve(b, A::DictionaryOperator, Zt::DictionaryOperator,
@@ -264,7 +264,7 @@ function az_solve(platform::BasisFunctions.Platform, i, f::Function; R=0, option
     az_solve(s*f, a, zt; R=R, options...)
 end
 
-function azs_solve_new(fplatform::BasisFunctions.Platform, i, f::Function; options...)
+function azs_solve_new(fplatform::BasisFunctions.Platform, i, f::Function; info=false,options...)
     a = A(fplatform, i; options...)
     zt = Zt(fplatform, i; options...)
     platform = fplatform.super_platform
@@ -273,7 +273,11 @@ function azs_solve_new(fplatform::BasisFunctions.Platform, i, f::Function; optio
     gamma = supergrid(omega)
     domain = FrameFun.domain(src(a))
     frame_restriction, grid_restriction = azselection_restriction_operators(primal(platform, i), gamma, omega, domain)
-    azs_solve(s*f, a, zt, frame_restriction', grid_restriction; options...)
+    if info
+        restriction_info(s*f, a, frame_restriction', grid_restriction)
+    else
+        azs_solve(s*f, a, zt, frame_restriction', grid_restriction; options...)
+    end
 end
 
 function azs_solve(fplatform::BasisFunctions.Platform, i, f::Function; options...)
@@ -343,7 +347,7 @@ function az_tree_solve(fplatform::BasisFunctions.Platform, i, f::Function;
 end
 
 function az_decomposition_solve(fplatform::BasisFunctions.Platform, i, f::Function;
-        depth=nothing, options...)
+        depth=nothing, info=false, fig=false, options...)
     platform = fplatform.super_platform
     a = A(fplatform, i)
     zt = Zt(fplatform, i)
@@ -361,5 +365,11 @@ function az_decomposition_solve(fplatform::BasisFunctions.Platform, i, f::Functi
     bound = FrameFun.boundary_grid(gamma, dom)
     boundary_coefficient_mask = BasisFunctions.coefficient_index_mask_of_overlapping_elements(dual, bound)
     cart_indices, c_indices = classified_indices(boundary_coefficient_mask, basis, gamma, depth)
-    az_solve(S*f, a, zt, cart_indices, c_indices; trunc=decomposition_solve, use_plunge=false,options...)
+    if info
+        decomposition_info(S*f, a, cart_indices, c_indices)
+    elseif fig
+        decomposition_plot(S*f, a, cart_indices, c_indices)
+    else
+        az_solve(S*f, a, zt, cart_indices, c_indices; trunc=decomposition_solve, use_plunge=false,options...)
+    end
 end

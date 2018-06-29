@@ -512,7 +512,7 @@ BasisFunctions.apply(s::DomainDecompositionSolver, src) = domaindecomposition_so
 domaindecomposition_solve(b::Vector, A::DictionaryOperator, s::DomainDecompositionSolver; options...) =
     solve(b, A, s.tree, s.basis, s.gamma, s.omega; options...)
 
-function decomposition_solve(b::Vector, A::DictionaryOperator, cart_indices, classified_indices; cutoff=default_cutoff(A), options...)
+function decomposition_solve(b::Vector, A::DictionaryOperator, cart_indices, classified_indices; cutoff=default_cutoff(A), verbose=false, info=false, options...)
     bins = unique(classified_indices)
     # assign sequence numbers to each of the bins.
     seq_nr = assign_sequence_nro(bins)
@@ -520,7 +520,6 @@ function decomposition_solve(b::Vector, A::DictionaryOperator, cart_indices, cla
     primal = basis(src(A))
     omega = grid(dest(A))
     g = supergrid(omega)
-
     x1 = zeros(primal)
     b_ =  copy(b)
     t = similar(x1)
@@ -529,9 +528,11 @@ function decomposition_solve(b::Vector, A::DictionaryOperator, cart_indices, cla
         # first solve all parts with a low sequence number
         bpart = bins[find(seq_nr.==d)]
         # Each of the parts with an equal sequence number can be solved independently
+        verbose && println("$(length(bpart)) parts in $(d)th flow")
         for i in 1:size(bpart,1)
             mo = cart_indices[find(classified_indices.==bpart[i,:])]
             xx, yy = FrameFun._azselection_restriction_operators(primal, g, omega, mo)
+            verbose && println("\t$(i)\t has size ($(size(yy,1)),$(size(xx,1)))")
             op = yy*A*xx'
             a = matrix(op)
             y = LAPACK.gelsy!(a, yy*b_, cutoff)[1]
@@ -548,3 +549,52 @@ function decomposition_solve(b::Vector, A::DictionaryOperator, cart_indices, cla
     end
     x1
 end
+
+function decomposition_info(b::Vector, A::DictionaryOperator, cart_indices, classified_indices; cutoff=default_cutoff(A), info=false, options...)
+    bins = unique(classified_indices)
+    seq_nr = assign_sequence_nro(bins)
+    primal = basis(src(A))
+    omega = grid(dest(A))
+    g = supergrid(omega)
+    r = zeros(Int, length(bins), 2)
+    ii = 1
+    for d in 1:length(bins[1])+1
+        bpart = bins[find(seq_nr.==d)]
+        println("$(length(bpart)) parts in $(d)th flow")
+        for i in 1:size(bpart,1)
+            mo = cart_indices[find(classified_indices.==bpart[i,:])]
+            xx, yy = FrameFun._azselection_restriction_operators(primal, g, omega, mo)
+            op = yy*A*xx'
+            println("\t$(i)\t has size ($(size(yy,1)),$(size(xx,1)))")
+            r[ii,1] = size(yy,1)
+            r[ii,2] = size(xx,1)
+            ii += 1
+        end
+    end
+    r
+end
+
+using Plots
+function decomposition_plot(b::Vector, A::DictionaryOperator, cart_indices, classified_indices; cutoff=default_cutoff(A), info=false, options...)
+    bins = unique(classified_indices)
+    seq_nr = assign_sequence_nro(bins)
+    clrs = [:blue, :red, :green]
+    seq_nr = assign_sequence_nro(bins)
+    primal = basis(src(A))
+    plot()
+    for d in 1:length(bins[1])+1
+        bpart = bins[find(seq_nr.==d)]
+        for i in 1:size(bpart,1)
+            mo = cart_indices[find(classified_indices.==bpart[i,:])]
+            m = falses(size(primal))
+            m[mo] = true
+            plot!(m,c=clrs[d])
+        end
+    end
+    plot!()
+end
+
+# Function with equal functionality, but allocating memory
+restriction_info(b::Vector, A::DictionaryOperator, BE::IndexExtensionOperator,
+        GR::IndexRestrictionOperator; cutoff=FrameFun.default_cutoff(A), options...) =
+    (println("Selection has size ($(size(GR,1)),$(size(BE,2)))"); [size(GR,1),size(BE,2)]')
