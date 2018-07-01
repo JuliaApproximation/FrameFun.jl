@@ -68,7 +68,7 @@ tensor product of a Fourier series on the interval ⊗ a 2D Fourier series on th
 function extensionframe(domain::ProductDomain, basis::TensorProductDict)
     ExtensionFrames = Dictionary[]
     dc = 1
-    for i = 1:nb_elements(domain)
+    for i = 1:numelements(domain)
         el = element(domain, i)
         range = dc:dc+dimension(el)-1
         push!(ExtensionFrames, ExtensionFrame(el, element(basis, range)))

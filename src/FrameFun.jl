@@ -41,7 +41,7 @@ import Domains: indomain, dimension
 # - for mapped domains
 import Domains: domain
 # - for composite structures
-import Domains: element, elements, nb_elements
+import Domains: element, elements, numelements
 # - for cartesian products
 import Domains: cartesianproduct, ×
 

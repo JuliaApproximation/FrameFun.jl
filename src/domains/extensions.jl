@@ -23,7 +23,7 @@ end
 
 function indomain_broadcast(grid, d::UnionDomain)
     z = indomain_broadcast(grid, element(d,1))
-    for i in 2:nb_elements(d)
+    for i in 2:numelements(d)
         z = z .| indomain_broadcast(grid, element(d,i))
     end
     z
@@ -31,7 +31,7 @@ end
 
 function indomain_broadcast(grid, d::IntersectionDomain)
     z = indomain_broadcast(grid, element(d,1))
-    for i in 2:nb_elements(d)
+    for i in 2:numelements(d)
         z = z .& indomain_broadcast(grid, element(d,i))
     end
     z
