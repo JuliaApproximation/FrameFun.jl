@@ -116,8 +116,6 @@ end
     @test norm(a*x-b)+1≈ 1
     x = FrameFun.azs_solve(fplatform, i, f2d; cutoff=epsilon)
     @test norm(a*x-b)+1≈ 1
-    x = FrameFun.az_tree_solve(fplatform, i, f2d; cutoff=epsilon)
-    @test norm(a*x-b)+1≈ 1
 
     # For tensor domain
     i = 2
@@ -150,9 +148,6 @@ end
     AZSS = FrameFun.AZSSolver(A, Zt, BR', DMZ_R)
     x = AZSS*b
     @test 1+norm(A*x-b)≈1
-    AZSDCS = FrameFun.AZSDCSolver(A, Zt, BRsplit', BR1', BR2', DMZ_Rsplit, DMZ_R1, DMZ_R2)
-    x = AZSDCS*b
-    @test 1+norm(A*x-b)≈1
     AZS = FrameFun.AZSolver(A, Zt)
     x = AZS*b
     @test 1+norm(A*x-b)≈1
@@ -161,28 +156,15 @@ end
     @test 1+norm(A*x-b)≈1
     x = FrameFun.azs_solve(b, A, Zt, BR', DMZ_R)
     @test 1+norm(A*x-b)≈1
-    x = FrameFun.azsdc_solve(b, A, Zt, BRsplit', BR1', BR2', DMZ_Rsplit, DMZ_R1, DMZ_R2)
-    @test 1+norm(A*x-b)≈1
 
     x = FrameFun.az_solve(fplatform, i, fun)
     @test 1+norm(A*x-b)≈1
     x = FrameFun.azs_solve(fplatform, i, fun)
     @test 1+norm(A*x-b)≈1
-    x = FrameFun.azsdc_solve(fplatform, i, fun, 1, [0,.5])
-    @test 1+norm(A*x-b)≈1
-    x = FrameFun.azsdcN_solve(fplatform, i, fun)
-    @test 1+norm(A*x-b)≈1
-    x = FrameFun.az_tree_solve(fplatform, i, fun)
-    @test 1+norm(A*x-b)≈1
-
 
     op = FrameFun.AZSSolver(fplatform, i)
     x = op*b;@test 1+norm(A*x-b)≈1
     op = FrameFun.AZSolver(fplatform, i)
-    x = op*b;@test 1+norm(A*x-b)≈1
-    op = FrameFun.AZSDCSolver(fplatform, i, 1, [.0,.5])
-    x = op*b;@test 1+norm(A*x-b)≈1
-    op = FrameFun.DomainDecompositionSolver(fplatform, i)
     x = op*b;@test 1+norm(A*x-b)≈1
 
     # 1D
@@ -255,7 +237,7 @@ end
     x = FrameFun.azs_solve(b, A, Zt, BR', DMZ_R;afirst=false)
     @test 1+norm(A*x-b)≈1
 
-    x = FrameFun.azs_solve_new(fplatform, i, fun;afirst=false)
+    x = FrameFun.azs_solve(fplatform, i, fun;afirst=false)
     @test 1+norm(A*x-b)≈1
 
     # # 1D

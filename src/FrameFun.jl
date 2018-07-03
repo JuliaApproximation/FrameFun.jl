@@ -41,7 +41,7 @@ import Domains: indomain, dimension
 # - for mapped domains
 import Domains: domain
 # - for composite structures
-import Domains: element, elements, nb_elements
+import Domains: element, elements, numelements
 # - for cartesian products
 import Domains: cartesianproduct, ×
 
@@ -168,7 +168,6 @@ include("frames/extensionframe.jl")
 include("frames/weighted_sum_frame.jl")
 
 include("approximation/splines/spline_approximation.jl")
-include("approximation/splines/split_grid.jl")
 
 include("fun/basisdomains.jl")
 include("fun/funs.jl")
@@ -178,6 +177,8 @@ include("approximation/fe_solvers.jl")
 include("approximation/continuous_solver.jl")
 include("approximation/lowranksolver.jl")
 include("approximation/azsolver.jl")
+include("approximation/solve.jl")
+include("approximation/azssolver.jl")
 include("approximation/tridiagonalsolver.jl")
 include("approximation/smoothsolver.jl")
 include("approximation/fe_approx.jl")

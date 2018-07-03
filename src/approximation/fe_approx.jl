@@ -119,7 +119,7 @@ default_frame_n(domain::Domain3d, basis) = (7, 7, 7)
 
 function default_frame_n(domain::ProductDomain, basis)
     s = [default_frame_n(element(domain,1), basis)...]
-    for i = 2:nb_elements(domain)
+    for i = 2:numelements(domain)
         s = [s; default_frame_n(element(domain,i), basis)...]
     end
     s = round.(Int,s/dimension(domain))
