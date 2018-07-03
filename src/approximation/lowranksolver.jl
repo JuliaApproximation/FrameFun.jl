@@ -575,10 +575,10 @@ function decomposition_info(b::Vector, A::DictionaryOperator, cart_indices, clas
 end
 
 using Plots
-function decomposition_plot(b::Vector, A::DictionaryOperator, cart_indices, classified_indices; cutoff=default_cutoff(A), info=false, options...)
+function decomposition_plot(b::Vector, A::DictionaryOperator, cart_indices, classified_indices)
     bins = unique(classified_indices)
     seq_nr = assign_sequence_nro(bins)
-    clrs = [:blue, :red, :green]
+    clrs = [:blue, :red, :green,:black]
     seq_nr = assign_sequence_nro(bins)
     primal = basis(src(A))
     plot()
@@ -588,10 +588,10 @@ function decomposition_plot(b::Vector, A::DictionaryOperator, cart_indices, clas
             mo = cart_indices[find(classified_indices.==bpart[i,:])]
             m = falses(size(primal))
             m[mo] = true
-            plot!(m,c=clrs[d])
+            scatter!(m,c=clrs[d])
         end
     end
-    plot!()
+    scatter!()
 end
 
 # Function with equal functionality, but allocating memory

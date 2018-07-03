@@ -216,7 +216,8 @@ function az_solve(b, A::DictionaryOperator, Zt::DictionaryOperator, util...; use
         x1 = Zt*b
         x2 = trunc(b-A*x1, A, util... ; cutoff=cutoff, verbose=verbose, options...)
     end
-    x1 + x2
+    x1 .= x1 .+ x2
+    x1
 end
 
 # Function with equal functionality, but allocating memory
@@ -264,7 +265,7 @@ function az_solve(platform::BasisFunctions.Platform, i, f::Function; R=0, option
     az_solve(s*f, a, zt; R=R, options...)
 end
 
-function azs_solve_new(fplatform::BasisFunctions.Platform, i, f::Function; info=false,options...)
+function azs_solve(fplatform::BasisFunctions.Platform, i, f::Function; info=false,options...)
     a = A(fplatform, i; options...)
     zt = Zt(fplatform, i; options...)
     platform = fplatform.super_platform
@@ -280,7 +281,7 @@ function azs_solve_new(fplatform::BasisFunctions.Platform, i, f::Function; info=
     end
 end
 
-function azs_solve(fplatform::BasisFunctions.Platform, i, f::Function; options...)
+function azs_solve_old(fplatform::BasisFunctions.Platform, i, f::Function; options...)
     a = A(fplatform, i)
     zt = Zt(fplatform, i)
     s = sampler(fplatform, i)
@@ -347,7 +348,7 @@ function az_tree_solve(fplatform::BasisFunctions.Platform, i, f::Function;
 end
 
 function az_decomposition_solve(fplatform::BasisFunctions.Platform, i, f::Function;
-        depth=nothing, info=false, fig=false, options...)
+        depth=nothing, info=false, fig=false, no_blocks=nothing, options...)
     platform = fplatform.super_platform
     a = A(fplatform, i)
     zt = Zt(fplatform, i)
@@ -364,12 +365,84 @@ function az_decomposition_solve(fplatform::BasisFunctions.Platform, i, f::Functi
     dual = BasisFunctions.wavelet_dual(basis)
     bound = FrameFun.boundary_grid(gamma, dom)
     boundary_coefficient_mask = BasisFunctions.coefficient_index_mask_of_overlapping_elements(dual, bound)
-    cart_indices, c_indices = classified_indices(boundary_coefficient_mask, basis, gamma, depth)
+    cart_indices, c_indices = classified_indices(boundary_coefficient_mask, basis, gamma, depth; no_blocks=no_blocks)
+
     if info
         decomposition_info(S*f, a, cart_indices, c_indices)
     elseif fig
         decomposition_plot(S*f, a, cart_indices, c_indices)
     else
-        az_solve(S*f, a, zt, cart_indices, c_indices; trunc=decomposition_solve, use_plunge=false,options...)
+        az_solve(S*f, a, zt, cart_indices, c_indices; trunc=decomposition_solve, use_plunge=false, options...)
     end
+end
+
+function timed_az_decomposition_solve(fplatform::BasisFunctions.Platform, i, f::Function;
+        afirst=false, depth=nothing, no_blocks=nothing, verbose=false, options...)
+    platform = fplatform.super_platform
+    t1 = @timed begin
+        platform = fplatform.super_platform
+        a = A(fplatform, i)
+        zt = Zt(fplatform, i)
+        S = sampler(fplatform, i)
+
+        # The grid on Gamma
+        gamma = grid(sampler(platform, i))
+        # The grid on Omega
+        omega = grid(S)
+
+        dom = domain(primal(fplatform, i))
+        basis = primal(platform, i)
+        (depth==nothing) && (depth=dimension(basis))
+        dual = BasisFunctions.wavelet_dual(basis)
+        b = S*f
+    end
+    t2 = @timed bound = FrameFun.boundary_grid(gamma, dom)
+    t3 = @timed boundary_coefficient_mask = BasisFunctions.coefficient_index_mask_of_overlapping_elements(dual, bound)
+    t4 = @timed cart_indices, c_indices = classified_indices(boundary_coefficient_mask, basis, gamma, depth; no_blocks=no_blocks)
+    if afirst
+        t5 = @timed x2 = decomposition_solve(b, a, cart_indices, c_indices ; verbose=verbose, options...)
+        t6 = @timed x1 = zt*(b-a*x2)
+    else
+        t6 = @timed x1 = zt*b
+        t5 = @timed x2 = decomposition_solve(b-a*x1, a, cart_indices, c_indices ; verbose=verbose, options...)
+    end
+    t7 = @timed x1 .= x1 .+ x2
+    info("error is $(norm(a*x1-b))")
+    x1, [t1,t2,t3,t4,t5,t6,t7]
+end
+
+function timed_azs_solve(fplatform::BasisFunctions.Platform, i, f::Function; afirst=false, verbose=false, options...)
+    t1 = @timed begin
+        platform = fplatform.super_platform
+        a = A(fplatform, i)
+        zt = Zt(fplatform, i)
+        s = sampler(fplatform, i)
+        omega = grid(s)
+        gamma = supergrid(omega)
+        domain = FrameFun.domain(src(a))
+        primal = FrameFun.basis(src(a))
+        dual = BasisFunctions.wavelet_dual(primal)
+        b = s*f
+    end
+
+    t2 = @timed bound = FrameFun.boundary_grid(gamma, domain)
+    t3 = @timed coefficient_mask = BasisFunctions.coefficient_index_mask_of_overlapping_elements(dual, bound)
+    t4 = @timed begin
+        grid_mask = BasisFunctions.grid_index_mask_in_element_support(primal, gamma, coefficient_mask)
+        grid_mask .= grid_mask .& FrameFun.mask(omega)
+        DMZ = gamma[grid_mask]
+        system_coefficient_mask = BasisFunctions.coefficient_index_mask_of_overlapping_elements(primal, DMZ)
+        gr = restriction_operator(gridbasis(omega, coeftype(primal)), gridbasis(DMZ, coeftype(primal)))
+        dr = restriction_operator(primal, system_coefficient_mask)
+    end
+    if afirst
+        t5 = @timed x2 = restriction_solve(b, a, dr', gr ; verbose=verbose, options...)
+        t6 = @timed x1 = zt*(b-a*x2)
+    else
+        t6 = @timed x1 = zt*b
+        t5 = @timed x2 = restriction_solve(b-a*x1, a, dr', gr ; verbose=verbose, options...)
+    end
+    t7 = @timed x1 .= x1 .+ x2
+    info("error is $(norm(a*x1-b))")
+    x1, [t1,t2,t3,t4,t5,t6,t7]
 end
