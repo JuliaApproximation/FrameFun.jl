@@ -22,7 +22,6 @@ using Domains
     # TODO: type based on space of F
     fval = sample(rgrid,f,eltype(FSP))
     abserror= sum(abs.(Fval-fval))/200
-    @test abserror<1e-8
+    @test abserror<1e-7
 end
 end
-    
