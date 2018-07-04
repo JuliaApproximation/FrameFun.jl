@@ -102,14 +102,16 @@ function timed_az_decomposition_solve(fplatform::BasisFunctions.Platform, i, f::
     t4 = @timed cart_indices, c_indices = classified_indices(boundary_coefficient_mask, basis, gamma, depth; no_blocks=no_blocks)
     if afirst
         t5 = @timed x2 = decomposition_solve(b, a, cart_indices, c_indices ; verbose=verbose, options...)
-        t6 = @timed x1 = zt*(b-a*x2)
+        t6 = @timed nothing
+        t7 = @timed x1 = zt*(b-a*x2)
     else
-        t6 = @timed x1 = zt*b
+        t7 = @timed x1 = zt*b
         t5 = @timed x2 = decomposition_solve(b-a*x1, a, cart_indices, c_indices ; verbose=verbose, options...)
+        t6 = @timed nothing
     end
-    t7 = @timed x1 .= x1 .+ x2
+    t8 = @timed x1 .= x1 .+ x2
     info("error is $(norm(a*x1-b))")
-    x1, [t1,t2,t3,t4,t5,t6,t7]
+    x1, [t1,t2,t3,t4,t5,t6,t7,t8]
 end
 
 function timed_azs_solve(fplatform::BasisFunctions.Platform, i, f::Function; afirst=false, verbose=false, options...)
@@ -125,7 +127,7 @@ function timed_azs_solve(fplatform::BasisFunctions.Platform, i, f::Function; afi
         dual = BasisFunctions.wavelet_dual(primal)
         b = s*f
     end
-
+    cutoff = default_cutoff(a)
     t2 = @timed bound = FrameFun.boundary_grid(gamma, domain)
     t3 = @timed coefficient_mask = BasisFunctions.coefficient_index_mask_of_overlapping_elements(dual, bound)
     t4 = @timed begin
@@ -137,13 +139,15 @@ function timed_azs_solve(fplatform::BasisFunctions.Platform, i, f::Function; afi
         dr = restriction_operator(primal, system_coefficient_mask)
     end
     if afirst
-        t5 = @timed x2 = restriction_solve(b, a, dr', gr ; verbose=verbose, options...)
-        t6 = @timed x1 = zt*(b-a*x2)
+        t5 = @timed m = matrix(gr*a*dr')
+        t6 = @timed x2 = dr'*LAPACK.gelsy!(m,gr*b,cutoff)[1]
+        t7 = @timed x1 = zt*(b-a*x2)
     else
-        t6 = @timed x1 = zt*b
-        t5 = @timed x2 = restriction_solve(b-a*x1, a, dr', gr ; verbose=verbose, options...)
+        t7 = @timed x1 = zt*b
+        t5 = @timed m = matrix(gr*a*dr')
+        t6 = @timed x2 = dr'*LAPACK.gelsy!(m,gr*(b-a*x1),cutoff)[1]
     end
-    t7 = @timed x1 .= x1 .+ x2
+    t8 = @timed x1 .= x1 .+ x2
     info("error is $(norm(a*x1-b))")
-    x1, [t1,t2,t3,t4,t5,t6,t7]
+    x1, [t1,t2,t3,t4,t5,t6,t7,t8]
 end
