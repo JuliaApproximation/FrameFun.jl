@@ -101,18 +101,103 @@ function timed_az_decomposition_solve(fplatform::BasisFunctions.Platform, i, f::
     t3 = @timed boundary_coefficient_mask = BasisFunctions.coefficient_index_mask_of_overlapping_elements(dual, bound)
     t4 = @timed cart_indices, c_indices = classified_indices(boundary_coefficient_mask, basis, gamma, depth; no_blocks=no_blocks)
     if afirst
-        t5 = @timed x2 = decomposition_solve(b, a, cart_indices, c_indices ; verbose=verbose, options...)
-        t6 = @timed nothing
+        # t5 = @timed x2 = decomposition_solve(b, a, cart_indices, c_indices ; verbose=verbose, options...)
+        # t6 = @timed nothing
+        t5 = @timed matrices = decomposition_matrices(a, cart_indices, c_indices ; verbose=verbose, options...)
+        t6 = @timed x2 = decomposition_solve_matrices(b,  a, cart_indices, c_indices, matrices ; verbose=verbose, options...)
         t7 = @timed x1 = zt*(b-a*x2)
     else
         t7 = @timed x1 = zt*b
-        t5 = @timed x2 = decomposition_solve(b-a*x1, a, cart_indices, c_indices ; verbose=verbose, options...)
-        t6 = @timed nothing
+        t5 = @timed matrices = decomposition_matrices(a, cart_indices, c_indices ; verbose=verbose, options...)
+        t6 = @timed x2 = decomposition_solve_matrices(b-a*x1,  a, cart_indices, c_indices, matrices ; verbose=verbose, options...)
     end
     t8 = @timed x1 .= x1 .+ x2
     info("error is $(norm(a*x1-b))")
     x1, [t1,t2,t3,t4,t5,t6,t7,t8]
 end
+
+function decomposition_matrices(A::DictionaryOperator{ELT}, cart_indices, classified_indices; cutoff=default_cutoff(A), verbose=false, info=false, options...) where {ELT}
+    bins = unique(classified_indices)
+    # assign sequence numbers to each of the bins.
+    seq_nr = assign_sequence_nro(bins)
+
+    primal = basis(src(A))
+    omega = grid(dest(A))
+    g = supergrid(omega)
+    x1 = zeros(primal)
+    j = 1
+    r = Array{Matrix{ELT}}(length(bins))
+    for d in 1:length(bins[1])+1
+        # first solve all parts with a low sequence number
+        bpart = bins[find(seq_nr.==d)]
+        # Each of the parts with an equal sequence number can be solved independently
+        verbose && println("$(length(bpart)) parts in $(d)th flow")
+        for i in 1:size(bpart,1)
+            mo = cart_indices[find(classified_indices.==bpart[i,:])]
+            xx, yy = FrameFun._azselection_restriction_operators(primal, g, omega, mo)
+            verbose && println("\t$(i)\t has size ($(size(yy,1)),$(size(xx,1)))")
+            op = yy*A*xx'
+            a = matrix(op)
+            r[j] = a
+            j += 1
+        end
+    end
+    r
+end
+
+
+function decomposition_solve_matrices(b::Vector, A::DictionaryOperator{ELT}, cart_indices, classified_indices, matrices; cutoff=default_cutoff(A), verbose=false, info=false, options...) where {ELT}
+    bins = unique(classified_indices)
+    # assign sequence numbers to each of the bins.
+    seq_nr = assign_sequence_nro(bins)
+
+    primal = basis(src(A))
+    omega = grid(dest(A))
+    g = supergrid(omega)
+    x1 = zeros(primal)
+    b_ =  copy(b)
+    t = similar(x1)
+
+    j = 1
+    for d in 1:length(bins[1])+1
+        # first solve all parts with a low sequence number
+        bpart = bins[find(seq_nr.==d)]
+        # Each of the parts with an equal sequence number can be solved independently
+        verbose && println("$(length(bpart)) parts in $(d)th flow")
+        for i in 1:size(bpart,1)
+            mo = cart_indices[find(classified_indices.==bpart[i,:])]
+            xx, yy = FrameFun._azselection_restriction_operators(primal, g, omega, mo)
+            verbose && println("\t$(i)\t has size ($(size(yy,1)),$(size(xx,1)))")
+            a = matrices[j]
+            j += 1
+            y = LAPACK.gelsy!(a, yy*b_, cutoff)[1]
+            # x1 = x1 + xx'*y
+            apply!(xx', t, y)
+            x1 .+= t
+        end
+        # Remove the solved part after all parts with equal seq number are dealt with.
+        if d!=length(bins[1])+1
+            # b_ = b-A*x1
+            apply!(A, b_, x1)
+            b_ .= b .- b_
+        end
+    end
+    x1
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 function timed_azs_solve(fplatform::BasisFunctions.Platform, i, f::Function; afirst=false, verbose=false, options...)
     t1 = @timed begin
