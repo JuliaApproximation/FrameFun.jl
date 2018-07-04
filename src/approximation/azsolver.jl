@@ -2,7 +2,8 @@
 # fastsolver.jl
 
 """
-Fast implementation of the AZ Algorithm. Returns an operator that is approximately pinv(A), based on a suitable Zt so that (A*Zt-I)*A is low rank.
+Fast implementation of the AZ Algorithm. Returns an operator that is approximately
+`pinv(A)`, based on a suitable `Zt` so that `(A*Zt-I)*A` is low rank.
 
 Steps when applying to right hand side b:
 
@@ -14,7 +15,6 @@ Can be done fast if Zt and A are fast.
 
 3. x = x1+x2
 This is the solution.
-
 """
 struct AZSolver{ELT} <: FE_Solver{ELT}
     TS          ::  DictionaryOperator # The low rank decomposition of (A*Zt-I)*A
@@ -89,23 +89,21 @@ apply!(s::AZSolver, coef_dest, coef_src) = _apply!(s, coef_dest, coef_src,
 
 function _apply!(s::AZSolver, coef_dest, coef_src, plunge_op::DictionaryOperator, A, Zt, b, blinear, TS, x1, x2)
     # Step 1:
-    # Consruct (A*Zt-I)*b
+    # Compute (A*Zt-I)*b
     apply!(plunge_op, b, coef_src)
     # Solve x2 = ((A*Zt-I)*A)^-1(A*Zt-I)*b
     apply!(TS,x2,b)
+
     # Step 2:
-    # Store A*x2 in s.b
+    # Store A*x2 in s.b and subtract from the right hand side
     apply!(A, b, x2)
-    # Store b-A*x2 in s.b
-    # Compute x1 =  Zt*(b-A*x2)
-    # b .= coef_src .- b
     for i in eachindex(b)
         b[i] = coef_src[i] - b[i]
     end
+    # Then compute x1 =  Zt*(b-A*x2)
     apply!(Zt, x1, b)
     # Step 3:
     # x = x1 + x2
-    # coef_dest .= s.x1 .+ s.x2
     for i in eachindex(x1)
         coef_dest[i] = x1[i] + x2[i]
     end
