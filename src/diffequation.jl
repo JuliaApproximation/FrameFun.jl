@@ -140,3 +140,68 @@ function solve(D::DiffEquation; solver=AZSolver, options...)
     coef  = A * b
     DictFun(D.D, dest(A), Adiff*coef)
 end
+
+
+
+""" Spectral collocation Operators
+A spectral collocation operator is a DictionaryOperator from a Fourier Extension Frame to a GridBasis.
+It represents the linear differential operator:
+L[u](x) = aX[1](X)*sampler*pD[1](D) + ⋯ + aX[r](X)*sampler*pD[r](D)
+where X is a grid multiplication operator for x -> x, and D is the derivative operator
+"""
+
+struct FECollocationOperator{T} <: DictionaryOperator{T}
+  # L = aX[1]*sampler*pD[1] + ⋯ + aX[r]*sampler*pD[r]
+  feframe :: ExtensionFrame # This should be Fourier Extension of odd order to work
+  pD :: Vector
+  aX :: Vector
+  sampler :: DictionaryOperator{T}
+  function FECollocationOperator{T}(feframe::ExtensionFrame,pD::Vector,aX::Vector,sampler::DictionaryOperator{T}) where {T}
+      r = length(pD)
+      @assert r == length(aX)
+      for k = 1:r
+          @assert src(pD[k]) == feframe
+          @assert dest(pD[k]) == feframe # Assumed feframe is of odd order
+          @assert src(sampler) == feframe
+          @assert src(aX[k]) == dest(sampler)
+      end
+      new(feframe,pD,aX,sampler)
+  end
+end
+
+## Constructors
+# All input format checks are done in the first constructor
+FECollocationOperator(feframe::ExtensionFrame,pD::Vector,aX::Vector,sampler::DictionaryOperator) = FECollocationOperator{eltype(sampler)}(feframe,pD,aX,sampler)
+function FECollocationOperator{S1<:Function,S2<:Function}(feframe::ExtensionFrame,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real)
+    pD = map(p->pseudodifferential_operator(feframe,x->p(x)),pd)
+    gridbasis = GridBasis(oversampled_grid(feframe,samplingfactor)[1],coefficient_type(feframe))
+    aX = map(a->grid_multiplication_operator(a,gridbasis),ax)
+    sampler = evaluation_operator(feframe,grid(gridbasis))
+    FECollocationOperator(feframe,pD,aX,sampler)
+end
+FECollocationOperator{S1<:Function,S2<:Function}(feframe::ExtensionFrame,pd::Vector{S1},ax::Vector{S2}) = FECollocationOperator(feframe,pd,ax,2)
+FECollocationOperator{S1<:Function,S2<:Function}(dom::Domain,ambientdom::Domain,n::Int,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real) = FECollocationOperator(ExtensionFrame(dom,FourierBasis(n,leftendpoint(ambientdom),rightendpoint(ambientdom))),pd,ax,samplingfactor)
+FECollocationOperator{S1<:Function,S2<:Function}(dom::Domain,ambientdom::Domain,n,pd::Vector{S1},ax::Vector{S2}) = FECollocationOperator(dom,ambientdom,n,pd,ax,2)
+
+# Constructors for higher dimensional domains:
+function FECollocationOperator{S1<:Tuple{Function},S2<:Function}(feframe::ExtensionFrame,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real)
+    pD = map(p->pseudodifferential_operator(feframe,x->p(x)),pd)
+    gridbasis = GridBasis(oversampled_grid(feframe,samplingfactor)[1],coefficient_type(feframe))
+    aX = map(a->grid_multiplication_operator(a,gridbasis),ax)
+    sampler = evaluation_operator(feframe,grid(gridbasis))
+    FECollocationOperator(feframe,pD,aX,sampler)
+end
+FECollocationOperator{S1<:Function,S2<:Function}(dom::Domain,ambientdom::ProductDomain,nn::Tuple,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real) = FECollocationOperator(tensorproduct(map((x,y)->FourierBasis(x,leftendpoint(y),rightendpoint(y)),nn, elements(ambientdom))),pd,ax,samplingfactor)
+FECollocationOperator{S1<:Function,S2<:Function}(dom::Domain,ambientdom::ProductDomain,nn::Tuple,pd::Vector{S1},ax::Vector{S2}) = FECollocationOperator(dom,ambientdom,nn,pd,ax,2)
+
+
+src(L::FECollocationOperator) = L.feframe
+dest(L::FECollocationOperator) = dest(L.sampler)
+
+function apply!(L::FECollocationOperator,dest,src,coef_dest,coef_src)
+    coef_dest[:] = L.aX[1]*(L.sampler*(L.pD[1]*coef_src))
+    for k = 2:length(L.pD)
+        coef_dest[:] += L.aX[k]*(L.sampler*(L.pD[k]*coef_src))
+    end
+    coef_dest
+end
