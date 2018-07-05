@@ -154,6 +154,7 @@ export FeFun, FeFunNd
 
 # from diffequation.jl
 export operator
+export FECollocationOperator
 
 # from approximation
 export DirectSolver, AZSolver, AZSmoothSolver, TridiagonalSolver, AZSSolver, AZSDCSolver

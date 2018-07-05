@@ -13,7 +13,7 @@ function prolate_test()
             b = FourierBasis{T}(n)
             d = interval(T(.25),T(.75))
             frame = extensionframe(b, d)
-            g = Gram(frame; reltol=tol,abstol=tol)
+            g = Gram(frame; rtol=tol,atol=tol)
             m = matrix(g)
             @test norm(imag(m)) < tol
             m1 = real(m)
@@ -42,9 +42,9 @@ function basis_test()
                 domain = support(basis)
                 frame = extensionframe(basis, domain)
 
-                @test norm(Gram(frame; abstol=tol, reltol=tol)*e - Gram(basis; abstol=tol, reltol=tol)*e) <100*tol
-                @test norm(DualGram(frame; abstol=tol, reltol=tol)*e - DualGram(basis; abstol=tol, reltol=tol)*e) <100*tol
-                @test norm(MixedGram(frame; abstol=tol, reltol=tol)*e - MixedGram(basis; abstol=tol, reltol=tol)*e) <100*tol
+                @test norm(Gram(frame; atol=tol, rtol=tol)*e - Gram(basis; atol=tol, rtol=tol)*e) <100*tol
+                @test norm(DualGram(frame; atol=tol, rtol=tol)*e - DualGram(basis; atol=tol, rtol=tol)*e) <100*tol
+                @test norm(MixedGram(frame; atol=tol, rtol=tol)*e - MixedGram(basis; atol=tol, rtol=tol)*e) <100*tol
             end
             for B in (ChebyshevBasis,FourierBasis,CosineSeries,BSplineTranslatesBasis,), oversampling in 1:4
                   basis = instantiate(B, n, T)
@@ -200,8 +200,8 @@ function test_general_gram()
     for method in (Gram, DualGram, MixedGram), B in (FourierBasis{T}(11), BSplineTranslatesBasis(5, 1,T))
         D = support(B)
         frame = extensionframe(B,D)
-        GBB = method(frame,frame; abstol=tol, reltol=tol)
-        GB = method(B; abstol=tol, reltol=tol)
+        GBB = method(frame,frame; atol=tol, rtol=tol)
+        GB = method(B; atol=tol, rtol=tol)
 
         e = rand(length(frame))
         @test norm(GBB*e - GB*e) <= 1000*tol
