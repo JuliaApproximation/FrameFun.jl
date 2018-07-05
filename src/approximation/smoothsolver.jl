@@ -40,9 +40,9 @@ struct AZSmoothSolver{ELT} <: FE_Solver{ELT}
     end
 end
 
-function AZSmoothSolver(A::DictionaryOperator, Zt::DictionaryOperator; options...)
+function AZSmoothSolver{ELT}(A::DictionaryOperator, Zt::DictionaryOperator; options...) where {ELT}
     D = IdxnScalingOperator(src(A); options...)
-    AZSmoothSolver{eltype(A)}(A, Zt, D; options...)
+    AZSmoothSolver{ELT}(A, Zt, D; options...)
 end
 
 AZSmoothSolver(A::DictionaryOperator; scaling=nothing, options...) =
