@@ -20,9 +20,19 @@ function assign_sequence_nro(bins)
     for i in 1:L
         b .= bins[i]
         a .= iseven.(b)
-        seq[i] = M+1-sum(a)
+        seq[i] = (1<<M)-_int(a)
+        # seq[i] = M+1-sum(a)
     end
     seq
+end
+
+"Convert array of ones and zeros to integer. [1,1,0] => 110b = 6. "
+function _int(a)
+    i = 0
+    for ai in a
+        i = 2*i+ai
+    end
+    i
 end
 
 """

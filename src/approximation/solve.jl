@@ -71,7 +71,7 @@ function az_decomposition_solve(fplatform::BasisFunctions.Platform, i, f::Functi
     if info
         decomposition_info(S*f, a, cart_indices, c_indices)
     elseif fig
-        decomposition_plot(S*f, a, cart_indices, c_indices)
+        decomposition_plot(a, cart_indices, c_indices)
     else
         az_solve(S*f, a, zt, cart_indices, c_indices; trunc=decomposition_solve, use_plunge=false, options...)
     end
@@ -127,7 +127,7 @@ function decomposition_matrices(A::DictionaryOperator{ELT}, cart_indices, classi
     x1 = zeros(primal)
     j = 1
     r = Array{Matrix{ELT}}(length(bins))
-    for d in 1:length(bins[1])+1
+    for d in 1:1<<length(bins[1])
         # first solve all parts with a low sequence number
         bpart = bins[find(seq_nr.==d)]
         # Each of the parts with an equal sequence number can be solved independently
@@ -159,7 +159,7 @@ function decomposition_solve_matrices(b::Vector, A::DictionaryOperator{ELT}, car
     t = similar(x1)
 
     j = 1
-    for d in 1:length(bins[1])+1
+    for d in 1:1<<length(bins[1])
         # first solve all parts with a low sequence number
         bpart = bins[find(seq_nr.==d)]
         # Each of the parts with an equal sequence number can be solved independently
@@ -176,7 +176,7 @@ function decomposition_solve_matrices(b::Vector, A::DictionaryOperator{ELT}, car
             x1 .+= t
         end
         # Remove the solved part after all parts with equal seq number are dealt with.
-        if d!=length(bins[1])+1
+        if d!=1<<length(bins[1])
             # b_ = b-A*x1
             apply!(A, b_, x1)
             b_ .= b .- b_
@@ -184,20 +184,6 @@ function decomposition_solve_matrices(b::Vector, A::DictionaryOperator{ELT}, car
     end
     x1
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 function timed_azs_solve(fplatform::BasisFunctions.Platform, i, f::Function; afirst=false, verbose=false, options...)
     t1 = @timed begin
