@@ -24,21 +24,21 @@ function continuous_solver_test()
         frame = extensionframe(B,D)
         f = x->B[1](x)
 
-        frameop = approximation_operator(frame; discrete=false, abstol=tol)
+        frameop = approximation_operator(frame; discrete=false, atol=tol)
         # framopmatrix = matrix(frameop)
-        basisop = approximation_operator(B; discrete=false, abstol=tol)
+        basisop = approximation_operator(B; discrete=false, atol=tol)
         # basisopmatrix = matrix(basisop)
 
-        framesol = *(frameop,f; discrete=false, abstol=tol)
+        framesol = *(frameop,f; discrete=false, atol=tol)
 
-        basissol = *(basisop,f; discrete=false, abstol=tol)
+        basissol = *(basisop,f; discrete=false, atol=tol)
 
         @test norm(framesol-basissol) < 20*tol
         # println(norm(framesol-basissol))
 
-        frameF = approximate(frame, f; discrete=false, abstol=tol)
+        frameF = approximate(frame, f; discrete=false, atol=tol)
         frameFcoef = coefficients(frameF)
-        basisF = approximate(B, f; discrete=false, abstol=tol)
+        basisF = approximate(B, f; discrete=false, atol=tol)
         basisFcoef = coefficients(basisF)
 
         @test norm(frameFcoef-basisFcoef) < 20*tol
