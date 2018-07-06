@@ -173,7 +173,7 @@ end
 # All input format checks are done in the first constructor
 FECollocationOperator(feframe::ExtensionFrame,pD::Vector,aX::Vector,sampler::DictionaryOperator) = FECollocationOperator{eltype(sampler)}(feframe,pD,aX,sampler)
 function FECollocationOperator{S1<:Function,S2<:Function}(feframe::ExtensionFrame,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real)
-    pD = map(p->pseudodifferential_operator(feframe,x->p(x)),pd)
+    pD = map(p->pseudodifferential_operator(feframe,p),pd)
     gridbasis = GridBasis(oversampled_grid(feframe,samplingfactor)[1],coefficient_type(feframe))
     aX = map(a->grid_multiplication_operator(a,gridbasis),ax)
     sampler = evaluation_operator(feframe,grid(gridbasis))
@@ -184,19 +184,11 @@ FECollocationOperator{S1<:Function,S2<:Function}(dom::Domain,ambientdom::Domain,
 FECollocationOperator{S1<:Function,S2<:Function}(dom::Domain,ambientdom::Domain,n,pd::Vector{S1},ax::Vector{S2}) = FECollocationOperator(dom,ambientdom,n,pd,ax,2)
 
 # Constructors for higher dimensional domains:
-function FECollocationOperator{S1<:Tuple{Function},S2<:Function}(feframe::ExtensionFrame,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real)
-    pD = map(p->pseudodifferential_operator(feframe,x->p(x)),pd)
-    gridbasis = GridBasis(oversampled_grid(feframe,samplingfactor)[1],coefficient_type(feframe))
-    aX = map(a->grid_multiplication_operator(a,gridbasis),ax)
-    sampler = evaluation_operator(feframe,grid(gridbasis))
-    FECollocationOperator(feframe,pD,aX,sampler)
-end
-FECollocationOperator{S1<:Function,S2<:Function}(dom::Domain,ambientdom::ProductDomain,nn::Tuple,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real) = FECollocationOperator(tensorproduct(map((x,y)->FourierBasis(x,leftendpoint(y),rightendpoint(y)),nn, elements(ambientdom))),pd,ax,samplingfactor)
+FECollocationOperator{S1<:Function,S2<:Function}(dom::Domain,ambientdom::ProductDomain,nn::Tuple,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real) = FECollocationOperator(ExtensionFrame(dom,tensorproduct(map((x,y)->FourierBasis(x,leftendpoint(y),rightendpoint(y)),nn, elements(ambientdom)))),pd,ax,samplingfactor)
 FECollocationOperator{S1<:Function,S2<:Function}(dom::Domain,ambientdom::ProductDomain,nn::Tuple,pd::Vector{S1},ax::Vector{S2}) = FECollocationOperator(dom,ambientdom,nn,pd,ax,2)
 
-
 src(L::FECollocationOperator) = L.feframe
-dest(L::FECollocationOperator) = dest(L.sampler)
+dest(L::FECollocationOperator) = dest(sampler(L))
 
 function apply!(L::FECollocationOperator,dest,src,coef_dest,coef_src)
     coef_dest[:] = L.aX[1]*(L.sampler*(L.pD[1]*coef_src))
@@ -205,3 +197,6 @@ function apply!(L::FECollocationOperator,dest,src,coef_dest,coef_src)
     end
     coef_dest
 end
+
+sampler(L) = L.sampler
+grid(L::FECollocationOperator) = grid(sampler(L))
