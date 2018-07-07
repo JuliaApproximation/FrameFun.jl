@@ -102,7 +102,7 @@ import BasisFunctions: primal, dual, Zt, A, sampler, dual_sampler
 ## Exhaustive list of exports
 ###############################
 # from funs.jl
-export ExpFun, ChebyFun, Fun, DictFun, sampling_grid, domain, abserror, maxerror, L2error
+export ExpFun, ChebyFun, Fun, DictFun, sampling_grid, domain, abserror, maxerror, L2error, expansion
 
 # from subgrid.jl
 export MaskedGrid, boundary_grid
