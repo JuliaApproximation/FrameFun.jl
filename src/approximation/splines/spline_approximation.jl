@@ -1,4 +1,4 @@
-SYSTEM_SIZE=2000
+SYSTEM_SIZE=8000
 
 """
 Number of basis elements overlapping with a point.

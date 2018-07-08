@@ -71,7 +71,7 @@ function az_decomposition_solve(fplatform::BasisFunctions.Platform, i, f::Functi
     if info
         decomposition_info(S*f, a, cart_indices, c_indices)
     elseif fig
-        decomposition_plot(a, cart_indices, c_indices)
+        decomposition_plot(a, cart_indices, c_indices; options...)
     else
         az_solve(S*f, a, zt, cart_indices, c_indices; trunc=decomposition_solve, use_plunge=false, options...)
     end

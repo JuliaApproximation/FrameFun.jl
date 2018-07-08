@@ -318,21 +318,23 @@ function decomposition_info(b::Vector, A::DictionaryOperator, cart_indices, clas
 end
 
 using Plots
-function decomposition_plot(A::DictionaryOperator, cart_indices, classified_indices)
+function decomposition_plot(A::DictionaryOperator, cart_indices, classified_indices; max_plots=nothing, options...)
     bins = unique(classified_indices)
     seq_nr = assign_sequence_nro(bins)
     # clrs = [:blue,:red,:green,:black]
-    clrs = Plots.colormap("blues",1<<length(bins[1]))
+    clrs = Plots.colormap("blues",1+1<<length(bins[1]))[2:end]
+    clrs = clrs[end:-1:1]
     seq_nr = assign_sequence_nro(bins)
     primal = basis(src(A))
+    (max_plots==nothing) && (max_plots = 1<<length(bins[1]))
     plot()
-    for d in 1:1<<length(bins[1])
+    for d in 1:min(max_plots, 1<<length(bins[1]))
         bpart = bins[find(seq_nr.==d)]
         for i in 1:size(bpart,1)
             mo = cart_indices[find(classified_indices.==bpart[i,:])]
             m = falses(size(primal))
             m[mo] = true
-            scatter!(m,c=clrs[d])
+            scatter!(m,c=clrs[d]; options...)
         end
     end
     scatter!()
