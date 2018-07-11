@@ -88,7 +88,7 @@ function FE_BestSolver(op::DictionaryOperator; scaling=NaN, verbose= false, opti
         end
     else
         # Don't bother with a fast algorithm if there is no fast transform
-        DirectSolver(op, scaling; verbose=verbose, options...)
+        DirectSolver(op; verbose=verbose, options...)
     end
 end
 
