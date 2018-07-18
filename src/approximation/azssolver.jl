@@ -1,10 +1,8 @@
 
-# fastsolver.jl
-
 """
 
 """
-struct AZSSolver{ELT} <: FE_Solver{ELT}
+struct AZSSolver{ELT,AFIRST<:Union{Val{false},Val{true}}} <: FE_Solver{ELT}
     TS          ::  DictionaryOperator # The low rank decomposition of (A*Zt-I)*A
     A           ::  DictionaryOperator # Store for application in step 2
     Zt          ::  DictionaryOperator # Store for application in step 2
@@ -13,8 +11,8 @@ struct AZSSolver{ELT} <: FE_Solver{ELT}
     x2
     x1
 
-    function AZSSolver{ELT}(trunc::FE_Solver, A::DictionaryOperator, Zt::DictionaryOperator;
-            options...) where ELT
+    function AZSSolver{ELT,AFIRST}(trunc::FE_Solver, A::DictionaryOperator, Zt::DictionaryOperator;
+            options...) where {ELT,AFIRST}
         # Allocate scratch space
         b = zeros(src(trunc))
         blinear = zeros(ELT, length(src(trunc)))
@@ -26,8 +24,8 @@ end
 
 # Set type of scratch space based on operator eltype.
 AZSSolver(trunc::FE_Solver{ELT}, A::DictionaryOperator{ELT}, Zt::DictionaryOperator{ELT};
-        options...) where {ELT} =
-    AZSSolver{eltype(A)}(trunc, A, Zt; options...)
+        afirst=true,options...) where {ELT} =
+    AZSSolver{eltype(A),Val{afirst}}(trunc, A, Zt; options...)
 
 
 function AZSSolver(A::DictionaryOperator, Zt::DictionaryOperator, RD::DictionaryOperator, EF::DictionaryOperator; options...)
@@ -59,7 +57,35 @@ function _apply!(s::AZSSolver, coef_dest, coef_src, A, Zt, b, blinear, TS, x1, x
     end
 end
 
-function AZSSolver(platform::BasisFunctions.Platform, i; options...)
-    frame_restriction, grid_restriction = FrameFun.spline_util_restriction_operators(platform, i)
-    AZSSolver(A(platform, i), Zt(platform, i), frame_restriction', grid_restriction; options...)
+function _apply!(s::AZSSolver{ELT,Val{false}}, coef_dest, coef_src, A, Zt, b, blinear, TS, x1, x2) where {ELT}
+    # Step 1:
+    # Compute x2 =  Zt*b
+    apply!(Zt, x2, coef_src)
+    # Step 2:
+    # Store A*x2 in s.b
+    apply!(A, b, x2)
+    # Store b-A*x2 in s.b
+    for i in eachindex(b)
+        b[i] = coef_src[i] - b[i]
+    end
+    # Solve x2 = A*x=(b-A*x2)
+    apply!(TS,x1,b)
+    # Step 3:
+    # x = x1 + x2
+    for i in eachindex(x1)
+        coef_dest[i] = x1[i] + x2[i]
+    end
+end
+
+function AZSSolver(fplatform::BasisFunctions.Platform, i; options...)
+    a = BasisFunctions.A(fplatform, i; options...)
+    zt = BasisFunctions.Zt(fplatform, i; options...)
+    platform = fplatform.super_platform
+    s = BasisFunctions.sampler(fplatform, i)
+    omega = grid(s)
+    gamma = supergrid(omega)
+    domain = FrameFun.domain(src(a))
+    frame_restriction, grid_restriction = azselection_restriction_operators(primal(platform, i), gamma, omega, domain)
+    # frame_restriction, grid_restriction = FrameFun.spline_util_restriction_operators(platform, i)
+    AZSSolver(a, zt, frame_restriction', grid_restriction; options...)
 end

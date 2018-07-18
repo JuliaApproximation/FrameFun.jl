@@ -87,7 +87,7 @@ end
 apply!(s::AZSolver, coef_dest, coef_src) = _apply!(s, coef_dest, coef_src,
         s.plunge_op, s.A, s.Zt, s.b, s.blinear, s.TS, s.x1, s.x2)
 
-function _apply!(s::AZSolver, coef_dest, coef_src, plunge_op::DictionaryOperator, A, Zt, b, blinear, TS, x1, x2)
+function _apply!(s::AZSolver{ELT}, coef_dest, coef_src, plunge_op::DictionaryOperator, A, Zt, b, blinear, TS, x1, x2) where {ELT}
     # Step 1:
     # Compute (A*Zt-I)*b
     apply!(plunge_op, b, coef_src)
