@@ -158,19 +158,12 @@ function native_nodes(set1::Dictionary, set2::Dictionary, domain::Domains.Abstra
     native_nodes(set1, domain)
 end
 
-
 grid_evaluation_operator(s::TensorProductExtensionFrameDict, dgs::GridBasis, grid::AbstractGrid; options...) =
     grid_evaluation_operator(flatten(s), dgs, grid; options...)
 grid_evaluation_operator(s::TensorProductExtensionFrameDict, dgs::GridBasis, grid::AbstractSubGrid; options...) =
     grid_evaluation_operator(flatten(s), dgs, grid; options...)
 
-function BasisFunctions.DWTSamplingOperator(span::FrameFun.ExtensionFrame, oversampling::Int=1, recursion::Int=0)
-    S = BasisFunctions.GridSamplingOperator(gridbasis(BasisFunctions.dwt_oversampled_grid(dictionary(span), oversampling, recursion), coeftype(span)))
-    new_oversampling = Int(length(supergrid(grid(S)))/length(span))>>recursion
-    E = extension_operator(gridbasis(S), gridbasis(supergrid(grid(S)), coeftype(span)))
-    W = BasisFunctions.WeightOperator(FrameFun.basisspan(span), new_oversampling, recursion)
-    BasisFunctions.DWTSamplingOperator(S, W*E)
-end
+
 
 ##################
 # platform
@@ -180,12 +173,6 @@ BasisFunctions.sampler(platform::Platform, sampler::GridSamplingOperator, domain
     GridSamplingOperator(gridbasis(sampler), grid(sampler), domain, sampler.scaling)
 BasisFunctions.GridSamplingOperator(dgs::GridBasis, grid::AbstractGrid, domain::Domain, scaling) =
     GridSamplingOperator(gridbasis(FrameFun.subgrid(grid, domain), coeftype(dgs)), scaling=scaling)
-
-function BasisFunctions.sampler(platform::BasisFunctions.GenericPlatform, sampler::BasisFunctions.DWTSamplingOperator, domain::Domain)
-    S = BasisFunctions.sampler(platform, sampler.sampler, domain)
-    E = extension_operator(gridbasis(S), gridbasis(supergrid(grid(S)), coeftype(primal(platform, 1))))
-    BasisFunctions.DWTSamplingOperator(S,sampler.weight*E)
-end
 
 extension_frame_sampler(platform::Platform, domain::Domain) = n->sampler(platform, platform.sampler_generator(n), domain)
 dual_extension_frame_sampler(platform::Platform, domain::Domain) = n->sampler(platform, platform.dual_sampler_generator(n), domain)

@@ -1,10 +1,6 @@
 module test_suite_applications
-using BasisFunctions
-using FrameFun
-using FrameFun: FrameFun.spline_util_restriction_operators, boundary_support_grid, relative_indices, restriction_operator
+using BasisFunctions, Domains, FrameFun
 using Base.Test
-using StaticArrays
-using Domains
 
 
 @testset "WeightedSumPlatform" begin

@@ -108,8 +108,6 @@ export ExpFun, ChebyFun, Fun, DictFun, sampling_grid, domain, abserror, maxerror
 # from subgrid.jl
 export MaskedGrid, boundary_grid
 
-# from spline_approximation.jl
-
 # from domains/boundingbox.jl
 export BoundingBox, BBox, BBox1, BBox2, BBox3, BBox4
 export boundingbox
@@ -160,7 +158,7 @@ export FECollocationOperator
 # from approximation
 export DirectSolver, AZSolver, AZSmoothSolver, TridiagonalSolver, AZSSolver, AZSDCSolver
 
-include("subgrid.jl")
+include("sampling/subgrid.jl")
 
 
 #include("domains/boundingbox.jl")
@@ -168,8 +166,6 @@ include("domains/extensions.jl")
 
 include("frames/extensionframe.jl")
 include("frames/weighted_sum_frame.jl")
-
-include("approximation/splines/spline_approximation.jl")
 
 include("fun/basisdomains.jl")
 include("fun/funs.jl")
@@ -180,7 +176,6 @@ include("approximation/continuous_solver.jl")
 include("approximation/lowranksolver.jl")
 include("approximation/azsolver.jl")
 include("approximation/solve.jl")
-include("approximation/azssolver.jl")
 include("approximation/tridiagonalsolver.jl")
 include("approximation/smoothsolver.jl")
 include("approximation/fe_approx.jl")
@@ -200,8 +195,8 @@ include("domains/atomium.jl")
 include("domains/characteristic.jl")
 include("domains/polardomain.jl")
 
-include("randomgrid.jl")
-include("oversampledgrid.jl")
+include("sampling/randomgrid.jl")
+include("sampling/oversampledgrid.jl")
 
 include("fun/fefun.jl")
 

@@ -1,7 +1,6 @@
 module test_suite
 
-using BasisFunctions
-using FrameFun
+using BasisFunctions, FrameFun, Domains
 using Base.Test
 FE = FrameFun
 BA = BasisFunctions
@@ -37,7 +36,7 @@ function basis_test()
         for T in (Float32,Float64,), n in (10,11)
             tol = sqrt(eps(T))
             e = rand(T,n)
-            for B in (ChebyshevBasis,LegendrePolynomials,FourierBasis,SineSeries,CosineSeries,BSplineTranslatesBasis,)
+            for B in (ChebyshevBasis,LegendrePolynomials,FourierBasis,SineSeries,CosineSeries,)
                 basis = instantiate(B, n, T)
                 domain = support(basis)
                 frame = extensionframe(basis, domain)
@@ -46,7 +45,7 @@ function basis_test()
                 @test norm(DualGram(frame; atol=tol, rtol=tol)*e - DualGram(basis; atol=tol, rtol=tol)*e) <100*tol
                 @test norm(MixedGram(frame; atol=tol, rtol=tol)*e - MixedGram(basis; atol=tol, rtol=tol)*e) <100*tol
             end
-            for B in (ChebyshevBasis,FourierBasis,CosineSeries,BSplineTranslatesBasis,), oversampling in 1:4
+            for B in (ChebyshevBasis,FourierBasis,CosineSeries,), oversampling in 1:4
                   basis = instantiate(B, n, T)
                   domain = support(basis)
                   frame = extensionframe(basis, domain)
@@ -61,12 +60,12 @@ end
 
 function test_basis_oversampling()
     @testset "oversampling" begin
-        for B in (ChebyshevBasis,CosineSeries,BSplineTranslatesBasis,), oversampling in 1:4, n in (10,11)
+        for B in (ChebyshevBasis,CosineSeries,), oversampling in 1:4, n in (10,11)
             basis = instantiate(B, n, Float64)
             domain = support(basis)
             @test BasisFunctions.basis_oversampling(extensionframe(basis, domain), oversampling)==oversampling
         end
-        for B in (CosineSeries,BSplineTranslatesBasis,), oversampling in 1:4, n in (1000,1001)
+        for B in (CosineSeries,), oversampling in 1:4, n in (1000,1001)
             basis = instantiate(B, n, Float64)
             domain = support(basis)/2
             # println(FrameFun.basis_oversampling(domain, basis, oversampling), " ", 2oversampling)
@@ -79,7 +78,7 @@ function test_discrete_gram()
 
     @testset "Testing discrete dual gram en mixed gram with oversampling" begin
         for T in [Float64, BigFloat]
-            for n in [10,11], os in 1:4, B in [ChebyshevBasis, FourierBasis, BSplineTranslatesBasis]
+            for n in [10,11], os in 1:4, B in [ChebyshevBasis, FourierBasis]
                 e = map(T, rand(n))
                 b = instantiate(B,n,T)
                 d = support(b)/2
@@ -105,7 +104,7 @@ end
 
 function test_connection_restriction_extension_discretegram()
   @testset "Testing connection extension with discrete gram" begin
-    for T in (Float64, BigFloat), (b,os) in [(BSplineTranslatesBasis(10, 1, T),1), (BSplineTranslatesBasis(10, 2, T),1), (FourierBasis{T}(10),1.1), (ChebyshevBasis{T}(20),.66)]
+    for T in (Float64, BigFloat), (b,os) in [(FourierBasis{T}(10),1.1), (ChebyshevBasis{T}(20),.66)]
       d = support(b)/2
       frame = extensionframe(b, d)
       bspan = b
@@ -149,7 +148,7 @@ function test_connection_restriction_extension_discretegram()
       @test 1+maximum(abs.((GM- GM_test)*e))≈1
     end
   end
-  for T in (Float64,BigFloat), B in (BSplineTranslatesBasis, FourierBasis, ChebyshevBasis,), n in (10,11), os in 1:4
+  for T in (Float64,BigFloat), B in ( FourierBasis, ChebyshevBasis,), n in (10,11), os in 1:4
     b = instantiate(B, n, T)
     bspan = b
     d = support(b)/2
@@ -197,7 +196,7 @@ end
 function test_general_gram()
     T = Float64
     tol = max(sqrt(eps(T)), 1e-10)
-    for method in (Gram, DualGram, MixedGram), B in (FourierBasis{T}(11), BSplineTranslatesBasis(5, 1,T))
+    for method in (Gram, DualGram, MixedGram), B in (FourierBasis{T}(11),)
         D = support(B)
         frame = extensionframe(B,D)
         GBB = method(frame,frame; atol=tol, rtol=tol)
