@@ -71,7 +71,7 @@ import BasisFunctions: superdict, similar_dictionary,
 
 import BasisFunctions: eval_element, eval_element_derivative, eval_expansion,
     unsafe_eval_element, unsafe_eval_element_derivative,
-    name, in_support, domain
+    name, in_support, dict_in_support, domain
 
 import BasisFunctions: differentiate, ∂x, ∂y, ∂z, ∫∂x, ∫∂y, ∫∂z, ∫, is_compatible
 
@@ -91,7 +91,8 @@ import BasisFunctions: coefficient_type, coeftype
 import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
     similar_subgrid, mask, subindices
 
-import BasisFunctions: Gram, DualGram, MixedGram, DiscreteGram, DiscreteDualGram, DiscreteMixedGram
+import BasisFunctions: Gram, DualGram, MixedGram, DiscreteGram, DiscreteDualGram,
+    DiscreteMixedGram, gram_entry
 import BasisFunctions: dual, primal, sampler, dual_sampler
 
 import BasisFunctions: discrete_approximation_operator, continuous_approximation_operator

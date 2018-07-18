@@ -42,7 +42,8 @@ has_antiderivative(f::ExtensionFrame) = false
 
 name(f::ExtensionFrame) = "An extension frame of " * name(f.basis)
 
-in_support(f::ExtensionFrame, idx::Int, x) = x ∈ domain(f)
+dict_in_support(f::ExtensionFrame, x) = x ∈ domain(f)
+dict_in_support(f::ExtensionFrame, idx, x) = x ∈ domain(f) && in_support(basis(x), idx, x)
 
 is_compatible(d1::ExtensionFrame, d2::ExtensionFrame) = is_compatible(basis(d1),basis(d2))
 
@@ -103,6 +104,12 @@ DiscreteMixedGram(f::ExtensionFrame; oversampling=BasisFunctions.default_oversam
 BasisFunctions.discrete_dual_evaluation_operator(dict::ExtensionFrame; oversampling=1, options...) =
     BasisFunctions.grid_evaluation_operator(dict, gridbasis(dict, BasisFunctions.oversampled_grid(dict, oversampling)), BasisFunctions.oversampled_grid(dict, oversampling); options...)*DiscreteDualGram(basis(dict); oversampling=BasisFunctions.basis_oversampling(dict, oversampling))
 
+import BasisFunctions: measure, restrict
+import BasisFunctions: innerproduct
+
+measure(f::ExtensionFrame) = restrict(measure(basis(f)), domain(f))
+innerproduct(f1::ExtensionFrame, i, f2::ExtensionFrame, j, measure) =
+    innerproduct(basis(f1), i, basis(f2), j, measure)
 
 import BasisFunctions: dot
 import BasisFunctions: native_nodes
@@ -110,28 +117,28 @@ import BasisFunctions: native_nodes
 native_nodes(basis::Dictionary, domain::Domains.AbstractInterval) =
     BasisFunctions.clip_and_cut(native_nodes(basis), infimum(domain), supremum(domain))
 
-dot(span::ExtensionFrame, f1::Function, f2::Function; options...)  =
-    dot(basis(span), domain(span), f1::Function, f2::Function; options...)
+dot(dict::ExtensionFrame, f1::Function, f2::Function; options...)  =
+    dot(basis(dict), domain(dict), f1::Function, f2::Function; options...)
 
-dot(span::ExtensionFrame, f1::Int, f2::Function; options...) =
-    dot(span, x->eval_element(basis(span), f1, x), f2; options...)
+dot(dict::ExtensionFrame, f1::Int, f2::Function; options...) =
+    dot(dict, x->eval_element(basis(dict), f1, x), f2; options...)
 
-dot(span::ExtensionFrame, f1::Int, f2::Int; options...) =
-    dot(span, f1 ,x->eval_element(basis(span), f2, x); options...)
+dot(dict::ExtensionFrame, f1::Int, f2::Int; options...) =
+    dot(dict, f1 ,x->eval_element(basis(dict), f2, x); options...)
 
-dot(span::Dictionary, domain::Domains.AbstractInterval, f1::Function, f2::Function; options...) =
-    dot(span, f1, f2, native_nodes(span, domain); options...)
+dot(dict::Dictionary, domain::Domains.AbstractInterval, f1::Function, f2::Function; options...) =
+    dot(dict, f1, f2, native_nodes(dict, domain); options...)
 # # TODO now we assume that domainunion contains sections that do not overlap
 # dot(dict::Dictionary, domain::DomainUnion, f1::Function, f2::Function; options...) =
 #     dot(dict, firstelement(domain), f1, f2; options...) +
 #     dot(dict, secondelement(domain), f1, f2; options...)
 
-#continuous_approximation_operator(span::ExtensionFrame; solver = ContinuousDirectSolver, options...) = solver(span; options...)
+#continuous_approximation_operator(dict::ExtensionFrame; solver = ContinuousDirectSolver, options...) = solver(dict; options...)
 
 #################
 ## Gram operators extended
 #################
-dual(span::ExtensionFrame; options...) = extensionframe(dual(basis(span); options...), domain(span))
+dual(dict::ExtensionFrame; options...) = extensionframe(dual(basis(dict); options...), domain(dict))
 
 dot(frame1::ExtensionFrame, frame2::ExtensionFrame, f1::Int, f2::Int; options...) =
     dot(frame1, frame2, x->eval_element(frame1, f1, x), x->eval_element(frame2, f2, x); options...)
