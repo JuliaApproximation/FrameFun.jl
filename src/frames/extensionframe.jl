@@ -43,7 +43,7 @@ has_antiderivative(f::ExtensionFrame) = false
 name(f::ExtensionFrame) = "An extension frame of " * name(f.basis)
 
 dict_in_support(f::ExtensionFrame, x) = x ∈ domain(f)
-dict_in_support(f::ExtensionFrame, idx, x) = x ∈ domain(f) && in_support(basis(x), idx, x)
+dict_in_support(f::ExtensionFrame, idx, x) = x ∈ domain(f) && in_support(basis(f), idx, x)
 
 is_compatible(d1::ExtensionFrame, d2::ExtensionFrame) = is_compatible(basis(d1),basis(d2))
 
