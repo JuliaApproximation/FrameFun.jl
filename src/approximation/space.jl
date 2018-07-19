@@ -7,7 +7,7 @@ dimension(space::B) where{B<:AbstractSpace} = dimension(basis(space))
 domaintype(space::B) where{B<:AbstractSpace} = domaintype(basis(space))
 codomaintype(space::B) where{B<:AbstractSpace} = codomaintype(basis(space))
 
-Dictionary{S,T}(space::AbstractSpace{S,T},n) = resize(basis(space),n)
+Dictionary(space::AbstractSpace{S,T},n) where {S,T}= resize(basis(space),n) 
 
 struct FunctionSpace{S,T} <: AbstractSpace{S,T}
     basis   ::    Dictionary{S,T}

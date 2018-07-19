@@ -68,7 +68,7 @@ function _apply!(s::AZSmoothSolver, coef_dest, coef_src, TS, A, Zt, plunge_op, b
     ## for i = 1:length(s.x2)
     ##     s.x2[i] = s.x2[i] - s.x3[i]
 ## end
-    apply!(MatrixOperator(Q'), syv, x1)
+    apply!(MatrixOperator(Matrix(Q')), syv, x1)
     apply!(MatrixOperator(Q), x3, syv)
     apply!(AD, x2, x3)
 
@@ -103,7 +103,11 @@ default_scaling_function(i,j) = 1+(abs(i)^2+abs(j)^2)
 is_inplace(::IdxnScalingOperator) = true
 is_diagonal(::IdxnScalingOperator) = true
 
-ctranspose(op::IdxnScalingOperator) = DiagonalOperator(src(op), conj(diagonal(op)))
+if VERSION < v"0.7-"
+    ctranspose(op::IdxnScalingOperator) = DiagonalOperator(src(op), conj(diagonal(op)))
+else
+    adjoint(op::IdxnScalingOperator) = DiagonalOperator(src(op), conj(diagonal(op)))
+end
 
 function apply_inplace!(op::IdxnScalingOperator, dest::Dictionary1d, srcdict, coef_srcdest)
     ELT = eltype(op)

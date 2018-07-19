@@ -104,7 +104,7 @@ function fun_optimal_N(f::Function, set::Dictionary{S,T}, domain::Domain;
                 n = round(Int,(Nmin + Nmax)/2)
             else
                 # in multiple dimensions, Nmin and Nmax are tupples
-                n = (round.(Int,(collect(Nmin) + collect(Nmax))/2)...)
+                n = (round.(Int,(collect(Nmin) + collect(Nmax))/2)...,)
             end
         end
 

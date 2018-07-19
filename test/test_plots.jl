@@ -1,11 +1,13 @@
 module test_suite_applications
 
-using Domains
-using BasisFunctions
-using FrameFun
+using Domains, BasisFunctions, FrameFun, Plots
 # Plots loads the default backend (PyPlot unless otherwise specified)
-using Plots
-using Base.Test
+
+if VERSION < v"0.7-"
+    using Base.Test
+else
+    using Test
+end
 FE = FrameFun
 BA = BasisFunctions
 

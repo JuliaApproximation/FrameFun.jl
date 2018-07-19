@@ -10,6 +10,15 @@ using Domains
 using BasisFunctions
 using Combinatorics: permutations
 
+if VERSION < v"0.7-"
+    mul! = A_mul_B!
+    import Base: ctranspose
+else
+    using LinearAlgebra
+    using Printf
+    import LinearAlgebra: adjoint
+end
+
 ###############################
 ## Exhaustive list of imports
 ###############################
@@ -21,7 +30,7 @@ import Base: intersect, union, isapprox, setdiff, in
 
 # Arrays
 import Base: length, eltype, size, push!, similar
-import Base: ctranspose, inv
+import Base: inv
 
 # Iteration and indexing
 import Base: eachindex, start, next, done, getindex, unsafe_getindex,

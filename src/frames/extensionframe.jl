@@ -15,7 +15,7 @@ struct ExtensionFrame{S,T} <: DerivedDict{S,T}
     end
 end
 
-ExtensionFrame{S,T}(domain::Domain, basis::Dictionary{S,T}) =
+ExtensionFrame(domain::Domain, basis::Dictionary{S,T}) where {S,T} =
     ExtensionFrame{S,T}(domain, basis)
 
 # superdict is the function for DerivedDict's to obtain the underlying set

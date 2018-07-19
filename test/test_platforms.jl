@@ -1,6 +1,10 @@
 module test_suite_applications
 using BasisFunctions, Domains, FrameFun
-using Base.Test
+if VERSION < v"0.7-"
+    using Base.Test
+else
+    using Test
+end
 
 
 @testset "WeightedSumPlatform" begin

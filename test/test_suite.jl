@@ -1,11 +1,13 @@
 module test_suite
 
 
-using Domains
-using BasisFunctions
-using FrameFun
-using StaticArrays
-using Base.Test
+using Domains, BasisFunctions, FrameFun, StaticArrays
+
+if VERSION < v"0.7-"
+    using Base.Test
+else
+    using Test, Printf
+end
 FE = FrameFun
 BA = BasisFunctions
 
@@ -92,7 +94,7 @@ function test_1d_cases()
     solver = FE.FE_TridiagonalSolver
     println()
     println("Testing \t solver = $solver, \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = Float64 ")
-    verbose && println("N\t T\t Complex?\t abserror\t time\t\t \memory   ")
+    verbose && println("N\t T\t Complex?\t abserror\t time\t\t memory   ")
 
     for n in [FE.default_frame_n(D, Basis)]
 
@@ -120,7 +122,7 @@ function test_1d_cases()
             solver in (AZSolver, DirectSolver)
         println()
         println("Testing \t solver = $solver, \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = $ELT ")
-        verbose && println("N\t T\t Complex?\t abserror\t time\t\t \memory   ")
+        verbose && println("N\t T\t Complex?\t abserror\t time\t\t memory   ")
 
         for n in [FE.default_frame_n(D, Basis)]
 
@@ -152,7 +154,7 @@ function test_bigfloat()
         D in [interval(BigFloat, -3//2, 7//10)]
         println()
         println("Testing \t solver = DirectSolver{ELT}\n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = BigFloat ")
-        verbose && println("N\t T\t Complex?\t abserror\t time\t\t \memory   ")
+        verbose && println("N\t T\t Complex?\t abserror\t time\t\t memory   ")
         for T in (BigFloat(17//10),)
             for func in (f,g)
                 B = Basis(91, -T, T)
@@ -181,7 +183,7 @@ function test_2d_cases()
 
         println()
         println("Testing \t solver = $solver \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10)⊗instantiate(Basis,10))),\n\t\t ELT = Float64 ")
-        verbose && println("N\t\t T\t\t Complex?\t abserror\t time\t\t \memory   ")
+        verbose && println("N\t\t T\t\t Complex?\t abserror\t time\t\t memory   ")
 
         for n in ((11,11),)
             for T in ((1.7,2.3),)
@@ -214,7 +216,7 @@ function test_3d_cases()
                 show(solver); println()
         println()
         println("Testing \t solver = $solver \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10)⊗instantiate(Basis,10)⊗instantiate(Basis,10))),\n\t\t ELT = Float64 ")
-        verbose && println("N\t\t T\t\t Complex?\t abserror\t time\t\t \memory   ")
+        verbose && println("N\t\t T\t\t Complex?\t abserror\t time\t\t memory   ")
 
         n = FE.default_frame_n(D, Basis)
 

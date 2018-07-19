@@ -1,7 +1,6 @@
 StaticArrays
 Plots
 GR
-Interact
-Reactive
-IJulia
 Combinatorics
+RecipesBase
+QuadGK

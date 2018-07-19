@@ -62,10 +62,10 @@ function indomain_broadcast(grid::ProductGrid, m::Mandelbrot)
     mask
 end
 
-function isapprox{T}(t::Tuple{T,T}, v::SVector{2,T})
+function isapprox(t::Tuple{T,T}, v::SVector{2,T}) where {T}
     return t[1]≈v[1] && t[2]≈v[2]
 end
-function isapprox{T}(v::SVector{2,T}, t::Tuple{T,T})
+function isapprox(v::SVector{2,T}, t::Tuple{T,T}) where {T}
     return t[1]≈v[1] && t[2]≈v[2]
 end
 boundingbox(m::Mandelbrot) = m.box

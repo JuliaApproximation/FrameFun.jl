@@ -42,7 +42,7 @@ MaskedGrid(supergrid::AbstractGrid, mask) = MaskedGrid(supergrid, mask, subindic
 
 function subindices(supergrid, mask::BitArray)
     I= eltype(eachindex(supergrid))
-    indices = Array{I}(sum(mask))
+    indices = (VERSION < v"0.7-") ?  Array{I}(sum(mask)) : Array{I}(undef, sum(mask))
     i = 1
     for m in eachindex(supergrid)
        if mask[m]
@@ -73,7 +73,7 @@ getindex(g::AbstractGrid, idx::BitArray) = MaskedGrid(g, idx)
 
 
 # Efficient extension operator
-function apply!{G <: MaskedGrid}(op::Extension, dest, src::GridBasis{G}, coef_dest, coef_src)
+function apply!(op::Extension, dest, src::GridBasis{G}, coef_dest, coef_src) where {G <: MaskedGrid}
     @assert length(coef_src) == length(src)
     @assert length(coef_dest) == length(dest)
     # @assert grid(dest) == supergrid(grid(src))
@@ -93,7 +93,7 @@ end
 
 
 # Efficient restriction operator
-function apply!{G <: MaskedGrid}(op::Restriction, dest::GridBasis{G}, src, coef_dest, coef_src)
+function apply!(op::Restriction, dest::GridBasis{G}, src, coef_dest, coef_src) where {G <: MaskedGrid}
     @assert length(coef_src) == length(src)
     @assert length(coef_dest) == length(dest)
     # This line below seems to allocate memory...
@@ -341,16 +341,16 @@ function midpoint(v1, v2, dom::Domain, tol)
 end
 
 ## Avoid ambiguity (because everything >=2D is tensor but 1D is not)
-function boundary{TG,T}(g::ProductGrid{TG,T},dom::Domain1d)
+function boundary(g::ProductGrid{TG,T},dom::Domain1d) where {TG,T}
     println("This method being called means there is a 1D ProductGrid.")
 end
 
-function boundary{G,M}(g::MaskedGrid{G,M},dom::Domain1d)
+function boundary(g::MaskedGrid{G,M},dom::Domain1d) where {G,M}
   # TODO merge supergrid?
     boundary(grid(g),dom)
 end
 
-function boundary{TG,N,T}(g::ProductGrid{TG,T},dom::EuclideanDomain{N},tol=1e-12)
+function boundary(g::ProductGrid{TG,T},dom::EuclideanDomain{N},tol=1e-12) where {TG,N,T}
     # Initialize neighbours
     neighbours=Array{Int64}(2^N-1,N)
     # adjust columns
@@ -403,11 +403,11 @@ function boundary(g::AbstractGrid{T},dom::Domain1d,tol=1e-12) where {T <: Number
 end
 
 
-function boundary{G,M,N}(g::MaskedGrid{G,M},dom::EuclideanDomain{N})
+function boundary(g::MaskedGrid{G,M},dom::EuclideanDomain{N}) where {G,M,N}
     boundary(supergrid(g),dom)
 end
 
-has_extension{G <: AbstractSubGrid}(dg::GridBasis{G}) = true
+has_extension(dg::GridBasis{G}) where {G <: AbstractSubGrid} = true
 
 function BasisFunctions.grid_restriction_operator(src::Dictionary, dest::Dictionary, src_grid::G, dest_grid::MaskedGrid{G,M,I,T}; options...) where {G<:AbstractGrid,M,I,T}
     @assert supergrid(dest_grid) == src_grid
