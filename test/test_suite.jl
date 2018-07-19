@@ -6,7 +6,7 @@ using Domains, BasisFunctions, FrameFun, StaticArrays
 if VERSION < v"0.7-"
     using Base.Test
 else
-    using Test, Printf
+    using Test, Printf, LinearAlgebra, Random
 end
 FE = FrameFun
 BA = BasisFunctions
@@ -42,7 +42,7 @@ end
 
 show_timings(F) = show_mv_times && show_timings(F, F.approx_op)
 
-show_timings(F, op::FE.FE_Solver) = show_timings(F, operator(op.problem))
+show_timings(F, op::FrameFun.FE_Solver) = show_timings(F, operator(op.problem))
 
 # function show_timings(F, op::TensorProductOperator)
 #     for i in 1:numelements(op)
@@ -91,12 +91,12 @@ function test_1d_cases()
     Basis = FourierBasis
     D = interval(-1.0,1.0)
     # Chebyshev and Fourier Bases
-    solver = FE.FE_TridiagonalSolver
+    solver = FrameFun.FE_TridiagonalSolver
     println()
     println("Testing \t solver = $solver, \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = Float64 ")
     verbose && println("N\t T\t Complex?\t abserror\t time\t\t memory   ")
 
-    for n in [FE.default_frame_n(D, Basis)]
+    for n in [FrameFun.default_frame_n(D, Basis)]
 
         # There is some symmetry around T=2, test smaller and larger values
         for T in (1.9,)
@@ -124,7 +124,7 @@ function test_1d_cases()
         println("Testing \t solver = $solver, \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = $ELT ")
         verbose && println("N\t T\t Complex?\t abserror\t time\t\t memory   ")
 
-        for n in [FE.default_frame_n(D, Basis)]
+        for n in [FrameFun.default_frame_n(D, Basis)]
 
             # There is some symmetry around T=2, test smaller and larger values
             for T in (1.9,)
@@ -210,15 +210,15 @@ function test_3d_cases()
     delimit("3D")
 
     f(x,y,z) = cos(x)+sin(y)-x*z
-    # @testset "result" for Basis in (FourierBasis, ChebyshevBasis), D in (Cube((-1.2,-1.0,-0.9),(1.0,0.9,1.2)),FE.tensorproduct(Interval(-1.0,1.0),Disk(1.05)), FE.Ball(1.2,[-0.3,0.25,0.1])), solver in (AZSolver, )
+    # @testset "result" for Basis in (FourierBasis, ChebyshevBasis), D in (Cube((-1.2,-1.0,-0.9),(1.0,0.9,1.2)),FrameFun.tensorproduct(Interval(-1.0,1.0),Disk(1.05)), FrameFun.Ball(1.2,[-0.3,0.25,0.1])), solver in (AZSolver, )
     #             show(solver); println()
-    @testset "result" for Basis in (FourierBasis, ChebyshevBasis), D in (cube((-1.2,-1.0,-0.9),(1.0,0.9,1.2)), FE.ball(1.2,v[-0.3,0.25,0.1])), solver in (AZSolver, )
+    @testset "result" for Basis in (FourierBasis, ChebyshevBasis), D in (cube((-1.2,-1.0,-0.9),(1.0,0.9,1.2)), FrameFun.ball(1.2,v[-0.3,0.25,0.1])), solver in (AZSolver, )
                 show(solver); println()
         println()
         println("Testing \t solver = $solver \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10)⊗instantiate(Basis,10)⊗instantiate(Basis,10))),\n\t\t ELT = Float64 ")
         verbose && println("N\t\t T\t\t Complex?\t abserror\t time\t\t memory   ")
 
-        n = FE.default_frame_n(D, Basis)
+        n = FrameFun.default_frame_n(D, Basis)
 
         for T in ((1.7,1.2,1.3),)
             B = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2]) ⊗ Basis(n[3],-T[3],T[3])
@@ -256,7 +256,7 @@ if include_3d_tests
 end
 
 # delimit("Random circles")
-# dom = FE.randomcircles(10)
+# dom = FrameFun.randomcircles(10)
 # #    b = FourierBasis(21) ⊗ FourierBasis(21)
 # b = FourierBasis(31) ⊗ ChebyshevBasis(31)
 # f(x,y) = cos(20*x+22*y)

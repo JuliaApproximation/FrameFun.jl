@@ -93,7 +93,11 @@ function operator(D::DiffEquation; incboundary=false, options...)
     #problem = FE_DiscreteProblem(D.D,D.S,2)
     B = D.S
     ADiff = pinv(D.Diff)
-    ops = incboundary ? Array{DictionaryOperator}(length(D.BCs)+2,1) : Array{DictionaryOperator}(length(D.BCs)+1,1)
+    if (VERSION < v"0.7-")
+        ops = incboundary ? Array{DictionaryOperator}(length(D.BCs)+2,1) : Array{DictionaryOperator}(length(D.BCs)+1,1)
+    else
+        ops = incboundary ? Array{DictionaryOperator}(undef, length(D.BCs)+2,1) : Array{DictionaryOperator}(undef, length(D.BCs)+1,1)
+    end
     G, lB = oversampled_grid(D.D,D.S,D.sampling_factor)
 
     op = grid_evaluation_operator(D.S,gridbasis(G,coeftype(D.S)),G)
@@ -114,7 +118,7 @@ end
 
 function rhs(D::DiffEquation; incboundary = false, options...)
     op = operator(D; incboundary=incboundary, options...)
-    rhs = Array{Array{coeftype(src(op)),1}}(0)
+    rhs = (VERSION < v"0.7-") ? Array{Array{coeftype(src(op)),1}}(0) : Array{Array{coeftype(src(op)),1}}(undef,0)
     G, lB = oversampled_grid(D.D,D.S,D.sampling_factor)
 
     op = grid_evaluation_operator(D.S,gridbasis(G,coeftype(D.S)),G)

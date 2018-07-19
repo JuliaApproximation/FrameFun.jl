@@ -12,7 +12,7 @@ using Combinatorics: permutations
 
 if VERSION < v"0.7-"
     mul! = A_mul_B!
-    import Base: ctranspose
+    import BasisFunctions.adjoint
 else
     using LinearAlgebra
     using Printf

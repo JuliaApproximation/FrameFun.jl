@@ -352,7 +352,7 @@ end
 
 function boundary(g::ProductGrid{TG,T},dom::EuclideanDomain{N},tol=1e-12) where {TG,N,T}
     # Initialize neighbours
-    neighbours=Array{Int64}(2^N-1,N)
+    neighbours= (VERSION < v"0.7-") ? Array{Int64}(2^N-1,N) : Array{Int64}(undef, 2^N-1,N)
     # adjust columns
     for i=1:N
         # The very first is not a neighbour but the point itself.
@@ -360,7 +360,7 @@ function boundary(g::ProductGrid{TG,T},dom::EuclideanDomain{N},tol=1e-12) where 
             neighbours[j-1,i]=(floor(Int,(j-1)/(2^(i-1))) % 2)
         end
     end
-    CartesianNeighbours = Array{CartesianIndex{N}}(2^N-1)
+    CartesianNeighbours = (VERSION < v"0.7-") ? Array{CartesianIndex{N}}(2^N-1) : Array{CartesianIndex{N}}(undef,2^N-1)
     for j=1:2^N-1
         CartesianNeighbours[j]=CartesianIndex{N}(neighbours[j,:]...)
     end

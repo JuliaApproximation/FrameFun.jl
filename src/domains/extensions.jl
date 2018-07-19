@@ -163,12 +163,12 @@ dist(x, d::Domain) = error("Domain distance not available for this domain type")
 dist(x, ::UnitSimplex) = min(minimum(x),1-sum(x))
 
 function normal(x, ::UnitSimplex)
-    z=zeros(x)
+    z=fill(eltype(x)(0), size(x))
     if minimum(x)<abs(sum(x)-1)/sqrt(length(x))
         index = findmin(x)[2]
         setindex!(z,-1,index)
     else
-        z = ones(x)
+        z = fill(eltype(x)(1), size(x))
     end
     return z/norm(z)
 end

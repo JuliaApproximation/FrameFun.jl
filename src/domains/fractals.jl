@@ -38,7 +38,7 @@ function mandelbrotiteration(x, maxiter, threshold)
 end
 
 function computemandelbrotgrid(grid, maxiter, threshold)
-    mask = BitArray(size(grid))
+    mask = (VERSION < v"0.7-") ? BitArray(size(grid)) : BitArray(undef, size(grid))
     fill!(mask,0)
     for i_2 = 1:size(grid, 2)
         for i_1 = 1:size(grid, 1)
@@ -109,7 +109,7 @@ end
 
 function computejuliasetgrid(grid, c, maxiter)
     m = size(grid)
-    mask = BitArray(m)
+    mask = (VERSION < v"0.7-") ? BitArray(m) : BitArray(undef, m)
     fill!(mask, 0)
     for i_2 = 1:m[2]
         for i_1 = 1:m[1]

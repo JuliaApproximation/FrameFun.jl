@@ -69,17 +69,16 @@ function test_distances_and_normals()
     @test isapprox(dist(0.5,D3),0.5)
     @test isapprox(normal(1.0,D3),1)
 
-    D4 = union(D6,disk())\D2
+    D5 = cube(Val{2})
+    @test domb([0.4,0.0],D5)
+    @test domn([0.4,0.0],D5,[0,-1])
+
+    D4 = UnionDomain(D6, disk())\D2
     @test domb([sqrt(0.5),0.0],D4)
     @test domb([-1.0,0.0],D4)
     @test ~domb([-0.8,0.0],D4)
     @test domn([-1.0,0],D4,[-1,0])
     @test domn([0.5,0.0],D4,[-1.0,0])
-
-    D5 = cube(Val{2})
-    @test domb([0.4,0.0],D5)
-    @test domn([0.4,0.0],D5,[0,-1])
-
 
 end
 

@@ -29,6 +29,7 @@ struct AZSmoothSolver{ELT} <: FE_Solver{ELT}
         ADV = (TS2.Ut)'.*diagonal(AD)
         # Orthogonal basis for D^(-1)V_mid
         Q, R = qr(ADV)
+        (VERSION >= v"0.7-") && (Q = Matrix(Q);warn("Unnecessary conversion if qr works fine. "))
         # Pre-allocation
         b = zeros(size(dest(plunge_op)))
         blinear = zeros(ELT, length(dest(A)))
@@ -103,11 +104,7 @@ default_scaling_function(i,j) = 1+(abs(i)^2+abs(j)^2)
 is_inplace(::IdxnScalingOperator) = true
 is_diagonal(::IdxnScalingOperator) = true
 
-if VERSION < v"0.7-"
-    ctranspose(op::IdxnScalingOperator) = DiagonalOperator(src(op), conj(diagonal(op)))
-else
-    adjoint(op::IdxnScalingOperator) = DiagonalOperator(src(op), conj(diagonal(op)))
-end
+adjoint(op::IdxnScalingOperator) = DiagonalOperator(src(op), conj(diagonal(op)))
 
 function apply_inplace!(op::IdxnScalingOperator, dest::Dictionary1d, srcdict, coef_srcdest)
     ELT = eltype(op)
