@@ -15,7 +15,9 @@ uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 
 [[BasisFunctions]]
 deps = ["AbstractTrees", "DSP", "Domains", "FFTW", "FastGaussQuadrature", "LinearAlgebra", "QuadGK", "RecipesBase", "SpecialFunctions", "StaticArrays"]
-path = "/Users/vincentcp/julia/BasisFunctions.jl"
+git-tree-sha1 = "d9a25c80f374e3846833b9e6ceb662c6049b3159"
+repo-rev = "julia-0.7"
+repo-url = "https://github.com/daanhb/BasisFunctions.jl.git"
 uuid = "8ac202e8-8a12-11e8-0422-2b902fe89c2d"
 version = "0.1.0"
 
@@ -90,8 +92,8 @@ uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[Domains]]
 deps = ["IntervalSets", "LinearAlgebra", "Markdown", "StaticArrays"]
-git-tree-sha1 = "a0e618e977dcada064b4e5680a22eabe50efd7b6"
-repo-rev = "master"
+git-tree-sha1 = "03d812a2c5d7dc47fce4a44fb90312bc394dd032"
+repo-rev = "development"
 repo-url = "https://github.com/daanhb/Domains.jl.git"
 uuid = "a4a0b8aa-7ac0-11e8-2da9-8385f1ed8077"
 version = "0.0.1"
