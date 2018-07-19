@@ -83,7 +83,7 @@ end
 function mideigs(N,M,L,irange)
     J2=Chamzas(L,M-1,N)
     J1=Chamzas(L,N-1,M)
-    E,V1 = eig(J1,irange)
+    E,V1 = eigen(J1,irange)
     for i=1:size(V1,1)
         for j=1:size(V1,2)
             if i%2==0
@@ -92,12 +92,12 @@ function mideigs(N,M,L,irange)
         end
     end
     V1b=circshift(V1,round(Int,(N-1)/2)+1)
-    E,V2 = eig(J2,irange+M-N)
+    E,V2 = eigen(J2,irange+M-N)
     (V1b,V2)
 end
 
 function Chamzas(N,M,F)
-    bs = sin.((pi/N)*(1:M)).*sin.((pi/N)*(M-(0:(M-1))))
-    cs = -cos.((pi/N)*(2*(0:M)-M))*cos.((pi/N)*(F))
+    bs = sin.((pi/N)*(1:M)).*sin.((pi/N)*(M .- (0:(M-1))))
+    cs = -cos.((pi/N)*(2*(0:M) .- M))*cos.((pi/N)*(F))
     T = SymTridiagonal(cs,bs)
 end

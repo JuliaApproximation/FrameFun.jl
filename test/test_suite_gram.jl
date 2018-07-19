@@ -3,11 +3,15 @@ module test_suite
 using BasisFunctions, FrameFun, Domains
 if VERSION < v"0.7-"
     using Base.Test
+    types = (Float64, BigFloat)
 else
     using Test
+    types = (Float64,)
 end
 FE = FrameFun
 BA = BasisFunctions
+
+
 
 function prolate_test()
     @testset "Fourier frame on half, symmetric domain (prolates)" begin
@@ -22,7 +26,7 @@ function prolate_test()
             m1 = real(m)
 
             I = [value(native_index(b, i)) for i in 1:n]
-            m2 = real([k==l ? .5: exp(1im*pi*(k-l))/(pi*(k-l))*sin(2pi*(1/2-T(.25))*(k-l)) for k in I, l in I])
+            m2 = real([(k==l) ? .5 : exp(1im*pi*(k-l))/(pi*(k-l))*sin(2pi*(1/2-T(.25))*(k-l)) for k in I, l in I])
             @test norm(m1-m2) < tol
         end
     end
@@ -81,7 +85,7 @@ end
 function test_discrete_gram()
 
     @testset "Testing discrete dual gram en mixed gram with oversampling" begin
-        for T in [Float64, BigFloat]
+        for T in types
             for n in [10,11], os in 1:4, B in [ChebyshevBasis, FourierBasis]
                 e = map(T, rand(n))
                 b = instantiate(B,n,T)
@@ -108,7 +112,7 @@ end
 
 function test_connection_restriction_extension_discretegram()
   @testset "Testing connection extension with discrete gram" begin
-    for T in (Float64, BigFloat), (b,os) in [(FourierBasis{T}(10),1.1), (ChebyshevBasis{T}(20),.66)]
+    for T in types, (b,os) in [(FourierBasis{T}(10),1.1), (ChebyshevBasis{T}(20),.66)]
       d = support(b)/2
       frame = extensionframe(b, d)
       bspan = b
@@ -152,7 +156,7 @@ function test_connection_restriction_extension_discretegram()
       @test 1+maximum(abs.((GM- GM_test)*e))≈1
     end
   end
-  for T in (Float64,BigFloat), B in ( FourierBasis, ChebyshevBasis,), n in (10,11), os in 1:4
+  for T in types, B in ( FourierBasis, ChebyshevBasis,), n in (10,11), os in 1:4
     b = instantiate(B, n, T)
     bspan = b
     d = support(b)/2

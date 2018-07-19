@@ -57,7 +57,7 @@ function test_residual()
         D = interval(-1.0, 1.0)/2
         f = x->cos(20x)
         res = Inf
-        for n in 2.^(3:5)
+        for n in 2 .^ (3:5)
             S = rescale(instantiate(basis,n), -1.0, 1.0)
             F = Fun(f, S, D)
             resnew = FE.residual(f,F)
