@@ -3,13 +3,14 @@ module test_suite
 using BasisFunctions, FrameFun, Domains
 if VERSION < v"0.7-"
     using Base.Test
-    types = (Float64, BigFloat)
 else
     using Test
-    types = (Float64,)
 end
 FE = FrameFun
 BA = BasisFunctions
+
+
+types = (Float64, BigFloat)
 
 
 
