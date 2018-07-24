@@ -116,7 +116,7 @@ import BasisFunctions: primal, dual, Zt, A, sampler, dual_sampler
 export ExpFun, ChebyFun, Fun, DictFun, sampling_grid, domain, abserror, maxerror, L2error, expansion
 
 # from subgrid.jl
-export MaskedGrid, boundary_grid
+export MaskedGrid
 
 # from domains/boundingbox.jl
 export BoundingBox, BBox, BBox1, BBox2, BBox3, BBox4
