@@ -17,7 +17,6 @@ jupyter = (VERSION < v"0.7-") ? homedir()*"/.julia/v0.6/Conda/deps/usr/bin/jupyt
 
 
 
-println(pwd())
 delimit("Notebooks")
 try
     cd("test/")
