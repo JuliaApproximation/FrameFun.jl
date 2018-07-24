@@ -11,8 +11,24 @@ function delimit(s::AbstractString)
     println("############")
 end
 
+
+jupyter = (VERSION < v"0.7-") ? homedir()*"/.julia/v0.6/Conda/deps/usr/bin/jupyter" :
+                                homedir()*"/.julia/packages/Conda/S0nV/deps/usr/bin/jupyter"
+
+
+
+println(pwd())
 delimit("Notebooks")
-run(`examples/test_notebooks.sh`)
+try
+    cd("test/")
+catch y
+    nothing
+finally
+    run(`$jupyter nbconvert --to script '../examples/*.ipynb'`)
+    run(`mkdir -p scripts/`)
+    run(`./findscripts.sh`)
+    cd("..")
+end
 
 FILE = open("notebookscripts")
 try

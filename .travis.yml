@@ -1,31 +1,12 @@
-sudo: required
 language:
     - julia
-    - python
 os:
     - linux
     - osx
 julia:
     - 0.6
     - 0.7
-python:
-    - 3.3
-env:
-  - PLOTS_DEFAULT_BACKEND="plotlyjs"
 notifications:
   email: false
-before_install:
-    - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-    # Install jupyter to test notebooks
-    - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-    - bash miniconda.sh -b -p $HOME/miniconda
-    - rm -f miniconda.sh
-    - export PATH="$HOME/miniconda/bin:$PATH"
-    - conda config --set always_yes yes --set changeps1 no
-    - conda info -a
-    - conda update -q conda
-    - conda install pip
-install:
-    - pip install jupyter
 after_success:
     - julia -e 'cd(Pkg.dir("FrameFun")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder()); Codecov.submit(process_folder())'

@@ -15,7 +15,7 @@ uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 
 [[BasisFunctions]]
 deps = ["AbstractTrees", "DSP", "Domains", "FFTW", "FastGaussQuadrature", "FastTransforms", "GenericLinearAlgebra", "LinearAlgebra", "Plots", "QuadGK", "Random", "RecipesBase", "SparseArrays", "SpecialFunctions", "StaticArrays", "Test"]
-git-tree-sha1 = "dabdcce4815e1a4402fe11c3d902838644f043ef"
+git-tree-sha1 = "82e5330718f9da6ee2db7bb9ed3da2962a65b229"
 repo-rev = "julia-0.7"
 repo-url = "https://github.com/daanhb/BasisFunctions.jl.git"
 uuid = "8ac202e8-8a12-11e8-0422-2b902fe89c2d"
@@ -112,7 +112,7 @@ version = "0.3.1"
 
 [[FastTransforms]]
 deps = ["AbstractFFTs", "Compat", "DSP", "FFTW", "HierarchicalMatrices", "LinearAlgebra", "LowRankApprox", "ProgressMeter", "SpecialFunctions", "ToeplitzMatrices"]
-git-tree-sha1 = "272ae18900fb0f557293bf194e727c21fcb49dd5"
+git-tree-sha1 = "afc2bad8c9e5d5243e0f0e9678f168f8179c0c1f"
 repo-rev = "master"
 repo-url = "https://github.com/MikaelSlevinsky/FastTransforms.jl"
 uuid = "057dd010-8810-581a-b7be-e3fc3b93f78c"
