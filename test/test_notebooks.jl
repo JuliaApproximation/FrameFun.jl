@@ -11,17 +11,37 @@ function delimit(s::AbstractString)
     println("############")
 end
 
+
+jupyter = (VERSION < v"0.7-") ? homedir()*"/.julia/v0.6/Conda/deps/usr/bin/jupyter" :
+                                homedir()*"/.julia/packages/Conda/S0nV/deps/usr/bin/jupyter"
+
+
+
 delimit("Notebooks")
-run(`examples/test_notebooks.sh`)
+try
+    cd("test/")
+catch y
+    nothing
+finally
+    run(`$jupyter nbconvert --to script '../examples/*.ipynb'`)
+    run(`mkdir -p scripts/`)
+    run(`./findscripts.sh`)
+    cd("..")
+end
 
 FILE = open("notebookscripts")
-for LINE in eachline(FILE)
-    println("Run $(LINE)")
-    include(LINE)
-    # Following makes things slow but deletes dependencies between notebooks.
-    # workspace()
+try
+    for LINE in eachline(FILE)
+        println("Run $(LINE)")
+        include(LINE)
+        # Following makes things slow but deletes dependencies between notebooks.
+        # workspace()
+    end
+catch y
+    rethrow(y)
+finally
+    close(FILE)
+    run(`examples/test_notebooks_after.sh`)
 end
-close(FILE)
-run(`examples/test_notebooks_after.sh`)
 
 end

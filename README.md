@@ -34,7 +34,7 @@ The bases support any AbstractFloat subtype, so high precision approximations ar
 
 
 ```julia
-B = FourierBasis(61, -1, 1, BigFloat)
+B = FourierBasis(61, BigFloat(-1), BigFloat(1))
 F = Fun(f,B,D)
 
 P = plot(F,plot_ext=true,layout=2)
@@ -79,8 +79,3 @@ Plots.savefig(P,"images/mandelbrot")
 ```
 
 ![](images/mandelbrot.png)
-
-
-```julia
-
-```

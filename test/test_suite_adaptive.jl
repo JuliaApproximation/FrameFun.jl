@@ -1,12 +1,15 @@
 module test_suite
+using Domains, BasisFunctions, FrameFun
 
-using Domains
-using BasisFunctions
-using FrameFun
-using Base.Test
+if VERSION < v"0.7-"
+    using Base.Test
+    ComplexF64 = Complex128
+else
+    using Test, LinearAlgebra, Random
+end
 FE = FrameFun
 BA = BasisFunctions
-
+srand(1234)
 function delimit(s::AbstractString)
     println()
     println("############")
@@ -22,7 +25,7 @@ function test_function_space()
   bases = (FourierBasis(64,-1.0, 1.0), FourierBasis(64,-1.0, 1.0),
       FourierBasis(64), FourierBasis(64,-1.0, 1.0), ChebyshevBasis(64),
       FourierBasis(8)⊗ChebyshevBasis(8), FourierBasis(32,-2.,1.)⊕rescale(ChebyshevBasis(32),-2.,1.),
-      BA.tensorproduct(FourierBasis(4),3), BA.multiset(FourierBasis(32),FourierBasis(32)))
+      BA.tensorproduct(FourierBasis(4),3), BA.multidict(FourierBasis(32),FourierBasis(32)))
   @testset "Space = $(name(space)) " for (i,space) in enumerate([
       FE.FunctionSpace(FourierBasis(64,-1.0, 1.0)),
       FE.FunctionSpace(FourierBasis(64,-1.0, 1.0), interval(-1.0, 1.0)),
@@ -35,15 +38,15 @@ function test_function_space()
       FE.add(FourierSpace(),2)])
       # @test left(bboxes[i])==left(boundingbox(space))
       # @test right(bboxes[i])==right(boundingbox(space))
-      @test FunctionSet(space, 64) == bases[i]
+      @test Dictionary(space, 64) == bases[i]
   end
   @testset "Util functions" begin
     for n in 1:4
       S = FE.tensorproduct(FourierSpace(),n)
       @test dimension(S) == n
-      @test rangetype(S) == Complex128
+      @test codomaintype(S) == ComplexF64
     end
-    @test domaintype(promote_domaintype(ChebyshevSpace(),Complex128)) == domaintype(promote_domaintype(ChebyshevBasis(11),Complex128))
+    @test domaintype(promote_domaintype(ChebyshevSpace(),ComplexF64)) == domaintype(promote_domaintype(ChebyshevBasis(11),ComplexF64))
     @test domaintype(promote_domaintype(ChebyshevSpace(),Float32)) == domaintype(promote_domaintype(ChebyshevBasis(11),Float32))
     @test domaintype(promote_domaintype(ChebyshevSpace(),Float64)) == domaintype(promote_domaintype(ChebyshevBasis(11),Float64))
   end
@@ -54,7 +57,7 @@ function test_residual()
         D = interval(-1.0, 1.0)/2
         f = x->cos(20x)
         res = Inf
-        for n in 2.^(3:5)
+        for n in 2 .^ (3:5)
             S = rescale(instantiate(basis,n), -1.0, 1.0)
             F = Fun(f, S, D)
             resnew = FE.residual(f,F)
@@ -73,7 +76,7 @@ function test_funs()
     @testset "$(tests[i]) tests" for (i,mth) in enumerate([FE.fun_simple, FE.fun_optimal_N, FE.fun_greedy])
         for tol in 10.0.^(-4.:-4.:-16.)
             F = mth(f, S, D, tol=tol, max_logn_coefs=max_logn_coefs)
-            @test ( (FE.maxerror(f,F) < tol*100) || (length(set(F))>= 2^max_logn_coefs))
+            @test ( (FE.maxerror(f,F) < tol*100) || (length(dictionary(F))>= 2^max_logn_coefs))
         end
         F = mth(x->cos(4π*x), S, D)
         @test FE.residual(x->cos(4π*x),F) < 1e-13

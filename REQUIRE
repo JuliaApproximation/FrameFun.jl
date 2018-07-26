@@ -1,7 +1,7 @@
-BasisFunctions
 StaticArrays
 Plots
 GR
-Interact
-Reactive
+Combinatorics
+RecipesBase
+QuadGK
 IJulia

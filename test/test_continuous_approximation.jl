@@ -1,7 +1,11 @@
 module test_suite
 using BasisFunctions
 using FrameFun
-using Base.Test
+if VERSION < v"0.7-"
+    using Base.Test
+else
+    using Test
+end
 
 function delimit(s::AbstractString)
     println()
@@ -15,33 +19,33 @@ delimit("Continuous solver")
 frameF = 0
 basisF = 0
 function continuous_solver_test()
-    @testset for basistype in (ChebyshevBasis, FourierBasis, BSplineTranslatesBasis), T in (Float32, Float64,), solver in (DirectSolver, FrameFun.ExactTruncatedSvdSolver)
+    @testset for basistype in (ChebyshevBasis, FourierBasis), T in (Float32, Float64,), solver in (DirectSolver, FrameFun.ExactTruncatedSvdSolver)
         tol = sqrt(eps(T))
 
         B = instantiate(basistype,11, T)
         # println(B)
-        D = interval(left(B),right(B))
+        D = support(B)
         frame = extensionframe(B,D)
         f = x->B[1](x)
 
-        frameop = approximation_operator(span(frame); discrete=false, solver=solver, abstol=tol)
+        frameop = approximation_operator(frame; discrete=false, atol=tol)
         # framopmatrix = matrix(frameop)
-        basisop = approximation_operator(span(B); discrete=false, solver=solver, abstol=tol)
+        basisop = approximation_operator(B; discrete=false, atol=tol)
         # basisopmatrix = matrix(basisop)
 
-        framesol = *(frameop,f; discrete=false, abstol=tol)
+        framesol = *(frameop,f; discrete=false, atol=tol)
 
-        basissol = *(basisop,f; discrete=false, abstol=tol)
+        basissol = *(basisop,f; discrete=false, atol=tol)
 
-        @test norm(framesol-basissol) < 10*tol
+        @test norm(framesol-basissol) < 20*tol
         # println(norm(framesol-basissol))
 
-        frameF = approximate(span(frame), f; discrete=false, solver=solver, abstol=tol)
+        frameF = approximate(frame, f; discrete=false, atol=tol)
         frameFcoef = coefficients(frameF)
-        basisF = approximate(span(B), f; discrete=false, solver=solver, abstol=tol)
+        basisF = approximate(B, f; discrete=false, atol=tol)
         basisFcoef = coefficients(basisF)
 
-        @test norm(frameFcoef-basisFcoef) < 10*tol
+        @test norm(frameFcoef-basisFcoef) < 20*tol
         # println(norm(frameFcoef-basisFcoef))
     end
 end

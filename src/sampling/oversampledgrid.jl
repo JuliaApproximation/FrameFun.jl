@@ -8,7 +8,7 @@ oversampled_grid(set::ExtensionFrame, args...) =
     oversampled_grid(domain(set), basis(set), args...)
 
 
-function oversampled_grid(domain, basis::BasisFunctions.FunctionSet, sampling_factor)
+function oversampled_grid(domain, basis::Dictionary, sampling_factor)
     N = dimension(basis)
     n_goal = length(basis) * sampling_factor^N
     grid1 = BasisFunctions.grid(basis)

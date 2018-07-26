@@ -7,11 +7,15 @@
 
 # Intercept a broadcasted call to indomain. We assume that the user wants evaluation
 # in a set of points (which we call a grid), rather than in a single point.
-broadcast(::typeof(in), grid, d::Domain) = indomain_broadcast(grid, d)
+if VERSION < v"0.7-"
+    broadcast(::typeof(in), grid, d::Domain) = indomain_broadcast(grid, d)
+else
+    Base.Broadcast.broadcasted(::typeof(in), grid, d::Domain) = indomain_broadcast(grid, d)
+end
 
 # # Default methods for evaluation on a grid: the default is to call eval on the domain with
 # # points as arguments. Domains that have faster grid evaluation routines may define their own version.
-indomain_broadcast(grid, d::Domain) = indomain_broadcast!(zeros(Bool, size(grid)), grid, d)
+indomain_broadcast(grid, d::Domain) = indomain_broadcast!((VERSION < v"0.7-") ? BitArray(size(grid)) : BitArray(undef, size(grid)), grid, d)
 # TODO: use BitArray here
 
 function indomain_broadcast!(result, grid, domain::Domain)
@@ -23,16 +27,16 @@ end
 
 function indomain_broadcast(grid, d::UnionDomain)
     z = indomain_broadcast(grid, element(d,1))
-    for i in 2:nb_elements(d)
-        z = z .| indomain_broadcast(grid, element(d,2))
+    for i in 2:numelements(d)
+        z = z .| indomain_broadcast(grid, element(d,i))
     end
     z
 end
 
 function indomain_broadcast(grid, d::IntersectionDomain)
     z = indomain_broadcast(grid, element(d,1))
-    for i in 2:nb_elements(d)
-        z = z .& indomain_broadcast(grid, element(d,2))
+    for i in 2:numelements(d)
+        z = z .& indomain_broadcast(grid, element(d,i))
     end
     z
 end
@@ -83,35 +87,37 @@ boundingbox(d::DifferenceDomain) = boundingbox(d.d1)
 
 # Extra functions
 
-leftendpoint(d::Domain) = leftendpoint(boundingbox(d))
+minimum(d::Domain) = minimum(boundingbox(d))
 
-rightendpoint(d::Domain) = rightendpoint(boundingbox(d))
+maximum(d::Domain) = maximum(boundingbox(d))
 
-leftendpoint(box::ProductDomain) = SVector(map(leftendpoint,elements(box)))
+minimum(box::ProductDomain) = SVector(map(minimum,elements(box)))
 
-rightendpoint(box::ProductDomain) = SVector(map(rightendpoint,elements(box)))
+maximum(box::ProductDomain) = SVector(map(maximum,elements(box)))
 
 # TODO: improve when grids move into domains?
-equispaced_grid(d::Domain, ns) = cartesianproduct([PeriodicEquispacedGrid(ns[idx], leftendpoint(d)[idx], rightendpoint(d)[idx]) for idx = 1:dimension(boundingbox(d))]...)
+equispaced_grid(d::Domain, ns) = cartesianproduct([PeriodicEquispacedGrid(ns[idx], infimum(d)[idx], supremum(d)[idx]) for idx = 1:dimension(boundingbox(d))]...)
 
 function boundingbox(d::UnionDomain)
-    left = SVector(minimum(hcat(map(leftendpoint,elements(d))...),2)...)
-    right = SVector(maximum(hcat(map(rightendpoint,elements(d))...),2)...)
+    left = SVector(minimum(hcat(map(infimum,elements(d))...),2)...)
+    right = SVector(maximum(hcat(map(supremum,elements(d))...),2)...)
     boundingbox(left,right)
 end
 
 function boundingbox(d::IntersectionDomain)
-    left = SVector(maximum(hcat(map(leftendpoint,elements(d))...),2)...)
-    right = SVector(minimum(hcat(map(rightendpoint,elements(d))...),2)...)
+    left = SVector(maximum(hcat(map(infimum,elements(d))...),2)...)
+    right = SVector(minimum(hcat(map(supremum,elements(d))...),2)...)
     boundingbox(left,right)
 end
+
+Domains.superdomain(d::MappedDomain) = Domains.source(d)
 
 # Now here is a problem: how do we compute a bounding box, without extra knowledge
 # of the map? We can only do this for some maps.
 boundingbox(d::MappedDomain) = mapped_boundingbox(boundingbox(source(d)), forward_map(d))
 
 function mapped_boundingbox(box::Interval, fmap)
-    l,r = (leftendpoint(box),rightendpoint(box))
+    l,r = (minimum(box),maximum(box))
     ml = fmap*l
     mr = fmap*r
     boundingbox(min(ml,mr), max(ml,mr))
@@ -121,7 +127,7 @@ end
 # underlying domain, and compute a bounding box for those points. This will be
 # correct for affine maps.
 function mapped_boundingbox(box::ProductDomain, fmap)
-    crn = corners(leftendpoint(box),rightendpoint(box))
+    crn = corners(minimum(box),maximum(box))
     mapped_corners = [fmap*crn[:,i] for i in 1:size(crn,2)]
     left = [minimum([mapped_corners[i][j] for i in 1:length(mapped_corners)]) for j in 1:size(crn,1)]
     right = [maximum([mapped_corners[i][j] for i in 1:length(mapped_corners)]) for j in 1:size(crn,1)]
@@ -157,21 +163,21 @@ dist(x, d::Domain) = error("Domain distance not available for this domain type")
 dist(x, ::UnitSimplex) = min(minimum(x),1-sum(x))
 
 function normal(x, ::UnitSimplex)
-    z=zeros(x)
+    z=fill(eltype(x)(0), size(x))
     if minimum(x)<abs(sum(x)-1)/sqrt(length(x))
         index = findmin(x)[2]
         setindex!(z,-1,index)
     else
-        z = ones(x)
+        z = fill(eltype(x)(1), size(x))
     end
     return z/norm(z)
 end
 
 normal(x, d::UnitBall) = x/norm(x)
 
-dist(x, d::AbstractInterval) = min(rightendpoint(d)-x,x-leftendpoint(d))
+dist(x, d::AbstractInterval) = min(maximum(d)-x,x-minimum(d))
 
-normal(x, d::AbstractInterval) = abs(leftendpoint(d)-x) < abs(rightendpoint(d)-x) ? -1:1
+normal(x, d::AbstractInterval) = (abs(minimum(d)-x) < abs(maximum(d)-x)) ? -1 : 1
 
 dist(x, d::UnitBall) = 1-norm(x)
 

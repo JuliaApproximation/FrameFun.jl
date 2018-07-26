@@ -2,10 +2,6 @@
 
 # We associate a domain with some of the bases defined in BasisFunctions.
 
-domain(b::FourierBasis) = interval(0,1)
+domain(d::TensorProductDict) = cartesianproduct(map(domain, elements(d))...)
 
-domain(b::ChebyshevBasis) = interval(-1, 1)
-
-domain(s::TensorProductSet) = cartesianproduct(map(domain, elements(s))...)
-
-domain(set::MappedSet) = apply_map(domain(superset(set)), mapping(set))
+domain(dict::MappedDict) = apply_map(domain(superdict(dict)), mapping(dict))

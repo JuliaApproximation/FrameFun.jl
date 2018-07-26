@@ -8,7 +8,7 @@ For tensor product operators it returns a decomposition of the linearized system
 """
 struct TruncatedSvdSolver{ELT} <: FE_Solver{ELT}
     # Keep the original operator
-    A          ::  AbstractOperator
+    A          ::  DictionaryOperator
     # Random matrix
     W           ::  MultiplicationOperator
     # Decomposition
@@ -24,7 +24,7 @@ struct TruncatedSvdSolver{ELT} <: FE_Solver{ELT}
     smalltol :: Float64
 
 
-    function TruncatedSvdSolver{ELT}(A::AbstractOperator; cutoff = default_cutoff(A), R = 5, growth_factor = 2, verbose = false, smallcoefficients=false,smalltol=10,options...) where ELT
+    function TruncatedSvdSolver{ELT}(A::DictionaryOperator; cutoff = default_cutoff(A), R = 5, growth_factor = 2, verbose = false, smallcoefficients=false,smalltol=10,options...) where ELT
         finished=false
         USV = ()
         R = min(R, size(A,2))
@@ -58,10 +58,10 @@ struct TruncatedSvdSolver{ELT} <: FE_Solver{ELT}
         USV = LAPACK.gesdd!('S',C)
         S = USV[2]
         maxind = findlast(S.>(maximum(S)*cutoff))
-        Sinv = 1./S[1:maxind]
+        Sinv = 1 ./ S[1:maxind]
         y = zeros(ELT, size(USV[3],1))
         sy = zeros(ELT, maxind)
-        Wsrc = Span(DiscreteSet(size(random_matrix,2)), ELT)
+        Wsrc = DiscreteVectorDictionary{ELT}(size(random_matrix,2))
         Wdest = src(A)
         W = MatrixOperator(Wsrc, Wdest, random_matrix)
 
@@ -75,36 +75,38 @@ src(t::TruncatedSvdSolver) = dest(t.A)
 dest(t::TruncatedSvdSolver) = src(t.A)
 inv(t::TruncatedSvdSolver) = t.A
 
-TruncatedSvdSolver(A::AbstractOperator; options...) =
-    TruncatedSvdSolver{eltype(A)}(A::AbstractOperator; options...)
+TruncatedSvdSolver(A::DictionaryOperator; options...) =
+    TruncatedSvdSolver{eltype(A)}(A::DictionaryOperator; options...)
+
+apply!(s::TruncatedSvdSolver, coef_dest, coef_src) = _apply!(s, coef_dest, coef_src,
+    s.W, s.Ut, s.Sinv, s.V, s.y, s.sy, s.scratch_src, s.scratch_dest,
+    s.smallcoefficients, s.smalltol)
 
 # We don't need to (de)linearize coefficients when they are already vectors
-function apply!(s::TruncatedSvdSolver, coef_dest::Vector, coef_src::Vector)
-    # Applying the truncated SVD to P*Rhs
-    A_mul_B!(s.sy, s.Ut, coef_src)
-    for i =1:length(s.sy)
-        s.sy[i]=s.sy[i]*s.Sinv[i]
-    end
-    if s.smallcoefficients
-        s.sy[abs.(s.sy).>s.smalltol*maximum(abs.(coef_src))]=0
-    end
-    A_mul_B!(s.y, s.V, s.sy)
+function _apply!(s::TruncatedSvdSolver, coef_dest::Vector, coef_src::Vector,
+    W, Ut, Sinv, V, y, sy, scratch_src, scratch_dest, smallcoefficients, smalltol)
 
-    apply!(s.W, coef_dest, s.y)
+    # Applying the truncated SVD to P*Rhs
+    mul!(sy, Ut, coef_src)
+    for i in 1:length(sy)
+        sy[i] = sy[i]*Sinv[i]
+    end
+    if smallcoefficients
+        M = maximum(abs.(coef_src))
+        sy[abs.(sy) .> smalltol*M] = 0
+    end
+    mul!(y, V, sy)
+    apply!(W, coef_dest, y)
 end
 
-function apply!(s::TruncatedSvdSolver, coef_dest, coef_src)
-    linearize_coefficients!(src(s), s.scratch_src, coef_src)
-    A_mul_B!(s.sy, s.Ut, s.scratch_src)
-    for i =1:length(s.sy)
-        s.sy[i]=s.sy[i]*s.Sinv[i]
-    end
-    if s.smallcoefficients
-        s.sy[abs.(s.sy).>s.smalltol*maximum(abs.(coef_src))]=0
-    end
-    A_mul_B!(s.y, s.V, s.sy)
-    apply!(s.W, s.scratch_dest, s.y)
-    delinearize_coefficients!(dest(s), coef_dest, s.scratch_dest)
+function _apply!(s::TruncatedSvdSolver, coef_dest, coef_src,
+    W, Ut, Sinv, V, y, sy, scratch_src, scratch_dest, smallcoefficients, smalltol)
+
+    linearize_coefficients!(src(s), scratch_src, coef_src)
+    # Call the implementation above for vectors
+    _apply!(s, scratch_dest, scratch_src, W, Ut, Sinv, V, y, sy,
+        scratch_src, scratch_dest, smallcoefficients, smalltol)
+    delinearize_coefficients!(dest(s), coef_dest, scratch_dest)
 end
 
 
@@ -116,7 +118,7 @@ For tensor product operators it returns a decomposition of the linearized system
 """
 struct ExactTruncatedSvdSolver{ELT} <: FE_Solver{ELT}
     # Keep the original operator
-    A          ::  AbstractOperator
+    A          ::  DictionaryOperator
     # Decomposition
     Ut          ::  Array{ELT,2}
     Sinv        ::  Array{ELT,1}
@@ -126,14 +128,14 @@ struct ExactTruncatedSvdSolver{ELT} <: FE_Solver{ELT}
     sy          ::  Array{ELT,1}
     scratch_src ::  Array{ELT,1}
 
-    function ExactTruncatedSvdSolver{ELT}(A::AbstractOperator; cutoff = default_cutoff(A), verbose = false,options...) where ELT
+    function ExactTruncatedSvdSolver{ELT}(A::DictionaryOperator; cutoff = default_cutoff(A), verbose = false,options...) where ELT
         C = matrix(A)
         m = maximum(abs.(C))
         USV = LAPACK.gesdd!('S',C)
         S = USV[2]
         maxind = findlast(S.>cutoff*m)
         verbose && println("Solver truncated at singular value equal to ", S[maxind], " cutoff was ", cutoff, " and norm of A ", m)
-        Sinv = 1./S[1:maxind]
+        Sinv = 1 ./ S[1:maxind]
         y = zeros(ELT, size(USV[3],1))
         sy = zeros(ELT, maxind)
 
@@ -146,25 +148,56 @@ src(t::ExactTruncatedSvdSolver) = dest(t.A)
 dest(t::ExactTruncatedSvdSolver) = src(t.A)
 inv(t::ExactTruncatedSvdSolver) = t.A
 
-ExactTruncatedSvdSolver(A::AbstractOperator; options...) =
-    ExactTruncatedSvdSolver{eltype(A)}(A::AbstractOperator; options...)
+ExactTruncatedSvdSolver(A::DictionaryOperator; options...) =
+    ExactTruncatedSvdSolver{eltype(A)}(A::DictionaryOperator; options...)
 
 # We don't need to (de)linearize coefficients when they are already vectors
 function apply!(s::ExactTruncatedSvdSolver, coef_dest::Vector, coef_src::Vector)
     # Applying the truncated SVD to P*Rhs
-    A_mul_B!(s.sy, s.Ut, coef_src)
+    mul!(s.sy, s.Ut, coef_src)
     for i =1:length(s.sy)
         s.sy[i]=s.sy[i]*s.Sinv[i]
     end
-    A_mul_B!(coef_dest, s.V, s.sy)
+    mul!(coef_dest, s.V, s.sy)
 end
 
 function apply!(s::ExactTruncatedSvdSolver, coef_dest, coef_src)
     linearize_coefficients!(src(s), s.scratch_src, coef_src)
-    A_mul_B!(s.sy, s.Ut, s.scratch_src)
+    mul!(s.sy, s.Ut, s.scratch_src)
     for i =1:length(s.sy)
         s.sy[i]=s.sy[i]*s.Sinv[i]
     end
-    A_mul_B!(s.y, s.V, s.sy)
+    mul!(s.y, s.V, s.sy)
     delinearize_coefficients!(dest(s), coef_dest, s.y)
+end
+
+# Function with equal functionality, but allocating memory
+function truncatedsvd_solve(b::Vector, A::DictionaryOperator; cutoff = default_cutoff(A), R = 5, growth_factor = 2, verbose = false, smallcoefficients=false,smalltol=10,options...)
+    finished=false
+    ELT = eltype(A)
+    R = min(R, size(A,2))
+    random_matrix = map(ELT, rand(size(A,2), R))
+    C = apply_multiple(A, random_matrix)
+    c = cond(C)
+    cold = cutoff
+    while (c < 1/cutoff) && (R<size(A,2)) && (c>cold*10)
+        verbose && println("c : $c\t cold : $cold\t cutoff : $cutoff")
+        verbose && println("Solver truncated at R = ", R, " dof out of ",size(A,2))
+        R0 = R
+        R = min(round(Int,growth_factor*R),size(A,2))
+        extra_random_matrix = map(ELT, rand(size(A,2), R-R0))
+        Cextra = apply_multiple(A, extra_random_matrix)
+        random_matrix = [random_matrix extra_random_matrix]
+        # Extra condition: condition number has to increase by a significant amount each step, otherwise, possibly well conditioned.
+        # cold = c
+        C = [C Cextra]
+        c = cond(C)
+    end
+    verbose && println("c : $c\t cold : $cold\t cutoff : $cutoff")
+    verbose && println("Solver truncated at R = ", R, " dof out of ",size(A,2))
+
+
+    y, rr = LAPACK.gelsy!(C,b[:],cutoff)
+    x1 = random_matrix*y;
+    reshape(x1, size(src(A))...)
 end

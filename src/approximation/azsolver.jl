@@ -2,7 +2,8 @@
 # fastsolver.jl
 
 """
-Fast implementation of the AZ Algorithm. Returns an operator that is approximately pinv(A), based on a suitable Zt so that (A*Zt-I)*A is low rank.
+Fast implementation of the AZ Algorithm. Returns an operator that is approximately
+`pinv(A)`, based on a suitable `Zt` so that `(A*Zt-I)*A` is low rank.
 
 Steps when applying to right hand side b:
 
@@ -14,75 +15,102 @@ Can be done fast if Zt and A are fast.
 
 3. x = x1+x2
 This is the solution.
-
 """
 struct AZSolver{ELT} <: FE_Solver{ELT}
-    TS          ::  AbstractOperator # The low rank decomposition of (A*Zt-I)*A
-    A           ::  AbstractOperator # Store for application in step 2
-    Zt          ::  AbstractOperator # Store for application in step 2
-    plunge_op   ::  AbstractOperator # (A*Zt-I), store because it allocates memory
+    TS          ::  DictionaryOperator # The low rank decomposition of (A*Zt-I)*A
+    A           ::  DictionaryOperator # Store for application in step 2
+    Zt          ::  DictionaryOperator # Store for application in step 2
+    plunge_op   ::  DictionaryOperator # (A*Zt-I), store because it allocates memory
     b                                # Scratch for right hand size
     blinear     ::  Array{ELT,1}     # Scratch for linearized right hand side (necessary for svd inproducts)
-    x2                              
+    x2
     x1
-    function AZSolver{ELT}(A::AbstractOperator, Zt::AbstractOperator; cutoff = default_cutoff(A), trunc = TruncatedSvdSolver, R = estimate_plunge_rank(A), verbose=false,options...) where ELT
-        # Calculate (A*Zt-I)
-        plunge_op = plunge_operator(A, Zt)
-        # Calculate low rank decomposition of (A*Zt-I)*A
-        TS = trunc(plunge_op*A; cutoff=cutoff, R=R, verbose=verbose, options...)
+
+    function AZSolver{ELT}(trunc::FE_Solver, A::DictionaryOperator, Zt::DictionaryOperator, plunge_op::DictionaryOperator;
+            options...) where ELT
         # Allocate scratch space
-        b = zeros(dest(plunge_op))
-        blinear = zeros(ELT, length(dest(plunge_op)))
+        b = zeros(src(trunc))
+        blinear = zeros(ELT, length(src(trunc)))
         x1 = zeros(src(A))
         x2 = zeros(src(A))
-        # Construct AZSolver object
-        new(TS, A, Zt, plunge_op, b,blinear,x1,x2)
+        new(trunc, A, Zt, plunge_op, b, blinear, x1, x2)
     end
 end
 
 # Set type of scratch space based on operator eltype.
-AZSolver(A::AbstractOperator, Zt::AbstractOperator, options...) =
-    AZSolver{eltype(A)}(A, Zt; options...)
+AZSolver(trunc::FE_Solver{ELT}, A::DictionaryOperator{ELT}, Zt::DictionaryOperator{ELT}, plunge_op::DictionaryOperator;
+        options...) where {ELT} =
+    AZSolver{eltype(A)}(trunc, A, Zt, plunge_op; options...)
 
 # If no Zt is supplied, Zt=A' (up to scaling) by default.
-AZSolver(A::AbstractOperator; scaling=nothing, options...) =
-    AZSolver{eltype(A)}(A, 1/scaling*A'; options...)
-
+AZSolver(A::DictionaryOperator{ELT}; scaling=nothing, options...) where {ELT} =
+    AZSolver(A, ELT(1)/ELT(scaling)*A'; options...)
 
 function plunge_operator(A, Zt)
     I = IdentityOperator(dest(A))
     A*Zt - I
 end
 
+function AZSolver(A::DictionaryOperator{ELT}, Zt::DictionaryOperator{ELT};
+        cutoff = default_cutoff(A), TRUNC=TruncatedSvdSolver, R = estimate_plunge_rank(A), verbose=false, options...) where {ELT}
+    # Calculate (A*Zt-I)
+    plunge_op = plunge_operator(A, Zt)
+    TS = TRUNC(plunge_op*A; cutoff=cutoff, R=R, verbose=verbose, options...)
+    AZSolver(TS, A, Zt, plunge_op; options...)
+end
 
-default_cutoff(A::AbstractOperator) = 10^(4/5*log10(eps(real(eltype(A)))))
+default_cutoff(A::DictionaryOperator) = 10^(4/5*log10(eps(real(eltype(A)))))
 
 # Estimate for the rank of (A*Zt-I)*A when computing the low rank decomposition. If check fails, rank estimate is steadily increased.
-function estimate_plunge_rank(A::AbstractOperator)
-    nml=length(src(A))^2/length(dest(A))
-    N = dimension(src(A))
+@inline estimate_plunge_rank(A::DictionaryOperator) =
+    estimate_plunge_rank(src(A), dest(A))
+
+@inline estimate_plunge_rank(src::ExtensionFrame, dest::Dictionary) =
+    estimate_plunge_rank(superdict(src), domain(src), dest)
+
+@inline estimate_plunge_rank(src::Dictionary, dest::Dictionary) =
+    default_estimate_plunge_rank(src, dest)
+
+@inline estimate_plunge_rank(src::Dictionary, domain::Domain, dest::Dictionary) =
+    default_estimate_plunge_rank(src, dest)
+
+function default_estimate_plunge_rank(src::Dictionary, dest::Dictionary)
+    nml=length(src)^2/length(dest)
+    N = dimension(src)
     if N==1
-        return min(round(Int, 9*log(nml)),length(src(A)))
+        return max(1,min(round(Int, 9*log(nml)),length(src)))
     else
-        return min(round(Int, 9*log(nml)*nml^((N-1)/N)),length(src(A)))
+        return max(1,min(round(Int, 9*log(nml)*nml^((N-1)/N)),length(src)))
     end
 end
 
-function apply!(s::AZSolver, destset, srcset, coef_dest, coef_src)
+apply!(s::AZSolver, coef_dest, coef_src) = _apply!(s, coef_dest, coef_src,
+        s.plunge_op, s.A, s.Zt, s.b, s.blinear, s.TS, s.x1, s.x2)
+
+function _apply!(s::AZSolver{ELT}, coef_dest, coef_src, plunge_op::DictionaryOperator, A, Zt, b, blinear, TS, x1, x2) where {ELT}
     # Step 1:
-    # Consruct (A*Zt-I)*b
-    apply!(s.plunge_op, s.b, coef_src)
-    BasisFunctions.linearize_coefficients!(dest(s.A), s.blinear, s.b)
+    # Compute (A*Zt-I)*b
+    apply!(plunge_op, b, coef_src)
     # Solve x2 = ((A*Zt-I)*A)^-1(A*Zt-I)*b
-    apply!(s.TS,s.x2,s.blinear)
+    apply!(TS,x2,b)
+
     # Step 2:
-    # Store A*x2 in b
-    apply!(s.A, s.b, s.x2)
-    # Compute x1 =  Zt*(b-A*x2) 
-    apply!(s.Zt, s.x1, coef_src-s.b)
+    # Store A*x2 in s.b and subtract from the right hand side
+    apply!(A, b, x2)
+    for i in eachindex(b)
+        b[i] = coef_src[i] - b[i]
+    end
+    # Then compute x1 =  Zt*(b-A*x2)
+    apply!(Zt, x1, b)
     # Step 3:
     # x = x1 + x2
-    for i in eachindex(s.x1)
-        coef_dest[i] = s.x1[i]+s.x2[i]
+    for i in eachindex(x1)
+        coef_dest[i] = x1[i] + x2[i]
     end
+end
+
+function AZSolver(platform::BasisFunctions.Platform, i; options...)
+    a = A(platform, i)
+    zt = Zt(platform, i)
+    AZSolver(a, zt; options...)
 end

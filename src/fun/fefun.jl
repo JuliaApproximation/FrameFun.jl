@@ -5,9 +5,9 @@
 
 function FeFun(f::Function, d::Int=1; T = Float64, Omega=FeFun_Omega_default(T,d), Gamma=2*boundingbox(Omega), options...)
     if d==1
-        set = FourierBasis(0, leftendpoint(Gamma), rightendpoint(Gamma), T)
+        set = FourierBasis(0, infimum(Gamma), supremum(Gamma))
     else
-        set = tensorproduct(map((x,y)->FourierBasis(0,x, y, T),leftendpoint(Gamma),rightendpoint(Gamma)))
+        set = tensorproduct(map((x,y)->FourierBasis(0,x, y),infimum(Gamma),supremum(Gamma)))
     end
     fun_optimal_N(f, set, Omega; max_logn_coefs =min(12, 8^d),options...)
 end

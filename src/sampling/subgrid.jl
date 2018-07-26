@@ -3,6 +3,7 @@
 # See also the file grid/subgrid.jl in BasisFunctions for the definition of
 # AbstractSubGrid and IndexSubGrid.
 
+
 """
 A MaskedGrid is a subgrid of another grid that is defined by a mask.
 The mask is true or false for each point in the supergrid. The set of points
@@ -20,6 +21,8 @@ end
 # TODO: In MaskedGrid, perhaps we should not be storing pointers to the points of the underlying grid, but
 # rather the points themselves. In that case we wouldn't need to specialize on the type of grid (parameter G can go).
 
+
+
 function MaskedGrid(supergrid::AbstractGrid{T}, mask, indices) where {T}
 	@assert size(supergrid) == size(mask)
 
@@ -29,24 +32,34 @@ end
 # These are for the assignment to indices in the function below.
 convert(::Type{NTuple{N,Int}},i::CartesianIndex{N}) where {N} = ntuple(k->i[k],N)
 
-function MaskedGrid(supergrid::AbstractGrid, domain::Domain)
-    mask = in.(supergrid, domain)
-    I = eltype(eachindex(supergrid))
-    indices = Array{I}(sum(mask))
+MaskedGrid(supergrid::AbstractGrid, domain::Domain) =
+    MaskedGrid(supergrid, in.(supergrid, domain))
+
+# MaskedGrid(maskedgrid::MaskedGrid, domain::Domain) =
+#     MaskedGrid(supergrid(maskedgrid), mask(maskedgrid) .& in.(supergrid(maskedgrid), domain))
+
+MaskedGrid(supergrid::AbstractGrid, mask) = MaskedGrid(supergrid, mask, subindices(supergrid, mask))
+
+function subindices(supergrid, mask::BitArray)
+    I= eltype(eachindex(supergrid))
+    indices = (VERSION < v"0.7-") ?  Array{I}(sum(mask)) : Array{I}(undef, sum(mask))
     i = 1
     for m in eachindex(supergrid)
-        if mask[m]
-            indices[i] = m
-            i += 1
-        end
+       if mask[m]
+           indices[i] = m
+           i += 1
+       end
     end
-    MaskedGrid(supergrid, mask, indices)
+    indices
 end
-
 
 length(g::MaskedGrid) = g.M
 
 size(g::MaskedGrid) = (length(g),)
+
+mask(g::MaskedGrid) = g.mask
+
+subindices(g::MaskedGrid) = g.indices
 
 similar_subgrid(g::MaskedGrid, g2::AbstractGrid) = MaskedGrid(g2, g.mask, g.indices)
 
@@ -56,9 +69,11 @@ is_subindex(i, g::MaskedGrid) = g.mask[i]
 
 unsafe_getindex(g::MaskedGrid, idx) = unsafe_getindex(g.supergrid, g.indices[idx])
 
+getindex(g::AbstractGrid, idx::BitArray) = MaskedGrid(g, idx)
+
 
 # Efficient extension operator
-function apply!{G <: MaskedGrid}(op::Extension, dest, src::GridSet{G}, coef_dest, coef_src)
+function apply!(op::Extension, dest, src::GridBasis{G}, coef_dest, coef_src) where {G <: MaskedGrid}
     @assert length(coef_src) == length(src)
     @assert length(coef_dest) == length(dest)
     # @assert grid(dest) == supergrid(grid(src))
@@ -78,7 +93,7 @@ end
 
 
 # Efficient restriction operator
-function apply!{G <: MaskedGrid}(op::Restriction, dest::GridSet{G}, src, coef_dest, coef_src)
+function apply!(op::Restriction, dest::GridBasis{G}, src, coef_dest, coef_src) where {G <: MaskedGrid}
     @assert length(coef_src) == length(src)
     @assert length(coef_dest) == length(dest)
     # This line below seems to allocate memory...
@@ -95,8 +110,6 @@ function apply!{G <: MaskedGrid}(op::Restriction, dest::GridSet{G}, src, coef_de
     end
     coef_dest
 end
-
-
 
 
 "Create a suitable subgrid that covers a given domain."
@@ -117,6 +130,13 @@ function subgrid(grid::ScatteredGrid, domain::Domain)
     mask = in.(grid, domain)
     points = grid.points[mask]
     ScatteredGrid(points)
+end
+
+function subgrid(grid::MaskedGrid, domain::Domain)
+    mask = in.(supergrid(grid), domain)
+    MaskedGrid(supergrid(grid), mask .& BasisFunctions.mask(grid))
+    # points = grid.points[mask]
+    # ScatteredGrid(points)
 end
 
 # subgrid(grid::AbstractGrid, domain::DomainBoundary) = boundary(g, domain)
@@ -145,18 +165,18 @@ function midpoint(v1, v2, dom::Domain, tol)
 end
 
 ## Avoid ambiguity (because everything >=2D is tensor but 1D is not)
-function boundary{TG,T}(g::ProductGrid{TG,T},dom::Domain1d)
+function boundary(g::ProductGrid{TG,T},dom::Domain1d) where {TG,T}
     println("This method being called means there is a 1D ProductGrid.")
 end
 
-function boundary{G,M}(g::MaskedGrid{G,M},dom::Domain1d)
+function boundary(g::MaskedGrid{G,M},dom::Domain1d) where {G,M}
   # TODO merge supergrid?
     boundary(grid(g),dom)
 end
 
-function boundary{TG,N,T}(g::ProductGrid{TG,T},dom::EuclideanDomain{N},tol=1e-12)
+function boundary(g::ProductGrid{TG,T},dom::EuclideanDomain{N},tol=1e-12) where {TG,N,T}
     # Initialize neighbours
-    neighbours=Array{Int64}(2^N-1,N)
+    neighbours= (VERSION < v"0.7-") ? Array{Int64}(2^N-1,N) : Array{Int64}(undef, 2^N-1,N)
     # adjust columns
     for i=1:N
         # The very first is not a neighbour but the point itself.
@@ -164,7 +184,7 @@ function boundary{TG,N,T}(g::ProductGrid{TG,T},dom::EuclideanDomain{N},tol=1e-12
             neighbours[j-1,i]=(floor(Int,(j-1)/(2^(i-1))) % 2)
         end
     end
-    CartesianNeighbours = Array{CartesianIndex{N}}(2^N-1)
+    CartesianNeighbours = (VERSION < v"0.7-") ? Array{CartesianIndex{N}}(2^N-1) : Array{CartesianIndex{N}}(undef,2^N-1)
     for j=1:2^N-1
         CartesianNeighbours[j]=CartesianIndex{N}(neighbours[j,:]...)
     end
@@ -207,13 +227,13 @@ function boundary(g::AbstractGrid{T},dom::Domain1d,tol=1e-12) where {T <: Number
 end
 
 
-function boundary{G,M,N}(g::MaskedGrid{G,M},dom::EuclideanDomain{N})
+function boundary(g::MaskedGrid{G,M},dom::EuclideanDomain{N}) where {G,M,N}
     boundary(supergrid(g),dom)
 end
 
-# function evaluation_operator{G <: AbstractSubGrid}(s::FunctionSet, d::DiscreteGridSpace{G})
-#     d2 = DiscreteGridSpace(grid(grid(d)), eltype(s))
-#     restriction_operator(d2, d) * evaluation_operator(s, d2)
-# end
+has_extension(dg::GridBasis{G}) where {G <: AbstractSubGrid} = true
 
-has_extension{G <: AbstractSubGrid}(dg::DiscreteGridSpace{G}) = true
+function BasisFunctions.grid_restriction_operator(src::Dictionary, dest::Dictionary, src_grid::G, dest_grid::MaskedGrid{G,M,I,T}; options...) where {G<:AbstractGrid,M,I,T}
+    @assert supergrid(dest_grid) == src_grid
+    IndexRestrictionOperator(src, dest, subindices(dest_grid))
+end

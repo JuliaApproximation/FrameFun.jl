@@ -1,10 +1,12 @@
 # A test suite for support functions
 module test_suite_support
 
-using Domains
-using BasisFunctions
-using FrameFun
-using Base.Test
+using Domains, BasisFunctions, FrameFun
+if VERSION < v"0.7-"
+    using Base.Test
+else
+    using Test, LinearAlgebra
+end
 
 ## Settings
 
@@ -65,8 +67,8 @@ function test_subgrids()
         end
         @test cnt == length(subgrid)
 
-        space = gridspace(grid)
-        subspace = gridspace(subgrid)
+        space = gridbasis(grid)
+        subspace = gridbasis(subgrid)
         R = restriction_operator(space, subspace)
         E = extension_operator(subspace, space)
 
