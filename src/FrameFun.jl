@@ -160,7 +160,7 @@ export FECollocationOperator
 # from approximation
 export DirectSolver, AZSolver, AZSmoothSolver, TridiagonalSolver, AZSSolver, AZSDCSolver
 
-include("subgrid.jl")
+include("sampling/subgrid.jl")
 
 
 #include("domains/boundingbox.jl")
@@ -200,8 +200,8 @@ include("domains/atomium.jl")
 include("domains/characteristic.jl")
 include("domains/polardomain.jl")
 
-include("randomgrid.jl")
-include("oversampledgrid.jl")
+include("sampling/randomgrid.jl")
+include("sampling/oversampledgrid.jl")
 
 include("fun/fefun.jl")
 
