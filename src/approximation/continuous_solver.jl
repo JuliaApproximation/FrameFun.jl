@@ -11,7 +11,7 @@ end
 continuous_normalization(set::Dictionary; options...) = DualGram(set; options...)
 continuous_normalization(frame::ExtensionFrame; options...) = DualGram(basis(frame); options...)
 
-immutable ContinuousSolverPlan{T} <: DictionaryOperator{T}
+struct ContinuousSolverPlan{T} <: DictionaryOperator{T}
     src                     :: Dictionary
     dest                    :: Dictionary
     mixedgramsolver         :: FE_Solver

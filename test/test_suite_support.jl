@@ -1,10 +1,12 @@
 # A test suite for support functions
 module test_suite_support
 
-using Domains
-using BasisFunctions
-using FrameFun
-using Base.Test
+using Domains, BasisFunctions, FrameFun
+if VERSION < v"0.7-"
+    using Base.Test
+else
+    using Test, LinearAlgebra
+end
 
 ## Settings
 

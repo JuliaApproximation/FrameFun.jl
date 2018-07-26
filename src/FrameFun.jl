@@ -10,6 +10,16 @@ using Domains
 using BasisFunctions
 using Combinatorics: permutations
 
+if VERSION < v"0.7-"
+    import BasisFunctions.adjoint
+    mul! = A_mul_B!
+    eigen  = eig
+else
+    using LinearAlgebra
+    using Printf
+    import LinearAlgebra: adjoint
+end
+
 ###############################
 ## Exhaustive list of imports
 ###############################
@@ -21,7 +31,7 @@ import Base: intersect, union, isapprox, setdiff, in
 
 # Arrays
 import Base: length, eltype, size, push!, similar
-import Base: ctranspose, inv
+import Base: inv
 
 # Iteration and indexing
 import Base: eachindex, start, next, done, getindex, unsafe_getindex,
@@ -106,9 +116,7 @@ import BasisFunctions: primal, dual, Zt, A, sampler, dual_sampler
 export ExpFun, ChebyFun, Fun, DictFun, sampling_grid, domain, abserror, maxerror, L2error, expansion
 
 # from subgrid.jl
-export MaskedGrid, boundary_grid
-
-# from spline_approximation.jl
+export MaskedGrid
 
 # from domains/boundingbox.jl
 export BoundingBox, BBox, BBox1, BBox2, BBox3, BBox4
@@ -169,8 +177,6 @@ include("domains/extensions.jl")
 include("frames/extensionframe.jl")
 include("frames/weighted_sum_frame.jl")
 
-include("approximation/splines/spline_approximation.jl")
-
 include("fun/basisdomains.jl")
 include("fun/funs.jl")
 
@@ -179,8 +185,6 @@ include("approximation/fe_solvers.jl")
 include("approximation/continuous_solver.jl")
 include("approximation/lowranksolver.jl")
 include("approximation/azsolver.jl")
-include("approximation/solve.jl")
-include("approximation/azssolver.jl")
 include("approximation/tridiagonalsolver.jl")
 include("approximation/smoothsolver.jl")
 include("approximation/fe_approx.jl")

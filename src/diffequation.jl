@@ -10,7 +10,6 @@ When the equation is solved the equations:
 -diff(Fun) = dRhs on boundary
 will hold.
 """
-
 struct BoundaryCondition
     S      :: Dictionary
     diff   :: DictionaryOperator
@@ -94,7 +93,11 @@ function operator(D::DiffEquation; incboundary=false, options...)
     #problem = FE_DiscreteProblem(D.D,D.S,2)
     B = D.S
     ADiff = pinv(D.Diff)
-    ops = incboundary ? Array{DictionaryOperator}(length(D.BCs)+2,1) : Array{DictionaryOperator}(length(D.BCs)+1,1)
+    if (VERSION < v"0.7-")
+        ops = incboundary ? Array{DictionaryOperator}(length(D.BCs)+2,1) : Array{DictionaryOperator}(length(D.BCs)+1,1)
+    else
+        ops = incboundary ? Array{DictionaryOperator}(undef, length(D.BCs)+2,1) : Array{DictionaryOperator}(undef, length(D.BCs)+1,1)
+    end
     G, lB = oversampled_grid(D.D,D.S,D.sampling_factor)
 
     op = grid_evaluation_operator(D.S,gridbasis(G,coeftype(D.S)),G)
@@ -115,7 +118,7 @@ end
 
 function rhs(D::DiffEquation; incboundary = false, options...)
     op = operator(D; incboundary=incboundary, options...)
-    rhs = Array{Array{coeftype(src(op)),1}}(0)
+    rhs = (VERSION < v"0.7-") ? Array{Array{coeftype(src(op)),1}}(0) : Array{Array{coeftype(src(op)),1}}(undef,0)
     G, lB = oversampled_grid(D.D,D.S,D.sampling_factor)
 
     op = grid_evaluation_operator(D.S,gridbasis(G,coeftype(D.S)),G)
@@ -149,7 +152,6 @@ It represents the linear differential operator:
 L[u](x) = aX[1](X)*sampler*pD[1](D) + ⋯ + aX[r](X)*sampler*pD[r](D)
 where X is a grid multiplication operator for x -> x, and D is the derivative operator
 """
-
 struct FECollocationOperator{T} <: DictionaryOperator{T}
   # L = aX[1]*sampler*pD[1] + ⋯ + aX[r]*sampler*pD[r]
   feframe :: ExtensionFrame # This should be Fourier Extension of odd order to work
@@ -172,20 +174,20 @@ end
 ## Constructors
 # All input format checks are done in the first constructor
 FECollocationOperator(feframe::ExtensionFrame,pD::Vector,aX::Vector,sampler::DictionaryOperator) = FECollocationOperator{eltype(sampler)}(feframe,pD,aX,sampler)
-function FECollocationOperator{S1<:Function,S2<:Function}(feframe::ExtensionFrame,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real)
+function FECollocationOperator(feframe::ExtensionFrame,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real) where {S1<:Function,S2<:Function}
     pD = map(p->pseudodifferential_operator(feframe,p),pd)
     gridbasis = GridBasis(oversampled_grid(feframe,samplingfactor)[1],coefficient_type(feframe))
     aX = map(a->grid_multiplication_operator(a,gridbasis),ax)
     sampler = evaluation_operator(feframe,grid(gridbasis))
     FECollocationOperator(feframe,pD,aX,sampler)
 end
-FECollocationOperator{S1<:Function,S2<:Function}(feframe::ExtensionFrame,pd::Vector{S1},ax::Vector{S2}) = FECollocationOperator(feframe,pd,ax,2)
-FECollocationOperator{S1<:Function,S2<:Function}(dom::Domain,ambientdom::Domain,n::Int,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real) = FECollocationOperator(ExtensionFrame(dom,FourierBasis(n,leftendpoint(ambientdom),rightendpoint(ambientdom))),pd,ax,samplingfactor)
-FECollocationOperator{S1<:Function,S2<:Function}(dom::Domain,ambientdom::Domain,n,pd::Vector{S1},ax::Vector{S2}) = FECollocationOperator(dom,ambientdom,n,pd,ax,2)
+FECollocationOperator(feframe::ExtensionFrame,pd::Vector{S1},ax::Vector{S2}) where {S1<:Function,S2<:Function} = FECollocationOperator(feframe,pd,ax,2)
+FECollocationOperator(dom::Domain,ambientdom::Domain,n::Int,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real) where {S1<:Function,S2<:Function} = FECollocationOperator(ExtensionFrame(dom,FourierBasis(n,leftendpoint(ambientdom),rightendpoint(ambientdom))),pd,ax,samplingfactor)
+FECollocationOperator(dom::Domain,ambientdom::Domain,n,pd::Vector{S1},ax::Vector{S2}) where {S1<:Function,S2<:Function} = FECollocationOperator(dom,ambientdom,n,pd,ax,2)
 
 # Constructors for higher dimensional domains:
-FECollocationOperator{S1<:Function,S2<:Function}(dom::Domain,ambientdom::ProductDomain,nn::Tuple,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real) = FECollocationOperator(ExtensionFrame(dom,tensorproduct(map((x,y)->FourierBasis(x,leftendpoint(y),rightendpoint(y)),nn, elements(ambientdom)))),pd,ax,samplingfactor)
-FECollocationOperator{S1<:Function,S2<:Function}(dom::Domain,ambientdom::ProductDomain,nn::Tuple,pd::Vector{S1},ax::Vector{S2}) = FECollocationOperator(dom,ambientdom,nn,pd,ax,2)
+FECollocationOperator(dom::Domain,ambientdom::ProductDomain,nn::Tuple,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real) where {S1<:Function,S2<:Function} = FECollocationOperator(ExtensionFrame(dom,tensorproduct(map((x,y)->FourierBasis(x,leftendpoint(y),rightendpoint(y)),nn, elements(ambientdom)))),pd,ax,samplingfactor)
+FECollocationOperator(dom::Domain,ambientdom::ProductDomain,nn::Tuple,pd::Vector{S1},ax::Vector{S2}) where {S1<:Function,S2<:Function} = FECollocationOperator(dom,ambientdom,nn,pd,ax,2)
 
 src(L::FECollocationOperator) = L.feframe
 dest(L::FECollocationOperator) = dest(sampler(L))

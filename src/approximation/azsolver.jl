@@ -78,9 +78,9 @@ function default_estimate_plunge_rank(src::Dictionary, dest::Dictionary)
     nml=length(src)^2/length(dest)
     N = dimension(src)
     if N==1
-        return min(round(Int, 9*log(nml)),length(src))
+        return max(1,min(round(Int, 9*log(nml)),length(src)))
     else
-        return min(round(Int, 9*log(nml)*nml^((N-1)/N)),length(src))
+        return max(1,min(round(Int, 9*log(nml)*nml^((N-1)/N)),length(src)))
     end
 end
 

@@ -4,7 +4,6 @@
 A WeightedSumFrame is the union of a finite number of copies of a single frame,
 each weighted by function.
 """
-
 struct WeightedSumPlatform <: BasisFunctions.Platform
     weights :: Vector{Function}
     P :: Platform

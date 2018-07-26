@@ -32,7 +32,7 @@ for op in (:dictionary, :dimension, :coefficients, :eltype, :numtype, :length, :
     @eval $op(fun::DictFun) = $op(fun.expansion)
 end
 
-for op in (:ctranspose, :∫, :∂x, :∂y, :∂z, :∫∂x, :∫∂y, :∫∂z, :differentiate, :antidifferentiate)
+for op in (:adjoint, :∫, :∂x, :∂y, :∂z, :∫∂x, :∫∂y, :∫∂z, :differentiate, :antidifferentiate)
     @eval $op(fun::DictFun{S,T}, args...) where {S,T} = DictFun{S,T}($op(fun.expansion, args...))
 end
 

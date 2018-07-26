@@ -42,7 +42,7 @@ MaskedGrid(supergrid::AbstractGrid, mask) = MaskedGrid(supergrid, mask, subindic
 
 function subindices(supergrid, mask::BitArray)
     I= eltype(eachindex(supergrid))
-    indices = Array{I}(sum(mask))
+    indices = (VERSION < v"0.7-") ?  Array{I}(sum(mask)) : Array{I}(undef, sum(mask))
     i = 1
     for m in eachindex(supergrid)
        if mask[m]
@@ -73,7 +73,7 @@ getindex(g::AbstractGrid, idx::BitArray) = MaskedGrid(g, idx)
 
 
 # Efficient extension operator
-function apply!{G <: MaskedGrid}(op::Extension, dest, src::GridBasis{G}, coef_dest, coef_src)
+function apply!(op::Extension, dest, src::GridBasis{G}, coef_dest, coef_src) where {G <: MaskedGrid}
     @assert length(coef_src) == length(src)
     @assert length(coef_dest) == length(dest)
     # @assert grid(dest) == supergrid(grid(src))
@@ -93,7 +93,7 @@ end
 
 
 # Efficient restriction operator
-function apply!{G <: MaskedGrid}(op::Restriction, dest::GridBasis{G}, src, coef_dest, coef_src)
+function apply!(op::Restriction, dest::GridBasis{G}, src, coef_dest, coef_src) where {G <: MaskedGrid}
     @assert length(coef_src) == length(src)
     @assert length(coef_dest) == length(dest)
     # This line below seems to allocate memory...
@@ -111,182 +111,6 @@ function apply!{G <: MaskedGrid}(op::Restriction, dest::GridBasis{G}, src, coef_
     coef_dest
 end
 
-struct NBIndexList{N}
-    index::NTuple{N,Int}
-    size::NTuple{N,Int}
-end
-NBIndexList(index::Base.CartesianIndex{N}, size) where {N}  = NBIndexList(index.I, size)
-NBIndexList(index::Int, size)  = NBIndexList((index,), size)
-
-@generated function Base.start(l::NBIndexList{N}) where {N}
-	startargs = fill(-1, N)
-    stopargs = fill(1, N)
-	:(CartesianRange(CartesianIndex{$N}($(startargs...)), CartesianIndex{$N}($(stopargs...))), CartesianIndex{$N}($(startargs...)))
-end
-@generated function Base.next(l::NBIndexList{N}, state) where {N}
-    t = Expr(:tuple, [:(if 1<=idx[$i]+l.index[$i]<=l.size[$i];idx[$i]+l.index[$i];elseif idx[$i]+l.index[$i]==0;l.size[$i];else; 1 ;end) for i in 1:N]...)
-    return quote
-        iter = state[1]
-        iter_state = state[2]
-        idx, iter_next_state = next(iter, iter_state)
-        (sum(abs.(idx.I)) == 0) && ((idx, iter_next_state) = next(iter, iter_next_state))
-        CartesianIndex($t),(iter, iter_next_state)
-    end
-end
-
-@generated function Base.next(l::NBIndexList{1}, state)
-    t = :(if 1<=idx[1]+l.index[1]<=l.size[1];idx[1]+l.index[1];elseif idx[1]+l.index[1]==0;l.size[1];else; 1 ;end)
-    return quote
-        iter = state[1]
-        iter_state = state[2]
-        idx, iter_next_state = next(iter, iter_state)
-        (sum(abs.(idx.I)) == 0) && ((idx, iter_next_state) = next(iter, iter_next_state))
-        $t,(iter, iter_next_state)
-    end
-end
-function Base.done(g::NBIndexList{N}, state) where {N}
-    iter = state[1]
-    iter_state = state[2]
-    done(iter, iter_state)
-end
-
-"""
-A Masked grid that contains the elements of grid that are on the boundary of the domain
-"""
-function boundary_grid(grid::AbstractGrid, domain::Domains.Domain)
-    mask = boundary_mask(grid, domain);
-    MaskedGrid(grid,mask);
-end
-
-boundary_grid(grid::MaskedGrid, domain::Domains.Domain) = boundary_grid(supergrid(grid), domain)
-
-
-function boundary_mask(grid::AbstractGrid, domain::Domains.Domain)
-    S = size(grid)
-    m = BitArray(S...)#zeros(Bool, S...)
-    m[:] = 0
-    t = true
-    for i in eachindex(grid)
-        if Domains.indomain(grid[i], domain)
-            t = true
-            for bi in NBIndexList(i, S)
-                if !Domains.indomain(grid[bi], domain)
-                    t = false
-                    break
-                end
-            end
-            m[i] = !t
-        end
-    end
-    m
-end
-
-# collect_neighbours!(mask::BitArray{N}, start_index, grid::MaskedGrid) where {N} =  collect_neighbours!(mask, start_index, copy(grid.mask))
-collect_neighbours!(mask::BitArray{N}, start_index::CartesianIndex{N}, left_over::BitArray{N}) where {N} =  collect_neighbours!(mask, start_index.I, left_over)
-
-function collect_neighbours!(mask::BitArray{N}, index::NTuple{N,Int}, left_over::BitArray{N}) where {N}
-    mask[index...] = true
-    left_over[index...] = false
-
-    indices = [index]
-    new_indices_mask = BitArray(size(mask))
-    new_indices_mask[:] = false
-    new_indices_mask[index...] = true
-    while sum(new_indices_mask) > 0
-        for i in CartesianRange(CartesianIndex(ones(Int,N)...),CartesianIndex(size(left_over)...))
-            if new_indices_mask[i]
-                new_indices_mask[i] = false
-                mask[i] = true
-                for nb in FrameFun.NBIndexList(i, size(left_over))
-                    if left_over[nb]
-                        new_indices_mask[nb] = true
-                        left_over[nb] = false
-                    end
-                end
-            end
-        end
-    end
-end
-
-
-
-import Base:-, split
-function -(m1::MaskedGrid, m2::MaskedGrid)
-    @assert supergrid(m1)==supergrid(m2)
-    MaskedGrid(supergrid(m1), m1.mask .& (.!m2.mask))
-end
-
-function split(m::MaskedGrid)
-
-    L = length(m)
-    s = supergrid(m)
-    grid_mask = copy(m.mask)
-    index = 0
-    r = Array{AbstractGrid}(0)
-    mask_total = BitArray(size(s)...)
-    mask_total[:] = 0
-    mask = BitArray(size(s)...)
-    while index < L
-        for i in subindices(m)
-            if !mask_total[i]
-                mask = BitArray(size(s)...)
-                mask[:] = 0
-                collect_neighbours!(mask, i, grid_mask)
-                index += sum(mask)
-                mask_total = mask_total .| mask
-                push!(r, MaskedGrid(s, mask))
-            end
-        end
-    end
-    if length(r) == 1
-        return [m]
-    else
-        return r
-    end
-end
-
-function split_in_IndexGrids(m::MaskedGrid)
-    L = length(m)
-    s = supergrid(m)
-    index = 0
-    r = IndexSubGrid[]
-    grid_mask = copy(m.mask)
-    mask_total = BitArray(size(s)...)
-    mask_total[:] = 0
-    while index < L
-        for i in subindices(m)
-            if !mask_total[i]
-                mask = BitArray(size(s)...)
-                mask[:] = 0
-                collect_neighbours!(mask, i, grid_mask)
-                index += sum(mask)
-                mask_total = mask_total .| mask
-
-                push!(r, IndexSubGrid(s, subindices(s,mask)))
-            end
-        end
-    end
-    if length(r) == 1
-        return [m]
-    else
-        return r
-    end
-end
-
-# It is assumed that all points of `from` are in `relativeto` and that the supergrids of both grids are equal.
-function relative_indices(from::MaskedGrid, relativeto::Union{IndexSubGrid,MaskedGrid})
-    # @assert (supergrid(from)) == (supergrid(relativeto))
-    @assert length(supergrid(from)) == length(supergrid(relativeto))
-    support_index = Array{Int}(length(from))
-    index = 1
-    for (i_i,i) in enumerate(subindices(relativeto))
-        if is_subindex(i, from)
-            support_index[index] = i_i
-            index += 1
-        end
-    end
-    support_index
-end
 
 "Create a suitable subgrid that covers a given domain."
 function subgrid(grid::AbstractEquispacedGrid, domain::AbstractInterval)
@@ -341,18 +165,18 @@ function midpoint(v1, v2, dom::Domain, tol)
 end
 
 ## Avoid ambiguity (because everything >=2D is tensor but 1D is not)
-function boundary{TG,T}(g::ProductGrid{TG,T},dom::Domain1d)
+function boundary(g::ProductGrid{TG,T},dom::Domain1d) where {TG,T}
     println("This method being called means there is a 1D ProductGrid.")
 end
 
-function boundary{G,M}(g::MaskedGrid{G,M},dom::Domain1d)
+function boundary(g::MaskedGrid{G,M},dom::Domain1d) where {G,M}
   # TODO merge supergrid?
     boundary(grid(g),dom)
 end
 
-function boundary{TG,N,T}(g::ProductGrid{TG,T},dom::EuclideanDomain{N},tol=1e-12)
+function boundary(g::ProductGrid{TG,T},dom::EuclideanDomain{N},tol=1e-12) where {TG,N,T}
     # Initialize neighbours
-    neighbours=Array{Int64}(2^N-1,N)
+    neighbours= (VERSION < v"0.7-") ? Array{Int64}(2^N-1,N) : Array{Int64}(undef, 2^N-1,N)
     # adjust columns
     for i=1:N
         # The very first is not a neighbour but the point itself.
@@ -360,7 +184,7 @@ function boundary{TG,N,T}(g::ProductGrid{TG,T},dom::EuclideanDomain{N},tol=1e-12
             neighbours[j-1,i]=(floor(Int,(j-1)/(2^(i-1))) % 2)
         end
     end
-    CartesianNeighbours = Array{CartesianIndex{N}}(2^N-1)
+    CartesianNeighbours = (VERSION < v"0.7-") ? Array{CartesianIndex{N}}(2^N-1) : Array{CartesianIndex{N}}(undef,2^N-1)
     for j=1:2^N-1
         CartesianNeighbours[j]=CartesianIndex{N}(neighbours[j,:]...)
     end
@@ -403,11 +227,11 @@ function boundary(g::AbstractGrid{T},dom::Domain1d,tol=1e-12) where {T <: Number
 end
 
 
-function boundary{G,M,N}(g::MaskedGrid{G,M},dom::EuclideanDomain{N})
+function boundary(g::MaskedGrid{G,M},dom::EuclideanDomain{N}) where {G,M,N}
     boundary(supergrid(g),dom)
 end
 
-has_extension{G <: AbstractSubGrid}(dg::GridBasis{G}) = true
+has_extension(dg::GridBasis{G}) where {G <: AbstractSubGrid} = true
 
 function BasisFunctions.grid_restriction_operator(src::Dictionary, dest::Dictionary, src_grid::G, dest_grid::MaskedGrid{G,M,I,T}; options...) where {G<:AbstractGrid,M,I,T}
     @assert supergrid(dest_grid) == src_grid

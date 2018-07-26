@@ -1,12 +1,15 @@
 module test_suite
-srand(1234)
-using Domains
-using BasisFunctions
-using FrameFun
-using Base.Test
+using Domains, BasisFunctions, FrameFun
+
+if VERSION < v"0.7-"
+    using Base.Test
+    ComplexF64 = Complex128
+else
+    using Test, LinearAlgebra, Random
+end
 FE = FrameFun
 BA = BasisFunctions
-
+srand(1234)
 function delimit(s::AbstractString)
     println()
     println("############")
@@ -41,9 +44,9 @@ function test_function_space()
     for n in 1:4
       S = FE.tensorproduct(FourierSpace(),n)
       @test dimension(S) == n
-      @test codomaintype(S) == Complex128
+      @test codomaintype(S) == ComplexF64
     end
-    @test domaintype(promote_domaintype(ChebyshevSpace(),Complex128)) == domaintype(promote_domaintype(ChebyshevBasis(11),Complex128))
+    @test domaintype(promote_domaintype(ChebyshevSpace(),ComplexF64)) == domaintype(promote_domaintype(ChebyshevBasis(11),ComplexF64))
     @test domaintype(promote_domaintype(ChebyshevSpace(),Float32)) == domaintype(promote_domaintype(ChebyshevBasis(11),Float32))
     @test domaintype(promote_domaintype(ChebyshevSpace(),Float64)) == domaintype(promote_domaintype(ChebyshevBasis(11),Float64))
   end
@@ -54,7 +57,7 @@ function test_residual()
         D = interval(-1.0, 1.0)/2
         f = x->cos(20x)
         res = Inf
-        for n in 2.^(3:5)
+        for n in 2 .^ (3:5)
             S = rescale(instantiate(basis,n), -1.0, 1.0)
             F = Fun(f, S, D)
             resnew = FE.residual(f,F)

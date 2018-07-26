@@ -7,11 +7,15 @@
 
 # Intercept a broadcasted call to indomain. We assume that the user wants evaluation
 # in a set of points (which we call a grid), rather than in a single point.
-broadcast(::typeof(in), grid, d::Domain) = indomain_broadcast(grid, d)
+if VERSION < v"0.7-"
+    broadcast(::typeof(in), grid, d::Domain) = indomain_broadcast(grid, d)
+else
+    Base.Broadcast.broadcasted(::typeof(in), grid, d::Domain) = indomain_broadcast(grid, d)
+end
 
 # # Default methods for evaluation on a grid: the default is to call eval on the domain with
 # # points as arguments. Domains that have faster grid evaluation routines may define their own version.
-indomain_broadcast(grid, d::Domain) = indomain_broadcast!(BitArray(size(grid)), grid, d)
+indomain_broadcast(grid, d::Domain) = indomain_broadcast!((VERSION < v"0.7-") ? BitArray(size(grid)) : BitArray(undef, size(grid)), grid, d)
 # TODO: use BitArray here
 
 function indomain_broadcast!(result, grid, domain::Domain)
@@ -159,12 +163,12 @@ dist(x, d::Domain) = error("Domain distance not available for this domain type")
 dist(x, ::UnitSimplex) = min(minimum(x),1-sum(x))
 
 function normal(x, ::UnitSimplex)
-    z=zeros(x)
+    z=fill(eltype(x)(0), size(x))
     if minimum(x)<abs(sum(x)-1)/sqrt(length(x))
         index = findmin(x)[2]
         setindex!(z,-1,index)
     else
-        z = ones(x)
+        z = fill(eltype(x)(1), size(x))
     end
     return z/norm(z)
 end
@@ -173,7 +177,7 @@ normal(x, d::UnitBall) = x/norm(x)
 
 dist(x, d::AbstractInterval) = min(maximum(d)-x,x-minimum(d))
 
-normal(x, d::AbstractInterval) = abs(minimum(d)-x) < abs(maximum(d)-x) ? -1:1
+normal(x, d::AbstractInterval) = (abs(minimum(d)-x) < abs(maximum(d)-x)) ? -1 : 1
 
 dist(x, d::UnitBall) = 1-norm(x)
 

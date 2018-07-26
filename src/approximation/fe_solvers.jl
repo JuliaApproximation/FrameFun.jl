@@ -24,11 +24,11 @@ struct DirectSolver{ELT} <: FE_Solver{ELT}
     src_scratch :: Vector{ELT}
 
     function DirectSolver{ELT}(A::DictionaryOperator) where ELT
-        new(A, qrfact(matrix(A),Val{true}), zeros(ELT, length(dest(A))))
+        new(A, (VERSION < v"0.7-") ? qrfact(matrix(A),Val{true}) : qr(matrix(A),Val(true)), zeros(ELT, length(dest(A))))
     end
 end
 
-DirectSolver{ELT}(A::DictionaryOperator{ELT}; options...) =
+DirectSolver(A::DictionaryOperator{ELT}; options...) where {ELT} =
     DirectSolver{eltype(A)}(A)
 
 function apply!(s::DirectSolver, coef_dest, coef_src::MultiArray)
