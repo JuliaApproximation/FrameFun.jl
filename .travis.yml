@@ -6,10 +6,6 @@ os:
 julia:
     - 0.6
     - nightly
-matrix:
-    allow_failures:
-    - julia: nightly
-      osx: linux
 notifications:
   email: false
 after_success:
