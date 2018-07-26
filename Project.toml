@@ -1,6 +1,6 @@
 name = "FrameFun"
 uuid = "778aa48c-bd46-5276-944b-a086f2e2e18d"
-authors = ["vincentcp"]
+authors = ["daanhb, roelmatthysen,marcusdavidwebb vincentcp"]
 version = "0.1.0"
 
 [deps]

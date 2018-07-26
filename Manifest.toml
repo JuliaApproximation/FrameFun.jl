@@ -92,9 +92,9 @@ uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[Domains]]
 deps = ["IntervalSets", "LinearAlgebra", "Markdown", "StaticArrays"]
-git-tree-sha1 = "03d812a2c5d7dc47fce4a44fb90312bc394dd032"
+git-tree-sha1 = "a102f00d0b9d253df057ff71d2079359586506cf"
 repo-rev = "master"
-repo-url = "https://github.com/daanhb/Domains.jl.git"
+repo-url = "https://github.com/JuliaApproximation/Domains.jl.git"
 uuid = "a4a0b8aa-7ac0-11e8-2da9-8385f1ed8077"
 version = "0.0.1"
 
