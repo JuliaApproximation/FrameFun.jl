@@ -33,7 +33,7 @@ end
 
 show_timings(F) = show_timings(F, F.approx_op)
 
-show_timings(F, op::FE.FE_Solver) = show_timings(F, operator(op.problem))
+show_timings(F, op::FE.AbstractSolverOperator) = show_timings(F, operator(op.problem))
 
 function show_timings(F, op)
     if show_mv_times

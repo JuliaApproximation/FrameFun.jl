@@ -16,7 +16,7 @@ Can be done fast if Zt and A are fast.
 3. x = x1+x2
 This is the solution.
 """
-struct AZSolver{ELT} <: FE_Solver{ELT}
+struct AZSolver{ELT} <: AbstractSolverOperator{ELT}
     TS          ::  DictionaryOperator # The low rank decomposition of (A*Zt-I)*A
     A           ::  DictionaryOperator # Store for application in step 2
     Zt          ::  DictionaryOperator # Store for application in step 2
@@ -26,7 +26,7 @@ struct AZSolver{ELT} <: FE_Solver{ELT}
     x2
     x1
 
-    function AZSolver{ELT}(trunc::FE_Solver, A::DictionaryOperator, Zt::DictionaryOperator, plunge_op::DictionaryOperator;
+    function AZSolver{ELT}(trunc::AbstractSolverOperator, A::DictionaryOperator, Zt::DictionaryOperator, plunge_op::DictionaryOperator;
             options...) where ELT
         # Allocate scratch space
         b = zeros(src(trunc))
@@ -38,13 +38,15 @@ struct AZSolver{ELT} <: FE_Solver{ELT}
 end
 
 # Set type of scratch space based on operator eltype.
-AZSolver(trunc::FE_Solver{ELT}, A::DictionaryOperator{ELT}, Zt::DictionaryOperator{ELT}, plunge_op::DictionaryOperator;
+AZSolver(trunc::AbstractSolverOperator{ELT}, A::DictionaryOperator{ELT}, Zt::DictionaryOperator{ELT}, plunge_op::DictionaryOperator;
         options...) where {ELT} =
     AZSolver{eltype(A)}(trunc, A, Zt, plunge_op; options...)
 
 # If no Zt is supplied, Zt=A' (up to scaling) by default.
 AZSolver(A::DictionaryOperator{ELT}; scaling=nothing, options...) where {ELT} =
     AZSolver(A, ELT(1)/ELT(scaling)*A'; options...)
+
+operator(op::AZSolver) = op.A
 
 function plunge_operator(A, Zt)
     I = IdentityOperator(dest(A))

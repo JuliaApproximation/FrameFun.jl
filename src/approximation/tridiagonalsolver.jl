@@ -7,7 +7,7 @@ is isolated using a projection operator.
 For more details, see the paper 'Fast algorithms for the computation of Fourier extensions of arbitrary length'
 http://arxiv.org/abs/1509.00206
 """
-struct FE_TridiagonalSolver{ELT} <: FrameFun.FE_Solver{ELT}
+struct FE_TridiagonalSolver{ELT} <: AbstractSolverOperator{ELT}
     Ut :: Array{ELT,2}
     V :: Array{ELT,2}
     Sinv :: Array{ELT,1}
@@ -51,6 +51,8 @@ end
 
 FE_TridiagonalSolver(A::DictionaryOperator; scaling=nothing, options...) =
     FE_TridiagonalSolver{eltype(A)}(A, scaling; options...)
+
+operator(op::FE_TridiagonalSolver) = op.A
 
 function estimate_plunge_range(A,L,C)
     mid=size(A,2)-round(Int,size(A,1)*size(A,2)/L)

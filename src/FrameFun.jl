@@ -106,6 +106,7 @@ import BasisFunctions: Gram, DualGram, MixedGram, DiscreteGram, DiscreteDualGram
 import BasisFunctions: dual, primal, sampler, dual_sampler
 
 import BasisFunctions: discrete_approximation_operator, continuous_approximation_operator
+import BasisFunctions: AbstractSolverOperator
 
 import BasisFunctions: primal, dual, Zt, A, sampler, dual_sampler
 

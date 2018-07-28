@@ -42,7 +42,7 @@ end
 
 show_timings(F) = show_mv_times && show_timings(F, F.approx_op)
 
-show_timings(F, op::FrameFun.FE_Solver) = show_timings(F, operator(op.problem))
+show_timings(F, op::FE.AbstractSolverOperator) = show_timings(F, operator(op.problem))
 
 # function show_timings(F, op::TensorProductOperator)
 #     for i in 1:numelements(op)

@@ -6,7 +6,7 @@ If A is MxN, and of rank R, the cost of constructing this solver is MR^2.
 
 For tensor product operators it returns a decomposition of the linearized system
 """
-struct TruncatedSvdSolver{ELT} <: FE_Solver{ELT}
+struct TruncatedSvdSolver{ELT} <: AbstractSolverOperator{ELT}
     # Keep the original operator
     A          ::  DictionaryOperator
     # Random matrix
@@ -71,9 +71,7 @@ struct TruncatedSvdSolver{ELT} <: FE_Solver{ELT}
     end
 end
 
-src(t::TruncatedSvdSolver) = dest(t.A)
-dest(t::TruncatedSvdSolver) = src(t.A)
-inv(t::TruncatedSvdSolver) = t.A
+operator(op::TruncatedSvdSolver) = op.A
 
 TruncatedSvdSolver(A::DictionaryOperator; options...) =
     TruncatedSvdSolver{eltype(A)}(A::DictionaryOperator; options...)
@@ -116,7 +114,7 @@ The cost is equal to the computation of the SVD of A.
 
 For tensor product operators it returns a decomposition of the linearized system
 """
-struct ExactTruncatedSvdSolver{ELT} <: FE_Solver{ELT}
+struct ExactTruncatedSvdSolver{ELT} <: AbstractSolverOperator{ELT}
     # Keep the original operator
     A          ::  DictionaryOperator
     # Decomposition
@@ -144,12 +142,10 @@ struct ExactTruncatedSvdSolver{ELT} <: FE_Solver{ELT}
     end
 end
 
-src(t::ExactTruncatedSvdSolver) = dest(t.A)
-dest(t::ExactTruncatedSvdSolver) = src(t.A)
-inv(t::ExactTruncatedSvdSolver) = t.A
-
 ExactTruncatedSvdSolver(A::DictionaryOperator; options...) =
     ExactTruncatedSvdSolver{eltype(A)}(A::DictionaryOperator; options...)
+
+operator(op::ExactTruncatedSvdSolver) = op.A
 
 # We don't need to (de)linearize coefficients when they are already vectors
 function apply!(s::ExactTruncatedSvdSolver, coef_dest::Vector, coef_src::Vector)

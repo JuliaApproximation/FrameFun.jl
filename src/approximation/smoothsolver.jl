@@ -5,7 +5,7 @@ A fast FE solver based on a low-rank approximation of the plunge region. The plu
 is isolated using a projection operator. This algorithm contains an extra smoothing step
 
 """
-struct AZSmoothSolver{ELT} <: FE_Solver{ELT}
+struct AZSmoothSolver{ELT} <: AbstractSolverOperator{ELT}
     TS          :: DictionaryOperator
     A           ::  DictionaryOperator
     Zt          ::  DictionaryOperator
@@ -48,6 +48,8 @@ end
 
 AZSmoothSolver(A::DictionaryOperator; scaling=nothing, options...) =
         AZSmoothSolver{eltype(A)}(A, 1/scaling*A'; options...)
+
+operator(op::AZSmoothSolver) = op.A
 
 apply!(s::AZSmoothSolver, coef_dest, coef_src) =
     _apply!(s, coef_dest, coef_src, s.TS, s.A, s.Zt, s.plunge_op, s.b, s.blinear, s.syv, s.x1, s.x2, s.x3, s.Q, s.D, s.AD)
