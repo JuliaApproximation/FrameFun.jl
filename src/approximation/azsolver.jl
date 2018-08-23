@@ -42,9 +42,14 @@ AZSolver(trunc::AbstractSolverOperator{ELT}, A::DictionaryOperator{ELT}, Zt::Dic
         options...) where {ELT} =
     AZSolver{eltype(A)}(trunc, A, Zt, plunge_op; options...)
 
-# If no Zt is supplied, Zt=A' (up to scaling) by default.
-AZSolver(A::DictionaryOperator{ELT}; scaling=nothing, options...) where {ELT} =
-    AZSolver(A, ELT(1)/ELT(scaling)*A'; options...)
+# If no Zt is supplied, Zt=A' (up to an optional scaling) by default.
+function AZSolver(A::DictionaryOperator{ELT}; scaling=nothing, options...) where {ELT}
+    if scaling == nothing
+        AZSolver(A, A'; options...)
+    else
+        AZSolver(A, ELT(1)/ELT(scaling)*A'; options...)
+    end
+end
 
 operator(op::AZSolver) = op.A
 
