@@ -12,6 +12,7 @@ using BasisFunctions
 
 if VERSION < v"0.7-"
     import BasisFunctions.adjoint
+    import Base: start, next, done, showcompact
     mul! = A_mul_B!
     eigen  = eig
     macro warn(a)
@@ -41,11 +42,11 @@ import Base: length, eltype, size, push!, similar
 import Base: inv
 
 # Iteration and indexing
-import Base: eachindex, start, next, done, getindex, unsafe_getindex,
+import Base: eachindex, getindex, unsafe_getindex,
     checkbounds
 
 # Display
-import Base: show, showcompact
+import Base: show
 
 import Base: promote, promote_rule, convert, promote_eltype
 
@@ -119,6 +120,7 @@ import BasisFunctions: primal, dual, Zt, A, sampler, dual_sampler
 ###############################
 ## Exhaustive list of exports
 ###############################
+export ×
 # from funs.jl
 export ExpFun, ChebyFun, Fun, DictFun, sampling_grid, domain, abserror, maxerror, L2error, expansion
 
