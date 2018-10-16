@@ -18,7 +18,7 @@ if VERSION < v"0.7-"
     println("Create README.md")
     run(`$jupyter nbconvert --execute --to markdown --output README.md README.ipynb`)
 else
-    warn("Postponing Plot tests untill Plots is fixed")
+    @warn("Postponing Plot tests untill Plots is fixed")
 end
 
 

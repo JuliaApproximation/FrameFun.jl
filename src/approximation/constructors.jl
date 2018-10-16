@@ -55,7 +55,7 @@ function fun_simple(f::Function, dict::Dictionary, domain::Domain;
             return F
         end
     end
-    warn("Maximum number of coefficients exceeded, error is $(error)")
+    @warn("Maximum number of coefficients exceeded, error is $(error)")
     F
 end
 
@@ -138,7 +138,7 @@ function fun_optimal_N(f::Function, dict::Dictionary{S,T}, domain::Domain;
         dict=resize(dict, n)
         its = its + 1
     end
-    warn("Maximum number of coefficients exceeded, error is $(error)")
+    @warn("Maximum number of coefficients exceeded, error is $(error)")
     F
 end
 

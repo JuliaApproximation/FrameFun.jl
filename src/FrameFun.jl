@@ -5,16 +5,20 @@ module FrameFun
 using Base.Cartesian
 using StaticArrays
 using RecipesBase
+using Compat
 
 using Domains
 using BasisFunctions
-using Combinatorics: permutations
 
 if VERSION < v"0.7-"
     import BasisFunctions.adjoint
     mul! = A_mul_B!
     eigen  = eig
-else
+    macro warn(a)
+        return quote warn(a) end
+    end
+    Base.minimum(a::Array; dims=1) = minimum(a, dims)
+ else
     using LinearAlgebra
     using Printf
     import LinearAlgebra: adjoint

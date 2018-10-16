@@ -4,13 +4,15 @@ using Domains, BasisFunctions, FrameFun
 if VERSION < v"0.7-"
     using Base.Test
     ComplexF64 = Complex128
+    srand(1234)
 else
     using Test, LinearAlgebra, Random
+    Random.seed!(1234)
 end
 
 FE = FrameFun
 BA = BasisFunctions
-srand(1234)
+
 function delimit(s::AbstractString)
     println()
     println("############")
