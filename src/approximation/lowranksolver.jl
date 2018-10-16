@@ -30,8 +30,6 @@ struct TruncatedSvdSolver{ELT} <: FE_Solver{ELT}
         R = min(R, size(A,2))
         random_matrix = map(ELT, rand(size(A,2), R))
         C = apply_multiple(A, random_matrix)
-        @show typeof(C)
-        @show size(C)
         c = cond(C)
 # <<<<<<< HEAD
 #         # TODO change things with cold back

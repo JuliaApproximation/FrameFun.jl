@@ -99,14 +99,14 @@ maximum(box::ProductDomain) = SVector(map(maximum,elements(box)))
 equispaced_grid(d::Domain, ns) = cartesianproduct([PeriodicEquispacedGrid(ns[idx], infimum(d)[idx], supremum(d)[idx]) for idx = 1:dimension(boundingbox(d))]...)
 
 function boundingbox(d::UnionDomain)
-    left = SVector(minimum(hcat(map(infimum,elements(d))...);dims=2)...)
-    right = SVector(maximum(hcat(map(supremum,elements(d))...);dims=2)...)
+    left = SVector(my_minimum(hcat(map(infimum,elements(d))...);dims=2)...)
+    right = SVector(my_maximum(hcat(map(supremum,elements(d))...);dims=2)...)
     boundingbox(left,right)
 end
 
 function boundingbox(d::IntersectionDomain)
-    left = SVector(maximum(hcat(map(infimum,elements(d))...);dims=2)...)
-    right = SVector(minimum(hcat(map(supremum,elements(d))...);dims=2)...)
+    left = SVector(my_maximum(hcat(map(infimum,elements(d))...);dims=2)...)
+    right = SVector(my_minimum(hcat(map(supremum,elements(d))...);dims=2)...)
     boundingbox(left,right)
 end
 
