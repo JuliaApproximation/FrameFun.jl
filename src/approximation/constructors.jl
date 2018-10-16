@@ -1,102 +1,128 @@
 # constructors.jl
 
-"""
-  Create approximation to function with a function set in a domain.
+function _trapnorm(f::Function, D::ExtensionFrame, sampling_factor)
+    g = FrameFun.oversampled_grid(domain(D), basis(D), sampling_factor)[1]
+    sqrt(stepsize(g)*norm([f(x) for x in g])^2)
+end
 
-  The number of points is chosen adaptively.
+BasisFunctions.stepsize(s::IndexSubGrid) = BasisFunctions.stepsize(supergrid(s))
+
+random_test(f::Function, F::DictFun, tolerance, no_samples::Int) =
+    abserror(f,F;vals=no_samples) < tolerance
+
+abs_coefficient_test(f::Function, F::DictFun, abscoef, sampling_factor) =
+    norm(coefficients(F)) < abscoef*_trapnorm(f, dictionary(F), sampling_factor)
+
+rel_coefficient_test(f::Function, F::DictFun, relcoef, prev_cnorm, tolerance) =
+    abs(norm(coefficients(F))-prev_cnorm) < relcoef*tolerance
+
+function coefficient_test(f::Function, F::DictFun; abscoef=nothing, relcoef=nothing, tolerance=nothing, sampling_factor=1, prev_cnorm=nothing, options...)
+    if relcoef != nothing
+        rel_coefficient_test(f, F, relcoef, prev_cnorm, tolerance)
+    elseif abscoef != nothing
+        abs_coefficient_test(f, F, abscoef, sampling_factor)
+    else
+        error()
+    end
+end
+
+
+
 """
-function fun_simple(f::Function, set::Dictionary, domain::Domain;
-        no_checkpoints=200, max_logn_coefs=8, tol=1e-12, print_error=false, options...)
-    ELT = codomaintype(f, set)
-    N = dimension(set)
+  Create approximation to function with a given dictionary in a domain.
+
+  The number of points is chosen adaptively, and guarantees the tolerance, but may not be optimal.
+"""
+function fun_simple(f::Function, dict::Dictionary, domain::Domain;
+        no_checkpoints=3, max_logn_coefs=8, tol=1e-12, abscoef=nothing, verbose=false, adaptive_verbose = verbose, options...)
+    ELT = codomaintype(f, dict)
+    N = dimension(dict)
     F = nothing
-    # TODO Decide which is best
-    # tol = default_cutoff(FE_DiscreteProblem(domain, set, 2; options...))
     rgrid = randomgrid(domain, no_checkpoints)
     error = Inf
     random_f=sample(rgrid, f, eltype(f(rgrid[1]...)))
     random_F=zeros(ELT,no_checkpoints)
     n = 8
-    set = resize(set,n)
-    while length(set) <= 2^(max_logn_coefs)
-        set = resize(set,extension_size(set))
-        F = Fun(f, set, domain; options...)
+    dict = resize(dict,n)
+    while length(dict) <= 1<<(max_logn_coefs)
+        dict = resize(dict,extension_size(dict))
+        F = Fun(f, dict, domain; verbose=verbose, options...)
         random_F = F(rgrid)
         error = maximum(abs.(random_F-random_f))
-        print_error && (@printf "Error with %d coefficients is %1.3e\n" (length(set)) error)
-        if error < tol
+        adaptive_verbose && (@printf "Error with %d coefficients is %1.3e\n" (length(dict)) error)
+        (adaptive_verbose & (abscoef != nothing))  && (@printf "Norm with %d coefficients is %1.3e (%1.3e)\n" (length(dict)) norm(coefficients(F)) abscoef*_trapnorm(f, dictionary(F), 1))
+        if (error < tol) && ((abscoef == nothing) || abs_coefficient_test(f, F, abscoef, 1))
             return F
         end
     end
-    warn("Maximum number of coefficients exceeded, error is $(error)")
+    @warn("Maximum number of coefficients exceeded, error is $(error)")
     F
 end
 
 Base.isnan(::Tuple) = false
 
-"""
-  Create approximation to function with a function set in a domain.
+are_close(N1, N2) =
+    !isnan(N1) && !isnan(N2) && (sum(abs.(collect(N1)-collect(N2))) <= length(N1))
 
-  The number of points is chosen adaptively.
 """
-function fun_optimal_N(f::Function, set::Dictionary{S,T}, domain::Domain;
-  no_checkpoints=200, max_logn_coefs=8, cutoff=default_cutoff(real(S)), tol=100*cutoff, verbose=false, adaptive_verbose = verbose, return_log=false, randomtest=false, options...) where {S,T}
-    ELT = codomaintype(f, set)
-    N = dimension(set)
+  Create approximation to function with a dictionary in a domain.
+
+  The number of points is chosen adaptively and optimally.
+"""
+function fun_optimal_N(f::Function, dict::Dictionary{S,T}, domain::Domain;
+        no_checkpoints=3, max_logn_coefs=8, cutoff=default_cutoff(real(S)), tol=100*cutoff, verbose=false, adaptive_verbose = verbose, return_log=false, randomtest=false, abscoef=nothing, relcoef=nothing, options...) where {S,T}
+    coefficienttest = (nothing!=abscoef) | (nothing!=relcoef)
+
+    ELT = codomaintype(f, dict)
+    N = dimension(dict)
     F = nothing
     rgrid = randomgrid(domain, no_checkpoints)
-    error = Inf
     Nmax = NaN; Nmin = 1;
     n = 8
-    set=resize(set, n)
+    dict=resize(dict, n)
     return_log && (log = zeros(T,0,4))
     its = 0
-    while length(set) <= 2^max_logn_coefs && its < 100
+    error=-1
+    while length(dict) <= 2^max_logn_coefs && its < 100
         # Find new approximation
-        F=Fun(f, set, domain; verbose=verbose, cutoff=cutoff, options...)
-        # Calculate error
+        F=Fun(f, dict, domain; verbose=verbose, cutoff=cutoff, options...)
+
         # Using residual
         error = residual(f, F)/sqrt(length(F))
-
         # println(n, ": ", Nmin, " ", Nmax, " ", error)
         return_log && (log = [log; n Nmin Nmax error])
+        adaptive_verbose  && (@printf "Error with %d coefficients is %1.3e (%1.3e)\n" (length(dict)) error tol)
 
+        errorsucces = (error < tol)
 
-        adaptive_verbose  && (@printf "Error with %d coefficients is %1.3e (%1.3e)\n" (length(set)) error tol)
+        randomsuccess = randomtest ?
+            random_test(f, F, tol, 3) : true
+        (adaptive_verbose&randomtest)  && (randomsuccess ?
+            (@printf "Random test in 3 points succeeded\n") : (@printf "Random test in 3 points failed\n"))
 
-        error < tol ? Nmax=n : Nmin=n
+        coefsuccess = coefficienttest ?
+            coefficient_test(f, F; tolerance=tol, abscoef=abscoef, relcoef=relcoef, options...) : true
+        (adaptive_verbose&coefficienttest)  && (coefsuccess ?
+            (@printf "Coefficient test succeeded %1.3e\n" norm(coefficients(F))) :
+            (@printf "Coefficient test failed %1.3e\n" norm(coefficients(F))))
 
-        succeeded_randomtest = true
+        success = broadcast(&, errorsucces, coefsuccess, randomsuccess)
+        success ? Nmax=n : Nmin=n
+
         # Stop condition
-        # Stop if the bounds Nmin and Nmax are determined and if they are close
-        if !isnan(Nmax) && !isnan(Nmin) && (sum(abs.(collect(Nmax)-collect(Nmin))) <= N)
-            set=resize(set, Nmax)
-            F = Fun(f, set, domain; verbose=verbose, cutoff=cutoff, options...)
-            #test in 3 random points if randomtest
-            randomtestsucceeded = true
-            if randomtest
-                if maxerror(f, F, vals=3) > tol
-                    randomtestsucceeded = false
-                end
-                # return if test succeded
-                if randomtestsucceeded
-                    return_log && (return F, log)
-                    return F
-                else
-                    # continue if test failed
-                    adaptive_verbose && (@printf "Random test in 3 points failed\n")
-                    succeeded_randomtest = false
-                end
-            else
-                return_log && (return F, log)
-                return F
-            end
+        # If the bounds Nmin and Nmax are determined and if they are close
+        if are_close(Nmin, Nmax)
+            dict=resize(dict, Nmax)
+            F = Fun(f, dict, domain; verbose=verbose, cutoff=cutoff, options...)
+
+            return_log && (return F, log)
+            return F
         end
 
         # Decide on new n
-        if isnan(Nmax) || !succeeded_randomtest
+        if isnan(Nmax)
             # tolerance is not yet met, increase n
-            n = extension_size(set)
+            n = extension_size(dict)
         else
             # tolerance is reached, find optimal n by subdivision
             if N==1
@@ -109,12 +135,13 @@ function fun_optimal_N(f::Function, set::Dictionary{S,T}, domain::Domain;
         end
 
         # Use new n
-        set=resize(set, n)
+        dict=resize(dict, n)
         its = its + 1
     end
-    warn("Maximum number of coefficients exceeded, error is $(error)")
+    @warn("Maximum number of coefficients exceeded, error is $(error)")
     F
 end
+
 
 default_cutoff(::Type{T}) where T= 10*10^(4/5*log10(eps(real(T))))
 default_cutoff(::Type{Float64}) = 1e-16
@@ -131,14 +158,14 @@ Base.real(::Type{Tuple{N,T}}) where {N,T} = real(T)
   Stop the iteration when the residu of the approximation is smaller than the tolerance
   or at the maximum number of iterations.
 """
-function fun_greedy(f::Function, set::Dictionary, domain::FrameFun.Domain;
+function fun_greedy(f::Function, dict::Dictionary, domain::FrameFun.Domain;
     max_logn_coefs = 7, tol = 1e-12, options...)
     init_n = 4
-    set = resize(set,init_n)
-    F = Fun(x->0, set, domain; options...)
+    dict = resize(dict,init_n)
+    F = Fun(x->0, dict, domain; options...)
     for n in init_n:2^max_logn_coefs
-        set = resize(set,n)
-        p_i = Fun(x->(f(x)-F(x)), set, domain; options...)
+        dict = resize(dict,n)
+        p_i = Fun(x->(f(x)-F(x)), dict, domain; options...)
         F = F + p_i
         if residual(f, F) < tol
             return F
@@ -148,16 +175,16 @@ function fun_greedy(f::Function, set::Dictionary, domain::FrameFun.Domain;
 end
 
 function FourierFun(f::Function, ELT = Float64; T=ELT(2), Omega=interval(-ELT(-1),ELT(1)), Gamma=T*Omega, options...)
-  B = FourierBasis(1, leftendpoint(Omega), rightendpoint(Omega), ELT)
-  D = Omega
-  frame = extensionframe(B, Gamma)
+    B = FourierBasis(1, leftendpoint(Omega), rightendpoint(Omega), ELT)
+    D = Omega
+    frame = extensionframe(B, Gamma)
 end
 
 # Allows following notation
 # f2 = cos(f1) with f1 a DictFun.
 for f in (:cos, :sin, :tan, :sinh, :cosh, :tanh,
-  :asin, :acos, :atan,
-  :sqrt, :cbrt, :exp, :log)
+    :asin, :acos, :atan,
+    :sqrt, :cbrt, :exp, :log)
     @eval begin
         Base.$f(F::DictFun, ; afun = fun_optimal_N, options...) = afun(x->Base.$f(F(x)), basis(F), domain(F); options...)
     end

@@ -29,7 +29,7 @@ finally
     cd("..")
 end
 
-FILE = open("notebookscripts")
+FILE = open("notebookscripts") 
 try
     for LINE in eachline(FILE)
         println("Run $(LINE)")

@@ -4,12 +4,15 @@ using Domains, BasisFunctions, FrameFun
 if VERSION < v"0.7-"
     using Base.Test
     ComplexF64 = Complex128
+    srand(1234)
 else
     using Test, LinearAlgebra, Random
+    Random.seed!(1234)
 end
+
 FE = FrameFun
 BA = BasisFunctions
-srand(1234)
+
 function delimit(s::AbstractString)
     println()
     println("############")
@@ -74,12 +77,18 @@ function test_funs()
     f = x->x
     max_logn_coefs = 8
     @testset "$(tests[i]) tests" for (i,mth) in enumerate([FE.fun_simple, FE.fun_optimal_N, FE.fun_greedy])
-        for tol in 10.0.^(-4.:-4.:-16.)
-            F = mth(f, S, D, tol=tol, max_logn_coefs=max_logn_coefs)
+        for tol in 10.0.^(-4.:-4.:-12.)
+            F = mth(f, S, D; tol=tol, max_logn_coefs=max_logn_coefs, adaptive_verbose=false)
             @test ( (FE.maxerror(f,F) < tol*100) || (length(dictionary(F))>= 2^max_logn_coefs))
         end
+        if mth != FE.fun_greedy
+            for tol in 10.0.^(-4.:-4.:-16.)
+                F = mth(f, S, D; tol=tol, max_logn_coefs=max_logn_coefs, abscoef=3, adaptive_verbose=false, random_test=true)
+                @test ( (FE.maxerror(f,F) < tol*100) || (length(dictionary(F))>= 2^max_logn_coefs))
+            end
+        end
         F = mth(x->cos(4π*x), S, D)
-        @test FE.residual(x->cos(4π*x),F) < 1e-13
+        @test FE.residual(x->cos(4π*x),F,tol=1e-12) < 1e-11
     end
 end
 

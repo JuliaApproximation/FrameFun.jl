@@ -29,7 +29,7 @@ struct AZSmoothSolver{ELT} <: FE_Solver{ELT}
         ADV = (TS2.Ut)'.*diagonal(AD)
         # Orthogonal basis for D^(-1)V_mid
         Q, R = qr(ADV)
-        (VERSION >= v"0.7-") && (Q = Matrix(Q);warn("Unnecessary conversion if qr works fine. "))
+        (VERSION >= v"0.7-") && (Q = Matrix(Q);@warn("Unnecessary conversion if qr works fine. "))
         # Pre-allocation
         b = zeros(size(dest(plunge_op)))
         blinear = zeros(ELT, length(dest(A)))
