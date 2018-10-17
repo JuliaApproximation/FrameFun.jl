@@ -1,7 +1,7 @@
 StaticArrays
 Plots
 GR
-Combinatorics
 RecipesBase
 QuadGK
 IJulia
+Compat

@@ -5,19 +5,27 @@ module FrameFun
 using Base.Cartesian
 using StaticArrays
 using RecipesBase
+using Compat
 
 using Domains
 using BasisFunctions
-using Combinatorics: permutations
 
 if VERSION < v"0.7-"
     import BasisFunctions.adjoint
+    import Base: start, next, done, showcompact
     mul! = A_mul_B!
     eigen  = eig
-else
+    macro warn(a)
+        return quote warn($a) end
+    end
+    my_minimum(a::Array; dims=nothing) = minimum(a, dims)
+    my_maximum(a::Array; dims=nothing) = maximum(a, dims)
+ else
     using LinearAlgebra
     using Printf
     import LinearAlgebra: adjoint
+    my_minimum(a::Array; dims=nothing) = minimum(a; dims=dims)
+    my_maximum(a::Array; dims=nothing) = maximum(a, dims=dims)
 end
 
 ###############################
@@ -34,11 +42,11 @@ import Base: length, eltype, size, push!, similar
 import Base: inv
 
 # Iteration and indexing
-import Base: eachindex, start, next, done, getindex, unsafe_getindex,
+import Base: eachindex, getindex, unsafe_getindex,
     checkbounds
 
 # Display
-import Base: show, showcompact
+import Base: show
 
 import Base: promote, promote_rule, convert, promote_eltype
 
@@ -113,6 +121,7 @@ import BasisFunctions: primal, dual, Zt, A, sampler, dual_sampler
 ###############################
 ## Exhaustive list of exports
 ###############################
+export ×
 # from funs.jl
 export ExpFun, ChebyFun, Fun, DictFun, sampling_grid, domain, abserror, maxerror, L2error, expansion
 

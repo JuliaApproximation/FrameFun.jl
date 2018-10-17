@@ -69,7 +69,7 @@ function test_differential_equations_1d()
         BC = DirichletBC(x->0)
         # Set up Differential equation
         f(x) = x
-        Diff = differentiation_operator(B)^2
+        Diff = differentiation_operator(B)*differentiation_operator(B)
         DE = DiffEquation(B, Dom, Diff, f, (BC,))
         # Actually solve the differential equation
         F = solve(DE, solver=solver)
@@ -87,7 +87,7 @@ function test_differential_equations_1d()
         BC2 = NeumannBC(x->0, interval(-2.0,0.0))
         # Set up Differential equation
         f(x) = x
-        Diff = differentiation_operator(B)^2
+        Diff = differentiation_operator(B)*differentiation_operator(B)
         DE = DiffEquation(B, Dom, Diff, f, (BC1,BC2))
         # Actually solve the differential equation
         F = solve(DE, solver=solver)
