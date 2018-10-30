@@ -6,7 +6,7 @@ version = "0.1.0"
 [deps]
 BasisFunctions = "8ac202e8-8a12-11e8-0422-2b902fe89c2d"
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
-Domains = "a4a0b8aa-7ac0-11e8-2da9-8385f1ed8077"
+Domains = "92287275-370e-5158-8ba4-382d508e9c6d"
 GR = "28b8d3ca-fb5f-59d9-8090-bfdbd6d07a71"
 GenericLinearAlgebra = "14197337-ba66-59df-a3e3-ca00e7dcff7a"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
