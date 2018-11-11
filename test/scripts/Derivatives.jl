@@ -2,7 +2,7 @@
 using BasisFunctions
 using FrameFun
 using Plots
-using Domains
+using DomainSets
 
 B = ChebyshevBasis(10,-2.0,2.0)
 D = interval(-1.0,1.0)

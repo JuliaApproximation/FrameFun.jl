@@ -1,7 +1,7 @@
 module test_suite
 
 
-using Domains, BasisFunctions, FrameFun, StaticArrays
+using DomainSets, BasisFunctions, FrameFun, StaticArrays
 
 if VERSION < v"0.7-"
     using Base.Test
@@ -31,7 +31,7 @@ const include_bigfloat_tests = false
 # Auxiliary functions
 ########
 
-const v = TypeFactory{SVector}()
+const v = DomainSets.TypeFactory{SVector}()
 
 function delimit(s::AbstractString)
     println()
@@ -89,7 +89,7 @@ function test_1d_cases()
     f(x) = cos(x^2-1//2)-1
     g(x) = 1im*cos(x^2-1//2)-1
     Basis = FourierBasis
-    D = interval(-1.0,1.0)
+    D = Interval(-1.0,1.0)
     # Chebyshev and Fourier Bases
     solver = FrameFun.FE_TridiagonalSolver
     println()
@@ -118,8 +118,9 @@ function test_1d_cases()
 
     @testset "result" for ELT in (Float32,Float64),
             Basis in (FourierBasis, ChebyshevBasis),
-            D in [interval(ELT, -1.5, 0.7), interval(ELT, -1.5,-0.5)∪ interval(ELT, 0.5,1.5)],
+            D in [Interval(ELT(-1.5),ELT(0.7)), DomainSets.UnionDomain(Interval(ELT(-1.5),ELT(-0.5)),Interval(ELT(0.5),ELT(1.5)))],
             solver in (AZSolver, DirectSolver)
+
         println()
         println("Testing \t solver = $solver, \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = $ELT ")
         verbose && println("N\t T\t Complex?\t abserror\t time\t\t memory   ")
@@ -127,7 +128,7 @@ function test_1d_cases()
         for n in [FrameFun.default_frame_n(D, Basis)]
 
             # There is some symmetry around T=2, test smaller and larger values
-            for T in (1.9,)
+            for T in (ELT(1.9),)
                 for func in (f,g)
 
                     B = Basis{ELT}(n, -T, T)
@@ -151,7 +152,7 @@ function test_bigfloat()
     f(x) = cos(x.^2) - big(1.0)
     g(x) = big(1.0)im * cos(x.^2) - big(1.0)
     @testset "result" for Basis in (FourierBasis, ChebyshevBasis),
-        D in [interval(BigFloat, -3//2, 7//10)]
+        D in [Interval(BigFloat, -3//2, 7//10)]
         println()
         println("Testing \t solver = DirectSolver{ELT}\n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = BigFloat ")
         verbose && println("N\t T\t Complex?\t abserror\t time\t\t memory   ")
@@ -210,7 +211,7 @@ function test_3d_cases()
     delimit("3D")
 
     f(x,y,z) = cos(x)+sin(y)-x*z
-    # @testset "result" for Basis in (FourierBasis, ChebyshevBasis), D in (Cube((-1.2,-1.0,-0.9),(1.0,0.9,1.2)),FrameFun.tensorproduct(interval(-1.0,1.0),Disk(1.05)), FrameFun.Ball(1.2,[-0.3,0.25,0.1])), solver in (AZSolver, )
+    # @testset "result" for Basis in (FourierBasis, ChebyshevBasis), D in (Cube((-1.2,-1.0,-0.9),(1.0,0.9,1.2)),FrameFun.tensorproduct(Interval(-1.0,1.0),Disk(1.05)), FrameFun.Ball(1.2,[-0.3,0.25,0.1])), solver in (AZSolver, )
     #             show(solver); println()
     @testset "result" for Basis in (FourierBasis, ChebyshevBasis), D in (cube((-1.2,-1.0,-0.9),(1.0,0.9,1.2)), FrameFun.ball(1.2,v[-0.3,0.25,0.1])), solver in (AZSolver, )
                 show(solver); println()

@@ -83,7 +83,7 @@ const TensorProductExtensionFrameDict{N,N1,S,T} = TensorProductDict{N,NTuple{N1,
 # TODO remove need of this function
 function flatten(dict::TensorProductExtensionFrameDict)
     basis = tensorproduct([superdict(dicti) for dicti in elements(dict)]...)
-    domain = Domains.ProductDomain([FrameFun.domain(dicti) for dicti in elements(dict)]...)
+    domain = DomainSets.ProductDomain([FrameFun.domain(dicti) for dicti in elements(dict)]...)
     ExtensionFrame(domain, basis)
 end
 
@@ -114,7 +114,7 @@ innerproduct(f1::ExtensionFrame, i, f2::ExtensionFrame, j, measure) =
 import BasisFunctions: dot
 import BasisFunctions: native_nodes
 
-native_nodes(basis::Dictionary, domain::Domains.AbstractInterval) =
+native_nodes(basis::Dictionary, domain::DomainSets.AbstractInterval) =
     BasisFunctions.clip_and_cut(native_nodes(basis), infimum(domain), supremum(domain))
 
 dot(dict::ExtensionFrame, f1::Function, f2::Function; options...)  =
@@ -126,7 +126,7 @@ dot(dict::ExtensionFrame, f1::Int, f2::Function; options...) =
 dot(dict::ExtensionFrame, f1::Int, f2::Int; options...) =
     dot(dict, f1 ,x->eval_element(basis(dict), f2, x); options...)
 
-dot(dict::Dictionary, domain::Domains.AbstractInterval, f1::Function, f2::Function; options...) =
+dot(dict::Dictionary, domain::DomainSets.AbstractInterval, f1::Function, f2::Function; options...) =
     dot(dict, f1, f2, native_nodes(dict, domain); options...)
 # # TODO now we assume that domainunion contains sections that do not overlap
 # dot(dict::Dictionary, domain::DomainUnion, f1::Function, f2::Function; options...) =
@@ -149,10 +149,10 @@ function dot(frame1::ExtensionFrame, frame2::ExtensionFrame, f1::Function, f2::F
     dot(basis(frame1), basis(frame2), d1, f1, f2; options...)
 end
 
-dot(set1::Dictionary, set2::Dictionary, domain::Domains.AbstractInterval, f1::Function, f2::Function; options...) =
+dot(set1::Dictionary, set2::Dictionary, domain::DomainSets.AbstractInterval, f1::Function, f2::Function; options...) =
     dot(set1, set2, f1, f2, native_nodes(set1, set2, domain); options...)
 
-function native_nodes(set1::Dictionary, set2::Dictionary, domain::Domains.AbstractInterval)
+function native_nodes(set1::Dictionary, set2::Dictionary, domain::DomainSets.AbstractInterval)
     @assert infimum(support(set1) )≈ infimum(support((set2)))
     @assert supremum(support((set1))) ≈ supremum(support((set2)))
     native_nodes(set1, domain)

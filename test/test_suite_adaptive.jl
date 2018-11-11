@@ -1,5 +1,5 @@
 module test_suite
-using Domains, BasisFunctions, FrameFun
+using DomainSets, BasisFunctions, FrameFun
 
 if VERSION < v"0.7-"
     using Base.Test
@@ -21,17 +21,17 @@ function delimit(s::AbstractString)
 end
 
 function test_function_space()
-  bboxes = (interval(-1.0, 1.0), interval(-1.0, 1.0),
-      interval(0.0, 1.0), interval(-1.0, 1.0), interval(-1.0, 1.0),
-      interval(0.0, 1.0)×interval(-1.0, 1.0), interval(-2.0, 1.0),
-      interval(0.0, 1.0)×interval(0.0, 1.0)×interval(0.0, 1.0), interval(0.0, 1.0))
+  bboxes = (Interval(-1.0, 1.0), Interval(-1.0, 1.0),
+      Interval(0.0, 1.0), Interval(-1.0, 1.0), Interval(-1.0, 1.0),
+      Interval(0.0, 1.0)×Interval(-1.0, 1.0), Interval(-2.0, 1.0),
+      Interval(0.0, 1.0)×Interval(0.0, 1.0)×Interval(0.0, 1.0), Interval(0.0, 1.0))
   bases = (FourierBasis(64,-1.0, 1.0), FourierBasis(64,-1.0, 1.0),
       FourierBasis(64), FourierBasis(64,-1.0, 1.0), ChebyshevBasis(64),
       FourierBasis(8)⊗ChebyshevBasis(8), FourierBasis(32,-2.,1.)⊕rescale(ChebyshevBasis(32),-2.,1.),
       BA.tensorproduct(FourierBasis(4),3), BA.multidict(FourierBasis(32),FourierBasis(32)))
   @testset "Space = $(name(space)) " for (i,space) in enumerate([
       FE.FunctionSpace(FourierBasis(64,-1.0, 1.0)),
-      FE.FunctionSpace(FourierBasis(64,-1.0, 1.0), interval(-1.0, 1.0)),
+      FE.FunctionSpace(FourierBasis(64,-1.0, 1.0), Interval(-1.0, 1.0)),
       FourierSpace(),
       FourierSpace(-1.0, 1.0),
       ChebyshevSpace(),
@@ -57,7 +57,7 @@ end
 
 function test_residual()
     @testset "Residual for basis $(basis)" for basis in (FourierBasis, ChebyshevBasis)
-        D = interval(-1.0, 1.0)/2
+        D = Interval(-1.0, 1.0)/2
         f = x->cos(20x)
         res = Inf
         for n in 2 .^ (3:5)
@@ -73,7 +73,7 @@ end
 function test_funs()
     tests = ("fun_simple", "fun_optimal_N", "fun_greedy")
     S = FourierBasis(0, -1.0, 1.0)
-    D = interval(-1.0, 1.0)/2
+    D = Interval(-1.0, 1.0)/2
     f = x->x
     max_logn_coefs = 8
     @testset "$(tests[i]) tests" for (i,mth) in enumerate([FE.fun_simple, FE.fun_optimal_N, FE.fun_greedy])
@@ -104,7 +104,7 @@ end
 
 function test_extra_functionality()
     F = FourierSpace(-1.0, 1.0)
-    D = interval(-0.5, 0.5)
+    D = Interval(-0.5, 0.5)
     FC = FunConstructor(F, D)
     x = FC(identity)
     tol = 1e-9

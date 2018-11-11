@@ -1,5 +1,5 @@
 module test_suite_applications
-using BasisFunctions, Domains, FrameFun
+using BasisFunctions, DomainSets, FrameFun
 if VERSION < v"0.7-"
     using Base.Test
 else
@@ -9,7 +9,7 @@ end
 
 @testset "WeightedSumPlatform" begin
     # Simple platform construction test
-    D = interval(0,0.5)
+    D = 0.0..0.5
     i = 7
     P2a = BasisFunctions.fourier_platform(oversampling=4)
     P2 = FrameFun.extension_frame_platform(P2a,D)

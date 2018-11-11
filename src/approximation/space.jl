@@ -21,9 +21,9 @@ FunctionSpace(basis::Dictionary, dom::Domain) =
 
 # place somewhere else?
 FourierSpace(left::Real=0,right::Real=1) =
-    FunctionSpace(FourierBasis(0), interval(left,right))
+    FunctionSpace(FourierBasis(0), Interval(left,right))
 ChebyshevSpace(left::Real=-1,right::Real=1) =
-    FunctionSpace(ChebyshevBasis(0), interval(left,right))
+    FunctionSpace(ChebyshevBasis(0), Interval(left,right))
 # place somewhere else?
 boundingbox(f::Dictionary) = boundingbox(support(f))
 

@@ -20,7 +20,7 @@ struct DirichletBC
     dRhs   :: Function
     D      :: Domain
     factor :: Number
-    function DirichletBC(dRhs=default_boundary_condition :: Function, D=FullSpace(), factor=1.0)
+    function DirichletBC(dRhs=default_boundary_condition :: Function, D=DomainSets.FullSpace{Float64}(), factor=1.0)
         new(dRhs,D,factor)
     end
 end
@@ -28,7 +28,7 @@ end
 struct NeumannBC
     dRhs   :: Function
     D      :: Domain
-    function NeumannBC(dRhs=default_boundary_condition :: Function, D=FullSpace())
+    function NeumannBC(dRhs=default_boundary_condition :: Function, D=DomainSets.FullSpace{Float64}())
         new(dRhs,D)
     end
 end

@@ -1,6 +1,6 @@
 module test_suite_applications
 
-using Domains, BasisFunctions, FrameFun, Plots
+using DomainSets, BasisFunctions, FrameFun, Plots
 # Plots loads the default backend (PyPlot unless otherwise specified)
 
 if VERSION < v"0.7-"
@@ -51,7 +51,7 @@ function test_plots()
     plot(G,size=(400,400))
 
 B = FourierBasis(51,-2.0,-0.5)
-D = interval(-1.7,-1.0)
+D = -1.7..1.0
 f(x) = cos(3*x.^2)
 F = Fun(f,B,D)
 # Easily combine multiple plots

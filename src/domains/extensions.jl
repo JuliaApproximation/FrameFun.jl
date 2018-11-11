@@ -1,5 +1,6 @@
-# extensions.jl
-# A collection of extensions to the Domains package.
+# A collection of extensions to the DomainSets package.
+
+using DomainSets: inverse_map, forward_map
 
 ###########################
 # Applying broadcast to in
@@ -7,11 +8,8 @@
 
 # Intercept a broadcasted call to indomain. We assume that the user wants evaluation
 # in a set of points (which we call a grid), rather than in a single point.
-if VERSION < v"0.7-"
-    broadcast(::typeof(in), grid, d::Domain) = indomain_broadcast(grid, d)
-else
-    Base.Broadcast.broadcasted(::typeof(in), grid, d::Domain) = indomain_broadcast(grid, d)
-end
+# TODO: the user may want to evaluate a single point in a sequence of domains...
+broadcast(::typeof(in), grid, d::Domain) = indomain_broadcast(grid, d)
 
 # # Default methods for evaluation on a grid: the default is to call eval on the domain with
 # # points as arguments. Domains that have faster grid evaluation routines may define their own version.
@@ -20,7 +18,7 @@ indomain_broadcast(grid, d::Domain) = indomain_broadcast!((VERSION < v"0.7-") ? 
 
 function indomain_broadcast!(result, grid, domain::Domain)
     for (i,x) in enumerate(grid)
-        result[i] = indomain(x, domain)
+        result[i] = DomainSets.indomain(x, domain)
     end
     result
 end
@@ -67,17 +65,15 @@ in(x::Number, a::T, b::T) where {T <: Number} = a <= x <= b
 
 # Some of these constructors can hopefully disappear when spaces are introduced.
 
-boundingbox(a::SVector{1}, b::SVector{1}) = interval(a[1],b[1])
+boundingbox(a::SVector{1}, b::SVector{1}) = a[1]..b[1]
 
-boundingbox(a::Number, b::Number) = interval(a,b)
+boundingbox(a::Number, b::Number) = a..b
 
 boundingbox(a, b) = cube(a,b)
 
 boundingbox(d::AbstractInterval) = d
 
-boundingbox(::UnitBall{N,T}) where {N,T} = cube(-ones(SVector{N,T}), ones(SVector{N,T}))
-
-boundingbox(c::Ball) = cube((c.center[1]-c.radius,c.center[2]-c.radius,c.center[3]-c.radius),(c.center[1]+c.radius,c.center[2]+c.radius,c.center[3]+c.radius))
+boundingbox(::UnitHyperBall{N,T}) where {N,T} = cube(-ones(SVector{N,T}), ones(SVector{N,T}))
 
 boundingbox(d::ProductDomain) = cartesianproduct(map(boundingbox, elements(d))...)
 
@@ -110,11 +106,11 @@ function boundingbox(d::IntersectionDomain)
     boundingbox(left,right)
 end
 
-Domains.superdomain(d::MappedDomain) = Domains.source(d)
+DomainSets.superdomain(d::DomainSets.MappedDomain) = DomainSets.source(d)
 
 # Now here is a problem: how do we compute a bounding box, without extra knowledge
 # of the map? We can only do this for some maps.
-boundingbox(d::MappedDomain) = mapped_boundingbox(boundingbox(source(d)), forward_map(d))
+boundingbox(d::DomainSets.MappedDomain) = mapped_boundingbox(boundingbox(source(d)), forward_map(d))
 
 function mapped_boundingbox(box::Interval, fmap)
     l,r = (minimum(box),maximum(box))
@@ -173,17 +169,17 @@ function normal(x, ::UnitSimplex)
     return z/norm(z)
 end
 
-normal(x, d::UnitBall) = x/norm(x)
+normal(x, d::UnitHyperBall) = x/norm(x)
 
 dist(x, d::AbstractInterval) = min(maximum(d)-x,x-minimum(d))
 
 normal(x, d::AbstractInterval) = (abs(minimum(d)-x) < abs(maximum(d)-x)) ? -1 : 1
 
-dist(x, d::UnitBall) = 1-norm(x)
+dist(x, d::UnitHyperBall) = 1-norm(x)
 
-normal(x, d::UnitSphere) = x/norm(x)
+normal(x, d::UnitHyperSphere) = x/norm(x)
 
-dist(x, d::UnitSphere) = 1-norm(x)
+dist(x, d::UnitHyperSphere) = 1-norm(x)
 
 dist(x,d::UnionDomain) = indomain(x,d) ? sum(map(di->max(0,dist(x,di)),elements(d))) : maximum(map(di->dist(x,di),elements(d)))
 
@@ -199,9 +195,9 @@ normal(x,d::DifferenceDomain) = abs(dist(x,d.d1))<abs(dist(x,d.d2)) ? normal(x,d
 
 dist(x, t::ProductDomain) = minimum(map(dist,x,elements(t)))
 
-dist(x, d::MappedDomain) = dist(inverse_map(d)*x,source(d))
+dist(x, d::DomainSets.MappedDomain) = dist(inverse_map(d)*x,source(d))
 
-function normal(x, d::MappedDomain)
+function normal(x, d::DomainSets.MappedDomain)
     x = applymap(inverse_map(d),normal(inverse_map(d)*x,source(d)))
     x0 = apply_inverse(inverse_map(d),zeros(size(x)))
    (x-x0)/norm(x-x0)
@@ -210,6 +206,8 @@ function normal(x, t::ProductDomain)
     index = findmin(map(dist,x,elements(t)))[2]
     [(i==index)*normal(x[i],element(t,i)) for i =1:length(elements(t))]
 end
+
+
 ##########################################################################
 ### Assorted Domains
 ##########################################################################

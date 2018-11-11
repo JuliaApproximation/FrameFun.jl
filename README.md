@@ -15,10 +15,10 @@ After choosing a suitable Basis and Domain, any function can be approximated in 
 ```julia
 using BasisFunctions
 using Plots;gr()
-using Domains
+using DomainSets
 using FrameFun
 B = FourierBasis(61, -1, 1)
-D = interval(-0.5,0.5)
+D = -0.5..0.5
 f = x->x
 F = Fun(f,B,D)
 

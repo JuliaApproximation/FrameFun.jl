@@ -8,7 +8,7 @@ struct PolarDomain{T} <: EuclideanDomain{2,T}
     box     ::  EuclideanDomain{2,T}
 end
 
-polardomain(char, dom) = PolarDomain(Fun(char,FourierBasis(100,-pi,pi),interval(-pi,pi)),boundingbox(dom))
+polardomain(char, dom) = PolarDomain(Fun(char,FourierBasis(100,-pi,pi),Interval(-pi,pi)),boundingbox(dom))
 
 indomain(x, c::PolarDomain) = sqrt(x[1]^2+x[2]^2) < real(c.charFun((VERSION < v"0.7-") ? atan2(x[2],x[1]) : atan(x[2],x[1])))
 

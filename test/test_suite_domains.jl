@@ -1,4 +1,4 @@
-using Domains, BasisFunctions, FrameFun
+using DomainSets, BasisFunctions, FrameFun
 if VERSION < v"0.7-"
     using Base.Test
 else
@@ -65,7 +65,7 @@ function test_distances_and_normals()
     @test domb([0.5,0.5],D2b)
     @test domn([0.5,0.5],D2b,[1/sqrt(2),1/sqrt(2)])
 
-    D3 = interval(-1,1.0)
+    D3 = -1..1.0
     @test isapprox(dist(0.5,D3),0.5)
     @test isapprox(normal(1.0,D3),1)
 

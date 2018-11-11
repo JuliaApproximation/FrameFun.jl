@@ -1,6 +1,6 @@
 module test_suite_applications
 
-using Domains, BasisFunctions, FrameFun
+using DomainSets, BasisFunctions, FrameFun
 
 if VERSION < v"0.7-"
     using Base.Test
@@ -64,7 +64,7 @@ end
 function test_differential_equations_1d()
     @testset "diff 1D dirichlet" for solver in (AZSolver, DirectSolver)
         B = FourierBasis(101,-1,1)
-        Dom = interval(-0.5,0.5)
+        Dom = Interval(-0.5,0.5)
         # Set up Boundary conditions
         BC = DirichletBC(x->0)
         # Set up Differential equation
@@ -81,10 +81,10 @@ function test_differential_equations_1d()
     end
     @testset "diff 1D mixed" for solver in (AZSolver, DirectSolver)
         B = FourierBasis(101,-2,2)
-        Dom = interval(-1.0,1.0)
+        Dom = Interval(-1.0,1.0)
         # Set up Boundary conditions
-        BC1 = DirichletBC(x->0, interval(-2.0,0.0))
-        BC2 = NeumannBC(x->0, interval(-2.0,0.0))
+        BC1 = DirichletBC(x->0, Interval(-2.0,0.0))
+        BC2 = NeumannBC(x->0, Interval(-2.0,0.0))
         # Set up Differential equation
         f(x) = x
         Diff = differentiation_operator(B)*differentiation_operator(B)
@@ -105,7 +105,7 @@ function test_differential_equations_2d()
         Dom = disk(0.8)
         # Set up Boundary conditions
         df = (x,y)->x-y
-        BC = DirichletBC(df,euclideanspace(Val{2}()))
+        BC = DirichletBC(df,DomainSets.euclideanspace(Val{2}()))
         # Set up Differential equation
         f(x,y) = 0
         Diff = differentiation_operator(B,(2,0))+differentiation_operator(B,(0,2))
@@ -122,7 +122,7 @@ function test_differential_equations_2d()
         Dom = disk(0.8)
         # Set up Boundary conditions
         df = (x,y)->x-y
-        BC = NeumannBC(df,euclideanspace(Val{2}()))
+        BC = NeumannBC(df,DomainSets.euclideanspace(Val{2}()))
         # Set up Differential equation
         f(x,y) = 0
         Diff = differentiation_operator(B,(2,0))+differentiation_operator(B,(0,2))
@@ -141,7 +141,7 @@ end
 function test_smoothing_1d()
     @testset "Smoothing $(name(instantiate(Basis,10)))" for Basis in (FourierBasis,)
         B = Basis(101,-1,1)
-        D = interval(-0.5,0.5)
+        D = Interval(-0.5,0.5)
         f(x) = exp(x)
         fscale(i) = 10.0^-4+abs(i)+abs(i)^2+abs(i)^3
         F = Fun(f,B,D;solver=AZSmoothSolver,scale=fscale)

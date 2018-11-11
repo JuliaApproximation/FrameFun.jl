@@ -1,5 +1,5 @@
-# FrameFun.jl
 __precompile__(true)
+
 module FrameFun
 
 using Base.Cartesian
@@ -7,7 +7,7 @@ using StaticArrays
 using RecipesBase
 using Compat
 
-using Domains
+using DomainSets
 using BasisFunctions
 
 if VERSION < v"0.7-"
@@ -54,14 +54,14 @@ import Base: broadcast
 
 import Base: minimum, maximum
 
-## - Imports from Domains
-import Domains: indomain, dimension
+## - Imports from DomainSets
+import DomainSets: indomain, dimension
 # - for mapped domains
-import Domains: domain
+import DomainSets: domain
 # - for composite structures
-import Domains: element, elements, numelements
+import DomainSets: element, elements, numelements
 # - for cartesian products
-import Domains: cartesianproduct, ×
+import DomainSets: cartesianproduct, ×
 
 
 ## - Imports from BasisFunctions

@@ -3,7 +3,7 @@ using BasisFunctions
 BA = BasisFunctions
 using FrameFun
 FE = FrameFun
-using Domains
+using DomainSets
 using Plots
 if (VERSION >= v"0.7-")  using LinearAlgebra end
 gr()

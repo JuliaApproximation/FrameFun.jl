@@ -36,7 +36,7 @@ end
 function codomaintype(f::Function, basis)
     ELT = codomaintype(basis)
     # We only test for the return type in zero
-    RT = typeof(f(zero(GeometricSpace{domaintype(basis)})...))
+    RT = typeof(f(zero(DomainSets.GeometricSpace{domaintype(basis)})...))
     if (RT <: Complex)
         complex(ELT)
     else
