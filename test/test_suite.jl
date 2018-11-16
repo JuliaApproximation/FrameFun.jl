@@ -1,13 +1,8 @@
 module test_suite
 
-
 using DomainSets, BasisFunctions, FrameFun, StaticArrays
+using Test, Printf, LinearAlgebra, Random
 
-if VERSION < v"0.7-"
-    using Base.Test
-else
-    using Test, Printf, LinearAlgebra, Random
-end
 FE = FrameFun
 BA = BasisFunctions
 

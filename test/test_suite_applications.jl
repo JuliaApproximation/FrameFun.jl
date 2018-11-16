@@ -1,12 +1,8 @@
 module test_suite_applications
 
 using DomainSets, BasisFunctions, FrameFun
+using Test
 
-if VERSION < v"0.7-"
-    using Base.Test
-else
-    using Test
-end
 FE = FrameFun
 BA = BasisFunctions
 

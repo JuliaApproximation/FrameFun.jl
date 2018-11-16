@@ -1,4 +1,5 @@
 module test_nodebooks
+
 using DomainSets
 using BasisFunctions
 using FrameFun
@@ -29,7 +30,7 @@ finally
     cd("..")
 end
 
-FILE = open("notebookscripts") 
+FILE = open("notebookscripts")
 try
     for LINE in eachline(FILE)
         println("Run $(LINE)")

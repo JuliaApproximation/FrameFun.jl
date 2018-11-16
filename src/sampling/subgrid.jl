@@ -33,7 +33,7 @@ end
 convert(::Type{NTuple{N,Int}},i::CartesianIndex{N}) where {N} = ntuple(k->i[k],N)
 
 MaskedGrid(supergrid::AbstractGrid, domain::Domain) =
-    MaskedGrid(supergrid, in.(supergrid, domain))
+	MaskedGrid(supergrid, in.(supergrid, Ref(domain)))
 
 # MaskedGrid(maskedgrid::MaskedGrid, domain::Domain) =
 #     MaskedGrid(supergrid(maskedgrid), mask(maskedgrid) .& in.(supergrid(maskedgrid), domain))
@@ -41,8 +41,8 @@ MaskedGrid(supergrid::AbstractGrid, domain::Domain) =
 MaskedGrid(supergrid::AbstractGrid, mask) = MaskedGrid(supergrid, mask, subindices(supergrid, mask))
 
 function subindices(supergrid, mask::BitArray)
-    I= eltype(eachindex(supergrid))
-    indices = (VERSION < v"0.7-") ?  Array{I}(sum(mask)) : Array{I}(undef, sum(mask))
+    I = eltype(eachindex(supergrid))
+    indices = Array{I}(undef, sum(mask))
     i = 1
     for m in eachindex(supergrid)
        if mask[m]
@@ -127,7 +127,7 @@ end
 subgrid(grid::AbstractGrid, domain::Domain) = MaskedGrid(grid, domain)
 
 function subgrid(grid::ScatteredGrid, domain::Domain)
-    mask = in.(grid, domain)
+    mask = in.(grid, Ref(domain))
     points = grid.points[mask]
     ScatteredGrid(points)
 end

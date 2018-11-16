@@ -1,14 +1,9 @@
 module test_suite
+
 using DomainSets, BasisFunctions, FrameFun
 
-if VERSION < v"0.7-"
-    using Base.Test
-    ComplexF64 = Complex128
-    srand(1234)
-else
-    using Test, LinearAlgebra, Random
-    Random.seed!(1234)
-end
+using Test, LinearAlgebra, Random
+Random.seed!(1234)
 
 FE = FrameFun
 BA = BasisFunctions
@@ -21,38 +16,49 @@ function delimit(s::AbstractString)
 end
 
 function test_function_space()
-  bboxes = (Interval(-1.0, 1.0), Interval(-1.0, 1.0),
-      Interval(0.0, 1.0), Interval(-1.0, 1.0), Interval(-1.0, 1.0),
-      Interval(0.0, 1.0)×Interval(-1.0, 1.0), Interval(-2.0, 1.0),
-      Interval(0.0, 1.0)×Interval(0.0, 1.0)×Interval(0.0, 1.0), Interval(0.0, 1.0))
-  bases = (FourierBasis(64,-1.0, 1.0), FourierBasis(64,-1.0, 1.0),
-      FourierBasis(64), FourierBasis(64,-1.0, 1.0), ChebyshevBasis(64),
-      FourierBasis(8)⊗ChebyshevBasis(8), FourierBasis(32,-2.,1.)⊕rescale(ChebyshevBasis(32),-2.,1.),
-      BA.tensorproduct(FourierBasis(4),3), BA.multidict(FourierBasis(32),FourierBasis(32)))
-  @testset "Space = $(name(space)) " for (i,space) in enumerate([
-      FE.FunctionSpace(FourierBasis(64,-1.0, 1.0)),
-      FE.FunctionSpace(FourierBasis(64,-1.0, 1.0), Interval(-1.0, 1.0)),
-      FourierSpace(),
-      FourierSpace(-1.0, 1.0),
-      ChebyshevSpace(),
-      FourierSpace() ⊗ ChebyshevSpace(),
-      FourierSpace(-2,1) ⊕ ChebyshevSpace(-2,1),
-      FE.tensorproduct(FourierSpace(),3),
-      FE.add(FourierSpace(),2)])
-      # @test left(bboxes[i])==left(boundingbox(space))
-      # @test right(bboxes[i])==right(boundingbox(space))
-      @test Dictionary(space, 64) == bases[i]
-  end
-  @testset "Util functions" begin
+    bboxes = (Interval(-1.0, 1.0),
+        Interval(-1.0, 1.0),
+        Interval(0.0, 1.0),
+        Interval(-1.0, 1.0),
+        Interval(-1.0, 1.0),
+        Interval(0.0, 1.0)×Interval(-1.0, 1.0),
+        Interval(-2.0, 1.0),
+        Interval(0.0, 1.0)×Interval(0.0, 1.0)×Interval(0.0, 1.0),
+        Interval(0.0, 1.0))
+    bases = (FourierBasis(64,-1.0, 1.0),
+        FourierBasis(64,-1.0, 1.0),
+        FourierBasis(64),
+        FourierBasis(64,-1.0, 1.0),
+        ChebyshevBasis(64),
+        FourierBasis(8)⊗ChebyshevBasis(8),
+        FourierBasis(32,-2.,1.)⊕rescale(ChebyshevBasis(32),-2.,1.),
+        BA.tensorproduct(FourierBasis(4),3),
+        BA.multidict(FourierBasis(32),FourierBasis(32)))
+    @testset "Space = $(name(space)) " for (i,space) in enumerate([
+        FE.FunctionSpace(FourierBasis(64,-1.0, 1.0)),
+        FE.FunctionSpace(FourierBasis(64,-1.0, 1.0), Interval(-1.0, 1.0)),
+        FourierSpace(),
+        FourierSpace(-1.0, 1.0),
+        ChebyshevSpace(),
+        FourierSpace() ⊗ ChebyshevSpace(),
+        FourierSpace(-2,1) ⊕ ChebyshevSpace(-2,1),
+        FE.tensorproduct(FourierSpace(),3),
+        FE.add(FourierSpace(),2)])
+        # @test left(bboxes[i])==left(boundingbox(space))
+        # @test right(bboxes[i])==right(boundingbox(space))
+        println(i)
+        @test Dictionary(space, 64) == bases[i]
+    end
+    @testset "Util functions" begin
     for n in 1:4
-      S = FE.tensorproduct(FourierSpace(),n)
-      @test dimension(S) == n
-      @test codomaintype(S) == ComplexF64
+        S = FE.tensorproduct(FourierSpace(),n)
+        @test dimension(S) == n
+        @test codomaintype(S) == ComplexF64
     end
     @test domaintype(promote_domaintype(ChebyshevSpace(),ComplexF64)) == domaintype(promote_domaintype(ChebyshevBasis(11),ComplexF64))
     @test domaintype(promote_domaintype(ChebyshevSpace(),Float32)) == domaintype(promote_domaintype(ChebyshevBasis(11),Float32))
     @test domaintype(promote_domaintype(ChebyshevSpace(),Float64)) == domaintype(promote_domaintype(ChebyshevBasis(11),Float64))
-  end
+    end
 end
 
 function test_residual()

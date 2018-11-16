@@ -2,11 +2,7 @@
 module test_suite_support
 
 using DomainSets, BasisFunctions, FrameFun
-if VERSION < v"0.7-"
-    using Base.Test
-else
-    using Test, LinearAlgebra
-end
+using Test, LinearAlgebra
 
 ## Settings
 
