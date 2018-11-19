@@ -53,8 +53,8 @@ FE_TridiagonalSolver(A::DictionaryOperator; scaling=nothing, options...) =
     FE_TridiagonalSolver{eltype(A)}(A, scaling; options...)
 
 function estimate_plunge_range(A,L,C)
-    mid=size(A,2)-round(Int,size(A,1)*size(A,2)/L)
-    (VERSION < v"0.7-") ? mid + (max(1-mid,-round(Int,C)):min(size(A,2)-mid,round(Int,C))) : mid .+ (max(1-mid,-round(Int,C)):min(size(A,2)-mid,round(Int,C)))
+    mid = size(A,2)-round(Int,size(A,1)*size(A,2)/L)
+    mid .+ (max(1-mid,-round(Int,C)):min(size(A,2)-mid,round(Int,C)))
 end
 
 apply!(s::FE_TridiagonalSolver, dest, src, coef_dest, coef_src) =
@@ -81,18 +81,18 @@ function apply!(s::FE_TridiagonalSolver, destset, srcset, coef_dest, coef_src, A
 end
 
 function mideigs(N,M,L,irange)
-    J2=Chamzas(L,M-1,N)
-    J1=Chamzas(L,N-1,M)
+    J2 = Chamzas(L,M-1,N)
+    J1 = Chamzas(L,N-1,M)
     E,V1 = eigen(J1,irange)
-    for i=1:size(V1,1)
-        for j=1:size(V1,2)
-            if i%2==0
+    for i = 1:size(V1,1)
+        for j = 1:size(V1,2)
+            if i%2 == 0
                 V1[i,j]*=-1
             end
         end
     end
-    V1b=circshift(V1,round(Int,(N-1)/2)+1)
-    E,V2 = eigen(J2,(VERSION<v"0.7") ? (irange + (M-N)) : (irange .+ (M-N)))
+    V1b = circshift(V1,round(Int,(N-1)/2)+1)
+    E,V2 = eigen(J2,irange .+ (M-N))
     (V1b,V2)
 end
 

@@ -5,7 +5,8 @@ using FrameFun
 FE = FrameFun
 using DomainSets
 using Plots
-if (VERSION >= v"0.7-")  using LinearAlgebra end
+using LinearAlgebra
+
 gr()
 
 function myFun(f::Function,P::Platform,i)

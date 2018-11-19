@@ -10,23 +10,9 @@ using Compat
 using DomainSets
 using BasisFunctions
 
-if VERSION < v"0.7-"
-    import BasisFunctions.adjoint
-    import Base: start, next, done, showcompact
-    mul! = A_mul_B!
-    eigen  = eig
-    macro warn(a)
-        return quote warn($a) end
-    end
-    my_minimum(a::Array; dims=nothing) = minimum(a, dims)
-    my_maximum(a::Array; dims=nothing) = maximum(a, dims)
- else
-    using LinearAlgebra
-    using Printf
-    import LinearAlgebra: adjoint
-    my_minimum(a::Array; dims=nothing) = minimum(a; dims=dims)
-    my_maximum(a::Array; dims=nothing) = maximum(a, dims=dims)
-end
+using LinearAlgebra
+using Printf
+import LinearAlgebra: adjoint
 
 ###############################
 ## Exhaustive list of imports

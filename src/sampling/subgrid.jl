@@ -9,7 +9,7 @@ A MaskedGrid is a subgrid of another grid that is defined by a mask.
 The mask is true or false for each point in the supergrid. The set of points
 for which it is true make up the MaskedGrid.
 """
-struct MaskedGrid{G,M,I,T} <: AbstractSubGrid{T}
+struct MaskedGrid{G,M,I,T} <: AbstractSubGrid{T,1}
     supergrid   ::	G
     mask	    ::	M
     indices     ::  Vector{I}
@@ -53,9 +53,7 @@ function subindices(supergrid, mask::BitArray)
     indices
 end
 
-length(g::MaskedGrid) = g.M
-
-size(g::MaskedGrid) = (length(g),)
+size(g::MaskedGrid) = (g.M,)
 
 mask(g::MaskedGrid) = g.mask
 
@@ -67,7 +65,7 @@ similar_subgrid(g::MaskedGrid, g2::AbstractGrid) = MaskedGrid(g2, g.mask, g.indi
 # Check whether element grid[i] (of the underlying grid) is in the masked grid.
 is_subindex(i, g::MaskedGrid) = g.mask[i]
 
-unsafe_getindex(g::MaskedGrid, idx) = unsafe_getindex(g.supergrid, g.indices[idx])
+unsafe_getindex(g::MaskedGrid, idx::Int) = unsafe_getindex(g.supergrid, g.indices[idx])
 
 getindex(g::AbstractGrid, idx::BitArray) = MaskedGrid(g, idx)
 
@@ -165,7 +163,7 @@ function midpoint(v1, v2, dom::Domain, tol)
 end
 
 ## Avoid ambiguity (because everything >=2D is tensor but 1D is not)
-function boundary(g::ProductGrid{TG,T},dom::Domain1d) where {TG,T}
+function boundary(g::ProductGrid{TG,T,N},dom::Domain1d) where {TG,T,N}
     println("This method being called means there is a 1D ProductGrid.")
 end
 
@@ -176,7 +174,7 @@ end
 
 function boundary(g::ProductGrid{TG,T},dom::EuclideanDomain{N},tol=1e-12) where {TG,N,T}
     # Initialize neighbours
-    neighbours= (VERSION < v"0.7-") ? Array{Int64}(2^N-1,N) : Array{Int64}(undef, 2^N-1,N)
+    neighbours = Array{Int64}(undef, 2^N-1,N)
     # adjust columns
     for i=1:N
         # The very first is not a neighbour but the point itself.
@@ -184,7 +182,7 @@ function boundary(g::ProductGrid{TG,T},dom::EuclideanDomain{N},tol=1e-12) where 
             neighbours[j-1,i]=(floor(Int,(j-1)/(2^(i-1))) % 2)
         end
     end
-    CartesianNeighbours = (VERSION < v"0.7-") ? Array{CartesianIndex{N}}(2^N-1) : Array{CartesianIndex{N}}(undef,2^N-1)
+    CartesianNeighbours = Array{CartesianIndex{N}}(undef,2^N-1)
     for j=1:2^N-1
         CartesianNeighbours[j]=CartesianIndex{N}(neighbours[j,:]...)
     end

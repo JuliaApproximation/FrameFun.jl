@@ -10,16 +10,16 @@ end
 
 polardomain(char, dom) = PolarDomain(Fun(char,FourierBasis(100,-pi,pi),Interval(-pi,pi)),boundingbox(dom))
 
-indomain(x, c::PolarDomain) = sqrt(x[1]^2+x[2]^2) < real(c.charFun((VERSION < v"0.7-") ? atan2(x[2],x[1]) : atan(x[2],x[1])))
+indomain(x, c::PolarDomain) = sqrt(x[1]^2+x[2]^2) < real(c.charFun(atan(x[2],x[1])))
 
 boundingbox(c::PolarDomain) = c.box
 
 show(io::IO, c::PolarDomain) = print(io, "a domain in polar coordinates")
 
-dist(x, c::PolarDomain) = real(c.charFun((VERSION < v"0.7-") ? atan2(x[2],x[1]) : atan(x[2],x[1])))-norm(x)
+dist(x, c::PolarDomain) = real(c.charFun(atan(x[2],x[1])))-norm(x)
 
 function normal(x, c::PolarDomain)
-    phi=(VERSION < v"0.7-") ? atan2(x[2],x[1]) : atan(x[2],x[1])
+    phi = atan(x[2], x[1])
     y=c.charFun'(phi)*sin(phi)+c.charFun(phi)*cos(phi)
     x=c.charFun'(phi)*cos(phi)-c.charFun(phi)*sin(phi)
     return [real(y/(norm([x;y]))),-real(x/(norm([x;y])))]

@@ -13,7 +13,7 @@ broadcast(::typeof(in), grid, d::Domain) = indomain_broadcast(grid, d)
 
 # # Default methods for evaluation on a grid: the default is to call eval on the domain with
 # # points as arguments. Domains that have faster grid evaluation routines may define their own version.
-indomain_broadcast(grid, d::Domain) = indomain_broadcast!((VERSION < v"0.7-") ? BitArray(size(grid)) : BitArray(undef, size(grid)), grid, d)
+indomain_broadcast(grid, d::Domain) = indomain_broadcast!(BitArray(undef, size(grid)), grid, d)
 # TODO: use BitArray here
 
 function indomain_broadcast!(result, grid, domain::Domain)
@@ -95,14 +95,14 @@ maximum(box::ProductDomain) = SVector(map(maximum,elements(box)))
 equispaced_grid(d::Domain, ns) = cartesianproduct([PeriodicEquispacedGrid(ns[idx], infimum(d)[idx], supremum(d)[idx]) for idx = 1:dimension(boundingbox(d))]...)
 
 function boundingbox(d::UnionDomain)
-    left = SVector(my_minimum(hcat(map(infimum,elements(d))...);dims=2)...)
-    right = SVector(my_maximum(hcat(map(supremum,elements(d))...);dims=2)...)
+    left = SVector(minimum(hcat(map(infimum,elements(d))...);dims=2)...)
+    right = SVector(maximum(hcat(map(supremum,elements(d))...);dims=2)...)
     boundingbox(left,right)
 end
 
 function boundingbox(d::IntersectionDomain)
-    left = SVector(my_maximum(hcat(map(infimum,elements(d))...);dims=2)...)
-    right = SVector(my_minimum(hcat(map(supremum,elements(d))...);dims=2)...)
+    left = SVector(maximum(hcat(map(infimum,elements(d))...);dims=2)...)
+    right = SVector(minimum(hcat(map(supremum,elements(d))...);dims=2)...)
     boundingbox(left,right)
 end
 

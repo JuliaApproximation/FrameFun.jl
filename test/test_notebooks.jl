@@ -13,8 +13,7 @@ function delimit(s::AbstractString)
 end
 
 
-jupyter = (VERSION < v"0.7-") ? homedir()*"/.julia/v0.6/Conda/deps/usr/bin/jupyter" :
-                                homedir()*"/.julia/packages/Conda/S0nV/deps/usr/bin/jupyter"
+jupyter = homedir()*"/.julia/packages/Conda/S0nV/deps/usr/bin/jupyter"
 
 
 
