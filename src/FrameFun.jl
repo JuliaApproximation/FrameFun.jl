@@ -1,5 +1,3 @@
-__precompile__(true)
-
 module FrameFun
 
 using Base.Cartesian
@@ -52,7 +50,7 @@ import DomainSets: cartesianproduct, ×
 
 ## - Imports from BasisFunctions
 import BasisFunctions: src, dest, matrix, matrix!, apply!, apply_inplace!,
-    dimension, codomaintype, domaintype
+    dimension, codomaintype, domaintype, apply_multiple
 
 import BasisFunctions: tensorproduct, ⊗
 
@@ -101,7 +99,7 @@ import BasisFunctions: dual, primal, sampler, dual_sampler
 
 import BasisFunctions: discrete_approximation_operator, continuous_approximation_operator
 
-import BasisFunctions: primal, dual, Zt, A, sampler, dual_sampler
+import BasisFunctions: primal, dual, matrix_Zt, matrix_A, sampler, dual_sampler
 
 ###############################
 ## Exhaustive list of exports
@@ -175,6 +173,7 @@ include("frames/weighted_sum_frame.jl")
 include("fun/basisdomains.jl")
 include("fun/funs.jl")
 
+include("approximation/randomized.jl")
 
 include("approximation/fe_solvers.jl")
 include("approximation/continuous_solver.jl")

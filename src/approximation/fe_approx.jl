@@ -1,4 +1,3 @@
-# fe_fourier.jl
 
 
 ## "An ExpFun is a DictFun based on Fourier series."

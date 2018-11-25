@@ -1,4 +1,3 @@
-# constructors.jl
 
 function _trapnorm(f::Function, D::ExtensionFrame, sampling_factor)
     g = FrameFun.oversampled_grid(domain(D), basis(D), sampling_factor)[1]
@@ -70,7 +69,7 @@ are_close(N1, N2) =
   The number of points is chosen adaptively and optimally.
 """
 function fun_optimal_N(f::Function, dict::Dictionary{S,T}, domain::Domain;
-        no_checkpoints=3, max_logn_coefs=8, cutoff=default_cutoff(real(S)), tol=100*cutoff, verbose=false, adaptive_verbose = verbose, return_log=false, randomtest=false, abscoef=nothing, relcoef=nothing, options...) where {S,T}
+        no_checkpoints=3, max_logn_coefs=8, threshold=default_threshold(real(S)), tol=100*threshold, verbose=false, adaptive_verbose = verbose, return_log=false, randomtest=false, abscoef=nothing, relcoef=nothing, options...) where {S,T}
     coefficienttest = (nothing!=abscoef) | (nothing!=relcoef)
 
     ELT = codomaintype(f, dict)
@@ -85,7 +84,7 @@ function fun_optimal_N(f::Function, dict::Dictionary{S,T}, domain::Domain;
     error=-1
     while length(dict) <= 2^max_logn_coefs && its < 100
         # Find new approximation
-        F=Fun(f, dict, domain; verbose=verbose, cutoff=cutoff, options...)
+        F=Fun(f, dict, domain; verbose=verbose, threshold=threshold, options...)
 
         # Using residual
         error = residual(f, F)/sqrt(length(F))
@@ -113,7 +112,7 @@ function fun_optimal_N(f::Function, dict::Dictionary{S,T}, domain::Domain;
         # If the bounds Nmin and Nmax are determined and if they are close
         if are_close(Nmin, Nmax)
             dict=resize(dict, Nmax)
-            F = Fun(f, dict, domain; verbose=verbose, cutoff=cutoff, options...)
+            F = Fun(f, dict, domain; verbose=verbose, threshold=threshold, options...)
 
             return_log && (return F, log)
             return F
@@ -143,8 +142,8 @@ function fun_optimal_N(f::Function, dict::Dictionary{S,T}, domain::Domain;
 end
 
 
-default_cutoff(::Type{T}) where T= 10*10^(4/5*log10(eps(real(T))))
-default_cutoff(::Type{Float64}) = 1e-16
+default_threshold(::Type{T}) where T= 10*10^(4/5*log10(eps(real(T))))
+default_threshold(::Type{Float64}) = 1e-16
 Base.real(::Type{Tuple{N,T}}) where {N,T} = real(T)
 
 """

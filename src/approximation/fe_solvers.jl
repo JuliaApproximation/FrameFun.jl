@@ -1,24 +1,11 @@
-# fe_solvers.jl
 
+abstract type FE_Solver{T} <: BasisFunctions.AbstractSolverOperator{T} end
 
-abstract type FE_Solver{ELT} <: DictionaryOperator{ELT} end
+operator(s::FE_Solver) = s.A
 
-op(s::FE_Solver) = s.A
-
-## # Delegation methods
-## for op in (:frequency_basis, :frequency_basis_ext, :time_basis, :time_basis_ext,
-##            :time_basis_restricted, :operator, :operator_transpose, :domain)
-##     @eval $op(s::FE_Solver) = $op(op(s))
-## end
-
-size(s::FE_Solver, j::Int) = size(transpose(op(s)), j)
-
-src(s::FE_Solver) = dest(op(s))
-
-dest(s::FE_Solver) = src(op(s))
 
 struct DirectSolver{ELT} <: FE_Solver{ELT}
-    A      ::  DictionaryOperator
+    A       ::  DictionaryOperator
     QR      ::  Factorization
 
     src_scratch :: Vector{ELT}

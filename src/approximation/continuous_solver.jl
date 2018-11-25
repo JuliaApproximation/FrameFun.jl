@@ -20,7 +20,7 @@ struct ContinuousSolverPlan{T} <: DictionaryOperator{T}
     scratch                 :: Vector{T}
     mixedgram               :: DictionaryOperator
     ContinuousSolverPlan{T}(src::Dictionary, dest::Dictionary, mixedgramsolver::FE_Solver, normalizationofb::DictionaryOperator) where {T} =
-        new(src, dest, mixedgramsolver, normalizationofb, zeros(T, length(src)), op(mixedgramsolver))
+        new(src, dest, mixedgramsolver, normalizationofb, zeros(T, length(src)), operator(mixedgramsolver))
 end
 
 ContinuousSolverPlan(solver::FE_Solver{T}, normalization::DictionaryOperator) where {T} =

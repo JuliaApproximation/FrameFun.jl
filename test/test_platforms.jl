@@ -12,7 +12,7 @@ using Test
     P2 = FrameFun.extension_frame_platform(P2a,D)
     WSP = FrameFun.WeightedSumPlatform([x->sqrt(x),x->1],P2)
     f = x->sqrt(x)*(1-x)-exp(x)
-    AZS = AZSolver(A(WSP,i),Zt(WSP,i))
+    AZS = AZSolver(matrix_A(WSP,i), matrix_Zt(WSP,i))
     FSP = DictFun(primal(WSP,i),AZS*f)
     rgrid = randomgrid(D,200)
     Fval = FSP(rgrid)
@@ -21,4 +21,5 @@ using Test
     abserror= sum(abs.(Fval-fval))/200
     @test abserror<1e-7
 end
-end
+
+end # module

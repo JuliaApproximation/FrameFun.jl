@@ -1,6 +1,4 @@
 
-# fastsolver.jl
-
 """
 A fast FE solver based on a low-rank approximation of the plunge region. The plunge region
 is isolated using a projection operator.
@@ -19,7 +17,7 @@ struct FE_TridiagonalSolver{ELT} <: FrameFun.FE_Solver{ELT}
     y
     y2
     scaling
-    function FE_TridiagonalSolver{ELT}(A::DictionaryOperator, scaling; cutoff = default_cutoff(A), irange = estimate_plunge_range(A,scaling,estimate_plunge_rank(A)), verbose=false,options...) where ELT
+    function FE_TridiagonalSolver{ELT}(A::DictionaryOperator, scaling; threshold = default_threshold(A), irange = estimate_plunge_range(A,scaling,estimate_plunge_rank(A)), verbose=false,options...) where ELT
         R = estimate_plunge_rank(A)
         finished = false
         V=[]
@@ -31,14 +29,14 @@ struct FE_TridiagonalSolver{ELT} <: FrameFun.FE_Solver{ELT}
             for i=1:size(V,2)
                 S[i]=U[:,i]'*apply(A,V[:,i])
             end
-            if all(minimum(abs.(S)).< cutoff) || R>size(A,1)
+            if all(minimum(abs.(S)).< threshold) || R>size(A,1)
                 finished=true
             else
                 R = 2*R
                 irange=estimate_plunge_range(A,scaling,R)
             end
         end
-        I = abs.(S).>(cutoff*maximum(abs.(S)))
+        I = abs.(S).>(threshold*maximum(abs.(S)))
         b = zeros(dest(A))
         blinear = zeros(ELT, length(dest(A)))
         x1 = zeros(src(A))

@@ -20,11 +20,11 @@ struct AZSmoothSolver{ELT} <: FE_Solver{ELT}
     D           ::  DictionaryOperator
     AD          ::  DictionaryOperator
 
-    function AZSmoothSolver{ELT}(A::DictionaryOperator, Zt::DictionaryOperator, D::DictionaryOperator; cutoff = default_cutoff(A), cutoffv=sqrt(cutoff), R = estimate_plunge_rank(A), verbose=false,  options...) where ELT
+    function AZSmoothSolver{ELT}(A::DictionaryOperator, Zt::DictionaryOperator, D::DictionaryOperator; threshold = default_threshold(A), thresholdv=sqrt(threshold), R = estimate_plunge_rank(A), verbose=false,  options...) where ELT
         plunge_op = plunge_operator(A, Zt)
         # Create Random matrices
-        TS1 = TruncatedSvdSolver(plunge_op*A; cutoff = cutoff, verbose=verbose,R=R,options...)
-        TS2 = TruncatedSvdSolver(Zt*plunge_op; cutoff = cutoffv, verbose=verbose, R=R, options...)
+        TS1 = RandomizedSvdSolver(plunge_op*A; threshold = threshold, verbose=verbose,R=R,options...)
+        TS2 = RandomizedSvdSolver(Zt*plunge_op; threshold = thresholdv, verbose=verbose, R=R, options...)
         AD = inv(D)
         ADV = (TS2.Ut)'.*diagonal(AD)
         # Orthogonal basis for D^(-1)V_mid
