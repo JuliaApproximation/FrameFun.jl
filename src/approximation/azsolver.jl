@@ -14,7 +14,7 @@ Can be done fast if Zt and A are fast.
 3. x = x1+x2
 This is the solution.
 """
-struct AZSolver{T} <: FE_Solver{T}
+struct AZSolver{T} <: AbstractSolverOperator{T}
     A           ::  DictionaryOperator # Store for application in step 2
     Zt          ::  DictionaryOperator # Store for application in step 2
     plunge_op   ::  DictionaryOperator # (A*Zt-I), store because it allocates memory
@@ -41,6 +41,8 @@ AZSolver(A::DictionaryOperator{T}, Zt::DictionaryOperator{T}, plunge_op::Diction
 # # If no Zt is supplied, Zt=A' (up to scaling) by default.
 AZSolver(A::DictionaryOperator{T}; scaling=nothing, options...) where {T} =
     AZSolver(A, T(1)/T(scaling)*A'; options...)
+
+operator(s::AZSolver) = s.A
 
 function plunge_operator(A, Zt)
     I = IdentityOperator(dest(A))
@@ -111,7 +113,7 @@ function _apply!(s::AZSolver, coef_dest, coef_src, plunge_op::DictionaryOperator
     end
 end
 
-function AZSolver(platform::BasisFunctions.Platform, i; options...)
+function AZSolver(platform::Platform, i; options...)
     A = matrix_A(platform, i)
     Zt = matrix_Zt(platform, i)
     AZSolver(A, Zt; options...)

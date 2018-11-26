@@ -8,7 +8,7 @@ using Test
     # Simple platform construction test
     D = 0.0..0.5
     i = 7
-    P2a = BasisFunctions.fourier_platform(oversampling=4)
+    P2a = FrameFun.fourier_platform(oversampling=4)
     P2 = FrameFun.extension_frame_platform(P2a,D)
     WSP = FrameFun.WeightedSumPlatform([x->sqrt(x),x->1],P2)
     f = x->sqrt(x)*(1-x)-exp(x)

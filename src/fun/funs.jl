@@ -69,11 +69,6 @@ function matrix(fun::DictFun; options...)
     matrix(op)
 end
 
-function sampling_grid(fun::DictFun; sampling_factor=2)
-    problem = FE_DiscreteProblem(domain(fun), basis(fun), sampling_factor)
-    grid(time_basis_restricted(problem))
-end
-
 # Delegate operator applications to the underlying expansion
 function (*)(op::DictionaryOperator, fun::DictFun)
     @assert (src(op) == dictionary(fun)) | (src(op) == basis(dictionary(fun)))

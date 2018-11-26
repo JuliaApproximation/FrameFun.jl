@@ -1,26 +1,25 @@
-# smoothsolver.jl
 
 """
 A fast FE solver based on a low-rank approximation of the plunge region. The plunge region
 is isolated using a projection operator. This algorithm contains an extra smoothing step
 
 """
-struct AZSmoothSolver{ELT} <: FE_Solver{ELT}
+struct AZSmoothSolver{T} <: AbstractSolverOperator{T}
     TS          :: DictionaryOperator
     A           ::  DictionaryOperator
     Zt          ::  DictionaryOperator
     plunge_op   ::  DictionaryOperator    # store the operator because it allocates memory
-    b           ::  Array{ELT,1}
-    blinear     ::  Array{ELT,1}
-    syv         ::  Array{ELT,1}
-    x1          ::  Array{ELT}
-    x2          ::  Array{ELT}
-    x3          ::  Array{ELT}
-    Q           ::  Array{ELT,2}
+    b           ::  Array{T,1}
+    blinear     ::  Array{T,1}
+    syv         ::  Array{T,1}
+    x1          ::  Array{T}
+    x2          ::  Array{T}
+    x3          ::  Array{T}
+    Q           ::  Array{T,2}
     D           ::  DictionaryOperator
     AD          ::  DictionaryOperator
 
-    function AZSmoothSolver{ELT}(A::DictionaryOperator, Zt::DictionaryOperator, D::DictionaryOperator; threshold = default_threshold(A), thresholdv=sqrt(threshold), R = estimate_plunge_rank(A), verbose=false,  options...) where ELT
+    function AZSmoothSolver{T}(A::DictionaryOperator, Zt::DictionaryOperator, D::DictionaryOperator; threshold = default_threshold(A), thresholdv=sqrt(threshold), R = estimate_plunge_rank(A), verbose=false,  options...) where T
         plunge_op = plunge_operator(A, Zt)
         # Create Random matrices
         TS1 = RandomizedSvdSolver(plunge_op*A; threshold = threshold, verbose=verbose,R=R,options...)
@@ -32,7 +31,7 @@ struct AZSmoothSolver{ELT} <: FE_Solver{ELT}
         Q = Matrix(Q);@warn("Unnecessary conversion if qr works fine. ")
         # Pre-allocation
         b = zeros(size(dest(plunge_op)))
-        blinear = zeros(ELT, length(dest(A)))
+        blinear = zeros(T, length(dest(A)))
         x1 = zeros(size(src(A)))
         x2 = zeros(size(src(A)))
         x3 = zeros(size(src(A)))
@@ -41,10 +40,12 @@ struct AZSmoothSolver{ELT} <: FE_Solver{ELT}
     end
 end
 
-function AZSmoothSolver{ELT}(A::DictionaryOperator, Zt::DictionaryOperator; options...) where {ELT}
+function AZSmoothSolver{T}(A::DictionaryOperator, Zt::DictionaryOperator; options...) where {T}
     D = IdxnScalingOperator(src(A); options...)
-    AZSmoothSolver{ELT}(A, Zt, D; options...)
+    AZSmoothSolver{T}(A, Zt, D; options...)
 end
+
+operator(s::AZSmoothSolver) = s.A
 
 AZSmoothSolver(A::DictionaryOperator; scaling=nothing, options...) =
         AZSmoothSolver{eltype(A)}(A, 1/scaling*A'; options...)
@@ -86,8 +87,9 @@ end
 dc_index(b::ChebyshevBasis) = 1
 dc_index(b::FourierBasis) = 1
 
+
 # An index scaling operator, used to generate weights for the polynomial scaling algorithm.
-struct IdxnScalingOperator{ELT} <: DictionaryOperator{ELT}
+struct IdxnScalingOperator{T} <: DictionaryOperator{T}
     src     ::  Dictionary
     order   ::  Int
     scale   ::  Function
@@ -107,18 +109,18 @@ is_diagonal(::IdxnScalingOperator) = true
 adjoint(op::IdxnScalingOperator) = DiagonalOperator(src(op), conj(diagonal(op)))
 
 function apply_inplace!(op::IdxnScalingOperator, dest::Dictionary1d, srcdict, coef_srcdest)
-    ELT = eltype(op)
+    T = eltype(op)
     for i in eachindex(dest)
-        coef_srcdest[i] *= op.scale(ELT(BasisFunctions.value(native_index(dest,i))))^op.order
+        coef_srcdest[i] *= op.scale(convert(T, BasisFunctions.value(native_index(dest,i))))^op.order
     end
     coef_srcdest
 end
 
 function apply_inplace!(op::IdxnScalingOperator, dest::Dictionary2d, srcdict, coef_srcdest)
-    ELT = eltype(op)
+    T = eltype(op)
     for i in eachindex(coef_srcdest)
         ni = recursive_native_index(dest,i)
-        coef_srcdest[i]*=op.scale(ELT(BasisFunctions.value(ni[1])),ELT(BasisFunctions.value(ni[2])))^op.order
+        coef_srcdest[i]*=op.scale(convert(T, BasisFunctions.value(ni[1])),convert(T, BasisFunctions.value(ni[2])))^op.order
     end
     coef_srcdest
 end

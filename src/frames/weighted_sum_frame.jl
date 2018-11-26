@@ -1,12 +1,11 @@
-# weighted_sum_frame.jl
 
 """
 A WeightedSumFrame is the union of a finite number of copies of a single frame,
 each weighted by function.
 """
-struct WeightedSumPlatform <: BasisFunctions.Platform
+struct WeightedSumPlatform <: FramePlatform
     weights :: Vector{Function}
-    P :: Platform
+    P       :: Platform
 end
 
 weight(P::WeightedSumPlatform, i) = weights[i]

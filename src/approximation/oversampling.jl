@@ -1,4 +1,3 @@
-# oversampling.jl
 
 BasisFunctions.basis_oversampling(frame::ExtensionFrame, sampling_factor::Real) = extensionframe_oversampling(domain(frame), basis(frame), sampling_factor)
 

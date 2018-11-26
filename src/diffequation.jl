@@ -90,7 +90,6 @@ end
 
 
 function operator(D::DiffEquation; incboundary=false, options...)
-    #problem = FE_DiscreteProblem(D.D,D.S,2)
     B = D.S
     ADiff = pinv(D.Diff)
     ops = incboundary ? Array{DictionaryOperator}(undef, length(D.BCs)+2,1) : Array{DictionaryOperator}(undef, length(D.BCs)+1,1)

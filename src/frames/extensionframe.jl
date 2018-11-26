@@ -1,4 +1,3 @@
-# extensionframe.jl
 
 """
 An ExtensionFrame is the restriction of a basis to a subset of its domain. This
@@ -169,19 +168,26 @@ grid_evaluation_operator(s::TensorProductExtensionFrameDict, dgs::GridBasis, gri
 # platform
 ##################
 
-BasisFunctions.sampler(platform::Platform, sampler::GridSamplingOperator, domain::Domain) =
+sampler(platform::Platform, sampler::GridSamplingOperator, domain::Domain) =
     GridSamplingOperator(gridbasis(sampler), grid(sampler), domain, sampler.scaling)
-BasisFunctions.GridSamplingOperator(dgs::GridBasis, grid::AbstractGrid, domain::Domain, scaling) =
+GridSamplingOperator(dgs::GridBasis, grid::AbstractGrid, domain::Domain, scaling) =
     GridSamplingOperator(gridbasis(FrameFun.subgrid(grid, domain), coeftype(dgs)), scaling=scaling)
 
 extension_frame_sampler(platform::Platform, domain::Domain) = n->sampler(platform, platform.sampler_generator(n), domain)
 dual_extension_frame_sampler(platform::Platform, domain::Domain) = n->sampler(platform, platform.dual_sampler_generator(n), domain)
 
-function extension_frame_platform(platform::BasisFunctions.GenericPlatform, domain::Domain)
+function extension_frame_platform(platform::GenericPlatform, domain::Domain)
     primal = n->extensionframe(platform.primal_generator(n), domain)
     dual = n->platform.dual_generator(n)
     sampler = extension_frame_sampler(platform, domain)
     dual_sampler = dual_extension_frame_sampler(platform, domain)
-    BasisFunctions.GenericPlatform(super_platform=platform, primal = primal, dual = dual, sampler = sampler,dual_sampler = dual_sampler,
+    GenericPlatform(super_platform=platform, primal = primal, dual = dual, sampler = sampler,dual_sampler = dual_sampler,
         params = platform.parameter_sequence, name = "extension frame of " * platform.name)
 end
+
+struct ExtensionFramePlatform <: FramePlatform
+    basisplatform   ::  Platform
+    domain          ::  Domain
+end
+
+dictionary(p::ExtensionFramePlatform, param) = extensionframe(dictionary(p.basisplatform, param), p.domain)

@@ -3,7 +3,6 @@ module FrameFun
 using Base.Cartesian
 using StaticArrays
 using RecipesBase
-using Compat
 
 using DomainSets
 using BasisFunctions
@@ -94,12 +93,12 @@ import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
     similar_subgrid, mask, subindices
 
 import BasisFunctions: Gram, DualGram, MixedGram, DiscreteGram, DiscreteDualGram,
-    DiscreteMixedGram, gram_entry
-import BasisFunctions: dual, primal, sampler, dual_sampler
+    DiscreteMixedGram, gram_entry, dual
 
 import BasisFunctions: discrete_approximation_operator, continuous_approximation_operator
 
-import BasisFunctions: primal, dual, matrix_Zt, matrix_A, sampler, dual_sampler
+import BasisFunctions: AbstractSolverOperator, GridSamplingOperator
+
 
 ###############################
 ## Exhaustive list of exports
@@ -161,11 +160,24 @@ export FECollocationOperator
 # from approximation
 export DirectSolver, AZSolver, AZSmoothSolver, TridiagonalSolver, AZSSolver, AZSDCSolver
 
+# from platform/platform.jl
+export Platform
+export primal, dual, sampler, matrix_A, matrix_Zt, dual_sampler
+
+
+
 include("sampling/subgrid.jl")
 
 
 #include("domains/boundingbox.jl")
 include("domains/extensions.jl")
+
+## Platforms
+include("platform/platform.jl")
+include("platform/parameters.jl")
+include("platform/generic.jl")
+include("platform/approximate.jl")
+include("platform/bases.jl")
 
 include("frames/extensionframe.jl")
 include("frames/weighted_sum_frame.jl")
