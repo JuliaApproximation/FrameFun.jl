@@ -47,7 +47,11 @@ struct FE_TridiagonalSolver{ELT} <: AbstractSolverOperator{ELT}
     end
 end
 
-FE_TridiagonalSolver(A::DictionaryOperator; scaling=nothing, options...) =
+FE_TridiagonalSolver(A::DictionaryOperator; scaling = nothing, options...) =
+    FE_TridiagonalSolver(A, scaling; options...)
+
+# TODO: remove the scaling factor here
+FE_TridiagonalSolver(A::DictionaryOperator, scaling; options...) =
     FE_TridiagonalSolver{eltype(A)}(A, scaling; options...)
 
 operator(op::FE_TridiagonalSolver) = op.A

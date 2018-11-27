@@ -28,9 +28,11 @@ DictionaryStyle(p::FramePlatform) = FrameStyle()
 abstract type SolverStyle end
 
 struct DirectStyle <: SolverStyle end
-struct AZStyle <: SolverStyle end
 struct InverseStyle <: SolverStyle end
+struct TransformStyle <: SolverStyle end
 struct IterativeStyle <: SolverStyle end
+struct AZStyle <: SolverStyle end
+struct TridiagonalProlateStyle <: SolverStyle end
 
 SolverStyle(p::Platform) = SolverStyle(DictionaryStyle(p), p)
 

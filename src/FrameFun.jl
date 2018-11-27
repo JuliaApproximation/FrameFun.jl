@@ -64,11 +64,11 @@ import BasisFunctions: operator, matrix, is_diagonal, is_inplace, ⊕
 import BasisFunctions: coefficients, dictionary,
     transform_operator_pre, transform_operator_post, evaluation_operator, interpolation_operator,
     differentiation_operator, antidifferentiation_operator, approximation_operator,
-    extend, extension_size, extension_operator, restriction_operator,
+    extension_size, extension_operator, restriction_operator, approximate,
     default_approximation_operator, has_extension, wrap_operator, grid_evaluation_operator
 
 import BasisFunctions: superdict, similar_dictionary,
-    promote_domaintype, promote_domainsubtype
+    promote_domaintype, promote_domainsubtype, promote_coefficient_type
 
 import BasisFunctions: eval_element, eval_element_derivative, eval_expansion,
     unsafe_eval_element, unsafe_eval_element_derivative,
@@ -84,7 +84,7 @@ import BasisFunctions: postprocess, plotgrid
 
 import BasisFunctions: flatten
 
-import BasisFunctions: Span
+import BasisFunctions: Span, expansion
 
 import BasisFunctions: coefficient_type, coeftype
 
@@ -105,7 +105,7 @@ import BasisFunctions: AbstractSolverOperator, GridSamplingOperator
 ###############################
 export ×
 # from funs.jl
-export ExpFun, ChebyFun, Fun, DictFun, sampling_grid, domain, abserror, maxerror, L2error, expansion
+export ExpFun, ChebyFun, Fun, DictFun, sampling_grid, domain, abserror, maxerror, L2error
 
 # from subgrid.jl
 export MaskedGrid
@@ -158,12 +158,13 @@ export operator
 export FECollocationOperator
 
 # from approximation
-export DirectSolver, AZSolver, AZSmoothSolver, TridiagonalSolver, AZSSolver, AZSDCSolver
+export AZSolver, AZSmoothSolver, TridiagonalSolver
 
 # from platform/platform.jl
 export Platform
 export primal, dual, sampler, matrix_A, matrix_Zt, dual_sampler
-
+export InterpolationStyle, OversamplingStyle, GramStyle, RectangularGramStyle, GenericSamplingStyle
+export DirectStyle, InverseStyle, TransformStyle, IterativeStyle, AZStyle, TridiagonalProlateStyle
 
 
 include("sampling/subgrid.jl")
@@ -187,7 +188,6 @@ include("fun/funs.jl")
 
 include("approximation/randomized.jl")
 
-include("approximation/fe_solvers.jl")
 include("approximation/continuous_solver.jl")
 include("approximation/lowranksolver.jl")
 include("approximation/azsolver.jl")

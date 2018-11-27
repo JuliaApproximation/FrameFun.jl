@@ -25,6 +25,7 @@ domain(f::ExtensionFrame) = f.domain
 
 similar_dictionary(f::ExtensionFrame, dict::Dictionary) = ExtensionFrame(domain(f), dict)
 
+is_basis(f::ExtensionFrame) = false
 is_frame(f::ExtensionFrame) = true
 is_biorthogonal(f::ExtensionFrame) = false
 is_orthogonal(f::ExtensionFrame) = false

@@ -1,18 +1,4 @@
 
-
-## "An ExpFun is a DictFun based on Fourier series."
-## ExpFun(f::Function; n=n, T=T, args...) = Fun(FourierBasis, f ; args...)
-## # one of three things should be provided: n(tuple), domain or basis
-## # only n
-
-## ExpFun(f::Function, n::Int)
-## ExpFun{N}(f::Function, n::Ntuple{N}) = Fun(FourierBasis, f, domain; args...)
-
-## "A ChebyFun is a DictFun based on Chebyshev polynomials."
-## ChebyFun(f::Function; args...) = Fun(ChebyshevBasis, f; args...)
-## ChebyFun(f::Function, domain; args...) = Fun(ChebyshevBasis, f, domain; args...)
-
-
 function Fun(f::Function, basis::Dictionary, domain::Domain; options...)
     ELT = codomaintype(f, basis)
     frame = extensionframe(domain, BasisFunctions.promote_coefficient_type(basis, ELT))
@@ -20,6 +6,9 @@ function Fun(f::Function, basis::Dictionary, domain::Domain; options...)
     coef = A * f
     DictFun(domain, dest(A), coef)
 end
+
+Fun(basis::Dictionary, domain::Domain, fun; options...) =
+    Fun(ExtensionFrame(domain, basis), fun; options...)
 
 function fe_solver(basis, domain; options...)
     frame = ExtensionFrame(domain, basis)
@@ -38,10 +27,10 @@ function codomaintype(f::Function, basis)
     end
 end
 
-function oversampled_evaluation_operator(S::Dictionary, D::Domain; sampling_factor=2, incboundary=false, options...)
+function oversampled_evaluation_operator(S::Dictionary, D::Domain; oversamplingfactor=2, incboundary=false, options...)
     B = primarydict(S)
     # Establish time domain grid
-    G, lB = oversampled_grid(D,B,sampling_factor)
+    G, lB = oversampled_grid(D, B, oversamplingfactor = oversamplingfactor)
 
     op = grid_evaluation_operator(S,gridbasis(B,G),G)
     # Add boundary points if necessary
@@ -78,11 +67,11 @@ function FE_BestSolver(op::DictionaryOperator; scaling=NaN, verbose= false, opti
             AZSolver(op; scaling=scaling, verbose=verbose,options...)
         else
             verbose && println("Estimated plunge rank $R greater than $(size(op,2))/2 -> direct solver ")
-            DirectSolver(op; verbose=verbose,options...)
+            QR_solver(op)
         end
     else
         # Don't bother with a fast algorithm if there is no fast transform
-        DirectSolver(op; verbose=verbose, options...)
+        QR_solver(op)
     end
 end
 
@@ -126,7 +115,7 @@ end
 
 default_frame_solver(domain, basis) = FE_BestSolver
 
-default_frame_solver(domain::Domain, basis::Dictionary{S,SVector{N,BigFloat}}) where {S,N} = DirectSolver
-default_frame_solver(domain::Domain, basis::Dictionary{S,SVector{N,Complex{BigFloat}}}) where {S,N} = DirectSolver
-default_frame_solver(domain::Domain, basis::Dictionary{BigFloat}) = DirectSolver
-default_frame_solver(domain::Domain, basis::Dictionary{Complex{BigFloat}}) = DirectSolver
+default_frame_solver(domain::Domain, basis::Dictionary{S,SVector{N,BigFloat}}) where {S,N} = QR_solver
+default_frame_solver(domain::Domain, basis::Dictionary{S,SVector{N,Complex{BigFloat}}}) where {S,N} = QR_solver
+default_frame_solver(domain::Domain, basis::Dictionary{BigFloat}) = QR_solver
+default_frame_solver(domain::Domain, basis::Dictionary{Complex{BigFloat}}) = QR_solver

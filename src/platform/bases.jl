@@ -1,11 +1,14 @@
-## Platforms for Fourier series
+## Platforms for certain bases
 
 struct FourierPlatform{T} <: BasisPlatform
 end
 
 FourierPlatform() = FourierPlatform{Float64}()
 
-dictionary(p::FourierPlatform{T}, n; options...) where {T} = FourierBasis{T}(n)
+Dictionary(p::FourierPlatform{T}, n; options...) where {T} = FourierBasis{T}(n)
+
+DiscretizationStyle(p::FourierPlatform) = InterpolationStyle()
+SolverStyle(p::FourierPlatform) = TransformStyle()
 
 
 struct ChebyshevPlatform{T} <: BasisPlatform
@@ -13,7 +16,10 @@ end
 
 ChebyshevPlatform() = ChebyshevPlatform{Float64}()
 
-dictionary(p::ChebyshevPlatform{T}, n; options...) where {T} = ChebyshevBasis{T}(n)
+Dictionary(p::ChebyshevPlatform{T}, n; options...) where {T} = ChebyshevBasis{T}(n)
+
+DiscretizationStyle(p::ChebyshevPlatform) = InterpolationStyle()
+SolverStyle(p::ChebyshevPlatform) = TransformStyle()
 
 function interpolation_grid(dict::ChebyshevBasis; secondkind = false, options...)
     if secondkind

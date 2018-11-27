@@ -49,21 +49,20 @@ function plunge_operator(A, Zt)
     A*Zt - I
 end
 
-default_regularization(A, plunge_op;
-                    verbose = false,
-                    threshold = default_threshold(A),
-                    rankestimate = estimate_plunge_rank(A),
-                    options...) =
-    RandomizedSvdSolver(plunge_op*A;
-        verbose = verbose, threshold = threshold, rankestimate = rankestimate, options...)
+default_regularization(A; options...) = RandomizedSvdSolver(A; options...)
 
-function AZSolver(A::DictionaryOperator{T}, Zt::DictionaryOperator{T}; REG = default_regularization, options...) where {T}
+function AZSolver(A::DictionaryOperator{T}, Zt::DictionaryOperator{T};
+            REG = default_regularization,
+            rankestimate = estimate_plunge_rank(A),
+            threshold = default_threshold(A),
+            options...) where {T}
+
     plunge_op = plunge_operator(A, Zt)
-    psolver = REG(A, plunge_op; options...)
+    psolver = REG(plunge_op*A; threshold = threshold, rankestimate = rankestimate, options...)
     AZSolver(A, Zt, plunge_op, psolver)
 end
 
-default_threshold(A::DictionaryOperator) = 10^(4/5*log10(eps(real(eltype(A)))))
+default_threshold(A::DictionaryOperator) = regularization_threshold(eltype(A))
 
 # Estimate for the rank of (A*Zt-I)*A when computing the low rank decomposition. If check fails, rank estimate is steadily increased.
 estimate_plunge_rank(A::DictionaryOperator) =

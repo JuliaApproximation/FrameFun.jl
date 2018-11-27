@@ -1,4 +1,3 @@
-# diffequation.jl
 
 """
 A DiffEquation describes a differential equation, with or without boundary conditions.
@@ -75,16 +74,16 @@ struct DiffEquation
     Diff  :: DictionaryOperator
     DRhs   :: Function
     BCs    :: Tuple
-    sampling_factor
-    function DiffEquation(S::Dictionary, D::Domain,Diff::DictionaryOperator, DRhs:: Function, BCs::Tuple, sampling_factor=2)
-        new(S,D,Diff,DRhs,BCs, sampling_factor)
+    oversamplingfactor
+    function DiffEquation(S::Dictionary, D::Domain,Diff::DictionaryOperator, DRhs:: Function, BCs::Tuple, oversamplingfactor=2)
+        new(S,D,Diff,DRhs,BCs, oversamplingfactor)
     end
 end
 
-# DiffEquation(S::Dictionary, D::Domain, Diff::DictionaryOperator, DRhs::Function, BC::BoundaryCondition, sampling_factor=2) = DiffEquation(S,D,Diff,DRhs,(BC,), sampling_factor)
+# DiffEquation(S::Dictionary, D::Domain, Diff::DictionaryOperator, DRhs::Function, BC::BoundaryCondition, oversamplingfactor=2) = DiffEquation(S,D,Diff,DRhs,(BC,), oversamplingfactor)
 
 function boundarygrid(D::DiffEquation)
-    G, lB = oversampled_grid(D.D,D.S,D.sampling_factor)
+    G, lB = oversampled_grid(D.D, D.S, oversamplingfactor = D.oversamplingfactor)
     boundary(grid(lB),D.D)
 end
 
@@ -93,7 +92,7 @@ function operator(D::DiffEquation; incboundary=false, options...)
     B = D.S
     ADiff = pinv(D.Diff)
     ops = incboundary ? Array{DictionaryOperator}(undef, length(D.BCs)+2,1) : Array{DictionaryOperator}(undef, length(D.BCs)+1,1)
-    G, lB = oversampled_grid(D.D,D.S,D.sampling_factor)
+    G, lB = oversampled_grid(D.D, D.S, oversamplingfactor = D.oversamplingfactor)
 
     op = grid_evaluation_operator(D.S,gridbasis(G,coeftype(D.S)),G)
 
@@ -114,7 +113,7 @@ end
 function rhs(D::DiffEquation; incboundary = false, options...)
     op = operator(D; incboundary=incboundary, options...)
     rhs = Array{Array{coeftype(src(op)),1}}(undef,0)
-    G, lB = oversampled_grid(D.D,D.S,D.sampling_factor)
+    G, lB = oversampled_grid(D.D, D.S, oversamplingfactor = D.oversamplingfactor)
 
     op = grid_evaluation_operator(D.S,gridbasis(G,coeftype(D.S)),G)
     push!(rhs,sample(G,D.DRhs, coeftype(src(op))))
@@ -130,7 +129,7 @@ function rhs(D::DiffEquation; incboundary = false, options...)
 end
 
 function solve(D::DiffEquation; solver=AZSolver, options...)
-    G, lB = oversampled_grid(D.D,D.S,D.sampling_factor)
+    G, lB = oversampled_grid(D.D, D.S, oversamplingfactor = D.oversamplingfactor)
     Adiff= pinv(D.Diff)
     b = rhs(D; options...)
     OP = operator(D; options...)

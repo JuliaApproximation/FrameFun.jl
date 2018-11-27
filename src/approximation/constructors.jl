@@ -1,6 +1,6 @@
 
-function _trapnorm(f::Function, D::ExtensionFrame, sampling_factor)
-    g = FrameFun.oversampled_grid(domain(D), basis(D), sampling_factor)[1]
+function _trapnorm(f::Function, D::ExtensionFrame, oversamplingfactor)
+    g = FrameFun.oversampled_grid(domain(D), basis(D), oversamplingfactor = oversamplingfactor)[1]
     sqrt(stepsize(g)*norm([f(x) for x in g])^2)
 end
 
@@ -9,17 +9,17 @@ BasisFunctions.stepsize(s::IndexSubGrid) = BasisFunctions.stepsize(supergrid(s))
 random_test(f::Function, F::DictFun, tolerance, no_samples::Int) =
     abserror(f,F;vals=no_samples) < tolerance
 
-abs_coefficient_test(f::Function, F::DictFun, abscoef, sampling_factor) =
-    norm(coefficients(F)) < abscoef*_trapnorm(f, dictionary(F), sampling_factor)
+abs_coefficient_test(f::Function, F::DictFun, abscoef, oversamplingfactor) =
+    norm(coefficients(F)) < abscoef*_trapnorm(f, dictionary(F), oversamplingfactor)
 
 rel_coefficient_test(f::Function, F::DictFun, relcoef, prev_cnorm, tolerance) =
     abs(norm(coefficients(F))-prev_cnorm) < relcoef*tolerance
 
-function coefficient_test(f::Function, F::DictFun; abscoef=nothing, relcoef=nothing, tolerance=nothing, sampling_factor=1, prev_cnorm=nothing, options...)
+function coefficient_test(f::Function, F::DictFun; abscoef=nothing, relcoef=nothing, tolerance=nothing, oversamplingfactor=1, prev_cnorm=nothing, options...)
     if relcoef != nothing
         rel_coefficient_test(f, F, relcoef, prev_cnorm, tolerance)
     elseif abscoef != nothing
-        abs_coefficient_test(f, F, abscoef, sampling_factor)
+        abs_coefficient_test(f, F, abscoef, oversamplingfactor)
     else
         error()
     end

@@ -1,4 +1,3 @@
-# funs.jl
 
 abstract type AbstractFun
 end

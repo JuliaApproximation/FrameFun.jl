@@ -20,7 +20,7 @@ total_mv_time = 0.0
 const include_1d_tests = true
 const include_2d_tests = true
 const include_3d_tests = true
-const include_bigfloat_tests = false
+const include_bigfloat_tests = true
 
 ########
 # Auxiliary functions
@@ -37,7 +37,7 @@ end
 
 show_timings(F) = show_mv_times && show_timings(F, F.approx_op)
 
-show_timings(F, op::FrameFun.FE_Solver) = show_timings(F, operator(op.problem))
+show_timings(F, op::BasisFunctions.AbstractSolverOperator) = show_timings(F, operator(op))
 
 # function show_timings(F, op::TensorProductOperator)
 #     for i in 1:numelements(op)
@@ -80,54 +80,51 @@ end
 function test_1d_cases()
     delimit("1D")
 
+    ## The tridiagonal solver for Fourier extensions
+    solverstyle = TridiagonalProlateStyle()
+
+    n = 61
+    T = 1.9
+    domain = Interval(-1.0, 1.0)
+    basis = FourierBasis(n, -T, T)
+
+    println()
+    println("Testing \t solver = $solverstyle, \n\t\t Domain = $domain, \n\t\t Basis = Fourier,\n\t\t ELT = Float64 ")
+    verbose && println("N\t T\t Complex?\t abserror\t time\t\t memory   ")
+
     # Complex and real functions / Float64
     f(x) = cos(x^2-1//2)-1
     g(x) = 1im*cos(x^2-1//2)-1
-    Basis = FourierBasis
-    D = Interval(-1.0,1.0)
-    # Chebyshev and Fourier Bases
-    solver = FrameFun.FE_TridiagonalSolver
-    println()
-    println("Testing \t solver = $solver, \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = Float64 ")
-    verbose && println("N\t T\t Complex?\t abserror\t time\t\t memory   ")
-
-    for n in [FrameFun.default_frame_n(D, Basis)]
-
-        # There is some symmetry around T=2, test smaller and larger values
-        for T in (1.9,)
-            for func in (f,g)
-
-                B = Basis(n, -T, T)
-                F = @timed( Fun(func, B, D; solver=solver) )
-                error = abserror(func, F[1])
-                if verbose
-                    print("$n\t $T\t\t")
-                    func==g ? print("Y\t") : print("N\t")
-                    @printf("%3.2e\t %3.2e s\t %3.2e bytes \n",error, F[2],F[3])
-                end
-                @test  (error < sqrt(eps(Float64))*10)
-                show_timings(F[1])
-            end
+    for func in (f,g)
+        F = @timed( Fun(basis, domain, func; solverstyle=solverstyle) )
+        error = abserror(func, F[1])
+        if verbose
+            print("$n\t $T\t\t")
+            func==g ? print("Y\t") : print("N\t")
+            @printf("%3.2e\t %3.2e s\t %3.2e bytes \n",error, F[2],F[3])
         end
+        @test  (error < sqrt(eps(Float64))*10)
+        show_timings(F[1])
     end
 
     @testset "result" for ELT in (Float32,Float64),
             Basis in (FourierBasis, ChebyshevBasis),
-            D in [Interval(ELT(-1.5),ELT(0.7)), DomainSets.UnionDomain(Interval(ELT(-1.5),ELT(-0.5)),Interval(ELT(0.5),ELT(1.5)))],
-            solver in (AZSolver, DirectSolver)
+            domain in [Interval(ELT(-1.5),ELT(0.7)), DomainSets.UnionDomain(Interval(ELT(-1.5),ELT(-0.5)),Interval(ELT(0.5),ELT(1.5)))],
+            solver in (AZStyle(), DirectStyle())
 
         println()
-        println("Testing \t solver = $solver, \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = $ELT ")
+        println("Testing \t solver = $solver, \n\t\t Domain = $domain, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = $ELT ")
         verbose && println("N\t T\t Complex?\t abserror\t time\t\t memory   ")
 
-        for n in [FrameFun.default_frame_n(D, Basis)]
+        for n in (61,)
 
             # There is some symmetry around T=2, test smaller and larger values
             for T in (ELT(1.9),)
                 for func in (f,g)
 
-                    B = Basis{ELT}(n, -T, T)
-                    F = @timed( Fun(func, B, D; solver=solver) )
+                    basis = Basis{ELT}(n, -T, T)
+                    # F = @timed( Fun(func, B, D; solver=solver) )
+                    F = @timed( Fun(basis, domain, func; solver=solver) )
                     error = abserror(func, F[1])
                     if verbose
                         print("$n\t $T\t\t")
@@ -140,28 +137,28 @@ function test_1d_cases()
             end
         end
     end
-
 end
 
 function test_bigfloat()
     f(x) = cos(x.^2) - big(1.0)
     g(x) = big(1.0)im * cos(x.^2) - big(1.0)
     @testset "result" for Basis in (FourierBasis, ChebyshevBasis),
-        D in [Interval(BigFloat, -3//2, 7//10)]
+        D in [Interval(big(-3.0)/2, big(7.0)/10)]
         println()
-        println("Testing \t solver = DirectSolver{ELT}\n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = BigFloat ")
+        println("Testing \t solver = QR_solver\n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = BigFloat ")
         verbose && println("N\t T\t Complex?\t abserror\t time\t\t memory   ")
-        for T in (BigFloat(17//10),)
+        for T in (big(17.0)/10,)
             for func in (f,g)
                 B = Basis(91, -T, T)
-                F = @timed( Fun(func, B, D; solver = DirectSolver) )
+                # F = @timed( Fun(func, B, D; solver = QR_solver) )
+                F = @timed( Fun(B, D, func; solverstyle = DirectStyle(), directsolver=:svd) )
                 error = abserror(func, F[1])
                 if verbose
                     @printf("91\t %3.2e\t\t",T)
                     func==g ? print("Y\t") : print("N\t")
                     @printf("%3.2e\t %3.2e s\t %3.2e bytes \n",error, F[2],F[3])
                 end
-                @test  error < 1e-20
+                @test error < 1e-20
                 show_timings(F)
             end
         end
@@ -175,7 +172,7 @@ function test_2d_cases()
     g(x,y) = 1im*cos(0.5*x)+2*sin(0.2*y)-1.0im*x*y
     @testset "result" for Basis in (FourierBasis, ChebyshevBasis),
         D in [disk(1.2,v[-0.1,-0.2]), cube((-1.0,-1.5),(0.5,0.7))],
-        solver in (AZSolver, DirectSolver)
+        solver in (AZSolver, QR_solver)
 
         println()
         println("Testing \t solver = $solver \n\t\t Domain = $D, \n\t\t Basis = $(name(instantiate(Basis,10)⊗instantiate(Basis,10))),\n\t\t ELT = Float64 ")
@@ -218,7 +215,7 @@ function test_3d_cases()
 
         for T in ((1.7,1.2,1.3),)
             B = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2]) ⊗ Basis(n[3],-T[3],T[3])
-            F = @timed( Fun(f, B, D; solver=solver, cutoff=10.0^(3/4*log10(eps(real(codomaintype(B))))),sampling_factor=1.5))
+            F = @timed( Fun(f, B, D; solver=solver, cutoff=10.0^(3/4*log10(eps(real(codomaintype(B))))),oversamplingfactor=1.5))
             error = FrameFun.residual(f, F[1])/length(B)
             if verbose
                 print("$n \t $T \t\t")

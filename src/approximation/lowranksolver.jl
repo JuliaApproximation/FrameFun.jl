@@ -80,7 +80,7 @@ The cost is equal to the computation of the SVD of A.
 
 For tensor product operators it returns a decomposition of the linearized system
 """
-struct ExactSvdSolver{T} <: FE_Solver{T}
+struct ExactSvdSolver{T} <: AbstractSolverOperator{T}
     # Keep the original operator
     A          ::  DictionaryOperator
     # Decomposition
@@ -108,9 +108,7 @@ struct ExactSvdSolver{T} <: FE_Solver{T}
     end
 end
 
-src(t::ExactSvdSolver) = dest(t.A)
-dest(t::ExactSvdSolver) = src(t.A)
-inv(t::ExactSvdSolver) = t.A
+operator(s::ExactSvdSolver) = s.A
 
 ExactSvdSolver(A::DictionaryOperator; options...) =
     ExactSvdSolver{eltype(A)}(A::DictionaryOperator; options...)

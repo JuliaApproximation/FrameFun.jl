@@ -29,7 +29,7 @@ end
 
 show_timings(F) = show_timings(F, F.approx_op)
 
-show_timings(F, op::FE.FE_Solver) = show_timings(F, operator(op.problem))
+show_timings(F, op::BasisFunctions.AbstractSolverOperator) = show_timings(F, operator(op))
 
 function show_timings(F, op)
     if show_mv_times
@@ -58,7 +58,7 @@ end
 
 
 function test_differential_equations_1d()
-    @testset "diff 1D dirichlet" for solver in (AZSolver, DirectSolver)
+    @testset "diff 1D dirichlet" for solver in (AZSolver, QR_solver)
         B = FourierBasis(101,-1,1)
         Dom = Interval(-0.5,0.5)
         # Set up Boundary conditions
@@ -75,7 +75,7 @@ function test_differential_equations_1d()
         error = abserror(f,F'')
         @test (error < sqrt(eps(real(codomaintype(B))))*100)
     end
-    @testset "diff 1D mixed" for solver in (AZSolver, DirectSolver)
+    @testset "diff 1D mixed" for solver in (AZSolver, QR_solver)
         B = FourierBasis(101,-2,2)
         Dom = Interval(-1.0,1.0)
         # Set up Boundary conditions
@@ -96,7 +96,7 @@ function test_differential_equations_1d()
 end
 
 function test_differential_equations_2d()
-    @testset "diff 2D dirichlet" for solver in (AZSolver, DirectSolver)
+    @testset "diff 2D dirichlet" for solver in (AZSolver, QR_solver)
         B = FourierBasis(11,-1,1)⊗FourierBasis(11,-1,1)
         Dom = disk(0.8)
         # Set up Boundary conditions
@@ -113,7 +113,7 @@ function test_differential_equations_2d()
         error = abserror(f,∂x(∂x(F))+∂y(∂y(F)))
         @test (error < 0.3)
     end
-    @testset "diff 2D Neumann" for solver in (AZSolver, DirectSolver)
+    @testset "diff 2D Neumann" for solver in (AZSolver, QR_solver)
         B = FourierBasis(11,-1,1)⊗FourierBasis(11,-1,1)
         Dom = disk(0.8)
         # Set up Boundary conditions
