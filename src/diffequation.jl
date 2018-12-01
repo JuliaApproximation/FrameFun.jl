@@ -41,12 +41,12 @@ end
 
 function operator(BC :: DirichletBC, S::Dictionary, G::AbstractGrid, D::Domain)
     G = subgrid(G,BC.D)
-    BC.factor*grid_evaluation_operator(S,gridbasis(G,coeftype(S)),G)
+    BC.factor*grid_evaluation_operator(S,gridbasis(G,coefficienttype(S)),G)
 end
 
 function operator(BC :: NeumannBC, S::Dictionary2d, G::AbstractGrid, D::Domain2d)
     G = subgrid(G,BC.D)
-    GE = grid_evaluation_operator(S,gridbasis(G,coeftype(S)),G)
+    GE = grid_evaluation_operator(S,gridbasis(G,coefficienttype(S)),G)
     dx = Float64[]
     dy = Float64[]
     for i=1:length(G)
@@ -60,7 +60,7 @@ end
 
 function operator(BC :: NeumannBC, S::Dictionary1d, G::AbstractGrid1d, D::Domain1d)
     G = subgrid(G,BC.D)
-    GE = grid_evaluation_operator(S,gridbasis(G,coeftype(S)),G)
+    GE = grid_evaluation_operator(S,gridbasis(G,coefficienttype(S)),G)
     dx = Float64[]
     for i=1:length(G)
         push!(dx, normal(G[i],D)[1])
@@ -94,14 +94,14 @@ function operator(D::DiffEquation; incboundary=false, options...)
     ops = incboundary ? Array{DictionaryOperator}(undef, length(D.BCs)+2,1) : Array{DictionaryOperator}(undef, length(D.BCs)+1,1)
     G, lB = oversampled_grid(D.D, D.S, oversamplingfactor = D.oversamplingfactor)
 
-    op = grid_evaluation_operator(D.S,gridbasis(G,coeftype(D.S)),G)
+    op = grid_evaluation_operator(D.S,gridbasis(G,coefficienttype(D.S)),G)
 
     cnt=1
     ops[cnt] = op*D.Diff*ADiff
     BG = boundarygrid(D)
     if incboundary
         cnt=cnt+1
-        ops[cnt] = grid_evaluation_operator(D.S,gridbasis(BG,coeftype(D.S)),BG)
+        ops[cnt] = grid_evaluation_operator(D.S,gridbasis(BG,coefficienttype(D.S)),BG)
     end
     for i = 1:length(D.BCs)
         Ac = operator(D.BCs[i],D.S,BG,D.D)*ADiff
@@ -112,28 +112,32 @@ end
 
 function rhs(D::DiffEquation; incboundary = false, options...)
     op = operator(D; incboundary=incboundary, options...)
-    rhs = Array{Array{coeftype(src(op)),1}}(undef,0)
+    rhs = Array{Array{coefficienttype(src(op)),1}}(undef,0)
     G, lB = oversampled_grid(D.D, D.S, oversamplingfactor = D.oversamplingfactor)
 
-    op = grid_evaluation_operator(D.S,gridbasis(G,coeftype(D.S)),G)
-    push!(rhs,sample(G,D.DRhs, coeftype(src(op))))
+    op = grid_evaluation_operator(D.S,gridbasis(G,coefficienttype(D.S)),G)
+    push!(rhs,sample(G,D.DRhs, coefficienttype(src(op))))
     BG = boundarygrid(D)
 
     if incboundary
-        push!(rhs,sample(BG,D.DRhs, coeftype(src(op))))
+        push!(rhs,sample(BG,D.DRhs, coefficienttype(src(op))))
     end
     for i = 1:length(D.BCs)
-        push!(rhs,sample(subgrid(BG,D.BCs[i].D),D.BCs[i].dRhs, coeftype(src(op))))
+        push!(rhs,sample(subgrid(BG,D.BCs[i].D),D.BCs[i].dRhs, coefficienttype(src(op))))
     end
     MultiArray(rhs)
 end
 
-function solve(D::DiffEquation; solver=AZSolver, options...)
+struct PDEApproximation <: ApproximationProblem
+    D   ::  DiffEquation
+end
+
+function solve(D::DiffEquation; solverstyle=AZStyle(), options...)
     G, lB = oversampled_grid(D.D, D.S, oversamplingfactor = D.oversamplingfactor)
-    Adiff= pinv(D.Diff)
+    Adiff = pinv(D.Diff)
     b = rhs(D; options...)
     OP = operator(D; options...)
-    A = solver(OP; scaling=length(lB), options...)
+    A = solver(solverstyle, PDEApproximation(D), OP; Zt = 1/length(lB)*OP', options...)
     coef  = A * b
     DictFun(D.D, dest(A), Adiff*coef)
 end
@@ -170,7 +174,7 @@ end
 FECollocationOperator(feframe::ExtensionFrame,pD::Vector,aX::Vector,sampler::DictionaryOperator) = FECollocationOperator{eltype(sampler)}(feframe,pD,aX,sampler)
 function FECollocationOperator(feframe::ExtensionFrame,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real) where {S1<:Function,S2<:Function}
     pD = map(p->pseudodifferential_operator(feframe,p),pd)
-    gridbasis = GridBasis(oversampled_grid(feframe,samplingfactor)[1],coefficient_type(feframe))
+    gridbasis = GridBasis(oversampled_grid(feframe,samplingfactor)[1],coefficienttype(feframe))
     aX = map(a->grid_multiplication_operator(a,gridbasis),ax)
     sampler = evaluation_operator(feframe,grid(gridbasis))
     FECollocationOperator(feframe,pD,aX,sampler)

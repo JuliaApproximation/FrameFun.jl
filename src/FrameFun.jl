@@ -68,7 +68,7 @@ import BasisFunctions: coefficients, dictionary,
     default_approximation_operator, has_extension, wrap_operator, grid_evaluation_operator
 
 import BasisFunctions: superdict, similar_dictionary,
-    promote_domaintype, promote_domainsubtype, promote_coefficient_type
+    promote_domaintype, promote_domainsubtype, promote_coefficienttype
 
 import BasisFunctions: eval_element, eval_element_derivative, eval_expansion,
     unsafe_eval_element, unsafe_eval_element_derivative,
@@ -86,7 +86,7 @@ import BasisFunctions: flatten
 
 import BasisFunctions: Span, expansion
 
-import BasisFunctions: coefficient_type, coeftype
+import BasisFunctions: coefficienttype, coefficienttype
 
 # about subgrids
 import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
@@ -104,8 +104,11 @@ import BasisFunctions: AbstractSolverOperator, GridSamplingOperator
 ## Exhaustive list of exports
 ###############################
 export ×
-# from funs.jl
-export ExpFun, ChebyFun, Fun, DictFun, sampling_grid, domain, abserror, maxerror, L2error
+
+# from fun/funs.jl
+export Fun, DictFun, sampling_grid, domain
+# from fun/error.jl
+export residual, abserror, maxerror, L2error
 
 # from subgrid.jl
 export MaskedGrid
@@ -118,7 +121,7 @@ export boundingbox
 export dist, normal
 
 # from frames/extensionframe.jl
-export ExtensionFrame, basis, domain, extensionframe
+export ExtensionFrame, extensionframe
 export Gram, DualGram, MixedGram
 export extension_frame_platform
 
@@ -164,7 +167,8 @@ export AZSolver, AZSmoothSolver, TridiagonalSolver
 export Platform
 export primal, dual, sampler, matrix_A, matrix_Zt, dual_sampler
 export InterpolationStyle, OversamplingStyle, GramStyle, RectangularGramStyle, GenericSamplingStyle
-export DirectStyle, InverseStyle, TransformStyle, IterativeStyle, AZStyle, TridiagonalProlateStyle
+export DirectStyle, InverseStyle, TransformStyle, IterativeStyle, AZStyle,
+    AZSmoothStyle, TridiagonalProlateStyle
 
 
 include("sampling/subgrid.jl")
@@ -185,6 +189,7 @@ include("frames/weighted_sum_frame.jl")
 
 include("fun/basisdomains.jl")
 include("fun/funs.jl")
+include("fun/error.jl")
 
 include("approximation/randomized.jl")
 
@@ -193,7 +198,6 @@ include("approximation/lowranksolver.jl")
 include("approximation/azsolver.jl")
 include("approximation/tridiagonalsolver.jl")
 include("approximation/smoothsolver.jl")
-include("approximation/fe_approx.jl")
 
 include("approximation/oversampling.jl")
 

@@ -4,7 +4,6 @@ function continuous_approximation_operator(dest::ExtensionFrame; oversamplingfac
     (oversamplingfactor ≈ 1) &&
         (return ContinuousSolverPlan(solver(MixedGram(dest; options...); options...), continuous_normalization(dest; options...)))
     src = resize(dest, round(Int, oversamplingfactor*length(dest)))
-    println(oversamplingfactor)
     ContinuousSolverPlan(solver(MixedGram(dest, src; options...); options...), continuous_normalization(src; options...))
 end
 

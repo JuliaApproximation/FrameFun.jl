@@ -63,11 +63,6 @@ basis(fun::DictFun, dict::Dictionary) = dict
 
 domain(fun::DictFun, dict::Dictionary) = support(dict)
 
-function matrix(fun::DictFun; options...)
-    op = oversampled_evaluation_operator(basis(fun),domain(fun);  options...)[1]
-    matrix(op)
-end
-
 # Delegate operator applications to the underlying expansion
 function (*)(op::DictionaryOperator, fun::DictFun)
     @assert (src(op) == dictionary(fun)) | (src(op) == basis(dictionary(fun)))
@@ -109,52 +104,4 @@ function _restrict(expansion::Expansion, set::Dictionary, domain::Domain)
     @assert dimension(set) == dimension(domain)
     # We should check here whether the given domain lies in the support of the set
     DictFun(domain, set, coefficients(expansion))
-end
-
-# Get the mean approximation error in random interior points.
-function abserror(f::Function,F::DictFun;vals::Int=200)
-    rgrid = randomgrid(domain(F),vals)
-    Fval = F(rgrid)
-    # TODO: type based on space of F
-    fval = sample(rgrid,f,eltype(F))
-    return sum(abs.(Fval-fval))/vals
-end
-
-# Get the max approximation error in random interior points
-function maxerror(f::Function,F::DictFun;vals::Int=200)
-    rgrid = randomgrid(domain(F),vals)
-    Fval = F(rgrid)
-    # TODO: type based on space of F
-    fval = sample(rgrid,f,eltype(F))
-    return maximum(abs.(Fval-fval))
-end
-
-using QuadGK
-
-function L2error(f::Function, F::DictFun{S,T}; rtol = eps(real(T)), atol = 0, options...) where {S,T}
-    I = QuadGK.quadgk(x->abs(F(x)-f(x))^2, left(dictionary(F)), right(dictionary(F)), rtol=rtol, atol=atol)
-    @assert I[2] < 100max(rtol*I[1],atol)
-    sqrt(I[1])
-end
-
-function residual(f::Function, F::DictFun ;  options...)
-    op = oversampled_evaluation_operator(basis(F),domain(F); options...)[1]
-    rhs = project(dest(op),f)
-    norm(op*coefficients(F)-rhs)
-end
-
-function relresidual(f::Function, F::DictFun ;  options...)
-    op = oversampled_evaluation_operator(basis(F),domain(F); options...)[1]
-    rhs = project(dest(op),f)
-
-
-    norm(op*coefficients(F)-rhs)/norm(rhs)
-end
-
-function residualmax(f::Function, F::DictFun ;  options...)
-    op = oversampled_evaluation_operator(basis(F),domain(F); options...)[1]
-    rhs = project(dest(op),f)
-
-
-    maximum(abs(op*coefficients(F)-rhs))
 end

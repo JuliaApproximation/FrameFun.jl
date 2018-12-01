@@ -31,8 +31,9 @@ struct DirectStyle <: SolverStyle end
 struct InverseStyle <: SolverStyle end
 struct TransformStyle <: SolverStyle end
 struct IterativeStyle <: SolverStyle end
-struct AZStyle <: SolverStyle end
 struct TridiagonalProlateStyle <: SolverStyle end
+struct AZStyle <: SolverStyle end
+struct AZSmoothStyle <: SolverStyle end
 
 SolverStyle(p::Platform) = SolverStyle(DictionaryStyle(p), p)
 

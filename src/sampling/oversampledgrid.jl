@@ -7,7 +7,6 @@
 oversampled_grid(set::ExtensionFrame; options...) =
     oversampled_grid(domain(set), basis(set); options...)
 
-
 function oversampled_grid(domain, basis::Dictionary; oversamplingfactor, options...)
     N = dimension(basis)
     n_goal = length(basis) * oversamplingfactor^N

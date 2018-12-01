@@ -38,10 +38,6 @@ end
 AZSolver(A::DictionaryOperator{T}, Zt::DictionaryOperator{T}, plunge_op::DictionaryOperator{T}, psolver::DictionaryOperator{T}) where {T} =
     AZSolver{eltype(A)}(A, Zt, plunge_op, psolver)
 
-# # If no Zt is supplied, Zt=A' (up to scaling) by default.
-AZSolver(A::DictionaryOperator{T}; scaling=nothing, options...) where {T} =
-    AZSolver(A, T(1)/T(scaling)*A'; options...)
-
 operator(s::AZSolver) = s.A
 
 function plunge_operator(A, Zt)

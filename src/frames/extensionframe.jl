@@ -172,7 +172,7 @@ grid_evaluation_operator(s::TensorProductExtensionFrameDict, dgs::GridBasis, gri
 sampler(platform::Platform, sampler::GridSamplingOperator, domain::Domain) =
     GridSamplingOperator(gridbasis(sampler), grid(sampler), domain, sampler.scaling)
 GridSamplingOperator(dgs::GridBasis, grid::AbstractGrid, domain::Domain, scaling) =
-    GridSamplingOperator(gridbasis(FrameFun.subgrid(grid, domain), coeftype(dgs)), scaling=scaling)
+    GridSamplingOperator(gridbasis(FrameFun.subgrid(grid, domain), coefficienttype(dgs)), scaling=scaling)
 
 extension_frame_sampler(platform::Platform, domain::Domain) = n->sampler(platform, platform.sampler_generator(n), domain)
 dual_extension_frame_sampler(platform::Platform, domain::Domain) = n->sampler(platform, platform.dual_sampler_generator(n), domain)

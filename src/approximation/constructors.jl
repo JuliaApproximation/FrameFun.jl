@@ -34,7 +34,7 @@ end
 """
 function fun_simple(f::Function, dict::Dictionary, domain::Domain;
         no_checkpoints=3, max_logn_coefs=8, tol=1e-12, abscoef=nothing, verbose=false, adaptive_verbose = verbose, options...)
-    ELT = codomaintype(f, dict)
+    ELT = codomaintype(dict)
     N = dimension(dict)
     F = nothing
     rgrid = randomgrid(domain, no_checkpoints)
@@ -45,7 +45,7 @@ function fun_simple(f::Function, dict::Dictionary, domain::Domain;
     dict = resize(dict,n)
     while length(dict) <= 1<<(max_logn_coefs)
         dict = resize(dict,extension_size(dict))
-        F = Fun(f, dict, domain; verbose=verbose, options...)
+        F = Fun(dict, domain, f; verbose=verbose, options...)
         random_F = F(rgrid)
         error = maximum(abs.(random_F-random_f))
         adaptive_verbose && (@printf "Error with %d coefficients is %1.3e\n" (length(dict)) error)
@@ -72,7 +72,7 @@ function fun_optimal_N(f::Function, dict::Dictionary{S,T}, domain::Domain;
         no_checkpoints=3, max_logn_coefs=8, threshold=default_threshold(real(S)), tol=100*threshold, verbose=false, adaptive_verbose = verbose, return_log=false, randomtest=false, abscoef=nothing, relcoef=nothing, options...) where {S,T}
     coefficienttest = (nothing!=abscoef) | (nothing!=relcoef)
 
-    ELT = codomaintype(f, dict)
+    ELT = codomaintype(dict)
     N = dimension(dict)
     F = nothing
     rgrid = randomgrid(domain, no_checkpoints)
@@ -84,7 +84,7 @@ function fun_optimal_N(f::Function, dict::Dictionary{S,T}, domain::Domain;
     error=-1
     while length(dict) <= 2^max_logn_coefs && its < 100
         # Find new approximation
-        F=Fun(f, dict, domain; verbose=verbose, threshold=threshold, options...)
+        F = Fun(dict, domain, f; verbose=verbose, threshold=threshold, options...)
 
         # Using residual
         error = residual(f, F)/sqrt(length(F))
@@ -112,7 +112,7 @@ function fun_optimal_N(f::Function, dict::Dictionary{S,T}, domain::Domain;
         # If the bounds Nmin and Nmax are determined and if they are close
         if are_close(Nmin, Nmax)
             dict=resize(dict, Nmax)
-            F = Fun(f, dict, domain; verbose=verbose, threshold=threshold, options...)
+            F = Fun(dict, domain, f; verbose=verbose, threshold=threshold, options...)
 
             return_log && (return F, log)
             return F
@@ -157,14 +157,15 @@ Base.real(::Type{Tuple{N,T}}) where {N,T} = real(T)
   Stop the iteration when the residu of the approximation is smaller than the tolerance
   or at the maximum number of iterations.
 """
-function fun_greedy(f::Function, dict::Dictionary, domain::FrameFun.Domain;
+function fun_greedy(f::Function, dict::Dictionary, domain::Domain;
     max_logn_coefs = 7, tol = 1e-12, options...)
+
     init_n = 4
     dict = resize(dict,init_n)
-    F = Fun(x->0, dict, domain; options...)
+    F = Fun(dict, domain, x->0; options...)
     for n in init_n:2^max_logn_coefs
         dict = resize(dict,n)
-        p_i = Fun(x->(f(x)-F(x)), dict, domain; options...)
+        p_i = Fun(dict, domain, x->(f(x)-F(x)); coefficienttype = eltype(F), options...)
         F = F + p_i
         if residual(f, F) < tol
             return F

@@ -46,7 +46,6 @@ function test_function_space()
         FE.add(FourierSpace(),2)])
         # @test left(bboxes[i])==left(boundingbox(space))
         # @test right(bboxes[i])==right(boundingbox(space))
-        println(i)
         @test Dictionary(space, 64) == bases[i]
     end
     @testset "Util functions" begin
@@ -63,12 +62,12 @@ end
 
 function test_residual()
     @testset "Residual for basis $(basis)" for basis in (FourierBasis, ChebyshevBasis)
-        D = Interval(-1.0, 1.0)/2
+        domain = Interval(-1.0, 1.0)/2
         f = x->cos(20x)
         res = Inf
         for n in 2 .^ (3:5)
             S = rescale(instantiate(basis,n), -1.0, 1.0)
-            F = Fun(f, S, D)
+            F = Fun(S, domain, f)
             resnew = FE.residual(f,F)
             @test resnew < res
             res = resnew
@@ -85,16 +84,16 @@ function test_funs()
     @testset "$(tests[i]) tests" for (i,mth) in enumerate([FE.fun_simple, FE.fun_optimal_N, FE.fun_greedy])
         for tol in 10.0.^(-4.:-4.:-12.)
             F = mth(f, S, D; tol=tol, max_logn_coefs=max_logn_coefs, adaptive_verbose=false)
-            @test ( (FE.maxerror(f,F) < tol*100) || (length(dictionary(F))>= 2^max_logn_coefs))
+            @test (FE.maxerror(f,F) < tol*100) || (length(dictionary(F))>= 2^max_logn_coefs)
         end
         if mth != FE.fun_greedy
             for tol in 10.0.^(-4.:-4.:-16.)
                 F = mth(f, S, D; tol=tol, max_logn_coefs=max_logn_coefs, abscoef=3, adaptive_verbose=false, random_test=true)
-                @test ( (FE.maxerror(f,F) < tol*100) || (length(dictionary(F))>= 2^max_logn_coefs))
+                @test (FE.maxerror(f,F) < tol*100) || (length(dictionary(F))>= 2^max_logn_coefs)
             end
         end
         F = mth(x->cos(4π*x), S, D)
-        @test FE.residual(x->cos(4π*x),F,tol=1e-12) < 1e-11
+        @test residual(x->cos(4π*x), F, residualtype = :l2) < 1e-11
     end
 end
 

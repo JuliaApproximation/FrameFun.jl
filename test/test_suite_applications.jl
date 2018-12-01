@@ -27,29 +27,6 @@ function delimit(s::AbstractString)
     println("############")
 end
 
-show_timings(F) = show_timings(F, F.approx_op)
-
-show_timings(F, op::BasisFunctions.AbstractSolverOperator) = show_timings(F, operator(op))
-
-function show_timings(F, op)
-    if show_mv_times
-        c1 = zeros(eltype(op), size(src(op)))
-        c2 = zeros(eltype(op), size(dest(op)))
-        apply!(op, c2, c1)
-        t = @timed apply!(op, c2, c1)
-        if t[3] > 700
-            print_with_color(:red, "\"\tMV product: ")
-        elseif t[3] == 0
-            print_with_color(:green, "\"\tMV product: ")
-        else
-            print_with_color(:blue, "\"\tMV product: ")
-        end
-        println(t[3], " bytes allocated, in ", t[2], " seconds")
-        # end
-        global total_mv_allocs += t[3]
-        global total_mv_time += t[2]
-    end
-end
 
 #######
 # Testing -- Accuracy
@@ -135,24 +112,23 @@ end
 
 # We just test the accuracy, not the smoothing properties
 function test_smoothing_1d()
-    @testset "Smoothing $(name(instantiate(Basis,10)))" for Basis in (FourierBasis,)
-        B = Basis(101,-1,1)
-        D = Interval(-0.5,0.5)
+    @testset "Smoothing $(name(instantiate(Basis,10)))" for Basis in (ChebyshevBasis,)
+        basis = Basis(101,-1,1)
+        domain = Interval(-0.5,0.5)
         f(x) = exp(x)
-        fscale(i) = 10.0^-4+abs(i)+abs(i)^2+abs(i)^3
-        F = Fun(f,B,D;solver=AZSmoothSolver,scale=fscale)
-        # F = Fun(f,B,D;solver=FrameFun.FE_ProjectionSolver)
+        fscale(dict, i) = 10.0^-4+i+i^2+i^3
+        F = Fun(basis, domain, f; solverstyle = AZSmoothStyle(), scaling=fscale)
         @test (abserror(f,F) < 100*sqrt(eps(Float64)))
     end
 end
 
 function test_smoothing_2d()
-    @testset "Smoothing $(name(instantiate(Basis,10)))" for Basis in (FourierBasis,)
-        B = Basis(20,-1.0,1.0)⊗Basis(20,-1.0,1.0)
-        D = disk(0.5)
+    @testset "Smoothing $(name(instantiate(Basis,10)))" for Basis in (ChebyshevBasis,)
+        basis = Basis(20,-1.0,1.0)⊗Basis(20,-1.0,1.0)
+        domain = disk(0.5)
         f(x,y) = exp(x*y)
-        fscale(i,j) = 10.0^-4+100*abs((i)^2+abs(j^2))
-        F = Fun(f,B,D;solver=AZSmoothSolver,scale=fscale)
+        fscale(dict, I) = 10.0^-4+100*(I[1]^2+I[2]^2)
+        F = Fun(basis, domain, f; solverstyle = AZSmoothStyle(), scaling=fscale)
         @test (abserror(f,F) < 100*sqrt(sqrt(eps(Float64))))
     end
 end
