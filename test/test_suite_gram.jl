@@ -1,11 +1,8 @@
 module test_suite
 
-using BasisFunctions, FrameFun, Domains
-if VERSION < v"0.7-"
-    using Base.Test
-else
-    using Test
-end
+using BasisFunctions, FrameFun, DomainSets
+using Test
+
 FE = FrameFun
 BA = BasisFunctions
 
@@ -19,7 +16,7 @@ function prolate_test()
         for T in (Float32, Float64,), n in (11,13,)
             tol = sqrt(eps(T))
             b = FourierBasis{T}(n)
-            d = interval(T(.25),T(.75))
+            d = Interval(T(.25),T(.75))
             frame = extensionframe(b, d)
             g = Gram(frame; rtol=tol,atol=tol)
             m = matrix(g)

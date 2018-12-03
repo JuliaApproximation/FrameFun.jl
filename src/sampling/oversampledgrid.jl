@@ -4,13 +4,12 @@
 
 # Sidenote: very slow when testing with no inlining.
 
-oversampled_grid(set::ExtensionFrame, args...) =
-    oversampled_grid(domain(set), basis(set), args...)
+oversampled_grid(set::ExtensionFrame; options...) =
+    oversampled_grid(domain(set), basis(set); options...)
 
-
-function oversampled_grid(domain, basis::Dictionary, sampling_factor)
+function oversampled_grid(domain, basis::Dictionary; oversamplingfactor, options...)
     N = dimension(basis)
-    n_goal = length(basis) * sampling_factor^N
+    n_goal = length(basis) * oversamplingfactor^N
     grid1 = BasisFunctions.grid(basis)
     grid2 = FrameFun.subgrid(grid1, domain)
     ratio = max(1,length(grid2)) / length(grid1)

@@ -1,13 +1,10 @@
 module test_suite_applications
 
-using Domains, BasisFunctions, FrameFun, Plots
+using DomainSets, BasisFunctions, FrameFun, Plots
 # Plots loads the default backend (PyPlot unless otherwise specified)
 
-if VERSION < v"0.7-"
-    using Base.Test
-else
-    using Test
-end
+using Test
+
 FE = FrameFun
 BA = BasisFunctions
 
@@ -50,25 +47,25 @@ function test_plots()
     G = BasisFunctions.grid(Df)
     plot(G,size=(400,400))
 
-B = FourierBasis(51,-2.0,-0.5)
-D = interval(-1.7,-1.0)
-f(x) = cos(3*x.^2)
-F = Fun(f,B,D)
-# Easily combine multiple plots
-plot(BasisFunctions.grid(dictionary(F)),label="grid",markercolor=:white)
-plot!(F,label="function", plot_ext=true)
-plot!(F',title="Function and derivative",label="derivative",legend=true)
+    basis = FourierBasis(51,-2.0,-0.5)
+    domain = -1.7..1.0
+    f(x) = cos(3*x.^2)
+    F = Fun(f, basis, domain)
+    # Easily combine multiple plots
+    plot(BasisFunctions.grid(dictionary(F)),label="grid",markercolor=:white)
+    plot!(F,label="function", plot_ext=true)
+    plot!(F',title="Function and derivative",label="derivative",legend=true)
 
     plot(F,f,label="function")
     df(x) = -sin(3*x^2)*6*x
     plot!(F',df,label="derivative",legend=true)
 
-    B = FourierBasis(21,-1,1)⊗FourierBasis(21,-1,1)
-    D = intersect(disk(0.8),disk(0.4))
+    basis = FourierBasis(21,-1,1)⊗FourierBasis(21,-1,1)
+    domain = intersect(disk(0.8),disk(0.4))
     f(x,y) = cos(7*x-2*y^2)
-    F = Fun(f,B,D)
+    F = Fun(f, basis, domain)
 
-    plot(D,n=100)
+    plot(domain, n=100)
 
     plot(F,size=(600,400))
 

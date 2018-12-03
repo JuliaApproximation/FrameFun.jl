@@ -1,32 +1,15 @@
-# FrameFun.jl
-__precompile__(true)
 module FrameFun
 
 using Base.Cartesian
 using StaticArrays
 using RecipesBase
-using Compat
 
-using Domains
+using DomainSets
 using BasisFunctions
 
-if VERSION < v"0.7-"
-    import BasisFunctions.adjoint
-    import Base: start, next, done, showcompact
-    mul! = A_mul_B!
-    eigen  = eig
-    macro warn(a)
-        return quote warn($a) end
-    end
-    my_minimum(a::Array; dims=nothing) = minimum(a, dims)
-    my_maximum(a::Array; dims=nothing) = maximum(a, dims)
- else
-    using LinearAlgebra
-    using Printf
-    import LinearAlgebra: adjoint
-    my_minimum(a::Array; dims=nothing) = minimum(a; dims=dims)
-    my_maximum(a::Array; dims=nothing) = maximum(a, dims=dims)
-end
+using LinearAlgebra
+using Printf
+import LinearAlgebra: adjoint
 
 ###############################
 ## Exhaustive list of imports
@@ -54,19 +37,19 @@ import Base: broadcast
 
 import Base: minimum, maximum
 
-## - Imports from Domains
-import Domains: indomain, dimension
+## - Imports from DomainSets
+import DomainSets: indomain, dimension
 # - for mapped domains
-import Domains: domain
+import DomainSets: domain
 # - for composite structures
-import Domains: element, elements, numelements
+import DomainSets: element, elements, numelements
 # - for cartesian products
-import Domains: cartesianproduct, ×
+import DomainSets: cartesianproduct, ×
 
 
 ## - Imports from BasisFunctions
 import BasisFunctions: src, dest, matrix, matrix!, apply!, apply_inplace!,
-    dimension, codomaintype, domaintype
+    dimension, codomaintype, domaintype, apply_multiple
 
 import BasisFunctions: tensorproduct, ⊗
 
@@ -81,11 +64,11 @@ import BasisFunctions: operator, matrix, is_diagonal, is_inplace, ⊕
 import BasisFunctions: coefficients, dictionary,
     transform_operator_pre, transform_operator_post, evaluation_operator, interpolation_operator,
     differentiation_operator, antidifferentiation_operator, approximation_operator,
-    extend, extension_size, extension_operator, restriction_operator,
+    extension_size, extension_operator, restriction_operator, approximate,
     default_approximation_operator, has_extension, wrap_operator, grid_evaluation_operator
 
 import BasisFunctions: superdict, similar_dictionary,
-    promote_domaintype, promote_domainsubtype
+    promote_domaintype, promote_domainsubtype, promote_coefficienttype
 
 import BasisFunctions: eval_element, eval_element_derivative, eval_expansion,
     unsafe_eval_element, unsafe_eval_element_derivative,
@@ -101,29 +84,31 @@ import BasisFunctions: postprocess, plotgrid
 
 import BasisFunctions: flatten
 
-import BasisFunctions: Span
+import BasisFunctions: Span, expansion
 
-import BasisFunctions: coefficient_type, coeftype
+import BasisFunctions: coefficienttype, coefficienttype
 
 # about subgrids
 import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
     similar_subgrid, mask, subindices
 
 import BasisFunctions: Gram, DualGram, MixedGram, DiscreteGram, DiscreteDualGram,
-    DiscreteMixedGram, gram_entry
-import BasisFunctions: dual, primal, sampler, dual_sampler
+    DiscreteMixedGram, gram_entry, dual
 
 import BasisFunctions: discrete_approximation_operator, continuous_approximation_operator
-import BasisFunctions: AbstractSolverOperator
 
-import BasisFunctions: primal, dual, Zt, A, sampler, dual_sampler
+import BasisFunctions: AbstractSolverOperator, GridSamplingOperator
+
 
 ###############################
 ## Exhaustive list of exports
 ###############################
 export ×
-# from funs.jl
-export ExpFun, ChebyFun, Fun, DictFun, sampling_grid, domain, abserror, maxerror, L2error, expansion
+
+# from fun/funs.jl
+export Fun, DictFun, sampling_grid, domain
+# from fun/error.jl
+export residual, abserror, maxerror, L2error
 
 # from subgrid.jl
 export MaskedGrid
@@ -136,7 +121,7 @@ export boundingbox
 export dist, normal
 
 # from frames/extensionframe.jl
-export ExtensionFrame, basis, domain, extensionframe
+export ExtensionFrame, extensionframe
 export Gram, DualGram, MixedGram
 export extension_frame_platform
 
@@ -176,7 +161,15 @@ export operator
 export FECollocationOperator
 
 # from approximation
-export DirectSolver, AZSolver, AZSmoothSolver, TridiagonalSolver, AZSSolver, AZSDCSolver
+export AZSolver, AZSmoothSolver, TridiagonalSolver
+
+# from platform/platform.jl
+export Platform
+export primal, dual, sampler, matrix_A, matrix_Zt, dual_sampler
+export InterpolationStyle, OversamplingStyle, GramStyle, RectangularGramStyle, GenericSamplingStyle
+export DirectStyle, InverseStyle, TransformStyle, IterativeStyle, AZStyle,
+    AZSmoothStyle, TridiagonalProlateStyle
+
 
 include("sampling/subgrid.jl")
 
@@ -184,20 +177,27 @@ include("sampling/subgrid.jl")
 #include("domains/boundingbox.jl")
 include("domains/extensions.jl")
 
+## Platforms
+include("platform/platform.jl")
+include("platform/parameters.jl")
+include("platform/generic.jl")
+include("platform/approximate.jl")
+include("platform/bases.jl")
+
 include("frames/extensionframe.jl")
 include("frames/weighted_sum_frame.jl")
 
 include("fun/basisdomains.jl")
 include("fun/funs.jl")
+include("fun/error.jl")
 
+include("approximation/randomized.jl")
 
-include("approximation/fe_solvers.jl")
 include("approximation/continuous_solver.jl")
 include("approximation/lowranksolver.jl")
 include("approximation/azsolver.jl")
 include("approximation/tridiagonalsolver.jl")
 include("approximation/smoothsolver.jl")
-include("approximation/fe_approx.jl")
 
 include("approximation/oversampling.jl")
 

@@ -3,9 +3,10 @@ using BasisFunctions
 BA = BasisFunctions
 using FrameFun
 FE = FrameFun
-using Domains
+using DomainSets
 using Plots
-if (VERSION >= v"0.7-")  using LinearAlgebra end
+using LinearAlgebra
+
 gr()
 
 function myFun(f::Function,P::Platform,i)

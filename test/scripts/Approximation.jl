@@ -1,7 +1,7 @@
 
 using BasisFunctions
 using FrameFun
-using Domains
+using DomainSets
 using Plots;gr()
 using StaticArrays
 

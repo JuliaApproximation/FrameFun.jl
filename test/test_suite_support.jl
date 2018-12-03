@@ -1,12 +1,8 @@
 # A test suite for support functions
 module test_suite_support
 
-using Domains, BasisFunctions, FrameFun
-if VERSION < v"0.7-"
-    using Base.Test
-else
-    using Test, LinearAlgebra
-end
+using DomainSets, BasisFunctions, FrameFun
+using Test, LinearAlgebra
 
 ## Settings
 
@@ -33,7 +29,7 @@ function test_subgrids()
     delimit("Grid functionality")
     n = 20
     grid1 = EquispacedGrid(n, -1.0, 1.0)
-    subgrid1 = MaskedGrid(grid1, interval(-0.5, 0.7))
+    subgrid1 = MaskedGrid(grid1, -0.5..0.7)
     subgrid2 = IndexSubGrid(grid1, 4:12)
 
     G1 = EquispacedGrid(n, -1.0, 1.0)
@@ -105,7 +101,7 @@ function test_randomgrids()
         g2 = randomgrid(disk(BigFloat), 10)
         @test eltype(g2[1]) == BigFloat
 
-        g3 = randomgrid(interval(0.0, 1.0), 10)
+        g3 = randomgrid(0.0..1.0, 10)
         @test length(g3) == 10
         # 1D is a special case where we don't use vectors of length 1
         @test eltype(g3) == Float64
@@ -114,7 +110,7 @@ function test_randomgrids()
         p1 = randompoint(box1)
         @test length(p1) == dimension(box1)
         @test p1 ∈ box1
-        box2 = interval(0.0, 1.0)
+        box2 = 0.0..1.0
         p2 = randompoint(box2)
         @test typeof(p2) == Float64
         @test p2 ∈ box2

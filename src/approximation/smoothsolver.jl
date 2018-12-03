@@ -1,38 +1,37 @@
-# smoothsolver.jl
 
 """
 A fast FE solver based on a low-rank approximation of the plunge region. The plunge region
 is isolated using a projection operator. This algorithm contains an extra smoothing step
 
 """
-struct AZSmoothSolver{ELT} <: AbstractSolverOperator{ELT}
+struct AZSmoothSolver{T} <: AbstractSolverOperator{T}
     TS          :: DictionaryOperator
     A           ::  DictionaryOperator
     Zt          ::  DictionaryOperator
     plunge_op   ::  DictionaryOperator    # store the operator because it allocates memory
-    b           ::  Array{ELT,1}
-    blinear     ::  Array{ELT,1}
-    syv         ::  Array{ELT,1}
-    x1          ::  Array{ELT}
-    x2          ::  Array{ELT}
-    x3          ::  Array{ELT}
-    Q           ::  Array{ELT,2}
+    b           ::  Array{T,1}
+    blinear     ::  Array{T,1}
+    syv         ::  Array{T,1}
+    x1          ::  Array{T}
+    x2          ::  Array{T}
+    x3          ::  Array{T}
+    Q           ::  Array{T,2}
     D           ::  DictionaryOperator
     AD          ::  DictionaryOperator
 
-    function AZSmoothSolver{ELT}(A::DictionaryOperator, Zt::DictionaryOperator, D::DictionaryOperator; cutoff = default_cutoff(A), cutoffv=sqrt(cutoff), R = estimate_plunge_rank(A), verbose=false,  options...) where ELT
+    function AZSmoothSolver{T}(A::DictionaryOperator, Zt::DictionaryOperator, D::DictionaryOperator; threshold = default_threshold(A), thresholdv=sqrt(threshold), R = estimate_plunge_rank(A), verbose=false,  options...) where T
         plunge_op = plunge_operator(A, Zt)
         # Create Random matrices
-        TS1 = TruncatedSvdSolver(plunge_op*A; cutoff = cutoff, verbose=verbose,R=R,options...)
-        TS2 = TruncatedSvdSolver(Zt*plunge_op; cutoff = cutoffv, verbose=verbose, R=R, options...)
+        TS1 = RandomizedSvdSolver(plunge_op*A; threshold = threshold, verbose=verbose, R=R, options...)
+        TS2 = RandomizedSvdSolver(Zt*plunge_op; threshold = thresholdv, verbose=verbose, R=R, options...)
         AD = inv(D)
         ADV = (TS2.Ut)'.*diagonal(AD)
         # Orthogonal basis for D^(-1)V_mid
         Q, R = qr(ADV)
-        (VERSION >= v"0.7-") && (Q = Matrix(Q);@warn("Unnecessary conversion if qr works fine. "))
+        Q = Matrix(Q);@warn("Unnecessary conversion if qr works fine. ")
         # Pre-allocation
         b = zeros(size(dest(plunge_op)))
-        blinear = zeros(ELT, length(dest(A)))
+        blinear = zeros(T, length(dest(A)))
         x1 = zeros(size(src(A)))
         x2 = zeros(size(src(A)))
         x3 = zeros(size(src(A)))
@@ -41,15 +40,15 @@ struct AZSmoothSolver{ELT} <: AbstractSolverOperator{ELT}
     end
 end
 
-function AZSmoothSolver{ELT}(A::DictionaryOperator, Zt::DictionaryOperator; options...) where {ELT}
-    D = IdxnScalingOperator(src(A); options...)
-    AZSmoothSolver{ELT}(A, Zt, D; options...)
+function AZSmoothSolver{T}(A::DictionaryOperator, Zt::DictionaryOperator; options...) where {T}
+    D = WeightedSmoothingOperator(src(A); options...)
+    AZSmoothSolver{T}(A, Zt, D; options...)
 end
 
-AZSmoothSolver(A::DictionaryOperator; scaling=nothing, options...) =
-        AZSmoothSolver{eltype(A)}(A, 1/scaling*A'; options...)
+AZSmoothSolver(A::DictionaryOperator, Zt::DictionaryOperator; options...) =
+    AZSmoothSolver{eltype(A)}(A, Zt; options...)
 
-operator(op::AZSmoothSolver) = op.A
+operator(s::AZSmoothSolver) = s.A
 
 apply!(s::AZSmoothSolver, coef_dest, coef_src) =
     _apply!(s, coef_dest, coef_src, s.TS, s.A, s.Zt, s.plunge_op, s.b, s.blinear, s.syv, s.x1, s.x2, s.x3, s.Q, s.D, s.AD)
@@ -88,40 +87,21 @@ end
 dc_index(b::ChebyshevBasis) = 1
 dc_index(b::FourierBasis) = 1
 
-# An index scaling operator, used to generate weights for the polynomial scaling algorithm.
-struct IdxnScalingOperator{ELT} <: DictionaryOperator{ELT}
-    src     ::  Dictionary
-    order   ::  Int
-    scale   ::  Function
-end
-
-IdxnScalingOperator(dict::Dictionary; order=1, scale = default_scaling_function) =
-    IdxnScalingOperator{BasisFunctions.op_eltype(dict,dict)}(dict, order, scale)
-
-dest(op::IdxnScalingOperator) = src(op)
-
-default_scaling_function(i) = 10.0^-4+(abs(i))+abs(i)^2+abs(i)^3
-default_scaling_function(i,j) = 1+(abs(i)^2+abs(j)^2)
-
-is_inplace(::IdxnScalingOperator) = true
-is_diagonal(::IdxnScalingOperator) = true
-
-adjoint(op::IdxnScalingOperator) = DiagonalOperator(src(op), conj(diagonal(op)))
-
-function apply_inplace!(op::IdxnScalingOperator, dest::Dictionary1d, srcdict, coef_srcdest)
-    ELT = eltype(op)
-    for i in eachindex(dest)
-        coef_srcdest[i] *= op.scale(ELT(BasisFunctions.value(native_index(dest,i))))^op.order
+function WeightedSmoothingOperator(dict::Dictionary; scaling = default_scaling_function, order = 1, options...)
+    if order == 1
+        WeightedSmoothingOperator(dict, scaling)
+    else
+        WeightedSmoothingOperator(dict, (d,i) -> scaling(d,i)^order)
     end
-    coef_srcdest
 end
 
-function apply_inplace!(op::IdxnScalingOperator, dest::Dictionary2d, srcdict, coef_srcdest)
-    ELT = eltype(op)
-    for i in eachindex(coef_srcdest)
-        ni = recursive_native_index(dest,i)
-        coef_srcdest[i]*=op.scale(ELT(BasisFunctions.value(ni[1])),ELT(BasisFunctions.value(ni[2])))^op.order
-    end
-    coef_srcdest
+WeightedSmoothingOperator(dict::Dictionary, scaling) = DiagonalOperator(dict, dict, [scaling(dict, i) for i in eachindex(dict)][:])
+
+function default_scaling_function(dict::Dictionary1d, idx)
+    f = abs(value(native_index(dict, idx)))
+    1 + f
 end
-inv(op::IdxnScalingOperator) = IdxnScalingOperator(op.src, order=op.order*-1, scale=op.scale)
+
+function default_scaling_function(dict::TensorProductDict, I)
+    default_scaling_function(element(dict, 1), I[1]) + default_scaling_function(element(dict, 2), I[2])
+end

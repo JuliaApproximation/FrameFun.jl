@@ -1,6 +1,4 @@
 
-# fastsolver.jl
-
 """
 A fast FE solver based on a low-rank approximation of the plunge region. The plunge region
 is isolated using a projection operator.
@@ -8,18 +6,18 @@ For more details, see the paper 'Fast algorithms for the computation of Fourier 
 http://arxiv.org/abs/1509.00206
 """
 struct FE_TridiagonalSolver{ELT} <: AbstractSolverOperator{ELT}
-    Ut :: Array{ELT,2}
-    V :: Array{ELT,2}
-    Sinv :: Array{ELT,1}
-    A     ::  DictionaryOperator
+    Ut      :: Array{ELT,2}
+    V       :: Array{ELT,2}
+    Sinv    :: Array{ELT,1}
+    A       ::  DictionaryOperator
     b
-    blinear     ::  Array{ELT,1}
+    blinear ::  Array{ELT,1}
     x2
     x1
     y
     y2
     scaling
-    function FE_TridiagonalSolver{ELT}(A::DictionaryOperator, scaling; cutoff = default_cutoff(A), irange = estimate_plunge_range(A,scaling,estimate_plunge_rank(A)), verbose=false,options...) where ELT
+    function FE_TridiagonalSolver{ELT}(A::DictionaryOperator, scaling; threshold = default_threshold(A), irange = estimate_plunge_range(A,scaling,estimate_plunge_rank(A)), verbose=false,options...) where ELT
         R = estimate_plunge_rank(A)
         finished = false
         V=[]
@@ -31,14 +29,14 @@ struct FE_TridiagonalSolver{ELT} <: AbstractSolverOperator{ELT}
             for i=1:size(V,2)
                 S[i]=U[:,i]'*apply(A,V[:,i])
             end
-            if all(minimum(abs.(S)).< cutoff) || R>size(A,1)
+            if all(minimum(abs.(S)).< threshold) || R>size(A,1)
                 finished=true
             else
                 R = 2*R
                 irange=estimate_plunge_range(A,scaling,R)
             end
         end
-        I = abs.(S).>(cutoff*maximum(abs.(S)))
+        I = abs.(S).>(threshold*maximum(abs.(S)))
         b = zeros(dest(A))
         blinear = zeros(ELT, length(dest(A)))
         x1 = zeros(src(A))
@@ -49,14 +47,18 @@ struct FE_TridiagonalSolver{ELT} <: AbstractSolverOperator{ELT}
     end
 end
 
-FE_TridiagonalSolver(A::DictionaryOperator; scaling=nothing, options...) =
+FE_TridiagonalSolver(A::DictionaryOperator; scaling = nothing, options...) =
+    FE_TridiagonalSolver(A, scaling; options...)
+
+# TODO: remove the scaling factor here
+FE_TridiagonalSolver(A::DictionaryOperator, scaling; options...) =
     FE_TridiagonalSolver{eltype(A)}(A, scaling; options...)
 
 operator(op::FE_TridiagonalSolver) = op.A
 
 function estimate_plunge_range(A,L,C)
-    mid=size(A,2)-round(Int,size(A,1)*size(A,2)/L)
-    (VERSION < v"0.7-") ? mid + (max(1-mid,-round(Int,C)):min(size(A,2)-mid,round(Int,C))) : mid .+ (max(1-mid,-round(Int,C)):min(size(A,2)-mid,round(Int,C)))
+    mid = size(A,2)-round(Int,size(A,1)*size(A,2)/L)
+    mid .+ (max(1-mid,-round(Int,C)):min(size(A,2)-mid,round(Int,C)))
 end
 
 apply!(s::FE_TridiagonalSolver, dest, src, coef_dest, coef_src) =
@@ -83,18 +85,18 @@ function apply!(s::FE_TridiagonalSolver, destset, srcset, coef_dest, coef_src, A
 end
 
 function mideigs(N,M,L,irange)
-    J2=Chamzas(L,M-1,N)
-    J1=Chamzas(L,N-1,M)
+    J2 = Chamzas(L,M-1,N)
+    J1 = Chamzas(L,N-1,M)
     E,V1 = eigen(J1,irange)
-    for i=1:size(V1,1)
-        for j=1:size(V1,2)
-            if i%2==0
+    for i = 1:size(V1,1)
+        for j = 1:size(V1,2)
+            if i%2 == 0
                 V1[i,j]*=-1
             end
         end
     end
-    V1b=circshift(V1,round(Int,(N-1)/2)+1)
-    E,V2 = eigen(J2,(VERSION<v"0.7") ? (irange + (M-N)) : (irange .+ (M-N)))
+    V1b = circshift(V1,round(Int,(N-1)/2)+1)
+    E,V2 = eigen(J2,irange .+ (M-N))
     (V1b,V2)
 end
 

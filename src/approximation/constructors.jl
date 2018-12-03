@@ -1,7 +1,6 @@
-# constructors.jl
 
-function _trapnorm(f::Function, D::ExtensionFrame, sampling_factor)
-    g = FrameFun.oversampled_grid(domain(D), basis(D), sampling_factor)[1]
+function _trapnorm(f::Function, D::ExtensionFrame, oversamplingfactor)
+    g = FrameFun.oversampled_grid(domain(D), basis(D), oversamplingfactor = oversamplingfactor)[1]
     sqrt(stepsize(g)*norm([f(x) for x in g])^2)
 end
 
@@ -10,17 +9,17 @@ BasisFunctions.stepsize(s::IndexSubGrid) = BasisFunctions.stepsize(supergrid(s))
 random_test(f::Function, F::DictFun, tolerance, no_samples::Int) =
     abserror(f,F;vals=no_samples) < tolerance
 
-abs_coefficient_test(f::Function, F::DictFun, abscoef, sampling_factor) =
-    norm(coefficients(F)) < abscoef*_trapnorm(f, dictionary(F), sampling_factor)
+abs_coefficient_test(f::Function, F::DictFun, abscoef, oversamplingfactor) =
+    norm(coefficients(F)) < abscoef*_trapnorm(f, dictionary(F), oversamplingfactor)
 
 rel_coefficient_test(f::Function, F::DictFun, relcoef, prev_cnorm, tolerance) =
     abs(norm(coefficients(F))-prev_cnorm) < relcoef*tolerance
 
-function coefficient_test(f::Function, F::DictFun; abscoef=nothing, relcoef=nothing, tolerance=nothing, sampling_factor=1, prev_cnorm=nothing, options...)
+function coefficient_test(f::Function, F::DictFun; abscoef=nothing, relcoef=nothing, tolerance=nothing, oversamplingfactor=1, prev_cnorm=nothing, options...)
     if relcoef != nothing
         rel_coefficient_test(f, F, relcoef, prev_cnorm, tolerance)
     elseif abscoef != nothing
-        abs_coefficient_test(f, F, abscoef, sampling_factor)
+        abs_coefficient_test(f, F, abscoef, oversamplingfactor)
     else
         error()
     end
@@ -35,7 +34,7 @@ end
 """
 function fun_simple(f::Function, dict::Dictionary, domain::Domain;
         no_checkpoints=3, max_logn_coefs=8, tol=1e-12, abscoef=nothing, verbose=false, adaptive_verbose = verbose, options...)
-    ELT = codomaintype(f, dict)
+    ELT = codomaintype(dict)
     N = dimension(dict)
     F = nothing
     rgrid = randomgrid(domain, no_checkpoints)
@@ -70,10 +69,10 @@ are_close(N1, N2) =
   The number of points is chosen adaptively and optimally.
 """
 function fun_optimal_N(f::Function, dict::Dictionary{S,T}, domain::Domain;
-        no_checkpoints=3, max_logn_coefs=8, cutoff=default_cutoff(real(S)), tol=100*cutoff, verbose=false, adaptive_verbose = verbose, return_log=false, randomtest=false, abscoef=nothing, relcoef=nothing, options...) where {S,T}
+        no_checkpoints=3, max_logn_coefs=8, threshold=default_threshold(real(S)), tol=100*threshold, verbose=false, adaptive_verbose = verbose, return_log=false, randomtest=false, abscoef=nothing, relcoef=nothing, options...) where {S,T}
     coefficienttest = (nothing!=abscoef) | (nothing!=relcoef)
 
-    ELT = codomaintype(f, dict)
+    ELT = codomaintype(dict)
     N = dimension(dict)
     F = nothing
     rgrid = randomgrid(domain, no_checkpoints)
@@ -85,7 +84,7 @@ function fun_optimal_N(f::Function, dict::Dictionary{S,T}, domain::Domain;
     error=-1
     while length(dict) <= 2^max_logn_coefs && its < 100
         # Find new approximation
-        F=Fun(f, dict, domain; verbose=verbose, cutoff=cutoff, options...)
+        F = Fun(f, dict, domain; verbose=verbose, threshold=threshold, options...)
 
         # Using residual
         error = residual(f, F)/sqrt(length(F))
@@ -113,7 +112,7 @@ function fun_optimal_N(f::Function, dict::Dictionary{S,T}, domain::Domain;
         # If the bounds Nmin and Nmax are determined and if they are close
         if are_close(Nmin, Nmax)
             dict=resize(dict, Nmax)
-            F = Fun(f, dict, domain; verbose=verbose, cutoff=cutoff, options...)
+            F = Fun(f, dict, domain; verbose=verbose, threshold=threshold, options...)
 
             return_log && (return F, log)
             return F
@@ -143,8 +142,8 @@ function fun_optimal_N(f::Function, dict::Dictionary{S,T}, domain::Domain;
 end
 
 
-default_cutoff(::Type{T}) where T= 10*10^(4/5*log10(eps(real(T))))
-default_cutoff(::Type{Float64}) = 1e-16
+default_threshold(::Type{T}) where T= 10*10^(4/5*log10(eps(real(T))))
+default_threshold(::Type{Float64}) = 1e-16
 Base.real(::Type{Tuple{N,T}}) where {N,T} = real(T)
 
 """
@@ -158,14 +157,15 @@ Base.real(::Type{Tuple{N,T}}) where {N,T} = real(T)
   Stop the iteration when the residu of the approximation is smaller than the tolerance
   or at the maximum number of iterations.
 """
-function fun_greedy(f::Function, dict::Dictionary, domain::FrameFun.Domain;
+function fun_greedy(f::Function, dict::Dictionary, domain::Domain;
     max_logn_coefs = 7, tol = 1e-12, options...)
+
     init_n = 4
     dict = resize(dict,init_n)
     F = Fun(x->0, dict, domain; options...)
     for n in init_n:2^max_logn_coefs
         dict = resize(dict,n)
-        p_i = Fun(x->(f(x)-F(x)), dict, domain; options...)
+        p_i = Fun(x->(f(x)-F(x)), dict, domain; coefficienttype = eltype(F), options...)
         F = F + p_i
         if residual(f, F) < tol
             return F
@@ -174,7 +174,7 @@ function fun_greedy(f::Function, dict::Dictionary, domain::FrameFun.Domain;
     F
 end
 
-function FourierFun(f::Function, ELT = Float64; T=ELT(2), Omega=interval(-ELT(-1),ELT(1)), Gamma=T*Omega, options...)
+function FourierFun(f::Function, ELT = Float64; T=ELT(2), Omega=Interval(-ELT(-1),ELT(1)), Gamma=T*Omega, options...)
     B = FourierBasis(1, leftendpoint(Omega), rightendpoint(Omega), ELT)
     D = Omega
     frame = extensionframe(B, Gamma)

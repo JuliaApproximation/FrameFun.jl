@@ -1,5 +1,6 @@
 module test_nodebooks
-using Domains
+
+using DomainSets
 using BasisFunctions
 using FrameFun
 using Plots
@@ -12,8 +13,7 @@ function delimit(s::AbstractString)
 end
 
 
-jupyter = (VERSION < v"0.7-") ? homedir()*"/.julia/v0.6/Conda/deps/usr/bin/jupyter" :
-                                homedir()*"/.julia/packages/Conda/S0nV/deps/usr/bin/jupyter"
+jupyter = homedir()*"/.julia/packages/Conda/S0nV/deps/usr/bin/jupyter"
 
 
 
@@ -29,7 +29,7 @@ finally
     cd("..")
 end
 
-FILE = open("notebookscripts") 
+FILE = open("notebookscripts")
 try
     for LINE in eachline(FILE)
         println("Run $(LINE)")

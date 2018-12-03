@@ -2,7 +2,7 @@
 using BasisFunctions
 using FrameFun
 using Plots
-using Domains
+using DomainSets
 
 FE = FrameFun
 BA = BasisFunctions

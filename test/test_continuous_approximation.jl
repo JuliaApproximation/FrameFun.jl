@@ -1,11 +1,8 @@
 module test_suite
+
 using BasisFunctions
 using FrameFun
-if VERSION < v"0.7-"
-    using Base.Test
-else
-    using Test
-end
+using Test
 
 function delimit(s::AbstractString)
     println()
@@ -19,7 +16,7 @@ delimit("Continuous solver")
 frameF = 0
 basisF = 0
 function continuous_solver_test()
-    @testset for basistype in (ChebyshevBasis, FourierBasis), T in (Float32, Float64,), solver in (DirectSolver, FrameFun.ExactTruncatedSvdSolver)
+    @testset for basistype in (ChebyshevBasis, FourierBasis), T in (Float32, Float64,), solver in (QR_solver, FrameFun.ExactSvdSolver)
         tol = sqrt(eps(T))
 
         B = instantiate(basistype,11, T)

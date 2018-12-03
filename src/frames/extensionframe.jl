@@ -1,4 +1,3 @@
-# extensionframe.jl
 
 """
 An ExtensionFrame is the restriction of a basis to a subset of its domain. This
@@ -26,6 +25,7 @@ domain(f::ExtensionFrame) = f.domain
 
 similar_dictionary(f::ExtensionFrame, dict::Dictionary) = ExtensionFrame(domain(f), dict)
 
+is_basis(f::ExtensionFrame) = false
 is_frame(f::ExtensionFrame) = true
 is_biorthogonal(f::ExtensionFrame) = false
 is_orthogonal(f::ExtensionFrame) = false
@@ -83,7 +83,7 @@ const TensorProductExtensionFrameDict{N,N1,S,T} = TensorProductDict{N,NTuple{N1,
 # TODO remove need of this function
 function flatten(dict::TensorProductExtensionFrameDict)
     basis = tensorproduct([superdict(dicti) for dicti in elements(dict)]...)
-    domain = Domains.ProductDomain([FrameFun.domain(dicti) for dicti in elements(dict)]...)
+    domain = DomainSets.ProductDomain([FrameFun.domain(dicti) for dicti in elements(dict)]...)
     ExtensionFrame(domain, basis)
 end
 
@@ -114,7 +114,7 @@ innerproduct(f1::ExtensionFrame, i, f2::ExtensionFrame, j, measure) =
 import BasisFunctions: dot
 import BasisFunctions: native_nodes
 
-native_nodes(basis::Dictionary, domain::Domains.AbstractInterval) =
+native_nodes(basis::Dictionary, domain::DomainSets.AbstractInterval) =
     BasisFunctions.clip_and_cut(native_nodes(basis), infimum(domain), supremum(domain))
 
 dot(dict::ExtensionFrame, f1::Function, f2::Function; options...)  =
@@ -126,7 +126,7 @@ dot(dict::ExtensionFrame, f1::Int, f2::Function; options...) =
 dot(dict::ExtensionFrame, f1::Int, f2::Int; options...) =
     dot(dict, f1 ,x->eval_element(basis(dict), f2, x); options...)
 
-dot(dict::Dictionary, domain::Domains.AbstractInterval, f1::Function, f2::Function; options...) =
+dot(dict::Dictionary, domain::DomainSets.AbstractInterval, f1::Function, f2::Function; options...) =
     dot(dict, f1, f2, native_nodes(dict, domain); options...)
 # # TODO now we assume that domainunion contains sections that do not overlap
 # dot(dict::Dictionary, domain::DomainUnion, f1::Function, f2::Function; options...) =
@@ -149,10 +149,10 @@ function dot(frame1::ExtensionFrame, frame2::ExtensionFrame, f1::Function, f2::F
     dot(basis(frame1), basis(frame2), d1, f1, f2; options...)
 end
 
-dot(set1::Dictionary, set2::Dictionary, domain::Domains.AbstractInterval, f1::Function, f2::Function; options...) =
+dot(set1::Dictionary, set2::Dictionary, domain::DomainSets.AbstractInterval, f1::Function, f2::Function; options...) =
     dot(set1, set2, f1, f2, native_nodes(set1, set2, domain); options...)
 
-function native_nodes(set1::Dictionary, set2::Dictionary, domain::Domains.AbstractInterval)
+function native_nodes(set1::Dictionary, set2::Dictionary, domain::DomainSets.AbstractInterval)
     @assert infimum(support(set1) )≈ infimum(support((set2)))
     @assert supremum(support((set1))) ≈ supremum(support((set2)))
     native_nodes(set1, domain)
@@ -169,19 +169,26 @@ grid_evaluation_operator(s::TensorProductExtensionFrameDict, dgs::GridBasis, gri
 # platform
 ##################
 
-BasisFunctions.sampler(platform::Platform, sampler::GridSamplingOperator, domain::Domain) =
+sampler(platform::Platform, sampler::GridSamplingOperator, domain::Domain) =
     GridSamplingOperator(gridbasis(sampler), grid(sampler), domain, sampler.scaling)
-BasisFunctions.GridSamplingOperator(dgs::GridBasis, grid::AbstractGrid, domain::Domain, scaling) =
-    GridSamplingOperator(gridbasis(FrameFun.subgrid(grid, domain), coeftype(dgs)), scaling=scaling)
+GridSamplingOperator(dgs::GridBasis, grid::AbstractGrid, domain::Domain, scaling) =
+    GridSamplingOperator(gridbasis(FrameFun.subgrid(grid, domain), coefficienttype(dgs)), scaling=scaling)
 
 extension_frame_sampler(platform::Platform, domain::Domain) = n->sampler(platform, platform.sampler_generator(n), domain)
 dual_extension_frame_sampler(platform::Platform, domain::Domain) = n->sampler(platform, platform.dual_sampler_generator(n), domain)
 
-function extension_frame_platform(platform::BasisFunctions.GenericPlatform, domain::Domain)
+function extension_frame_platform(platform::GenericPlatform, domain::Domain)
     primal = n->extensionframe(platform.primal_generator(n), domain)
     dual = n->platform.dual_generator(n)
     sampler = extension_frame_sampler(platform, domain)
     dual_sampler = dual_extension_frame_sampler(platform, domain)
-    BasisFunctions.GenericPlatform(super_platform=platform, primal = primal, dual = dual, sampler = sampler,dual_sampler = dual_sampler,
+    GenericPlatform(super_platform=platform, primal = primal, dual = dual, sampler = sampler,dual_sampler = dual_sampler,
         params = platform.parameter_sequence, name = "extension frame of " * platform.name)
 end
+
+struct ExtensionFramePlatform <: FramePlatform
+    basisplatform   ::  Platform
+    domain          ::  Domain
+end
+
+dictionary(p::ExtensionFramePlatform, param) = extensionframe(dictionary(p.basisplatform, param), p.domain)

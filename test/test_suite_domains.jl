@@ -1,9 +1,7 @@
-using Domains, BasisFunctions, FrameFun
-if VERSION < v"0.7-"
-    using Base.Test
-else
-    using Test
-end
+using DomainSets, BasisFunctions, FrameFun
+
+using Test
+
 FE = FrameFun
 BA = BasisFunctions
 
@@ -22,10 +20,10 @@ function test_extended_domains_2d()
     D1 = characteristic(x->(x[1]-x[2])<0,disk(1.0))
     @test in([0.5;1.0],D1)
     @test ~in([1.0,0.5],D1)
-    B = ChebyshevBasis(21)⊗ChebyshevBasis(21)
-    D = disk(1.0)
+    basis = ChebyshevBasis(21)⊗ChebyshevBasis(21)
+    domain = disk(1.0)
     f = (x,y)->exp(x+y)
-    F = Fun(f,B,D)
+    F = Fun(f, basis, domain)
     F2 = F*2
     D2 = F<2
     D3 = F<F2
@@ -65,7 +63,7 @@ function test_distances_and_normals()
     @test domb([0.5,0.5],D2b)
     @test domn([0.5,0.5],D2b,[1/sqrt(2),1/sqrt(2)])
 
-    D3 = interval(-1,1.0)
+    D3 = -1..1.0
     @test isapprox(dist(0.5,D3),0.5)
     @test isapprox(normal(1.0,D3),1)
 
