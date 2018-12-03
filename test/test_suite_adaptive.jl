@@ -67,7 +67,7 @@ function test_residual()
         res = Inf
         for n in 2 .^ (3:5)
             S = rescale(instantiate(basis,n), -1.0, 1.0)
-            F = Fun(S, domain, f)
+            F = Fun(f, S, domain)
             resnew = FE.residual(f,F)
             @test resnew < res
             res = resnew

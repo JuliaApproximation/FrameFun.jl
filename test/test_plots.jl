@@ -50,7 +50,7 @@ function test_plots()
     basis = FourierBasis(51,-2.0,-0.5)
     domain = -1.7..1.0
     f(x) = cos(3*x.^2)
-    F = Fun(basis, domain, f)
+    F = Fun(f, basis, domain)
     # Easily combine multiple plots
     plot(BasisFunctions.grid(dictionary(F)),label="grid",markercolor=:white)
     plot!(F,label="function", plot_ext=true)
@@ -63,7 +63,7 @@ function test_plots()
     basis = FourierBasis(21,-1,1)⊗FourierBasis(21,-1,1)
     domain = intersect(disk(0.8),disk(0.4))
     f(x,y) = cos(7*x-2*y^2)
-    F = Fun(basis, domain, f)
+    F = Fun(f, basis, domain)
 
     plot(domain, n=100)
 

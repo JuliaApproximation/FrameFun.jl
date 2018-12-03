@@ -23,7 +23,7 @@ function test_extended_domains_2d()
     basis = ChebyshevBasis(21)⊗ChebyshevBasis(21)
     domain = disk(1.0)
     f = (x,y)->exp(x+y)
-    F = Fun(basis, domain, f)
+    F = Fun(f, basis, domain)
     F2 = F*2
     D2 = F<2
     D3 = F<F2

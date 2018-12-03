@@ -83,7 +83,7 @@ function test_1d_cases()
     f(x) = cos(x^2-1//2)-1
     g(x) = 1im*cos(x^2-1//2)-1
     for func in (f,g)
-        F = @timed Fun(basis, domain, func; solverstyle=solverstyle)
+        F = @timed Fun(func, basis, domain; solverstyle=solverstyle)
         error = abserror(func, F[1])
         if verbose
             print("$n\t $T\t\t")
@@ -110,7 +110,7 @@ function test_1d_cases()
                 for func in (f,g)
 
                     basis = Basis{ELT}(n, -T, T)
-                    F = @timed Fun(basis, domain, func; solverstyle=solverstyle)
+                    F = @timed Fun(func, basis, domain; solverstyle=solverstyle)
                     error = abserror(func, F[1])
                     if verbose
                         print("$n\t $T\t\t")
@@ -136,7 +136,7 @@ function test_bigfloat()
         for T in (big(17.0)/10,)
             for func in (f,g)
                 basis = Basis(91, -T, T)
-                F = @timed Fun(basis, domain, func; solverstyle = DirectStyle(), directsolver=:qr)
+                F = @timed Fun(func, basis, domain; solverstyle = DirectStyle(), directsolver=:qr)
                 error = abserror(func, F[1])
                 if verbose
                     @printf("91\t %3.2e\t\t",T)
@@ -167,7 +167,7 @@ function test_2d_cases()
             for T in ((1.7,2.3),)
                 basis = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2])
                 for func in (f,g)
-                    F = @timed Fun(basis, domain, func; solverstyle=solverstyle)
+                    F = @timed Fun(func, basis, domain; solverstyle=solverstyle)
                     error = abserror(func, F[1])
                     if verbose
                         print("$n \t $T \t\t")
@@ -201,7 +201,7 @@ function test_3d_cases()
 
         for T in ((1.7,1.2,1.3),)
             basis = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2]) ⊗ Basis(n[3],-T[3],T[3])
-            F = @timed Fun(basis, domain, f; solverstyle=solverstyle, threshold=10.0^(3/4*log10(eps(real(codomaintype(basis))))), oversamplingfactor=1.5)
+            F = @timed Fun(f, basis, domain; solverstyle=solverstyle, threshold=10.0^(3/4*log10(eps(real(codomaintype(basis))))), oversamplingfactor=1.5)
             error = abserror(f, F[1])
             if verbose
                 print("$n \t $T \t\t")

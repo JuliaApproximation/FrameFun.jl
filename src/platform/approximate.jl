@@ -35,6 +35,7 @@ DiscretizationStyle(dict::Dictionary) = is_basis(dict) ? InterpolationStyle() : 
 SolverStyle(dict::Dictionary, dstyle::InterpolationStyle) = has_transform(dict) ? TransformStyle() : DirectStyle()
 SolverStyle(dict::Dictionary, dstyle::OversamplingStyle) = AZStyle()
 
+SolverStyle(dict::Dictionary, dstyle::DiscretizationStyle) = DirectStyle()
 
 
 ##########################
@@ -67,8 +68,13 @@ AZ_Zt(dict::Dictionary, A) = (one(eltype(A))/convert(eltype(A), Zt_scaling_facto
 AZ_Zt(ap::DictionaryApproximation, A) = AZ_Zt(Dictionary(ap), A)
 
 
+abstract type AbstractPlatformApproximation <: ApproximationProblem end
 
-struct PlatformApproximation <: ApproximationProblem
+DiscretizationStyle(ap::AbstractPlatformApproximation) = DiscretizationStyle(ap.platform)
+SolverStyle(dict::AbstractPlatformApproximation, dstyle::DiscretizationStyle) = SolverStyle(ap.platform, dstyle)
+
+
+struct PlatformApproximation <: AbstractPlatformApproximation
     platform    ::  Platform
     param
     dict        ::  Dictionary
@@ -79,60 +85,72 @@ PlatformApproximation(platform, param) = PlatformApproximation(platform, param, 
 
 Dictionary(ap::PlatformApproximation) = ap.dict
 
-DiscretizationStyle(ap::PlatformApproximation) = DiscretizationStyle(ap.platform)
-SolverStyle(dict::PlatformApproximation, dstyle::DiscretizationStyle) = SolverStyle(ap.platform, dstyle)
-
 for op in (:interpolation_grid, :oversampled_grid, :approximation_grid)
     @eval $op(ap::PlatformApproximation; options...) = $op(ap.platform, ap.param, ap.dict; options...)
 end
 
 AZ_Zt(ap::PlatformApproximation, A) = AZ_Zt(Dictionary(ap), A)
 
-Base.getindex(platform::Platform, param) = PlatformApproximation(platform, param)
+
+struct AdaptiveApproximation <: AbstractPlatformApproximation
+    platform    ::  Platform
+end
+
+Dictionary(ap::AdaptiveApproximation, param) = ap.platform[param]
+
+platformapproximation(ap::AdaptiveApproximation, param) = approximationproblem(ap.platform, param)
 
 
-approximationproblem(dict::Dictionary) = DictionaryApproximation(dict)
 approximationproblem(platform, param) = PlatformApproximation(platform, param)
+approximationproblem(platform) = AdaptiveApproximation(platform)
 
+approximationproblem(dict::Dictionary) = approximationproblem(coefficienttype(dict), dict)
+approximationproblem(dict::Dictionary, domain::Domain) =
+    approximationproblem(promote_type(coefficienttype(dict),eltype(domain)), dict)
+
+approximationproblem(::Type{T}, dict::Dictionary) where {T} =
+    DictionaryApproximation(promote_coefficienttype(dict, T))
+
+function approximationproblem(::Type{T}, dict::Dictionary, domain::Domain) where {T}
+    if domain == support(dict)
+        approximationproblem(T, dict)
+    else
+        approximationproblem(T, ExtensionFrame(domain, promote_coefficienttype(dict, T)))
+    end
+end
 
 ####################
 # The Fun interface
 ####################
 
 # The `Fun` interface first turns the approximation problem into a subtype of
-# ApproximationProblem. Next, it calls `approximate`. Finally, it discards all
+# `ApproximationProblem`. Next, it calls `approximate`. Finally, it discards all
 # the operators that were computed and simply returns the function.
 # Users wanting to access the operators can call `approximate` directly.
 
-function Fun(dict::Dictionary, domain::Domain, fun;
+function Fun(fun, dict::Dictionary, args...;
         coefficienttype = promote_type(codomaintype(dict), determine_return_type(fun, domaintype(dict))),
         options...)
-    promoted_dict = promote_coefficienttype(dict, coefficienttype)
-    Fun(ExtensionFrame(domain, promoted_dict), fun; options...)
+    ap = approximationproblem(coefficienttype, dict, args...)
+    Fun(fun, ap; options...)
 end
 
-function Fun(dict::Dictionary, fun;
-            coefficienttype = promote_type(codomaintype(dict), determine_return_type(fun, domaintype(dict))),
-            options...)
-    promoted_dict = promote_coefficienttype(dict, coefficienttype)
-    ap = DictionaryApproximation(promoted_dict)
-    Fun(ap, fun; options...)
+function Fun(fun, platform::Platform, args...; options...)
+    ap = approximationproblem(platform, args...)
+    Fun(fun, ap; options...)
 end
 
-function Fun(platform::Platform, param, fun; verbose = false, options...)
-    ap = platform[param]
-    verbose && println("Platform: using dictionary $(Dictionary(ap))")
-    Fun(ap, fun; verbose = verbose, options...)
-end
-
-function Fun(ap::ApproximationProblem, fun; options...)
-    A, B, C, F = approximate(ap, fun; options...)
+function Fun(fun, ap::ApproximationProblem; verbose = false, options...)
+    verbose && println("Fun: using dictionary $(Dictionary(ap))")
+    A, B, C, F = approximate(fun, ap; verbose=verbose, options...)
     F
 end
 
+Fun(dict::Dictionary, coefficients::AbstractArray) = DictFun(dict, coefficients)
+
 # The difference between Fun and approximate is that approximate returns all the
 # operators it constructed.
-function approximate(ap::ApproximationProblem, fun;
+function approximate(fun, ap::ApproximationProblem;
             discretizationstyle = DiscretizationStyle(ap),
             solverstyle = SolverStyle(ap, discretizationstyle),
             verbose = false,
@@ -142,12 +160,12 @@ function approximate(ap::ApproximationProblem, fun;
         println("Fun: discretizing with style $discretizationstyle")
         println("Fun: solving with style $solverstyle")
     end
-    approximate(discretizationstyle, solverstyle, ap, fun; verbose=verbose, options...)
+    approximate(discretizationstyle, solverstyle, fun, ap; verbose=verbose, options...)
 end
 
 # Construct the approximation problem and solve it
 function approximate(discretizationstyle::DiscretizationStyle, solverstyle::SolverStyle,
-            ap::ApproximationProblem, fun; options...)
+            fun, ap::ApproximationProblem; options...)
     A, B = discretization(discretizationstyle, ap, fun; options...)
     C = solve(solverstyle, ap, A, B; options...)
     A, B, C, DictFun(Dictionary(ap), C)
@@ -172,6 +190,20 @@ function discretization(::OversamplingStyle, ap::ApproximationProblem, fun;
     verbose && println("Discretization: oversampled grid of length $(length(grid))")
     discretization(GridStyle(), ap, fun; grid = grid, verbose = verbose, options...)
 end
+
+function discretization(::GramStyle, ap::ApproximationProblem, fun;
+        discrete = false, options...)
+    dict = Dictionary(ap)
+    if discrete
+        A = DiscreteGram(dict)
+        B = sample(grid(dict), fun, coefficienttype(dict))
+    else
+        A = Gram(dict)
+        B = project(dict, fun)
+    end
+    A, B
+end
+
 
 function grid_discretization(dict, fun, grid)
     A = evaluation_operator(dict, grid)

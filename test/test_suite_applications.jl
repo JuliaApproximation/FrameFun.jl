@@ -117,7 +117,7 @@ function test_smoothing_1d()
         domain = Interval(-0.5,0.5)
         f(x) = exp(x)
         fscale(dict, i) = 10.0^-4+i+i^2+i^3
-        F = Fun(basis, domain, f; solverstyle = AZSmoothStyle(), scaling=fscale)
+        F = Fun(f, basis, domain; solverstyle = AZSmoothStyle(), scaling=fscale)
         @test (abserror(f,F) < 100*sqrt(eps(Float64)))
     end
 end
@@ -128,7 +128,7 @@ function test_smoothing_2d()
         domain = disk(0.5)
         f(x,y) = exp(x*y)
         fscale(dict, I) = 10.0^-4+100*(I[1]^2+I[2]^2)
-        F = Fun(basis, domain, f; solverstyle = AZSmoothStyle(), scaling=fscale)
+        F = Fun(f, basis, domain; solverstyle = AZSmoothStyle(), scaling=fscale)
         @test (abserror(f,F) < 100*sqrt(sqrt(eps(Float64))))
     end
 end

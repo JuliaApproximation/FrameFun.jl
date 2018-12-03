@@ -45,7 +45,7 @@ function fun_simple(f::Function, dict::Dictionary, domain::Domain;
     dict = resize(dict,n)
     while length(dict) <= 1<<(max_logn_coefs)
         dict = resize(dict,extension_size(dict))
-        F = Fun(dict, domain, f; verbose=verbose, options...)
+        F = Fun(f, dict, domain; verbose=verbose, options...)
         random_F = F(rgrid)
         error = maximum(abs.(random_F-random_f))
         adaptive_verbose && (@printf "Error with %d coefficients is %1.3e\n" (length(dict)) error)
@@ -84,7 +84,7 @@ function fun_optimal_N(f::Function, dict::Dictionary{S,T}, domain::Domain;
     error=-1
     while length(dict) <= 2^max_logn_coefs && its < 100
         # Find new approximation
-        F = Fun(dict, domain, f; verbose=verbose, threshold=threshold, options...)
+        F = Fun(f, dict, domain; verbose=verbose, threshold=threshold, options...)
 
         # Using residual
         error = residual(f, F)/sqrt(length(F))
@@ -112,7 +112,7 @@ function fun_optimal_N(f::Function, dict::Dictionary{S,T}, domain::Domain;
         # If the bounds Nmin and Nmax are determined and if they are close
         if are_close(Nmin, Nmax)
             dict=resize(dict, Nmax)
-            F = Fun(dict, domain, f; verbose=verbose, threshold=threshold, options...)
+            F = Fun(f, dict, domain; verbose=verbose, threshold=threshold, options...)
 
             return_log && (return F, log)
             return F
@@ -162,10 +162,10 @@ function fun_greedy(f::Function, dict::Dictionary, domain::Domain;
 
     init_n = 4
     dict = resize(dict,init_n)
-    F = Fun(dict, domain, x->0; options...)
+    F = Fun(x->0, dict, domain; options...)
     for n in init_n:2^max_logn_coefs
         dict = resize(dict,n)
-        p_i = Fun(dict, domain, x->(f(x)-F(x)); coefficienttype = eltype(F), options...)
+        p_i = Fun(x->(f(x)-F(x)), dict, domain; coefficienttype = eltype(F), options...)
         F = F + p_i
         if residual(f, F) < tol
             return F
