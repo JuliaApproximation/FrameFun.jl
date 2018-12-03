@@ -71,7 +71,7 @@ AZ_Zt(ap::DictionaryApproximation, A) = AZ_Zt(Dictionary(ap), A)
 abstract type AbstractPlatformApproximation <: ApproximationProblem end
 
 DiscretizationStyle(ap::AbstractPlatformApproximation) = DiscretizationStyle(ap.platform)
-SolverStyle(dict::AbstractPlatformApproximation, dstyle::DiscretizationStyle) = SolverStyle(ap.platform, dstyle)
+SolverStyle(ap::AbstractPlatformApproximation, dstyle::DiscretizationStyle) = SolverStyle(ap.platform, dstyle)
 
 
 struct PlatformApproximation <: AbstractPlatformApproximation
@@ -146,7 +146,13 @@ function Fun(fun, ap::ApproximationProblem; verbose = false, options...)
     F
 end
 
+function Fun(fun, ap::AdaptiveApproximation; verbose = false, options...)
+    verbose && println("Fun: adaptive approximation using platform $(ap.platform)")
+    approximate(fun, ap; verbose=verbose, options...)
+end
+
 Fun(dict::Dictionary, coefficients::AbstractArray) = DictFun(dict, coefficients)
+
 
 # The difference between Fun and approximate is that approximate returns all the
 # operators it constructed.

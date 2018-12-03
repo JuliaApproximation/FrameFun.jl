@@ -182,6 +182,7 @@ include("platform/platform.jl")
 include("platform/parameters.jl")
 include("platform/generic.jl")
 include("platform/approximate.jl")
+include("platform/adaptive.jl")
 include("platform/bases.jl")
 
 include("frames/extensionframe.jl")
