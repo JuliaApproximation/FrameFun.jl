@@ -31,7 +31,7 @@ struct FE_TridiagonalSolver{ELT} <: AbstractSolverOperator{ELT}
             for i=1:size(V,2)
                 S[i]=U[:,i]'*apply(A,V[:,i])
             end
-            if minimum(abs.(S))<(cutoff) || R>size(A,1)
+            if all(minimum(abs.(S)).< cutoff) || R>size(A,1)
                 finished=true
             else
                 R = 2*R
@@ -94,7 +94,7 @@ function mideigs(N,M,L,irange)
         end
     end
     V1b=circshift(V1,round(Int,(N-1)/2)+1)
-    E,V2 = eigen(J2,irange+M-N)
+    E,V2 = eigen(J2,(VERSION<v"0.7") ? (irange + (M-N)) : (irange .+ (M-N)))
     (V1b,V2)
 end
 

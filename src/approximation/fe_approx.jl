@@ -107,9 +107,9 @@ end
 # - solver: the solver to use for solving the FE problem
 
 
-default_frame_domain_1d(basis) = Interval()
-default_frame_domain_2d(basis) = Interval() ⊗ Interval()
-default_frame_domain_3d(basis) = Interval() ⊗ Interval() ⊗ Interval()
+default_frame_domain_1d(basis) = interval()
+default_frame_domain_2d(basis) = interval() ⊗ interval()
+default_frame_domain_3d(basis) = interval() ⊗ interval() ⊗ interval()
 
 
 default_frame_n(domain::Domain1d, basis) = 61
