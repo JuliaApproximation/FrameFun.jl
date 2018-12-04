@@ -69,13 +69,13 @@ function adaptive_simple(f::Function, platform;
         F = Fun(f, platform, n; options...)
         random_F = F(rgrid)
         error = maximum(abs.(random_F-random_f))
-        verbose && (@printf "Error with %d coefficients is %1.3e\n" (length(dict)) error)
+        verbose && (@printf "Adaptive: error with %d coefficients is %1.3e\n" (length(dict)) error)
         (verbose & (abscoef != nothing))  && (@printf "Norm with %d coefficients is %1.3e (%1.3e)\n" (length(dict)) norm(coefficients(F)) abscoef*_trapnorm(f, dictionary(F), 1))
         if (error < tol) && ((abscoef == nothing) || abs_coefficient_test(f, F, abscoef, 1))
             return F
         end
     end
-    @warn("Maximum number of coefficients exceeded, error is $(error)")
+    @warn("Adaptive: maximum number of coefficients exceeded, error is $(error)")
     F
 end
 
@@ -108,20 +108,20 @@ function adaptive_optimal(f::Function, platform;
         error = abserror(f, F)
         # println(n, ": ", Nmin, " ", Nmax, " ", error)
         return_log && (log = [log; n Nmin Nmax error])
-        adaptive_verbose  && (@printf "Error with %d coefficients is %1.3e (%1.3e)\n" (length(dict)) error tol)
+        adaptive_verbose  && (@printf "Adaptive: error with %d coefficients is %1.3e (%1.3e)\n" (length(dict)) error tol)
 
         errorsucces = (error < tol)
 
         randomsuccess = randomtest ?
             random_test(f, F, tol, 3) : true
         (adaptive_verbose&randomtest)  && (randomsuccess ?
-            (@printf "Random test in 3 points succeeded\n") : (@printf "Random test in 3 points failed\n"))
+            (@printf "Adaptive: random test in 3 points succeeded\n") : (@printf "Random test in 3 points failed\n"))
 
         coefsuccess = coefficienttest ?
             coefficient_test(f, F; tolerance=tol, abscoef=abscoef, relcoef=relcoef, options...) : true
         (adaptive_verbose&coefficienttest)  && (coefsuccess ?
-            (@printf "Coefficient test succeeded %1.3e\n" norm(coefficients(F))) :
-            (@printf "Coefficient test failed %1.3e\n" norm(coefficients(F))))
+            (@printf "Adaptive: coefficient test succeeded %1.3e\n" norm(coefficients(F))) :
+            (@printf "Adaptive: coefficient test failed %1.3e\n" norm(coefficients(F))))
 
         success = broadcast(&, errorsucces, coefsuccess, randomsuccess)
         success ? Nmax=n : Nmin=n
@@ -155,6 +155,6 @@ function adaptive_optimal(f::Function, platform;
         dict = Dictionary(platform, n)
         its = its + 1
     end
-    @warn("Maximum number of coefficients exceeded, error is $(error)")
+    @warn("Adaptive: maximum number of coefficients exceeded, error is $(error)")
     F
 end

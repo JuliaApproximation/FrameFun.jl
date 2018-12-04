@@ -106,7 +106,7 @@ approximationproblem(platform) = AdaptiveApproximation(platform)
 
 approximationproblem(dict::Dictionary) = approximationproblem(coefficienttype(dict), dict)
 approximationproblem(dict::Dictionary, domain::Domain) =
-    approximationproblem(promote_type(coefficienttype(dict),eltype(domain)), dict)
+    approximationproblem(promote_type(coefficienttype(dict),eltype(domain)), dict, domain)
 
 approximationproblem(::Type{T}, dict::Dictionary) where {T} =
     DictionaryApproximation(promote_coefficienttype(dict, T))

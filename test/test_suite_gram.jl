@@ -85,7 +85,7 @@ function test_discrete_gram()
     @testset "Testing discrete dual gram en mixed gram with oversampling" begin
         for T in types
             for n in [10,11], os in 1:4, B in [ChebyshevBasis, FourierBasis]
-                e = map(T, rand(n))
+                e = rand(T, n)
                 b = instantiate(B,n,T)
                 d = support(b)/2
                 frame = extensionframe(b,d)
@@ -133,11 +133,11 @@ function test_connection_restriction_extension_discretegram()
       R = restriction_operator(time_basisspan, r_time_basisspan)
       A_Omega = R*A*E
       matrix(A_Omega)
-      e = map(T, rand(size(A_Omega,2)))
+      e = rand(T, size(A_Omega,2))
       @assert A_Omega*e ≈ evaluation_operator(framespan, oversampling=os)*e
       G_test = (1/T(N))*A_Omega'A_Omega
 
-      e = map(T, rand(size(G,2)))
+      e = rand(T, size(G,2))
       @test 1+maximum(abs.((G- G_test)*e))≈1
 
       GD = DiscreteDualGram(framespan; oversampling=os)
@@ -172,19 +172,19 @@ function test_connection_restriction_extension_discretegram()
     A = evaluation_operator(bspan; oversampling=BasisFunctions.basis_oversampling(frame, os))
     R = restriction_operator(time_basisspan, r_time_basisspan)
     Af = evaluation_operator(framespan; oversampling=os)
-    e = map(T, rand(size(A,2)))
+    e = rand(T, size(A,2))
     @test (R*A)*e ≈ Af*e
     A_Omega = Af
     G_test = (1/T(N))*A_Omega'A_Omega
 
-    e = map(T, rand(size(G,2)))
+    e = rand(T, size(G,2))
     @test 1+maximum(abs.((G- G_test)*e))≈1
 
     GD = DiscreteDualGram(framespan; oversampling=os)
 
     Ad = discrete_dual_evaluation_operator(bspan; oversampling=oversampling=BasisFunctions.basis_oversampling(frame,os))
     Adf = discrete_dual_evaluation_operator(framespan, oversampling=os)
-    e = map(T, rand(size(Ad,2)))
+    e = rand(T, size(Ad,2))
     @test (R*Ad)*e ≈ Adf*e
 
     Ad_Omega = Adf
