@@ -20,7 +20,7 @@ import Base: +, *, /, ^, ==, |, &, -, \, <, <=, >, >=
 
 import Base: intersect, union, isapprox, setdiff, in
 
-# Arrays
+# Array interface
 import Base: length, eltype, size, push!, similar
 import Base: inv
 
@@ -53,10 +53,10 @@ import BasisFunctions: src, dest, matrix, matrix!, apply!, apply_inplace!,
 
 import BasisFunctions: tensorproduct, ⊗
 
-import BasisFunctions: grid, left, right, stepsize, sample
+import BasisFunctions: interpolation_grid, left, right, stepsize, sample, support
 
 import BasisFunctions: is_basis, is_frame, is_orthogonal, is_orthonormal, is_biorthogonal,
-    has_transform, has_grid, has_derivative,
+    has_transform, has_interpolationgrid, has_derivative,
     has_antiderivative, has_extension, has_grid_transform
 
 import BasisFunctions: operator, matrix, is_diagonal, is_inplace, ⊕
@@ -90,19 +90,25 @@ import BasisFunctions: coefficienttype, coefficienttype
 
 # about subgrids
 import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
-    similar_subgrid, mask, subindices
+    similar_subgrid, mask, subindices, grid
 
 import BasisFunctions: Gram, DualGram, MixedGram, DiscreteGram, DiscreteDualGram,
     DiscreteMixedGram, gram_entry, dual
 
 import BasisFunctions: discrete_approximation_operator, continuous_approximation_operator
 
-import BasisFunctions: AbstractSolverOperator, GridSamplingOperator
+import BasisFunctions: AbstractSolverOperator, GridSampling, ProjectionSampling
+
+# Function spaces
+import BasisFunctions: quadraturenormalization
+import BasisFunctions: L2
 
 
 ###############################
 ## Exhaustive list of exports
 ###############################
+
+# TODO: where does this come from?
 export ×
 
 # from fun/funs.jl
@@ -118,7 +124,7 @@ export BoundingBox, BBox, BBox1, BBox2, BBox3, BBox4
 export boundingbox
 
 # from domains/extensions.jl
-export dist, normal
+export distance, normal, volume
 
 # from frames/extensionframe.jl
 export ExtensionFrame, extensionframe
@@ -126,7 +132,7 @@ export Gram, DualGram, MixedGram
 export extension_frame_platform
 
 # from frames/weighted_sum_frame.jl
-export WeightedSumFrame, weightfunctions
+export WeightedSumFrame, weightfunctions, WeightedSumPlatform
 export hassuperdict
 
 # from DiffEquation.jl
@@ -145,14 +151,8 @@ export randomgrid, randompoint
 # from domains/fractals.jl
 export mandelbrot, juliaset
 
-# from domains/atomium.jl
-export atomium
-
-# from domains/polardomain.jl
-export polardomain
-
-# from domains/characteristic.jl
-export characteristic
+# from domains/*.jl
+export atomium, polardomain, characteristic
 
 export FeFun, FeFunNd
 
@@ -163,15 +163,27 @@ export FECollocationOperator
 # from approximation
 export AZSolver, AZSmoothSolver, TridiagonalSolver
 
-# from platform/platform.jl
-export Platform
+# from platform/*.jl
 export primal, dual, sampler, matrix_A, matrix_Zt, dual_sampler
-export InterpolationStyle, OversamplingStyle, GramStyle, RectangularGramStyle, GenericSamplingStyle
-export DirectStyle, InverseStyle, TransformStyle, IterativeStyle, AZStyle,
+export SamplingStyle, SolverStyle
+export InterpolationStyle, OversamplingStyle, GramStyle,
+    RectangularGramStyle, GenericSamplingStyle
+export DirectStyle, InverseStyle, DualStyle, IterativeStyle, AZStyle,
     AZSmoothStyle, TridiagonalProlateStyle
+
+# from platform/interface.jl
+export approximate
+export samplingoperator, dualsamplingoperator, dualdictionary,
+    plungeoperator, smoothingoperator, discretization, dualdiscretization,
+    solver, AZ_Zt, oversampledgrid
+export interpolation_grid, oversampled_grid, sampling_grid
+
+# from platform/bases.jl
+export FourierPlatform, ChebyshevPlatform, FourierExtensionPlatform
 
 
 include("sampling/subgrid.jl")
+include("sampling/boundary.jl")
 
 
 #include("domains/boundingbox.jl")
@@ -180,15 +192,17 @@ include("domains/extensions.jl")
 ## Platforms
 include("platform/platform.jl")
 include("platform/parameters.jl")
-include("platform/generic.jl")
+include("platform/interface.jl")
 include("platform/approximate.jl")
 include("platform/adaptive.jl")
 include("platform/bases.jl")
+include("platform/generic.jl")
 
 include("frames/extensionframe.jl")
 include("frames/weighted_sum_frame.jl")
 
-include("fun/basisdomains.jl")
+include("platform/duality.jl")
+
 include("fun/funs.jl")
 include("fun/error.jl")
 

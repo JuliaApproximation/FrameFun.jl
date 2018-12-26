@@ -41,12 +41,12 @@ end
 
 function operator(BC :: DirichletBC, S::Dictionary, G::AbstractGrid, D::Domain)
     G = subgrid(G,BC.D)
-    BC.factor*grid_evaluation_operator(S,gridbasis(G,coefficienttype(S)),G)
+    BC.factor*grid_evaluation_operator(S,GridBasis{coefficienttype(S)}(G),G)
 end
 
 function operator(BC :: NeumannBC, S::Dictionary2d, G::AbstractGrid, D::Domain2d)
     G = subgrid(G,BC.D)
-    GE = grid_evaluation_operator(S,gridbasis(G,coefficienttype(S)),G)
+    GE = grid_evaluation_operator(S, GridBasis{coefficienttype(S)}(G),G)
     dx = Float64[]
     dy = Float64[]
     for i=1:length(G)
@@ -60,7 +60,7 @@ end
 
 function operator(BC :: NeumannBC, S::Dictionary1d, G::AbstractGrid1d, D::Domain1d)
     G = subgrid(G,BC.D)
-    GE = grid_evaluation_operator(S,gridbasis(G,coefficienttype(S)),G)
+    GE = grid_evaluation_operator(S,GridBasis{coefficienttype(S)}(G),G)
     dx = Float64[]
     for i=1:length(G)
         push!(dx, normal(G[i],D)[1])
@@ -84,7 +84,7 @@ end
 
 function boundarygrid(D::DiffEquation)
     G, lB = oversampled_grid(D.D, D.S, oversamplingfactor = D.oversamplingfactor)
-    boundary(grid(lB),D.D)
+    boundary(interpolation_grid(lB),D.D)
 end
 
 
@@ -94,14 +94,14 @@ function operator(D::DiffEquation; incboundary=false, options...)
     ops = incboundary ? Array{DictionaryOperator}(undef, length(D.BCs)+2,1) : Array{DictionaryOperator}(undef, length(D.BCs)+1,1)
     G, lB = oversampled_grid(D.D, D.S, oversamplingfactor = D.oversamplingfactor)
 
-    op = grid_evaluation_operator(D.S,gridbasis(G,coefficienttype(D.S)),G)
+    op = grid_evaluation_operator(D.S, GridBasis{coefficienttype(D.S)}(G),G)
 
     cnt=1
     ops[cnt] = op*D.Diff*ADiff
     BG = boundarygrid(D)
     if incboundary
         cnt=cnt+1
-        ops[cnt] = grid_evaluation_operator(D.S,gridbasis(BG,coefficienttype(D.S)),BG)
+        ops[cnt] = grid_evaluation_operator(D.S, GridBasis{coefficienttype(D.S)}(BG),BG)
     end
     for i = 1:length(D.BCs)
         Ac = operator(D.BCs[i],D.S,BG,D.D)*ADiff
@@ -115,7 +115,7 @@ function rhs(D::DiffEquation; incboundary = false, options...)
     rhs = Array{Array{coefficienttype(src(op)),1}}(undef,0)
     G, lB = oversampled_grid(D.D, D.S, oversamplingfactor = D.oversamplingfactor)
 
-    op = grid_evaluation_operator(D.S,gridbasis(G,coefficienttype(D.S)),G)
+    op = grid_evaluation_operator(D.S, GridBasis{coefficienttype(D.S)}(G),G)
     push!(rhs,sample(G,D.DRhs, coefficienttype(src(op))))
     BG = boundarygrid(D)
 
@@ -174,7 +174,7 @@ end
 FECollocationOperator(feframe::ExtensionFrame,pD::Vector,aX::Vector,sampler::DictionaryOperator) = FECollocationOperator{eltype(sampler)}(feframe,pD,aX,sampler)
 function FECollocationOperator(feframe::ExtensionFrame,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real) where {S1<:Function,S2<:Function}
     pD = map(p->pseudodifferential_operator(feframe,p),pd)
-    gridbasis = GridBasis(oversampled_grid(feframe,samplingfactor)[1],coefficienttype(feframe))
+    gridbasis = GridBasis{coefficienttype(feframe)}(oversampled_grid(feframe,samplingfactor)[1])
     aX = map(a->grid_multiplication_operator(a,gridbasis),ax)
     sampler = evaluation_operator(feframe,grid(gridbasis))
     FECollocationOperator(feframe,pD,aX,sampler)

@@ -1,7 +1,28 @@
 
+abstract type ErrorStyle end
+
+struct RandomPoints <: ErrorStyle
+end
+
+struct OversampledResidual <: ErrorStyle
+end
+
+struct ResidualStyle <: ErrorStyle
+end
+
+function errormeasure(::RandomPoints, platform, f, F, args...; Q=50, options...)
+    g = randomgrid(support(F.expansion.dictionary), Q)
+    z = sqrt(sum(abs.(f.(g)-F.(g)).^2))/sum(Q)
+end
+
+function errormeasure(::ResidualStyle, platform, f, F, args...; oversamplingfactor=2, options...)
+    # TODO: implement
+    errormeasure(RandomPoints(), platform, f, F; options...)
+end
+
+
 # Generic adaptivity
-function approximate(discretizationstyle::DiscretizationStyle, solverstyle::SolverStyle,
-            fun, ap::AdaptiveApproximation; algorithm = :optimal, options...)
+function approximate(fun, ap::AdaptiveApproximation; algorithm = :optimal, options...)
     if algorithm == :greedy
         adaptive_greedy(fun, ap.platform; options...)
     elseif algorithm == :simple
@@ -25,6 +46,7 @@ end
   or at the maximum number of iterations.
 """
 function adaptive_greedy(f, platform;
+        criterium = ResidualStyle(),
         max_logn_coefs = 7, tol = 1e-12, verbose = false, options...)
 
     init_n = 4
@@ -33,7 +55,7 @@ function adaptive_greedy(f, platform;
     for n in init_n:2^max_logn_coefs
         p_i = Fun(x->(f(x)-F(x)), platform, n; coefficienttype = T, options...)
         F = F + p_i
-        R = abserror(f, F)
+        R = errormeasure(criterium, platform, f, F)
         verbose && println("Adaptive: using $n degrees of freedom, residual $R")
         if R < tol
             verbose && println("Adaptive: stopped with residual $R")
@@ -85,6 +107,7 @@ end
   The number of points is chosen adaptively and optimally.
 """
 function adaptive_optimal(f::Function, platform;
+        criterium = ResidualStyle(),
         no_checkpoints=50, max_logn_coefs=8, threshold = 1e-10, tol=100*threshold, verbose=false, adaptive_verbose = verbose, return_log=false, randomtest=false, abscoef=nothing, relcoef=nothing, options...)
 
     coefficienttest = (nothing!=abscoef) | (nothing!=relcoef)
@@ -99,13 +122,14 @@ function adaptive_optimal(f::Function, platform;
     Nmax = NaN; Nmin = 1;
     return_log && (log = zeros(T,0,4))
     its = 0
-    error=-1
+    error = -1
     while length(dict) <= 2^max_logn_coefs && its < 100
         # Find new approximation
-        F = Fun(f, dict, domain; threshold=threshold, options...)
+        # F, A, B, C, D, S = approximate(f, dict, domain; threshold=threshold, options...)
+        F = Fun(f, platform, n; threshold=threshold, options...)
 
         # Using residual
-        error = abserror(f, F)
+        error = errormeasure(criterium, platform, f, F; options...)
         # println(n, ": ", Nmin, " ", Nmax, " ", error)
         return_log && (log = [log; n Nmin Nmax error])
         adaptive_verbose  && (@printf "Adaptive: error with %d coefficients is %1.3e (%1.3e)\n" (length(dict)) error tol)
@@ -130,7 +154,7 @@ function adaptive_optimal(f::Function, platform;
         # If the bounds Nmin and Nmax are determined and if they are close
         if are_close(Nmin, Nmax)
             dict = Dictionary(platform, Nmax)
-            F = Fun(f, dict, domain; threshold=threshold, options...)
+            F = Fun(f, platform, Nmax; threshold=threshold, options...)
 
             return_log && (return F, log)
             return F

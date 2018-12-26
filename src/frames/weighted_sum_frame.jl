@@ -1,20 +1,28 @@
 
 """
 A WeightedSumFrame is the union of a finite number of copies of a single frame,
-each weighted by function.
+each weighted by a function.
 """
 struct WeightedSumPlatform <: FramePlatform
-    weights :: Vector{Function}
     P       :: Platform
+    weights :: Vector{Function}
 end
 
-weight(P::WeightedSumPlatform, i) = weights[i]
+WeightedSumPlatform(platform::Platform, weights) = WeightedSumPlatform(platform, weights)
 
-primal(P::WeightedSumPlatform, i) = MultiDict([P.weights[j]*primal(P.P,i) for j=1:length(P.weights)])
+SolverStyle(platform::WeightedSumPlatform, ::SamplingStyle) = AZStyle()
 
-function dual(P::WeightedSumPlatform, i)
-    denom = (x...)->sum(map(w->abs(w(x...))^2,P.weights))
-    MultiDict([((x...)->(P.weights[j](x...)/denom(x...)))*dual(P.P,i) for j=1:length(P.weights)])
+weight(platform::WeightedSumPlatform, i) = platform.weights[i]
+
+Dictionary(platform::WeightedSumPlatform, i) =
+    MultiDict([weight(platform, j) * Dictionary(platform.P,i) for j in 1:length(platform.weights)])
+
+function dualdictionary(platform::WeightedSumPlatform, i; dict = Dictionary(platform, i))
+    denom = (x...)->sum(map(w->abs(w(x...))^2, platform.weights))
+    MultiDict([((x...)->(platform.weights[j](x...)/denom(x...))) * dualdictionary(platform.P,i) for j=1:length(platform.weights)])
 end
-sampler(P::WeightedSumPlatform,i) = sampler(P.P,i)
-dual_sampler(P::WeightedSumPlatform,i) = dual_sampler(P.P,i)
+
+oversampledgrid(p::WeightedSumPlatform, param, dict, M) = oversampledgrid(element(dict,1), M)
+
+dualsamplingoperator(platform::WeightedSumPlatform, n, m; S = samplingoperator(platform, n; M=m)) =
+    dualsamplingoperator(platform.P, n, m, S=S)

@@ -114,8 +114,8 @@ end
 function test_smoothing_1d()
     @testset "Smoothing $(name(instantiate(Basis,10)))" for Basis in (ChebyshevBasis,)
         basis = Basis(101,-1,1)
-        domain = Interval(-0.5,0.5)
-        f(x) = exp(x)
+        domain = -0.5..0.5
+        f = exp
         fscale(dict, i) = 10.0^-4+i+i^2+i^3
         F = Fun(f, basis, domain; solverstyle = AZSmoothStyle(), scaling=fscale)
         @test (abserror(f,F) < 100*sqrt(eps(Float64)))

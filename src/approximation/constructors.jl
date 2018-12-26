@@ -1,6 +1,6 @@
 
 function _trapnorm(f::Function, D::ExtensionFrame, oversamplingfactor)
-    g = FrameFun.oversampled_grid(domain(D), basis(D), oversamplingfactor = oversamplingfactor)[1]
+    g = FrameFun.oversampled_grid(support(D), basis(D), oversamplingfactor = oversamplingfactor)[1]
     sqrt(stepsize(g)*norm([f(x) for x in g])^2)
 end
 
@@ -192,13 +192,13 @@ end
 
 # A FunConstructor approximates a function in a domain given a (function)space
 struct FunConstructor{T}
-    space   ::    FunctionSpace{T}
+    space   ::    GenericFunctionSpace{T}
     domain  ::    Domain
 
-    FunConstructor{T}(space::FunctionSpace, domain::Domain) where {T} = new(space, domain)
+    FunConstructor{T}(space::GenericFunctionSpace, domain::Domain) where {T} = new(space, domain)
 end
 
-FunConstructor(space::FunctionSpace{T}, domain::Domain) where {T} = FunConstructor{T}(space, domain)
+FunConstructor(space::GenericFunctionSpace{T}, domain::Domain) where {T} = FunConstructor{T}(space, domain)
 
 domain(constructor::FunConstructor) = constructor.domain
 space(constructor::FunConstructor) = constructor.space

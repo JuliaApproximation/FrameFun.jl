@@ -35,8 +35,8 @@ function test_function_space()
         BA.tensorproduct(FourierBasis(4),3),
         BA.multidict(FourierBasis(32),FourierBasis(32)))
     @testset "Space = $(name(space)) " for (i,space) in enumerate([
-        FE.FunctionSpace(FourierBasis(64,-1.0, 1.0)),
-        FE.FunctionSpace(FourierBasis(64,-1.0, 1.0), Interval(-1.0, 1.0)),
+        FE.GenericFunctionSpace(FourierBasis(64,-1.0, 1.0)),
+        FE.GenericFunctionSpace(FourierBasis(64,-1.0, 1.0), Interval(-1.0, 1.0)),
         FourierSpace(),
         FourierSpace(-1.0, 1.0),
         ChebyshevSpace(),
@@ -68,7 +68,7 @@ function test_residual()
         for n in 2 .^ (3:5)
             S = rescale(instantiate(basis,n), -1.0, 1.0)
             F = Fun(f, S, domain)
-            resnew = FE.residual(f,F)
+            resnew = residual(f,F)
             @test resnew < res
             res = resnew
         end

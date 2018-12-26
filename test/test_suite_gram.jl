@@ -124,8 +124,8 @@ function test_connection_restriction_extension_discretegram()
       # check whether the previous calculation is the same as extension by 2.
       b_large = extend(b)
       b_largespan = b_large
-      time_basisspan = gridbasis(b_largespan)
-      r_time_basisspan = gridbasis(b_largespan,FrameFun.subgrid(grid(b_large), d))
+      time_basisspan = GridBasis(b_largespan)
+      r_time_basisspan = GridBasis(b_largespan,FrameFun.subgrid(interpolation_grid(b_large), d))
 
 
       E = extension_operator(bspan, b_largespan)
@@ -166,8 +166,8 @@ function test_connection_restriction_extension_discretegram()
 
     r_grid = BasisFunctions.oversampled_grid(frame, os)
     t_grid = BasisFunctions.oversampled_grid(b, BasisFunctions.basis_oversampling(frame, os))
-    time_basisspan = gridbasis(bspan, t_grid)
-    r_time_basisspan = gridbasis(framespan, r_grid)
+    time_basisspan = GridBasis(bspan, t_grid)
+    r_time_basisspan = GridBasis(framespan, r_grid)
 
     A = evaluation_operator(bspan; oversampling=BasisFunctions.basis_oversampling(frame, os))
     R = restriction_operator(time_basisspan, r_time_basisspan)

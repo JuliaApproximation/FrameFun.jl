@@ -24,7 +24,8 @@ struct AZSolver{T} <: AbstractSolverOperator{T}
     x2
     x1
 
-    function AZSolver{T}(A::DictionaryOperator, Zt::DictionaryOperator, plunge_op::DictionaryOperator, psolver::DictionaryOperator) where {T}
+    function AZSolver{T}(A::DictionaryOperator, Zt::DictionaryOperator, plunge_op::DictionaryOperator,
+            psolver::DictionaryOperator) where {T}
         # Allocate scratch space
         b = zeros(src(psolver))
         blinear = zeros(T, length(src(psolver)))
@@ -47,41 +48,34 @@ end
 
 default_regularization(A; options...) = RandomizedSvdSolver(A; options...)
 
-function AZSolver(A::DictionaryOperator{T}, Zt::DictionaryOperator{T};
+function AZSolver(A::DictionaryOperator, Zt::DictionaryOperator;
             REG = default_regularization,
-            rankestimate = estimate_plunge_rank(A),
+            rankestimate = 40,
             threshold = default_threshold(A),
-            options...) where {T}
+            options...)
 
     plunge_op = plunge_operator(A, Zt)
     psolver = REG(plunge_op*A; threshold = threshold, rankestimate = rankestimate, options...)
     AZSolver(A, Zt, plunge_op, psolver)
 end
 
-default_threshold(A::DictionaryOperator) = regularization_threshold(eltype(A))
-
-# Estimate for the rank of (A*Zt-I)*A when computing the low rank decomposition. If check fails, rank estimate is steadily increased.
-estimate_plunge_rank(A::DictionaryOperator) =
-    estimate_plunge_rank(src(A), dest(A))
-
-estimate_plunge_rank(src::ExtensionFrame, dest::Dictionary) =
-    estimate_plunge_rank(superdict(src), domain(src), dest)
-
-estimate_plunge_rank(src::Dictionary, dest::Dictionary) =
-    default_estimate_plunge_rank(src, dest)
-
-estimate_plunge_rank(src::Dictionary, domain::Domain, dest::Dictionary) =
-    default_estimate_plunge_rank(src, dest)
-
-function default_estimate_plunge_rank(src::Dictionary, dest::Dictionary)
-    nml=length(src)^2/length(dest)
-    N = dimension(src)
-    if N==1
-        return max(1,min(round(Int, 9*log(nml)),length(src)))
-    else
-        return max(1,min(round(Int, 9*log(nml)*nml^((N-1)/N)),length(src)))
-    end
+function AZSolver_with_smoothing(A::DictionaryOperator, Zt::DictionaryOperator; options...)
+    D = WeightedSmoothingOperator(src(A); options...)
+    AZSolver_with_smoothing(A, Zt, D; options...)
 end
+
+function AZSolver_with_smoothing(A, Zt, D;
+            REG = default_regularization,
+            rankestimate = 40,
+            threshold = default_threshold(A),
+            options...)
+
+    plunge_op = plunge_operator(A, Zt)
+    psolver = inv(D)*REG(plunge_op*A*inv(D); threshold = threshold, rankestimate = rankestimate, options...)
+    AZSolver(A, Zt, plunge_op, psolver)
+end
+
+default_threshold(A::DictionaryOperator) = regularization_threshold(eltype(A))
 
 apply!(s::AZSolver, coef_dest, coef_src) = _apply!(s, coef_dest, coef_src,
         s.plunge_op, s.A, s.Zt, s.b, s.blinear, s.psolver, s.x1, s.x2)
@@ -106,10 +100,4 @@ function _apply!(s::AZSolver, coef_dest, coef_src, plunge_op::DictionaryOperator
     for i in eachindex(x1)
         coef_dest[i] = x1[i] + x2[i]
     end
-end
-
-function AZSolver(platform::Platform, i; options...)
-    A = matrix_A(platform, i)
-    Zt = matrix_Zt(platform, i)
-    AZSolver(A, Zt; options...)
 end

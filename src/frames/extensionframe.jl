@@ -21,9 +21,9 @@ ExtensionFrame(domain::Domain, basis::Dictionary{S,T}) where {S,T} =
 superdict(f::ExtensionFrame) = f.basis
 
 basis(f::ExtensionFrame) = f.basis
-domain(f::ExtensionFrame) = f.domain
+support(f::ExtensionFrame) = f.domain
 
-similar_dictionary(f::ExtensionFrame, dict::Dictionary) = ExtensionFrame(domain(f), dict)
+similar_dictionary(f::ExtensionFrame, dict::Dictionary) = ExtensionFrame(support(f), dict)
 
 is_basis(f::ExtensionFrame) = false
 is_frame(f::ExtensionFrame) = true
@@ -33,7 +33,7 @@ is_orthonormal(f::ExtensionFrame) = false
 
 # The following properties do not hold for extension frames
 # - there is no interpolation grid
-has_grid(f::ExtensionFrame) = false
+has_interpolationgrid(f::ExtensionFrame) = false
 # - there is no unitary transform
 has_transform(f::ExtensionFrame) = false
 has_transform(f::ExtensionFrame, dgs) = false
@@ -42,22 +42,25 @@ has_antiderivative(f::ExtensionFrame) = false
 
 name(f::ExtensionFrame) = "An extension frame of " * name(f.basis)
 
-dict_in_support(f::ExtensionFrame, x) = x ∈ domain(f)
-dict_in_support(f::ExtensionFrame, idx, x) = x ∈ domain(f) && in_support(basis(f), idx, x)
+dict_in_support(f::ExtensionFrame, x) = x ∈ support(f)
+dict_in_support(f::ExtensionFrame, idx, x) = x ∈ support(f) && in_support(basis(f), idx, x)
 
 is_compatible(d1::ExtensionFrame, d2::ExtensionFrame) = is_compatible(basis(d1),basis(d2))
 
 function (*)(d1::ExtensionFrame, d2::ExtensionFrame, args...)
     @assert is_compatible(d1,d2)
     (mset, mcoef) = (*)(basis(d1),basis(d2),args...)
-    df = ExtensionFrame(domain(d1) ∩ domain(d2),mset)
+    df = ExtensionFrame(support(d1) ∩ support(d2),mset)
     (df, mcoef)
 end
 
 unsafe_eval_element(s::ExtensionFrame, idx::Int, x) =
     unsafe_eval_element(basis(s), idx, x)
 
-grid(f::ExtensionFrame) = subgrid(grid(basis(f)),domain(f))
+function interpolation_grid(f::ExtensionFrame)
+    @warn "interpolation_grid called on extensionframe $f"
+    subgrid(interpolation_grid(basis(f)),support(f))
+end
 
 """
 Make an ExtensionFrame, but match tensor product domains with tensor product sets
@@ -83,15 +86,15 @@ const TensorProductExtensionFrameDict{N,N1,S,T} = TensorProductDict{N,NTuple{N1,
 # TODO remove need of this function
 function flatten(dict::TensorProductExtensionFrameDict)
     basis = tensorproduct([superdict(dicti) for dicti in elements(dict)]...)
-    domain = DomainSets.ProductDomain([FrameFun.domain(dicti) for dicti in elements(dict)]...)
+    domain = DomainSets.ProductDomain([FrameFun.support(dicti) for dicti in elements(dict)]...)
     ExtensionFrame(domain, basis)
 end
 
 extensionframe(domain::Domain, basis::Dictionary) = ExtensionFrame(domain, basis)
 extensionframe(basis::Dictionary, domain::Domain) = extensionframe(domain, basis)
 
-left(d::ExtensionFrame, x...) = leftendpoint(domain(d))
-right(d::ExtensionFrame, x...) = rightendpoint(domain(d))
+left(d::ExtensionFrame, x...) = leftendpoint(support(d))
+right(d::ExtensionFrame, x...) = rightendpoint(support(d))
 
 DualGram(f::ExtensionFrame; options...) = wrap_operator(f, f, DualGram(basis(f); options...)*Gram(f; options...)*DualGram(basis(f); options...))
 
@@ -102,12 +105,12 @@ DiscreteDualGram(f::ExtensionFrame; oversampling=BasisFunctions.default_oversamp
 DiscreteMixedGram(f::ExtensionFrame; oversampling=BasisFunctions.default_oversampling(f)) = wrap_operator(f, f, DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))*DiscreteGram(f; oversampling=oversampling))
 
 BasisFunctions.discrete_dual_evaluation_operator(dict::ExtensionFrame; oversampling=1, options...) =
-    BasisFunctions.grid_evaluation_operator(dict, gridbasis(dict, BasisFunctions.oversampled_grid(dict, oversampling)), BasisFunctions.oversampled_grid(dict, oversampling); options...)*DiscreteDualGram(basis(dict); oversampling=BasisFunctions.basis_oversampling(dict, oversampling))
+    BasisFunctions.grid_evaluation_operator(dict, GridBasis(dict, BasisFunctions.oversampled_grid(dict, oversampling)), BasisFunctions.oversampled_grid(dict, oversampling); options...)*DiscreteDualGram(basis(dict); oversampling=BasisFunctions.basis_oversampling(dict, oversampling))
 
 import BasisFunctions: measure, restrict
 import BasisFunctions: innerproduct
 
-measure(f::ExtensionFrame) = restrict(measure(basis(f)), domain(f))
+measure(f::ExtensionFrame) = restrict(measure(basis(f)), support(f))
 innerproduct(f1::ExtensionFrame, i, f2::ExtensionFrame, j, measure) =
     innerproduct(basis(f1), i, basis(f2), j, measure)
 
@@ -118,7 +121,7 @@ native_nodes(basis::Dictionary, domain::DomainSets.AbstractInterval) =
     BasisFunctions.clip_and_cut(native_nodes(basis), infimum(domain), supremum(domain))
 
 dot(dict::ExtensionFrame, f1::Function, f2::Function; options...)  =
-    dot(basis(dict), domain(dict), f1::Function, f2::Function; options...)
+    dot(basis(dict), support(dict), f1::Function, f2::Function; options...)
 
 dot(dict::ExtensionFrame, f1::Int, f2::Function; options...) =
     dot(dict, x->eval_element(basis(dict), f1, x), f2; options...)
@@ -138,13 +141,13 @@ dot(dict::Dictionary, domain::DomainSets.AbstractInterval, f1::Function, f2::Fun
 #################
 ## Gram operators extended
 #################
-dual(dict::ExtensionFrame; options...) = extensionframe(dual(basis(dict); options...), domain(dict))
+dual(dict::ExtensionFrame; options...) = extensionframe(dual(basis(dict); options...), support(dict))
 
 dot(frame1::ExtensionFrame, frame2::ExtensionFrame, f1::Int, f2::Int; options...) =
     dot(frame1, frame2, x->eval_element(frame1, f1, x), x->eval_element(frame2, f2, x); options...)
 
 function dot(frame1::ExtensionFrame, frame2::ExtensionFrame, f1::Function, f2::Function; options...)
-    d1 = domain(frame1); d2 = domain(frame2)
+    d1 = support(frame1); d2 = support(frame2)
     @assert d1 == d2
     dot(basis(frame1), basis(frame2), d1, f1, f2; options...)
 end
@@ -169,10 +172,12 @@ grid_evaluation_operator(s::TensorProductExtensionFrameDict, dgs::GridBasis, gri
 # platform
 ##################
 
-sampler(platform::Platform, sampler::GridSamplingOperator, domain::Domain) =
-    GridSamplingOperator(gridbasis(sampler), grid(sampler), domain, sampler.scaling)
-GridSamplingOperator(dgs::GridBasis, grid::AbstractGrid, domain::Domain, scaling) =
-    GridSamplingOperator(gridbasis(FrameFun.subgrid(grid, domain), coefficienttype(dgs)), scaling=scaling)
+SolverStyle(dict::ExtensionFrame, ::OversamplingStyle) = AZStyle()
+
+sampler(platform::Platform, sampler::GridSampling, domain::Domain) =
+    GridSampling(dest(sampler), grid(sampler), domain, sampler.scaling)
+GridSampling(dgs::GridBasis, grid::AbstractGrid, domain::Domain, scaling) =
+    GridSampling(GridBasis{coefficienttype(dgs)}(subgrid(grid, domain)), scaling=scaling)
 
 extension_frame_sampler(platform::Platform, domain::Domain) = n->sampler(platform, platform.sampler_generator(n), domain)
 dual_extension_frame_sampler(platform::Platform, domain::Domain) = n->sampler(platform, platform.dual_sampler_generator(n), domain)
@@ -185,10 +190,3 @@ function extension_frame_platform(platform::GenericPlatform, domain::Domain)
     GenericPlatform(super_platform=platform, primal = primal, dual = dual, sampler = sampler,dual_sampler = dual_sampler,
         params = platform.parameter_sequence, name = "extension frame of " * platform.name)
 end
-
-struct ExtensionFramePlatform <: FramePlatform
-    basisplatform   ::  Platform
-    domain          ::  Domain
-end
-
-dictionary(p::ExtensionFramePlatform, param) = extensionframe(dictionary(p.basisplatform, param), p.domain)

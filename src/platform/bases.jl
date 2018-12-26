@@ -1,14 +1,21 @@
-## Platforms for certain bases
+## Platforms for certain bases and frames
 
 struct FourierPlatform{T} <: BasisPlatform
 end
 
 FourierPlatform() = FourierPlatform{Float64}()
 
-Dictionary(p::FourierPlatform{T}, n; options...) where {T} = FourierBasis{T}(n)
+Dictionary(p::FourierPlatform{T}, n) where {T} = FourierBasis{T}(n)
 
-DiscretizationStyle(p::FourierPlatform) = InterpolationStyle()
-SolverStyle(p::FourierPlatform, ::DiscretizationStyle) = TransformStyle()
+dualdictionary(p::FourierPlatform, n; dict = Dictionary(p, n)) = dict
+
+SolverStyle(p::FourierPlatform, ::OversamplingStyle) = DualStyle()
+
+dualsamplingoperator(p::FourierPlatform, n, m; S = samplingoperator(p, n; M=m)) =
+    quadraturenormalization(S) * S
+
+functionspace(p::FourierPlatform{T}) where {T} =
+    L2Space{Complex{T}}(zero(T)..one(T))
 
 
 struct ChebyshevPlatform{T} <: BasisPlatform
@@ -16,15 +23,68 @@ end
 
 ChebyshevPlatform() = ChebyshevPlatform{Float64}()
 
-Dictionary(p::ChebyshevPlatform{T}, n; options...) where {T} = ChebyshevBasis{T}(n)
+Dictionary(p::ChebyshevPlatform{T}, n) where {T} = ChebyshevBasis{T}(n)
 
-DiscretizationStyle(p::ChebyshevPlatform) = InterpolationStyle()
-SolverStyle(p::ChebyshevPlatform, ::DiscretizationStyle) = TransformStyle()
+function dualdictionary(p::ChebyshevPlatform{T}, n; dict = Dictionary(p, n)) where {T}
+    scaling = ScalingOperator(dict, 2/convert(T, pi)) *
+        BasisFunctions.CoefficientScalingOperator(dict, 1, one(T)/2)
+    scaling * dict
+end
 
-function interpolation_grid(dict::ChebyshevBasis; secondkind = false, options...)
-    if secondkind
-        secondgrid(dict)
-    else
-        grid(dict)
+dualsamplingoperator(p::ChebyshevPlatform, n, m; S = samplingoperator(p, n; M=m)) =
+    quadraturenormalization(S) * S
+
+
+
+
+struct FourierExtensionPlatform <: FramePlatform
+    basisplatform   ::  FourierPlatform
+    domain          ::  Domain
+
+    function FourierExtensionPlatform(basisplatform, domain::Domain{T}) where {T}
+        @assert issubset(domain, UnitInterval{T}())
+        new(basisplatform, domain)
     end
+end
+
+function FourierExtensionPlatform(domain::Domain{T}) where {T}
+    basisplatform = FourierPlatform{T}()
+    FourierExtensionPlatform(basisplatform, domain)
+end
+
+Dictionary(p::FourierExtensionPlatform, n) =
+    ExtensionFrame(p.domain, Dictionary(p.basisplatform, n))
+
+dualdictionary(p::FourierExtensionPlatform, n; dict = Dictionary(p, n)) = dict
+
+function dualsamplingoperator(p::FourierExtensionPlatform, n, m; S = samplingoperator(p, n; M=m))
+    grid1 = grid(dest(S))
+    grid2 = supergrid(grid1)
+    val = scalar(quadraturenormalization(coefficienttype(dest(S)), grid2))
+    val * S
+end
+
+
+
+struct ExtensionFramePlatform <: FramePlatform
+    basisplatform   ::  Platform
+    domain          ::  Domain
+end
+
+Dictionary(p::ExtensionFramePlatform, n) =
+    ExtensionFrame(p.domain, Dictionary(p.basisplatform, n))
+
+dualdictionary(p::ExtensionFramePlatform, n; dict = Dictionary(p, n)) =
+    dualdictionary(p.basisplatform, n; dict=dict)
+
+function dualsamplingoperator(p::ExtensionFramePlatform, n, m; S = samplingoperator(p, n; M=m))
+    grid1 = grid(dest(S))
+    grid2 = supergrid(grid1)
+    # TODO: make this more generic
+    # We can not just apply the quadrature normalization of the grid of S to S,
+    # we need the normalization of the underlying basis first, and then we need to
+    # restrict that to a subdomain
+    # For now, assume a ScalingOperator from which we can extract the scalar value
+    val = scalar(quadraturenormalization(coefficienttype(dest(S)), grid2))
+    val * S
 end

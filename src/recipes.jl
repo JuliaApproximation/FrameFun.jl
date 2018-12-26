@@ -23,7 +23,7 @@ function postprocess(D::Domain, grid, vals, value=NaN)
     vals
 end
 
-postprocess(B::ExtensionFrame, args...) = postprocess(domain(B), args...)
+postprocess(B::ExtensionFrame, args...) = postprocess(support(B), args...)
 
 # Plotgrids are determined by the underlying set
 plotgrid(B::ExtensionFrame, n) = plotgrid(basis(B),n)

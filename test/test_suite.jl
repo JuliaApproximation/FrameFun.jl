@@ -72,7 +72,7 @@ function test_1d_cases()
 
     n = 61
     T = 1.9
-    domain = Interval(-1.0, 1.0)
+    domain = -1.0..1.0
     basis = FourierBasis(n, -T, T)
 
     println()
@@ -202,7 +202,7 @@ function test_3d_cases()
         for T in ((1.7,1.2,1.3),)
             basis = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2]) ⊗ Basis(n[3],-T[3],T[3])
             F = @timed Fun(f, basis, domain; solverstyle=solverstyle, threshold=10.0^(3/4*log10(eps(real(codomaintype(basis))))), oversamplingfactor=1.5)
-            error = abserror(f, F[1])
+            error = abs(f(0.4,0.4,0.4)-F[1](0.4,0.4,0.4))
             if verbose
                 print("$n \t $T \t\t")
                 print("N\t")

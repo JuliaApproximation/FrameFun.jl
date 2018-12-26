@@ -1,20 +1,18 @@
 
 # Get the mean approximation error in random interior points.
-function abserror(f::Function,F::DictFun;vals::Int=200)
+function abserror(f::Function, F::DictFun; vals = 200)
     rgrid = randomgrid(domain(F),vals)
     Fval = F(rgrid)
-    # TODO: type based on space of F
     fval = sample(rgrid,f,eltype(F))
-    return sum(abs.(Fval-fval))/vals
+    sum(abs.(Fval-fval))/vals
 end
 
 # Get the max approximation error in random interior points
-function maxerror(f::Function,F::DictFun;vals::Int=200)
+function maxerror(f::Function, F::DictFun; vals = 200)
     rgrid = randomgrid(domain(F),vals)
     Fval = F(rgrid)
-    # TODO: type based on space of F
     fval = sample(rgrid,f,eltype(F))
-    return maximum(abs.(Fval-fval))
+    maximum(abs.(Fval-fval))
 end
 
 using QuadGK
@@ -26,7 +24,8 @@ function L2error(f::Function, F::DictFun{S,T}; rtol = eps(real(T)), atol = 0, op
 end
 
 function residual(f::Function, F::DictFun; residualtype = :l2, options...)
-    A, B = discretization(dictionary(F), f; options...)
+    A, S = discretization(dictionary(F); options...)
+    B = apply(S, f)
     R = A*coefficients(F)-B
     if residualtype == :l2
         norm(R)

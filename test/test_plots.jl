@@ -34,17 +34,17 @@ function test_plots()
     F = FourierBasis(10)⊗FourierBasis(10)
     plot(F[82],plot_complex=false)
 
-    G = BasisFunctions.grid(ChebyshevBasis(51))
+    G = interpolation_grid(ChebyshevBasis(51))
     plot(G)
 
-    G = BasisFunctions.grid(ChebyshevBasis(51,-1,0.3)⊗ChebyshevBasis(51,-0.5,0.5))
+    G = interpolation_grid(ChebyshevBasis(51,-1,0.3)⊗ChebyshevBasis(51,-0.5,0.5))
     G = FrameFun.subgrid(G,mandelbrot())
     plot(G)
 
     B = FourierBasis(21,-1,1)⊗FourierBasis(21,-1,1)⊗FourierBasis(21,-1,1)
     D = ball()\FrameFun.cube(-0.5,0.5,-0.5,0.5,-2.,2.)
     Df = ExtensionFrame(D,B)
-    G = BasisFunctions.grid(Df)
+    G = interpolation_grid(Df)
     plot(G,size=(400,400))
 
     basis = FourierBasis(51,-2.0,-0.5)
@@ -52,7 +52,7 @@ function test_plots()
     f(x) = cos(3*x.^2)
     F = Fun(f, basis, domain)
     # Easily combine multiple plots
-    plot(BasisFunctions.grid(dictionary(F)),label="grid",markercolor=:white)
+    plot(interpolation_grid(dictionary(F)),label="grid",markercolor=:white)
     plot!(F,label="function", plot_ext=true)
     plot!(F',title="Function and derivative",label="derivative",legend=true)
 

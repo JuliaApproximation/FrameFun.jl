@@ -20,7 +20,7 @@ boundingbox(c::PolarDomain) = c.box
 
 show(io::IO, c::PolarDomain) = print(io, "a domain in polar coordinates")
 
-dist(x, c::PolarDomain) = real(c.charFun(atan(x[2],x[1])))-norm(x)
+distance(x, c::PolarDomain) = real(c.charFun(atan(x[2],x[1])))-norm(x)
 
 function normal(x, c::PolarDomain)
     phi = atan(x[2], x[1])

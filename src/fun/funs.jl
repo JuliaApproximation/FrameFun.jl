@@ -55,8 +55,6 @@ end
 
 ExtensionFrame(fun::DictFun, set::ExtensionFrame) = set
 
-domain(fun::DictFun, set::ExtensionFrame) = domain(set)
-
 basis(fun::DictFun, set::ExtensionFrame) = basis(set)
 
 basis(fun::DictFun, dict::Dictionary) = dict
@@ -83,7 +81,7 @@ end
 function show(io::IO, fun::DictFun, set::ExtensionFrame)
     println(io, "A ", dimension(fun), "-dimensional DictFun with ", length(coefficients(fun)), " degrees of freedom.")
     println(io, "Basis: ", name(basis(set)))
-    println(io, "Domain: ", domain(set))
+    println(io, "Domain: ", support(set))
 end
 
 getindex(expansion::Expansion, domain::Domain) = restrict(expansion, domain)
@@ -95,7 +93,7 @@ restrict(expansion::Expansion, domain::Domain) = _restrict(expansion, dictionary
 function _restrict(expansion::Expansion, set::ExtensionFrame, domain1::Domain)
     @assert dimension(set) == dimension(domain1)
 
-    domain2 = domain(set)
+    domain2 = support(set)
     newdomain = domain1 ∩ domain2
     DictFun(newdomain, basis(set), coefficients(expansion))
 end

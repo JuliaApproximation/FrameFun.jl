@@ -154,12 +154,12 @@ end
 normal(x, d::Domain) = error("Normal not available for this domain type")
 
 # Auxiliary function that returns distance from the boundary in some metric
-dist(x, d::Domain) = error("Domain distance not available for this domain type")
+distance(x, d::Domain) = error("Domain distance not available for this domain type")
 
-dist(x, ::UnitSimplex) = min(minimum(x),1-sum(x))
+distance(x, ::UnitSimplex) = min(minimum(x),1-sum(x))
 
 function normal(x, ::UnitSimplex)
-    z=fill(eltype(x)(0), size(x))
+    z = fill(eltype(x)(0), size(x))
     if minimum(x)<abs(sum(x)-1)/sqrt(length(x))
         index = findmin(x)[2]
         setindex!(z,-1,index)
@@ -171,31 +171,31 @@ end
 
 normal(x, d::UnitHyperBall) = x/norm(x)
 
-dist(x, d::AbstractInterval) = min(maximum(d)-x,x-minimum(d))
+distance(x, d::AbstractInterval) = min(maximum(d)-x,x-minimum(d))
 
 normal(x, d::AbstractInterval) = (abs(minimum(d)-x) < abs(maximum(d)-x)) ? -1 : 1
 
-dist(x, d::UnitHyperBall) = 1-norm(x)
+distance(x, d::UnitHyperBall) = 1-norm(x)
 
 normal(x, d::UnitHyperSphere) = x/norm(x)
 
-dist(x, d::UnitHyperSphere) = 1-norm(x)
+distance(x, d::UnitHyperSphere) = 1-norm(x)
 
-dist(x,d::UnionDomain) = indomain(x,d) ? sum(map(di->max(0,dist(x,di)),elements(d))) : maximum(map(di->dist(x,di),elements(d)))
+distance(x,d::UnionDomain) = indomain(x,d) ? sum(map(di->max(0,distance(x,di)),elements(d))) : maximum(map(di->distance(x,di),elements(d)))
 
-normal(x,d::UnionDomain) = normal(x,elements(d)[findmin(map(di->abs(dist(x,di)),elements(d)))[2]])
+normal(x,d::UnionDomain) = normal(x,elements(d)[findmin(map(di->abs(distance(x,di)),elements(d)))[2]])
 
-dist(x,d::IntersectionDomain) = minimum(map(di->dist(x,di),elements(d)))
+distance(x,d::IntersectionDomain) = minimum(map(di->distance(x,di),elements(d)))
 
-normal(x,d::IntersectionDomain) = normal(x,elements(d)[findmin(map(di->dist(x,di),elements(d)))[2]])
+normal(x,d::IntersectionDomain) = normal(x,elements(d)[findmin(map(di->distance(x,di),elements(d)))[2]])
 
-dist(x,d::DifferenceDomain) = indomain(x,d) ? min(abs(dist(x,d.d1)),abs(dist(x,d.d2))) : -1*min(abs(dist(x,d.d1)),abs(dist(x,d.d2)))
+distance(x,d::DifferenceDomain) = indomain(x,d) ? min(abs(distance(x,d.d1)),abs(distance(x,d.d2))) : -1*min(abs(distance(x,d.d1)),abs(distance(x,d.d2)))
 
-normal(x,d::DifferenceDomain) = abs(dist(x,d.d1))<abs(dist(x,d.d2)) ? normal(x,d.d1) : -1*normal(x,d.d2)
+normal(x,d::DifferenceDomain) = abs(distance(x,d.d1))<abs(distance(x,d.d2)) ? normal(x,d.d1) : -1*normal(x,d.d2)
 
-dist(x, t::ProductDomain) = minimum(map(dist,x,elements(t)))
+distance(x, t::ProductDomain) = minimum(map(distance, x, elements(t)))
 
-dist(x, d::DomainSets.MappedDomain) = dist(inverse_map(d)*x,source(d))
+distance(x, d::DomainSets.MappedDomain) = distance(inverse_map(d)*x,source(d))
 
 function normal(x, d::DomainSets.MappedDomain)
     x = applymap(inverse_map(d),normal(inverse_map(d)*x,source(d)))
@@ -203,11 +203,15 @@ function normal(x, d::DomainSets.MappedDomain)
    (x-x0)/norm(x-x0)
 end
 function normal(x, t::ProductDomain)
-    index = findmin(map(dist,x,elements(t)))[2]
+    index = findmin(map(distance, x, elements(t)))[2]
     [(i==index)*normal(x[i],element(t,i)) for i =1:length(elements(t))]
 end
 
 
 ##########################################################################
-### Assorted Domains
+### Volume
 ##########################################################################
+
+volume(d::Domain) = missing
+
+volume(d::AbstractInterval) = abs(rightendpoint(d)-leftendpoint(d))

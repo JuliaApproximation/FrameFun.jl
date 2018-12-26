@@ -2,10 +2,9 @@
 """
 A fast FE solver based on a low-rank approximation of the plunge region. The plunge region
 is isolated using a projection operator. This algorithm contains an extra smoothing step
-
 """
 struct AZSmoothSolver{T} <: AbstractSolverOperator{T}
-    TS          :: DictionaryOperator
+    TS          ::  DictionaryOperator
     A           ::  DictionaryOperator
     Zt          ::  DictionaryOperator
     plunge_op   ::  DictionaryOperator    # store the operator because it allocates memory
@@ -19,16 +18,7 @@ struct AZSmoothSolver{T} <: AbstractSolverOperator{T}
     D           ::  DictionaryOperator
     AD          ::  DictionaryOperator
 
-    function AZSmoothSolver{T}(A::DictionaryOperator, Zt::DictionaryOperator, D::DictionaryOperator; threshold = default_threshold(A), thresholdv=sqrt(threshold), R = estimate_plunge_rank(A), verbose=false,  options...) where T
-        plunge_op = plunge_operator(A, Zt)
-        # Create Random matrices
-        TS1 = RandomizedSvdSolver(plunge_op*A; threshold = threshold, verbose=verbose, R=R, options...)
-        TS2 = RandomizedSvdSolver(Zt*plunge_op; threshold = thresholdv, verbose=verbose, R=R, options...)
-        AD = inv(D)
-        ADV = (TS2.Ut)'.*diagonal(AD)
-        # Orthogonal basis for D^(-1)V_mid
-        Q, R = qr(ADV)
-        Q = Matrix(Q);@warn("Unnecessary conversion if qr works fine. ")
+    function AZSmoothSolver{T}(A, Zt, D, plunge_op, AD, TS1, TS2, Q) where {T}
         # Pre-allocation
         b = zeros(size(dest(plunge_op)))
         blinear = zeros(T, length(dest(A)))
@@ -40,13 +30,29 @@ struct AZSmoothSolver{T} <: AbstractSolverOperator{T}
     end
 end
 
-function AZSmoothSolver{T}(A::DictionaryOperator, Zt::DictionaryOperator; options...) where {T}
+function AZSmoothSolver(A::DictionaryOperator, Zt::DictionaryOperator; options...)
     D = WeightedSmoothingOperator(src(A); options...)
-    AZSmoothSolver{T}(A, Zt, D; options...)
+    AZSmoothSolver(A, Zt, D; options...)
 end
 
-AZSmoothSolver(A::DictionaryOperator, Zt::DictionaryOperator; options...) =
-    AZSmoothSolver{eltype(A)}(A, Zt; options...)
+function AZSmoothSolver(A::DictionaryOperator{T}, Zt::DictionaryOperator, D::DictionaryOperator;
+            REG = default_regularization,
+            rankestimate = 40,
+            threshold = default_threshold(A),
+            thresholdv = sqrt(threshold),
+            options...) where {T}
+
+    plunge_op = plunge_operator(A, Zt)
+    TS1 = REG(plunge_op*A; threshold = threshold, rankestimate=rankestimate, options...)
+    TS2 = REG(Zt*plunge_op; threshold = thresholdv, rankestimate=rankestimate, options...)
+    AD = inv(D)
+    ADV = (TS2.Ut)'.*diagonal(AD)
+    # Orthogonal basis for D^(-1)V_mid
+    Q, R = qr(ADV)
+    Q = Matrix(Q)
+    AZSmoothSolver{T}(A, Zt, D, plunge_op, AD, TS1, TS2, Q)
+end
+
 
 operator(s::AZSmoothSolver) = s.A
 
@@ -102,6 +108,5 @@ function default_scaling_function(dict::Dictionary1d, idx)
     1 + f
 end
 
-function default_scaling_function(dict::TensorProductDict, I)
+default_scaling_function(dict::TensorProductDict, I) =
     default_scaling_function(element(dict, 1), I[1]) + default_scaling_function(element(dict, 2), I[2])
-end

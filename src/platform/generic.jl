@@ -83,7 +83,7 @@ fourier_platform(::Type{T};options...) where {T} = fourier_platform(T, 1; option
 function fourier_platform(::Type{T}, n::Int; oversampling=1) where {T}
 	primal = FourierBasis{T}
 	dual = FourierBasis{T}
-        sampler = n -> GridSamplingOperator(gridbasis(PeriodicEquispacedGrid(round(Int,oversampling*n), UnitInterval{T}()), T))
+        sampler = n -> GridSampling(GridBasis{T}(PeriodicEquispacedGrid(round(Int,oversampling*n), UnitInterval{T}())))
         dual_sampler = n->(1/length(dest(sampler(n))))*sampler(n)
 	params = isodd(n) ? OddDoublingSequence(n) : DoublingSequence(n)
 	GenericPlatform(primal = primal, dual = dual, sampler = sampler, dual_sampler=dual_sampler,

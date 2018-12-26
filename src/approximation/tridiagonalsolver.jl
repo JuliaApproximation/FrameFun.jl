@@ -56,6 +56,30 @@ FE_TridiagonalSolver(A::DictionaryOperator, scaling; options...) =
 
 operator(op::FE_TridiagonalSolver) = op.A
 
+# Estimate for the rank of (A*Zt-I)*A when computing the low rank decomposition. If check fails, rank estimate is steadily increased.
+# TODO: remove this estimate and use adaptivity
+estimate_plunge_rank(A::DictionaryOperator) =
+    estimate_plunge_rank(src(A), dest(A))
+
+estimate_plunge_rank(src::ExtensionFrame, dest::Dictionary) =
+    estimate_plunge_rank(superdict(src), support(src), dest)
+
+estimate_plunge_rank(src::Dictionary, dest::Dictionary) =
+    default_estimate_plunge_rank(src, dest)
+
+estimate_plunge_rank(src::Dictionary, domain::Domain, dest::Dictionary) =
+    default_estimate_plunge_rank(src, dest)
+
+function default_estimate_plunge_rank(src::Dictionary, dest::Dictionary)
+    nml=length(src)^2/length(dest)
+    N = dimension(src)
+    if N==1
+        return max(1,min(round(Int, 9*log(nml)),length(src)))
+    else
+        return max(1,min(round(Int, 9*log(nml)*nml^((N-1)/N)),length(src)))
+    end
+end
+
 function estimate_plunge_range(A,L,C)
     mid = size(A,2)-round(Int,size(A,1)*size(A,2)/L)
     mid .+ (max(1-mid,-round(Int,C)):min(size(A,2)-mid,round(Int,C)))
