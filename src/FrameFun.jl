@@ -62,7 +62,7 @@ import BasisFunctions: is_basis, is_frame, is_orthogonal, is_orthonormal, is_bio
 import BasisFunctions: operator, matrix, is_diagonal, is_inplace, ⊕
 
 import BasisFunctions: coefficients, dictionary,
-    transform_operator_pre, transform_operator_post, evaluation_operator, interpolation_operator,
+    evaluation_operator, interpolation_operator,
     differentiation_operator, antidifferentiation_operator, approximation_operator,
     extension_size, extension_operator, restriction_operator, approximate,
     default_approximation_operator, has_extension, wrap_operator, grid_evaluation_operator
