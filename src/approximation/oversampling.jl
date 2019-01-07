@@ -1,6 +1,4 @@
 
-BasisFunctions.basis_oversampling(frame::ExtensionFrame, oversamplingfactor::Real) = extensionframe_oversampling(support(frame), basis(frame), oversamplingfactor)
-
 function extensionframe_oversampling(domain, basis::Dictionary, oversamplingfactor::Real)
   N = dimension(basis)
   n_goal = length(basis) * oversamplingfactor^N

@@ -58,7 +58,7 @@ promote_domaintype(space::AbstractSpace{T1}, ::Type{T2}) where {T1,T2} = Generic
 #   end
 # end
 
-# for op in (:is_basis, :is_frame, :is_orthogonal, :is_biorthogonal,
+# for op in (:is_basis, :is_frame, :isorthogonal, :is_biorthogonal,
 #   :has_derivative, :has_antiderivative, :has_interpolationgrid, :has_transform, :has_extension)
 #   @eval begin
 #     $op(f::GenericFunctionSpace) = $op(basis(f))

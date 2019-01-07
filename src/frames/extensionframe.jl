@@ -28,8 +28,8 @@ similar_dictionary(f::ExtensionFrame, dict::Dictionary) = ExtensionFrame(support
 is_basis(f::ExtensionFrame) = false
 is_frame(f::ExtensionFrame) = true
 is_biorthogonal(f::ExtensionFrame) = false
-is_orthogonal(f::ExtensionFrame) = false
-is_orthonormal(f::ExtensionFrame) = false
+isorthogonal(f::ExtensionFrame) = false
+isorthonormal(f::ExtensionFrame) = false
 
 # The following properties do not hold for extension frames
 # - there is no interpolation grid
@@ -45,10 +45,10 @@ name(f::ExtensionFrame) = "An extension frame of " * name(f.basis)
 dict_in_support(f::ExtensionFrame, x) = x ∈ support(f)
 dict_in_support(f::ExtensionFrame, idx, x) = x ∈ support(f) && in_support(basis(f), idx, x)
 
-is_compatible(d1::ExtensionFrame, d2::ExtensionFrame) = is_compatible(basis(d1),basis(d2))
+iscompatible(d1::ExtensionFrame, d2::ExtensionFrame) = iscompatible(basis(d1),basis(d2))
 
 function (*)(d1::ExtensionFrame, d2::ExtensionFrame, args...)
-    @assert is_compatible(d1,d2)
+    @assert iscompatible(d1,d2)
     (mset, mcoef) = (*)(basis(d1),basis(d2),args...)
     df = ExtensionFrame(support(d1) ∩ support(d2),mset)
     (df, mcoef)
@@ -93,77 +93,19 @@ end
 extensionframe(domain::Domain, basis::Dictionary) = ExtensionFrame(domain, basis)
 extensionframe(basis::Dictionary, domain::Domain) = extensionframe(domain, basis)
 
-left(d::ExtensionFrame, x...) = leftendpoint(support(d))
-right(d::ExtensionFrame, x...) = rightendpoint(support(d))
+leftendpoint(d::ExtensionFrame, args...) = leftendpoint(support(d))
+rightendpoint(d::ExtensionFrame, args...) = rightendpoint(support(d))
 
-DualGram(f::ExtensionFrame; options...) = wrap_operator(f, f, DualGram(basis(f); options...)*Gram(f; options...)*DualGram(basis(f); options...))
-
-MixedGram(f::ExtensionFrame; options...) = wrap_operator(f, f, DualGram(basis(f); options...)*Gram(f; options...))
-
-DiscreteDualGram(f::ExtensionFrame; oversampling=BasisFunctions.default_oversampling(f)) = wrap_operator(f, f, DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))*DiscreteGram(f; oversampling=oversampling)*DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling)))
-
-DiscreteMixedGram(f::ExtensionFrame; oversampling=BasisFunctions.default_oversampling(f)) = wrap_operator(f, f, DiscreteDualGram(basis(f); oversampling=BasisFunctions.basis_oversampling(f, oversampling))*DiscreteGram(f; oversampling=oversampling))
-
-BasisFunctions.discrete_dual_evaluation_operator(dict::ExtensionFrame; oversampling=1, options...) =
-    BasisFunctions.grid_evaluation_operator(dict, GridBasis(dict, BasisFunctions.oversampled_grid(dict, oversampling)), BasisFunctions.oversampled_grid(dict, oversampling); options...)*DiscreteDualGram(basis(dict); oversampling=BasisFunctions.basis_oversampling(dict, oversampling))
 
 import BasisFunctions: measure, restrict
 import BasisFunctions: innerproduct
 
 measure(f::ExtensionFrame) = restrict(measure(basis(f)), support(f))
-innerproduct(f1::ExtensionFrame, i, f2::ExtensionFrame, j, measure) =
-    innerproduct(basis(f1), i, basis(f2), j, measure)
 
-import BasisFunctions: dot
-import BasisFunctions: native_nodes
-
-native_nodes(basis::Dictionary, domain::DomainSets.AbstractInterval) =
-    BasisFunctions.clip_and_cut(native_nodes(basis), infimum(domain), supremum(domain))
-
-dot(dict::ExtensionFrame, f1::Function, f2::Function; options...)  =
-    dot(basis(dict), support(dict), f1::Function, f2::Function; options...)
-
-dot(dict::ExtensionFrame, f1::Int, f2::Function; options...) =
-    dot(dict, x->eval_element(basis(dict), f1, x), f2; options...)
-
-dot(dict::ExtensionFrame, f1::Int, f2::Int; options...) =
-    dot(dict, f1 ,x->eval_element(basis(dict), f2, x); options...)
-
-dot(dict::Dictionary, domain::DomainSets.AbstractInterval, f1::Function, f2::Function; options...) =
-    dot(dict, f1, f2, native_nodes(dict, domain); options...)
-# # TODO now we assume that domainunion contains sections that do not overlap
-# dot(dict::Dictionary, domain::DomainUnion, f1::Function, f2::Function; options...) =
-#     dot(dict, firstelement(domain), f1, f2; options...) +
-#     dot(dict, secondelement(domain), f1, f2; options...)
-
-#continuous_approximation_operator(dict::ExtensionFrame; solver = ContinuousDirectSolver, options...) = solver(dict; options...)
-
-#################
-## Gram operators extended
-#################
-dual(dict::ExtensionFrame; options...) = extensionframe(dual(basis(dict); options...), support(dict))
-
-dot(frame1::ExtensionFrame, frame2::ExtensionFrame, f1::Int, f2::Int; options...) =
-    dot(frame1, frame2, x->eval_element(frame1, f1, x), x->eval_element(frame2, f2, x); options...)
-
-function dot(frame1::ExtensionFrame, frame2::ExtensionFrame, f1::Function, f2::Function; options...)
-    d1 = support(frame1); d2 = support(frame2)
-    @assert d1 == d2
-    dot(basis(frame1), basis(frame2), d1, f1, f2; options...)
-end
-
-dot(set1::Dictionary, set2::Dictionary, domain::DomainSets.AbstractInterval, f1::Function, f2::Function; options...) =
-    dot(set1, set2, f1, f2, native_nodes(set1, set2, domain); options...)
-
-function native_nodes(set1::Dictionary, set2::Dictionary, domain::DomainSets.AbstractInterval)
-    @assert infimum(support(set1) )≈ infimum(support((set2)))
-    @assert supremum(support((set1))) ≈ supremum(support((set2)))
-    native_nodes(set1, domain)
-end
+innerproduct(f1::ExtensionFrame, i, f2::ExtensionFrame, j, measure; options...) =
+    innerproduct(basis(f1), i, basis(f2), j, measure; options...)
 
 grid_evaluation_operator(s::TensorProductExtensionFrameDict, dgs::GridBasis, grid::AbstractGrid; options...) =
-    grid_evaluation_operator(flatten(s), dgs, grid; options...)
-grid_evaluation_operator(s::TensorProductExtensionFrameDict, dgs::GridBasis, grid::AbstractSubGrid; options...) =
     grid_evaluation_operator(flatten(s), dgs, grid; options...)
 
 

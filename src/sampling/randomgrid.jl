@@ -11,10 +11,11 @@ function randompoint(dom::ProductDomain)
     convert(eltype(dom),map(randompoint,elements(dom)))
 end
 
+
 # Don't return an SVector in 1d, just a value
 function randompoint(dom::AbstractInterval)
     val = rand(eltype(dom))
-    convert(eltype(dom),val * leftendpoint(dom) + (1-val) * rightendpoint(dom))
+    convert(eltype(dom),val * infimum(dom) + (1-val) * supremum(dom))
 end
 
 

@@ -55,7 +55,7 @@ import BasisFunctions: tensorproduct, ⊗
 
 import BasisFunctions: interpolation_grid, left, right, stepsize, sample, support
 
-import BasisFunctions: is_basis, is_frame, is_orthogonal, is_orthonormal, is_biorthogonal,
+import BasisFunctions: is_basis, is_frame, isorthogonal, isorthonormal, is_biorthogonal,
     has_transform, has_interpolationgrid, has_derivative,
     has_antiderivative, has_extension, has_grid_transform
 
@@ -74,7 +74,7 @@ import BasisFunctions: eval_element, eval_element_derivative, eval_expansion,
     unsafe_eval_element, unsafe_eval_element_derivative,
     name, in_support, dict_in_support, domain
 
-import BasisFunctions: differentiate, ∂x, ∂y, ∂z, ∫∂x, ∫∂y, ∫∂z, ∫, is_compatible
+import BasisFunctions: differentiate, ∂x, ∂y, ∂z, ∫∂x, ∫∂y, ∫∂z, ∫, iscompatible
 
 import BasisFunctions: True, False, resize, promote_eltype
 
@@ -91,9 +91,6 @@ import BasisFunctions: coefficienttype, coefficienttype
 # about subgrids
 import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
     similar_subgrid, mask, subindices, grid
-
-import BasisFunctions: Gram, DualGram, MixedGram, DiscreteGram, DiscreteDualGram,
-    DiscreteMixedGram, gram_entry, dual
 
 import BasisFunctions: discrete_approximation_operator, continuous_approximation_operator
 
@@ -128,7 +125,6 @@ export distance, normal, volume
 
 # from frames/extensionframe.jl
 export ExtensionFrame, extensionframe
-export Gram, DualGram, MixedGram
 export extension_frame_platform
 
 # from frames/weighted_sum_frame.jl

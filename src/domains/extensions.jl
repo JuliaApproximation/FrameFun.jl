@@ -91,6 +91,9 @@ minimum(box::ProductDomain) = SVector(map(minimum,elements(box)))
 
 maximum(box::ProductDomain) = SVector(map(maximum,elements(box)))
 
+leftendpoint(d::Domain) = infimum(d)
+rightendpoint(d::Domain) = supremum(d)
+
 # TODO: improve when grids move into domains?
 equispaced_grid(d::Domain, ns) = cartesianproduct([PeriodicEquispacedGrid(ns[idx], infimum(d)[idx], supremum(d)[idx]) for idx = 1:dimension(boundingbox(d))]...)
 
