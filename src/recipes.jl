@@ -16,7 +16,7 @@ end
 function postprocess(D::Domain, grid, vals, value=NaN)
     mgrid = subgrid(grid, D)
     for i in eachindex(grid)
-        if ~is_subindex(i, mgrid)
+        if ~issubindex(i, mgrid)
             vals[i] = value
         end
     end

@@ -57,7 +57,7 @@ function test_subgrids()
         # Count the number of elements in the subgrid
         cnt = 0
         for i in 1:length(grid)
-            if is_subindex(i, subgrid)
+            if issubindex(i, subgrid)
                 cnt += 1
             end
         end
@@ -74,7 +74,7 @@ function test_subgrids()
         cnt = 0
         diff = 0.0
         for i in 1:length(grid)
-            if is_subindex(i, subgrid)
+            if issubindex(i, subgrid)
                 cnt += 1
                 diff += abs(e[cnt] - e_ext[i])
             else

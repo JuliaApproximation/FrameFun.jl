@@ -102,7 +102,7 @@ function samplingoperator(ap::ApproximationProblem;
     end
 end
 
-samplinglength(S::AbstractOperator) = length(grid(dest(S)))
+samplinglength(S::AbstractOperator) = length(dest(S))
 
 oversamplingoperator(platform::Platform, n, m) = samplingoperator(platform, n;
     samplingstyle=OversamplingStyle(), M=m)

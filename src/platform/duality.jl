@@ -7,14 +7,10 @@ dualsamplingoperator(dict::Dictionary, m::Int; options...) =
 dualsamplingoperator(dict::Dictionary, S) =
     quadraturenormalization(S) * S
 
+dualdictionary(dict::Dictionary) = _dualdictionary(dict, gramoperator(dict))
+_dualdictionary(dict::Dictionary, gram::IdentityOperator) = dict
+_dualdictionary(dict::Dictionary, gram) = conj(inv(gram)) * dict
 
-dualdictionary(dict::FourierBasis) = dict
-
-function dualdictionary(dict::ChebyshevBasis{T}) where {T}
-    scaling = ScalingOperator(dict, 2/convert(T, pi)) *
-        BasisFunctions.CoefficientScalingOperator(dict, 1, one(T)/2)
-    scaling * dict
-end
 
 ## Weighted dictionaries
 
@@ -29,17 +25,16 @@ end
 
 ## Operated dictionaries
 
-function dualdictionary(dict::OperatedDict)
-    op = operator(dict)
-    @assert is_diagonal(op)
-    invop = similar(inv(op), dualdictionary(src(op)), dualdictionary(dest(op)))
-    OperatedDict(invop)
-end
+# function dualdictionary(dict::OperatedDict)
+#     G = gramoperator(superdict(dict))
+#     op = operator(dict)
+#     OperatedDict(conj(inv(operator(dict))))
+# end
 
 
 ## Mapped dictionaries
 
-dualdictionary(dict::MappedDict) = MappedDict(dualdictionary(superdict(dict)), mapping(dict))
+# dualdictionary(dict::MappedDict) = MappedDict(dualdictionary(superdict(dict)), mapping(dict))
 
 dualsamplingoperator(dict::MappedDict, S) =
     dualsamplingoperator(superdict(dict), S)

@@ -9,7 +9,7 @@ struct ExtensionFrame{S,T} <: DerivedDict{S,T}
     basis       ::  Dictionary{S,T}
 
     function ExtensionFrame{S,T}(domain::Domain, basis::Dictionary) where {S,T}
-        # @assert is_basis(basis)
+        # @assert isbasis(basis)
         new(domain, basis)
     end
 end
@@ -25,7 +25,7 @@ support(f::ExtensionFrame) = f.domain
 
 similar_dictionary(f::ExtensionFrame, dict::Dictionary) = ExtensionFrame(support(f), dict)
 
-is_basis(f::ExtensionFrame) = false
+isbasis(f::ExtensionFrame) = false
 is_frame(f::ExtensionFrame) = true
 is_biorthogonal(f::ExtensionFrame) = false
 isorthogonal(f::ExtensionFrame) = false

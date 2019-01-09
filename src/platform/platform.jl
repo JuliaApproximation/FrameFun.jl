@@ -72,7 +72,7 @@ SolverStyle(::UnknownDictionaryStyle, p::Platform, dstyle) = DirectStyle()
 
 
 # Defaults for dictionaries
-SamplingStyle(dict::Dictionary) = is_basis(dict) ? InterpolationStyle() : OversamplingStyle()
+SamplingStyle(dict::Dictionary) = isbasis(dict) ? InterpolationStyle() : OversamplingStyle()
 
 SolverStyle(dict::Dictionary, dstyle::InterpolationStyle) = has_transform(dict) ? InverseStyle() : DirectStyle()
 SolverStyle(dict::Dictionary, dstyle::SamplingStyle) = DirectStyle()

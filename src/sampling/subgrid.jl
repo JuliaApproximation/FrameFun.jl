@@ -62,7 +62,7 @@ similar_subgrid(g::MaskedGrid, g2::AbstractGrid) = MaskedGrid(g2, g.mask, g.indi
 
 
 # Check whether element grid[i] (of the underlying grid) is in the masked grid.
-is_subindex(i, g::MaskedGrid) = g.mask[i]
+issubindex(i, g::MaskedGrid) = g.mask[i]
 
 unsafe_getindex(g::MaskedGrid, idx::Int) = unsafe_getindex(g.supergrid, g.indices[idx])
 
@@ -80,7 +80,7 @@ function apply!(op::Extension, dest, src::GridBasis{T,G}, coef_dest, coef_src) w
 
     l = 0
     for i in eachindex(grid1.supergrid)
-        if is_subindex(i, grid1)
+        if issubindex(i, grid1)
             l += 1
             coef_dest[i] = coef_src[l]
         end
@@ -100,7 +100,7 @@ function apply!(op::Restriction, dest::GridBasis{T,G}, src, coef_dest, coef_src)
 
     l = 0
     for i in eachindex(grid1.supergrid)
-        if is_subindex(i, grid1)
+        if issubindex(i, grid1)
             l += 1
             coef_dest[l] = coef_src[i]
         end

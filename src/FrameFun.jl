@@ -55,11 +55,11 @@ import BasisFunctions: tensorproduct, ⊗
 
 import BasisFunctions: interpolation_grid, left, right, stepsize, sample, support
 
-import BasisFunctions: is_basis, is_frame, isorthogonal, isorthonormal, is_biorthogonal,
+import BasisFunctions: isbasis, is_frame, isorthogonal, isorthonormal, is_biorthogonal,
     has_transform, has_interpolationgrid, has_derivative,
     has_antiderivative, has_extension, has_grid_transform
 
-import BasisFunctions: operator, matrix, is_diagonal, is_inplace, ⊕
+import BasisFunctions: operator, matrix, isdiagonal, isinplace, ⊕
 
 import BasisFunctions: coefficients, dictionary,
     evaluation_operator, interpolation_operator,
@@ -89,7 +89,7 @@ import BasisFunctions: Span, expansion
 import BasisFunctions: coefficienttype, coefficienttype
 
 # about subgrids
-import BasisFunctions: AbstractSubGrid, IndexSubGrid, is_subindex, supergrid,
+import BasisFunctions: AbstractSubGrid, IndexSubGrid, issubindex, supergrid,
     similar_subgrid, mask, subindices, grid
 
 import BasisFunctions: discrete_approximation_operator, continuous_approximation_operator

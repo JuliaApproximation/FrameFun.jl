@@ -6,7 +6,7 @@ using Test
 
 @testset "WeightedSumPlatform" begin
     # Simple platform construction test
-    n = 10
+    n = 12
     domain = 0.0..0.5
     P = FourierExtensionPlatform(domain)
     WP = WeightedSumPlatform(P,[x->sqrt(x),x->1])
