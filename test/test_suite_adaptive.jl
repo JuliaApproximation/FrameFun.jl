@@ -46,7 +46,7 @@ function test_function_space()
         FE.add(FourierSpace(),2)])
         # @test left(bboxes[i])==left(boundingbox(space))
         # @test right(bboxes[i])==right(boundingbox(space))
-        @test Dictionary(space, 64) == bases[i]
+        @test dictionary(space, 64) == bases[i]
     end
     @testset "Util functions" begin
     for n in 1:4

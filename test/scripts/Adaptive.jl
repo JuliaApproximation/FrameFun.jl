@@ -9,7 +9,7 @@ D = interval(-0.5,0.5)
 
 F = FourierSpace(-1,1)
 C = ChebyshevSpace()
-Dictionary(F,4)
+dictionary(F,4)
 
 f0 = x->x
 f1 =(x)->cos(3*x)

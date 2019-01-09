@@ -7,7 +7,7 @@ dimension(space::B) where{B<:AbstractSpace} = dimension(basis(space))
 domaintype(space::B) where{B<:AbstractSpace} = domaintype(basis(space))
 codomaintype(space::B) where{B<:AbstractSpace} = codomaintype(basis(space))
 
-Dictionary(space::AbstractSpace{S,T},n) where {S,T}= resize(basis(space),n) 
+dictionary(space::AbstractSpace{S,T},n) where {S,T}= resize(basis(space),n)
 
 struct GenericFunctionSpace{S,T} <: AbstractSpace{S,T}
     basis   ::    Dictionary{S,T}
@@ -29,7 +29,7 @@ boundingbox(f::Dictionary) = boundingbox(support(f))
 
 boundingbox(space::GenericFunctionSpace) = boundingbox(space.basis)
 
-name(space::AbstractSpace) = "Space of "*name(Dictionary(space,0))
+name(space::AbstractSpace) = "Space of "*name(dictionary(space,0))
 
 "Tensorproduct of function space"
 tensorproduct(space::GenericFunctionSpace) = space

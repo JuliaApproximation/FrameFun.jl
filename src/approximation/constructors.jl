@@ -206,5 +206,5 @@ space(constructor::FunConstructor) = constructor.space
 # Allows the notation F = FunCSTR(f) with F the approximation and f the function
 (constructor::FunConstructor)(f::Function; options...) = construct(constructor, f; options...)
 
-construct(constructor::FunConstructor, f::Function; afun = fun_optimal_N, options...) = afun(f, Dictionary(space(constructor),0),
+construct(constructor::FunConstructor, f::Function; afun = fun_optimal_N, options...) = afun(f, dictionary(space(constructor),0),
     domain(constructor); options...)

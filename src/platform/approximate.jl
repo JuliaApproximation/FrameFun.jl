@@ -51,7 +51,7 @@ end
 function Fun(fun, ap::ApproximationProblem; verbose = false, options...)
     if verbose
         println("Fun: using the following dictionary:")
-        println("$(Dictionary(ap))")
+        println("$(dictionary(ap))")
     end
     F, A, B, C, S = approximate(fun, ap; verbose=verbose, options...)
     F
@@ -92,7 +92,7 @@ end
 
 # Construct the approximation problem and solve it
 function approximate(samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun, ap; verbose = false, options...)
-    dict = Dictionary(ap)
+    dict = dictionary(ap)
 
     S = samplingoperator(samplingstyle, ap; verbose=verbose, options...)
     if verbose
@@ -104,7 +104,7 @@ function approximate(samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun
     B = apply(S, fun)
     verbose && println("Approximate: using solver style $solverstyle")
     C = solve(solverstyle, ap, A, B; S=S, verbose=verbose, options...)
-    F = DictFun(Dictionary(ap), C)
+    F = DictFun(dictionary(ap), C)
     err = norm(A*C-B)
     verbose && println("Approximate: ended with residual $err\n")
     F, A, B, C, S
@@ -124,19 +124,6 @@ function showsamplinginformation(::DiscreteStyle, dict::Dictionary, S::GridSampl
     println(BasisFunctions.print_strings(("Fun: discrete approximation with grid:", BasisFunctions.strings(g))))
 end
 
-
-# function discretization(::GramStyle, ap::ApproximationProblem, fun;
-#         discrete = false, options...)
-#     dict = Dictionary(ap)
-#     if discrete
-#         A = DiscreteGram(dict)
-#         B = sample(interpolation_grid(dict), fun, coefficienttype(dict))
-#     else
-#         A = Gram(dict)
-#         B = project(dict, fun)
-#     end
-#     A, B
-# end
 
 
 solve(style::SolverStyle, ap, A, B; options...) =
@@ -168,5 +155,5 @@ function solver(::DualStyle, ap, A; S, options...)
     B'
 end
 
-solver(::TridiagonalProlateStyle, ap, A; scaling = Zt_scaling_factor(Dictionary(ap), A), options...) =
+solver(::TridiagonalProlateStyle, ap, A; scaling = Zt_scaling_factor(dictionary(ap), A), options...) =
     FE_TridiagonalSolver(A, scaling; options...)

@@ -14,7 +14,7 @@ struct DictionaryApproximation <: ApproximationProblem
     dict    ::  Dictionary
 end
 
-Dictionary(ap::DictionaryApproximation) = ap.dict
+dictionary(ap::DictionaryApproximation) = ap.dict
 
 coefficienttype(ap::DictionaryApproximation) = coefficienttype(ap.dict)
 
@@ -23,10 +23,10 @@ struct PlatformApproximation <: ApproximationProblem
     param
     dict        ::  Dictionary
 
-    PlatformApproximation(platform, param) = new(platform, param, Dictionary(platform, param))
+    PlatformApproximation(platform, param) = new(platform, param, dictionary(platform, param))
 end
 
-Dictionary(ap::PlatformApproximation) = ap.dict
+dictionary(ap::PlatformApproximation) = ap.dict
 
 coefficienttype(ap::PlatformApproximation) = coefficienttype(ap.dict)
 
@@ -35,7 +35,7 @@ struct AdaptiveApproximation <: ApproximationProblem
     platform    ::  Platform
 end
 
-Dictionary(ap::AdaptiveApproximation, param) = ap.platform[param]
+dictionary(ap::AdaptiveApproximation, param) = ap.platform[param]
 
 
 
@@ -77,8 +77,8 @@ dictionarylength(ap::PlatformApproximation) = length(ap.dict)
 
 ## SamplingStyle and SolverStyle
 
-SamplingStyle(ap::DictionaryApproximation) = SamplingStyle(Dictionary(ap))
-SolverStyle(ap::DictionaryApproximation, dstyle::SamplingStyle) = SolverStyle(Dictionary(ap), dstyle)
+SamplingStyle(ap::DictionaryApproximation) = SamplingStyle(dictionary(ap))
+SolverStyle(ap::DictionaryApproximation, dstyle::SamplingStyle) = SolverStyle(dictionary(ap), dstyle)
 
 SamplingStyle(ap::PlatformApproximation) = SamplingStyle(ap.platform)
 SolverStyle(ap::PlatformApproximation, dstyle::SamplingStyle) = SolverStyle(ap.platform, dstyle)
@@ -115,19 +115,23 @@ end
 samplingoperator(::GenericSamplingStyle, ap::PlatformApproximation; options...) =
     samplingoperator(ap.platform, ap.param; dict = ap.dict, options...)
 
+samplingoperator(samplingstyle::GramStyle, ap::ApproximationProblem;
+        measure = measure(dictionary(ap)), options...) =
+    ProjectionSampling(dictionary(ap), measure)
+
 
 ## Discrete sampling grid
 
 # - interpolation: we ask the dictionary
 sampling_grid(::InterpolationStyle, ap; options...) =
-    interpolation_grid(Dictionary(ap))
+    interpolation_grid(dictionary(ap))
 # - generic grid: it should be passed as an argument
 sampling_grid(::GridStyle, ap; grid, options...) = grid
 
 # - oversampling: we compute an oversampled grid. Its size can optionally be given
 # using the M keyword arguments. Here, we compute sensible defaults based on
 # oversampling by a factor of 2
-oversamplingsize(ap::ApproximationProblem) = oversamplingsize(Dictionary(ap))
+oversamplingsize(ap::ApproximationProblem) = oversamplingsize(dictionary(ap))
 oversamplingsize(dict::Dictionary) = 2length(dictionary)
 
 sampling_grid(::OversamplingStyle, ap; options...) = oversampledgrid(ap; options...)
@@ -136,8 +140,8 @@ oversampledsize(dict::Dictionary, factor) = round(Int, factor*length(dict))
 
 oversampledgrid(ap::DictionaryApproximation;
         oversamplingfactor = 2,
-        M = oversampledsize(Dictionary(ap), oversamplingfactor), options...) =
-    oversampledgrid(Dictionary(ap), M)
+        M = oversampledsize(dictionary(ap), oversamplingfactor), options...) =
+    oversampledgrid(dictionary(ap), M)
 
 oversampledsize(ap::PlatformApproximation, factor) = oversampledsize(ap.platform, ap.param, ap.dict, factor)
 oversampledsize(p::Platform, param, dict, factor) = oversampledsize(dict, factor)
@@ -173,10 +177,10 @@ dualdictionary(ap::PlatformApproximation) =
 dualsamplingoperator(ap::PlatformApproximation, S; options...) =
     dualsamplingoperator(ap.platform, ap.param, samplinglength(S); S=S, options...)
 
-dualdictionary(ap::DictionaryApproximation) = dualdictionary(Dictionary(ap))
+dualdictionary(ap::DictionaryApproximation) = dualdictionary(dictionary(ap))
 
 dualsamplingoperator(ap::DictionaryApproximation, S) =
-    dualsamplingoperator(Dictionary(ap), S)
+    dualsamplingoperator(dictionary(ap), S)
 
 
 # # TODO: clean up these scaling factors. They have to do with a normalization of the
@@ -201,7 +205,7 @@ for op in (:discretization, :dualdiscretization)
 end
 
 function discretization(ap::ApproximationProblem; options...)
-    d = Dictionary(ap)
+    d = dictionary(ap)
     S = samplingoperator(ap; options...)
     A = apply(S, d)
     A, S
@@ -228,4 +232,4 @@ function plungeoperator(ap::ApproximationProblem; options...)
 end
 
 smoothingoperator(ap::ApproximationProblem; options...) =
-    WeightedSmoothingOperator(Dictionary(ap); options...)
+    WeightedSmoothingOperator(dictionary(ap); options...)

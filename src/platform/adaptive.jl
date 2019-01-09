@@ -1,41 +1,71 @@
 
 abstract type ErrorStyle end
 
-struct RandomPoints <: ErrorStyle
+struct RandomPoints <: ErrorStyle end
+struct OversampledResidual <: ErrorStyle end
+struct ResidualStyle <: ErrorStyle end
+
+abstract type AdaptiveStrategy end
+struct GreedyStyle <: AdaptiveStrategy end
+struct OptimalStyle <: AdaptiveStrategy end
+struct SimpleStyle <: AdaptiveStrategy end
+
+
+emptylogbook() = Array{Any,1}(undef,0)
+addlogentry!(log, entry) = push!(log, entry)
+
+
+function errormeasure(::RandomPoints, platform, f, F, args...; numrandompts = 50, options...)
+    g = randomgrid(support(F.expansion.dictionary), numrandompts)
+    z = sqrt(sum(abs.(f.(g)-F.(g)).^2))/numrandompts
 end
 
-struct OversampledResidual <: ErrorStyle
+errormeasure(::ResidualStyle, platform, f, F, A, B, C, S; oversamplingfactor=2, options...) = norm(A*C-B)
+
+
+nextsize(platform::Platform, n; dict = dictionary(platform, n)) = extension_size(dict)
+
+ErrorStyle(platform::Platform) = ErrorStyle(platform, DictionaryStyle(platform))
+ErrorStyle(platform, ::BasisStyle) = RandomPoints()
+ErrorStyle(platform, ::FrameStyle) = ResidualStyle()
+ErrorStyle(platform, ::UnknownDictionaryStyle) = RandomPoints()
+
+
+# Dispatch on the style of the adaptive algorithm
+function approximate(fun, ap::AdaptiveApproximation; adaptivestyle = OptimalStyle(), verbose = false, options...)
+    verbose && println("\nAdaptive style: $(adaptivestyle)")
+
+    F, logbook, n, tol, error, iterations = adaptive_approximation(adaptivestyle, fun, ap.platform; verbose=verbose, options...)
+
+    if error > tol
+        @warn "Adaptive: convergence to desired tolerance not reached after $(iterations) iterations."
+        if verbose
+            @printf "     Tolerance: %1.3e\n" tol
+            @printf "     Minimal error: %1.3e\n\n" error
+        end
+    elseif verbose
+        println("\nAdaptive: Tolerance met using $(length(F)) degrees of freedom (n=$n) in $(iterations) iterations.\n")
+    end
+    return F
 end
 
-struct ResidualStyle <: ErrorStyle
-end
-
-function errormeasure(::RandomPoints, platform, f, F, args...; Q=50, options...)
-    g = randomgrid(support(F.expansion.dictionary), Q)
-    z = sqrt(sum(abs.(f.(g)-F.(g)).^2))/sum(Q)
-end
-
-function errormeasure(::ResidualStyle, platform, f, F, args...; oversamplingfactor=2, options...)
-    # TODO: implement
-    errormeasure(RandomPoints(), platform, f, F; options...)
-end
-
-
-# Generic adaptivity
-function approximate(fun, ap::AdaptiveApproximation; algorithm = :optimal, options...)
+function adaptive_approximation(algorithm::Symbol, args...; options...)
     if algorithm == :greedy
-        adaptive_greedy(fun, ap.platform; options...)
+        style = GreedyStyle()
     elseif algorithm == :simple
-        adaptive_simple(fun, ap.platform; options...)
+        style = SimpleStyle()
     elseif algorithm == :optimal
-        adaptive_optimal(fun, ap.platform; options...)
+        style = OptimalStyle()
     else
         error("Unknown adaptive algorithm.")
     end
+    adaptive_approximation(style, args...; options...)
 end
 
+
+
 """
-  Greedy scheme to get decreasing coefficients.
+  GreedyStyle: Greedy scheme to get decreasing coefficients.
 
   Let phi_i i=1..N basisfunctions.
   Take a LS of f with only phi_1, call the approximation p_1
@@ -45,140 +75,123 @@ end
   Stop the iteration when the residu of the approximation is smaller than the tolerance
   or at the maximum number of iterations.
 """
-function adaptive_greedy(f, platform;
-        criterium = ResidualStyle(),
-        max_logn_coefs = 7, tol = 1e-12, verbose = false, options...)
+function adaptive_approximation(::GreedyStyle, f, platform;
+            criterium = ErrorStyle(platform),
+            initial_n = 1, maxlength = 2^22, maxiterations = 100,
+            threshold = 1e-12, tol=100*threshold, verbose=false, options...)
 
-    init_n = 4
-    F = Fun(x->0, platform, init_n; options...)
-    T = eltype(F)
-    for n in init_n:2^max_logn_coefs
-        p_i = Fun(x->(f(x)-F(x)), platform, n; coefficienttype = T, options...)
-        F = F + p_i
-        R = errormeasure(criterium, platform, f, F)
-        verbose && println("Adaptive: using $n degrees of freedom, residual $R")
-        if R < tol
-            verbose && println("Adaptive: stopped with residual $R")
-            return F
-        end
+    n = initial_n
+    F = DictFun(dictionary(platform, n))
+    error = typemax(domaintype(dictionary(F)))
+
+    iterations = 0
+    logbook = emptylogbook()
+
+    while (error > tol) && (length(F) <= maxlength) && (iterations <= maxiterations)
+        residual_f = x -> f(x)-F(x)
+        P, A, B, C, S = approximate(residual_f, platform, n; threshold=threshold, options...)
+        error = errormeasure(criterium, platform, residual_f, P, A, B, C, S; options...)
+        addlogentry!(logbook, (n, error))
+
+        F = F + P
+
+        verbose && @printf "Adaptive: error with %d coefficients is %1.3e (tolerance: %1.3e)\n" length(F) error tol
+
+        n += 1
+        iterations += 1
     end
-    F
+    return F, logbook, n, tol, error, iterations
 end
 
-"""
-  Create approximation to function with a given dictionary in a domain.
+"SimpleStyle: the number of degrees of freedom is doubled until the tolerance is achieved."
+function adaptive_approximation(::SimpleStyle, f, platform;
+            criterium = ErrorStyle(platform),
+            initial_n = 1, maxlength = 2^22, maxiterations = 10,
+            threshold = 1e-12, tol=100*threshold, verbose=false, options...)
 
-  The number of points is chosen adaptively, and guarantees the tolerance, but may not be optimal.
-"""
-function adaptive_simple(f::Function, platform;
-        no_checkpoints = 50, max_logn_coefs=8, tol=1e-12, abscoef=nothing,
-        verbose=false, options...)
+    logbook = emptylogbook()
+    iterations = 0
 
-    n = 4
-    dict = Dictionary(platform, n)
-    domain = support(dict)
-    T = codomaintype(dict)
-    N = dimension(domain)
-    F = nothing
-    rgrid = randomgrid(domain, no_checkpoints)
-    error = Inf
-    random_f = sample(rgrid, f, eltype(f(rgrid[1]...)))
-    random_F = zeros(T,no_checkpoints)
+    n = initial_n
+    F = DictFun(dictionary(platform, n))
+    error = typemax(domaintype(dictionary(F)))
 
-    while length(dict) <= 1<<(max_logn_coefs)
-        n = extension_size(dict)
-        dict = Dictionary(platform, n)
-        F = Fun(f, platform, n; options...)
-        random_F = F(rgrid)
-        error = maximum(abs.(random_F-random_f))
-        verbose && (@printf "Adaptive: error with %d coefficients is %1.3e\n" (length(dict)) error)
-        (verbose & (abscoef != nothing))  && (@printf "Norm with %d coefficients is %1.3e (%1.3e)\n" (length(dict)) norm(coefficients(F)) abscoef*_trapnorm(f, dictionary(F), 1))
-        if (error < tol) && ((abscoef == nothing) || abs_coefficient_test(f, F, abscoef, 1))
-            return F
-        end
+    while (error > tol) && (length(F) <= maxlength) && (iterations <= maxiterations)
+        F, A, B, C, S = approximate(f, platform, n; threshold=threshold, options...)
+        error = errormeasure(criterium, platform, f, F, A, B, C, S; options...)
+        addlogentry!(logbook, (n, error))
+
+        verbose && @printf "Adaptive: error with %d coefficients is %1.3e (tolerance: %1.3e)\n" length(F) error tol
+
+        n = nextsize(platform, n)
+        iterations += 1
     end
-    @warn("Adaptive: maximum number of coefficients exceeded, error is $(error)")
-    F
+
+    return F, logbook, n, tol, error, iterations
 end
 
-"""
-  Create approximation to function with a dictionary in a domain.
 
-  The number of points is chosen adaptively and optimally.
-"""
-function adaptive_optimal(f::Function, platform;
-        criterium = ResidualStyle(),
-        no_checkpoints=50, max_logn_coefs=8, threshold = 1e-10, tol=100*threshold, verbose=false, adaptive_verbose = verbose, return_log=false, randomtest=false, abscoef=nothing, relcoef=nothing, options...)
+"OptimalStyle: the number of degrees of freedom is chosen adaptively and optimally."
+function adaptive_approximation(::OptimalStyle, f, platform;
+        criterium = ErrorStyle(platform),
+        initial_n = 1, maxlength = 2^12, maxiterations = 100,
+        threshold = 1e-12, tol=100*threshold, verbose=false, options...)
 
-    coefficienttest = (nothing!=abscoef) | (nothing!=relcoef)
+    logbook = emptylogbook()
+    iterations = 0
 
-    n = 8
-    dict = Dictionary(platform, n)
-    domain = support(dict)
-    ELT = codomaintype(dict)
-    N = dimension(dict)
-    F = nothing
-    rgrid = randomgrid(domain, no_checkpoints)
-    Nmax = NaN; Nmin = 1;
-    return_log && (log = zeros(T,0,4))
-    its = 0
-    error = -1
-    while length(dict) <= 2^max_logn_coefs && its < 100
-        # Find new approximation
-        # F, A, B, C, D, S = approximate(f, dict, domain; threshold=threshold, options...)
-        F = Fun(f, platform, n; threshold=threshold, options...)
+    n = initial_n
+    F = DictFun(dictionary(platform, n))
+    error = typemax(domaintype(dictionary(F)))
 
-        # Using residual
-        error = errormeasure(criterium, platform, f, F; options...)
-        # println(n, ": ", Nmin, " ", Nmax, " ", error)
-        return_log && (log = [log; n Nmin Nmax error])
-        adaptive_verbose  && (@printf "Adaptive: error with %d coefficients is %1.3e (%1.3e)\n" (length(dict)) error tol)
+    # First let the size grow until the tolerance is reached
+    previous_n = n
+    next_n = n
+    while (error > tol) && (length(F) <= maxlength)
+        previous_n = n
+        n = next_n
+        F, A, B, C, S = approximate(f, platform, n; threshold=threshold, options...)
+        error = errormeasure(criterium, platform, f, F, A, B, C, S; options...)
+        verbose && @printf "Adaptive (phase 1): error with %d coefficients is %1.3e (tolerance: %1.3e)\n" length(F) error tol
 
-        errorsucces = (error < tol)
+        addlogentry!(logbook, (n, error))
+        next_n = nextsize(platform, n)
+        iterations += 1
+    end
 
-        randomsuccess = randomtest ?
-            random_test(f, F, tol, 3) : true
-        (adaptive_verbose&randomtest)  && (randomsuccess ?
-            (@printf "Adaptive: random test in 3 points succeeded\n") : (@printf "Random test in 3 points failed\n"))
+    if error > tol
+        # The first phase was successful
+        return F, logbook, n, tol, error, iterations
+    end
+    verbose && println("Adaptive: Tolerance first met using $(length(F)) degrees of freedom (n=$n). Optimal n lies in [$previous_n,$n].\n")
 
-        coefsuccess = coefficienttest ?
-            coefficient_test(f, F; tolerance=tol, abscoef=abscoef, relcoef=relcoef, options...) : true
-        (adaptive_verbose&coefficienttest)  && (coefsuccess ?
-            (@printf "Adaptive: coefficient test succeeded %1.3e\n" norm(coefficients(F))) :
-            (@printf "Adaptive: coefficient test failed %1.3e\n" norm(coefficients(F))))
+    # Next, bisect until minimal n is found that achieves the tolerance
+    lower_n = previous_n
+    upper_n = n
 
-        success = broadcast(&, errorsucces, coefsuccess, randomsuccess)
-        success ? Nmax=n : Nmin=n
+    while lower_n < upper_n
+        n = (upper_n+lower_n) >> 1
 
-        # Stop condition
-        # If the bounds Nmin and Nmax are determined and if they are close
-        if are_close(Nmin, Nmax)
-            dict = Dictionary(platform, Nmax)
-            F = Fun(f, platform, Nmax; threshold=threshold, options...)
-
-            return_log && (return F, log)
-            return F
-        end
-
-        # Decide on new n
-        if isnan(Nmax)
-            # tolerance is not yet met, increase n
-            n = extension_size(dict)
+        F, A, B, C, S = approximate(f, platform, n; threshold=threshold, options...)
+        error = errormeasure(criterium, platform, f, F, A, B, C, S; options...)
+        addlogentry!(logbook, (n, error, lower_n, upper_n))
+        if error > tol
+            lower_n = n+1
         else
-            # tolerance is reached, find optimal n by subdivision
-            if N==1
-                # in one dimension Nmin and Nmax are floats
-                n = round(Int,(Nmin + Nmax)/2)
-            else
-                # in multiple dimensions, Nmin and Nmax are tupples
-                n = (round.(Int,(collect(Nmin) + collect(Nmax))/2)...,)
-            end
+            upper_n = n
         end
-
-        # Use new n
-        dict = Dictionary(platform, n)
-        its = its + 1
+        if verbose
+            @printf "Adaptive (phase 2): n = %d, error: %1.3e. Optimal n in [%d,%d].\n" n error lower_n upper_n
+        end
+        iterations += 1
     end
-    @warn("Adaptive: maximum number of coefficients exceeded, error is $(error)")
-    F
+    if n != lower_n
+        # We should take the upper_n. For simplicity, we recompute the approximation.
+        n = upper_n
+        F, A, B, C, S = approximate(f, platform, n; threshold=threshold, options...)
+        error = errormeasure(criterium, platform, f, F, A, B, C, S; options...)
+    end
+    (error <= tol) && verbose && println("Adaptive: Optimal n is $(n)!")
+
+    return F, logbook, n, tol, error, iterations
 end

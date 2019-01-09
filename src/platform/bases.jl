@@ -5,9 +5,9 @@ end
 
 FourierPlatform() = FourierPlatform{Float64}()
 
-Dictionary(p::FourierPlatform{T}, n) where {T} = FourierBasis{T}(n)
+dictionary(p::FourierPlatform{T}, n) where {T} = FourierBasis{T}(n)
 
-dualdictionary(p::FourierPlatform, n; dict = Dictionary(p, n)) = dict
+dualdictionary(p::FourierPlatform, n; dict = dictionary(p, n)) = dict
 
 SolverStyle(p::FourierPlatform, ::OversamplingStyle) = DualStyle()
 
@@ -23,9 +23,9 @@ end
 
 ChebyshevPlatform() = ChebyshevPlatform{Float64}()
 
-Dictionary(p::ChebyshevPlatform{T}, n) where {T} = ChebyshevBasis{T}(n)
+dictionary(p::ChebyshevPlatform{T}, n) where {T} = ChebyshevBasis{T}(n)
 
-function dualdictionary(p::ChebyshevPlatform{T}, n; dict = Dictionary(p, n)) where {T}
+function dualdictionary(p::ChebyshevPlatform{T}, n; dict = dictionary(p, n)) where {T}
     scaling = ScalingOperator(dict, 2/convert(T, pi)) *
         BasisFunctions.CoefficientScalingOperator(dict, 1, one(T)/2)
     scaling * dict
@@ -52,10 +52,10 @@ function FourierExtensionPlatform(domain::Domain{T}) where {T}
     FourierExtensionPlatform(basisplatform, domain)
 end
 
-Dictionary(p::FourierExtensionPlatform, n) =
-    ExtensionFrame(p.domain, Dictionary(p.basisplatform, n))
+dictionary(p::FourierExtensionPlatform, n) =
+    ExtensionFrame(p.domain, dictionary(p.basisplatform, n))
 
-dualdictionary(p::FourierExtensionPlatform, n; dict = Dictionary(p, n)) = dict
+dualdictionary(p::FourierExtensionPlatform, n; dict = dictionary(p, n)) = dict
 
 function dualsamplingoperator(p::FourierExtensionPlatform, n, m; S = samplingoperator(p, n; M=m))
     grid1 = grid(dest(S))
@@ -71,10 +71,10 @@ struct ExtensionFramePlatform <: FramePlatform
     domain          ::  Domain
 end
 
-Dictionary(p::ExtensionFramePlatform, n) =
-    ExtensionFrame(p.domain, Dictionary(p.basisplatform, n))
+dictionary(p::ExtensionFramePlatform, n) =
+    ExtensionFrame(p.domain, dictionary(p.basisplatform, n))
 
-dualdictionary(p::ExtensionFramePlatform, n; dict = Dictionary(p, n)) =
+dualdictionary(p::ExtensionFramePlatform, n; dict = dictionary(p, n)) =
     dualdictionary(p.basisplatform, n; dict=dict)
 
 function dualsamplingoperator(p::ExtensionFramePlatform, n, m; S = samplingoperator(p, n; M=m))
