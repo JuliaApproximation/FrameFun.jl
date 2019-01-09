@@ -11,6 +11,11 @@ function promote_dictionary(dict, fun)
     promote_coefficienttype(dict, T)
 end
 
+function directsolver(A::DiagonalOperator; verbose = false, options...)
+    verbose && println("Using direct solver: inverse of diagonal matrix")
+    inv(A)
+end
+
 function directsolver(A; directsolver = :svd, verbose = false, options...)
     if directsolver == :svd
         verbose && println("Using direct solver: SVD")
@@ -121,10 +126,13 @@ function showsamplinginformation(::DiscreteStyle, dict::Dictionary, S::GridSampl
     if M > N
         println("Fun: oversampling with N=$N and M=$M")
     end
-    println(BasisFunctions.print_strings(("Fun: discrete approximation with grid:", BasisFunctions.strings(g))))
+    println(BasisFunctions.print_strings(("Fun: discrete sampling operator:", BasisFunctions.strings(S))))
 end
 
 
+function showsamplinginformation(dstyle::GramStyle, dict::Dictionary, S::ProjectionSampling)
+    println(BasisFunctions.print_strings(("Fun: continuous approximation with projection:", BasisFunctions.strings(S))))
+end
 
 solve(style::SolverStyle, ap, A, B; options...) =
     solver(style, ap, A; options...) * B

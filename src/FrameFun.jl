@@ -134,13 +134,6 @@ export hassuperdict
 # from DiffEquation.jl
 export DirichletBC, NeumannBC, DiffEquation, solve
 
-# from constructors.jl
-export FunConstructor
-
-# from space.jl
-export FourierSpace, ChebyshevSpace, ⊕, add, construct
-# from recipes.jl
-
 # from randomgrid.jl
 export randomgrid, randompoint
 
@@ -154,7 +147,6 @@ export FeFun, FeFunNd
 
 # from diffequation.jl
 export operator
-export FECollocationOperator
 
 # from approximation
 export AZSolver, AZSmoothSolver, TridiagonalSolver
@@ -172,7 +164,7 @@ export approximate
 export samplingoperator, dualsamplingoperator, dualdictionary,
     plungeoperator, smoothingoperator, discretization, dualdiscretization,
     solver, AZ_Zt, oversampledgrid
-export interpolation_grid, oversampled_grid, sampling_grid
+export interpolation_grid, oversampledgrid, sampling_grid
 
 # from platform/bases.jl
 export FourierPlatform, ChebyshevPlatform, FourierExtensionPlatform
@@ -204,20 +196,14 @@ include("fun/error.jl")
 
 include("approximation/randomized.jl")
 
-include("approximation/continuous_solver.jl")
 include("approximation/lowranksolver.jl")
 include("approximation/azsolver.jl")
 include("approximation/tridiagonalsolver.jl")
 include("approximation/smoothsolver.jl")
 
-include("approximation/oversampling.jl")
-
 include("recipes.jl")
 
 include("diffequation.jl")
-
-include("approximation/space.jl")
-include("approximation/constructors.jl")
 
 include("domains/fourierdomains.jl")
 include("domains/fractals.jl")

@@ -161,7 +161,9 @@ for op in (:solver, :AZ_Zt)
     @eval $op(platform::Platform, args...; options...) = $op(approximationproblem(platform, args...); options...)
 end
 
-function solver(ap::ApproximationProblem; solverstyle = SolverStyle(ap), options...)
+function solver(ap::ApproximationProblem;
+            samplingstyle = SamplingStyle(ap),
+            solverstyle = SolverStyle(ap, samplingstyle), options...)
     A, S = discretization(ap; options...)
     solver(solverstyle, ap, A; S = S, options...)
 end

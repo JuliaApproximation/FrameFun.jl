@@ -59,22 +59,6 @@ function AZSolver(A::DictionaryOperator, Zt::DictionaryOperator;
     AZSolver(A, Zt, plunge_op, psolver)
 end
 
-function AZSolver_with_smoothing(A::DictionaryOperator, Zt::DictionaryOperator; options...)
-    D = WeightedSmoothingOperator(src(A); options...)
-    AZSolver_with_smoothing(A, Zt, D; options...)
-end
-
-function AZSolver_with_smoothing(A, Zt, D;
-            REG = default_regularization,
-            rankestimate = 40,
-            threshold = default_threshold(A),
-            options...)
-
-    plunge_op = plunge_operator(A, Zt)
-    psolver = inv(D)*REG(plunge_op*A*inv(D); threshold = threshold, rankestimate = rankestimate, options...)
-    AZSolver(A, Zt, plunge_op, psolver)
-end
-
 default_threshold(A::DictionaryOperator) = regularization_threshold(eltype(A))
 
 apply!(s::AZSolver, coef_dest, coef_src) = _apply!(s, coef_dest, coef_src,

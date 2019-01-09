@@ -74,17 +74,18 @@ struct DiffEquation
     Diff  :: DictionaryOperator
     DRhs   :: Function
     BCs    :: Tuple
+    SMP     ::  AbstractOperator
     oversamplingfactor
     function DiffEquation(S::Dictionary, D::Domain,Diff::DictionaryOperator, DRhs:: Function, BCs::Tuple, oversamplingfactor=2)
-        new(S,D,Diff,DRhs,BCs, oversamplingfactor)
+        SMP = samplingoperator(S, D, M = round(Int, oversamplingfactor^dimension(S)*length(S)))
+        new(S, D, Diff, DRhs, BCs, SMP, oversamplingfactor)
     end
 end
 
 # DiffEquation(S::Dictionary, D::Domain, Diff::DictionaryOperator, DRhs::Function, BC::BoundaryCondition, oversamplingfactor=2) = DiffEquation(S,D,Diff,DRhs,(BC,), oversamplingfactor)
 
 function boundarygrid(D::DiffEquation)
-    G, lB = oversampled_grid(D.D, D.S, oversamplingfactor = D.oversamplingfactor)
-    boundary(interpolation_grid(lB),D.D)
+    boundary(supergrid(grid(dest(D.SMP))),D.D)
 end
 
 
@@ -92,7 +93,7 @@ function operator(D::DiffEquation; incboundary=false, options...)
     B = D.S
     ADiff = pinv(D.Diff)
     ops = incboundary ? Array{DictionaryOperator}(undef, length(D.BCs)+2,1) : Array{DictionaryOperator}(undef, length(D.BCs)+1,1)
-    G, lB = oversampled_grid(D.D, D.S, oversamplingfactor = D.oversamplingfactor)
+    G = grid(dest(D.SMP))
 
     op = grid_evaluation_operator(D.S, GridBasis{coefficienttype(D.S)}(G),G)
 
@@ -113,7 +114,7 @@ end
 function rhs(D::DiffEquation; incboundary = false, options...)
     op = operator(D; incboundary=incboundary, options...)
     rhs = Array{Array{coefficienttype(src(op)),1}}(undef,0)
-    G, lB = oversampled_grid(D.D, D.S, oversamplingfactor = D.oversamplingfactor)
+    G = grid(dest(D.SMP))
 
     op = grid_evaluation_operator(D.S, GridBasis{coefficienttype(D.S)}(G),G)
     push!(rhs,sample(G,D.DRhs, coefficienttype(src(op))))
@@ -133,11 +134,11 @@ struct PDEApproximation <: ApproximationProblem
 end
 
 function solve(D::DiffEquation; solverstyle=AZStyle(), options...)
-    G, lB = oversampled_grid(D.D, D.S, oversamplingfactor = D.oversamplingfactor)
+    G = grid(dest(D.SMP))
     Adiff = pinv(D.Diff)
     b = rhs(D; options...)
     OP = operator(D; options...)
-    A = solver(solverstyle, PDEApproximation(D), OP; Zt = 1/length(lB)*OP', options...)
+    A = solver(solverstyle, PDEApproximation(D), OP; Zt = 1/length(supergrid(G))*OP', options...)
     coef  = A * b
     DictFun(D.D, dest(A), Adiff*coef)
 end
@@ -174,7 +175,7 @@ end
 FECollocationOperator(feframe::ExtensionFrame,pD::Vector,aX::Vector,sampler::DictionaryOperator) = FECollocationOperator{eltype(sampler)}(feframe,pD,aX,sampler)
 function FECollocationOperator(feframe::ExtensionFrame,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real) where {S1<:Function,S2<:Function}
     pD = map(p->pseudodifferential_operator(feframe,p),pd)
-    gridbasis = GridBasis{coefficienttype(feframe)}(oversampled_grid(feframe,samplingfactor)[1])
+    gridbasis = GridBasis{coefficienttype(feframe)}(oversampledgrid(feframe,round(Int,samplingfactor*length(feframe))))
     aX = map(a->grid_multiplication_operator(a,gridbasis),ax)
     sampler = evaluation_operator(feframe,grid(gridbasis))
     FECollocationOperator(feframe,pD,aX,sampler)
