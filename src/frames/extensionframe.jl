@@ -26,8 +26,8 @@ support(f::ExtensionFrame) = f.domain
 similar_dictionary(f::ExtensionFrame, dict::Dictionary) = ExtensionFrame(support(f), dict)
 
 isbasis(f::ExtensionFrame) = false
-is_frame(f::ExtensionFrame) = true
-is_biorthogonal(f::ExtensionFrame) = false
+isframe(f::ExtensionFrame) = true
+isbiorthogonal(f::ExtensionFrame) = false
 isorthogonal(f::ExtensionFrame) = false
 isorthonormal(f::ExtensionFrame) = false
 
@@ -116,19 +116,5 @@ grid_evaluation_operator(s::TensorProductExtensionFrameDict, dgs::GridBasis, gri
 
 SolverStyle(dict::ExtensionFrame, ::OversamplingStyle) = AZStyle()
 
-sampler(platform::Platform, sampler::GridSampling, domain::Domain) =
-    GridSampling(dest(sampler), grid(sampler), domain, sampler.scaling)
 GridSampling(dgs::GridBasis, grid::AbstractGrid, domain::Domain, scaling) =
     GridSampling(GridBasis{coefficienttype(dgs)}(subgrid(grid, domain)), scaling=scaling)
-
-extension_frame_sampler(platform::Platform, domain::Domain) = n->sampler(platform, platform.sampler_generator(n), domain)
-dual_extension_frame_sampler(platform::Platform, domain::Domain) = n->sampler(platform, platform.dual_sampler_generator(n), domain)
-
-function extension_frame_platform(platform::GenericPlatform, domain::Domain)
-    primal = n->extensionframe(platform.primal_generator(n), domain)
-    dual = n->platform.dual_generator(n)
-    sampler = extension_frame_sampler(platform, domain)
-    dual_sampler = dual_extension_frame_sampler(platform, domain)
-    GenericPlatform(super_platform=platform, primal = primal, dual = dual, sampler = sampler,dual_sampler = dual_sampler,
-        params = platform.parameter_sequence, name = "extension frame of " * platform.name)
-end

@@ -55,7 +55,7 @@ import BasisFunctions: tensorproduct, ⊗
 
 import BasisFunctions: interpolation_grid, left, right, stepsize, sample, support
 
-import BasisFunctions: isbasis, is_frame, isorthogonal, isorthonormal, is_biorthogonal,
+import BasisFunctions: isbasis, isframe, isorthogonal, isorthonormal, isbiorthogonal,
     has_transform, has_interpolationgrid, has_derivative,
     has_antiderivative, has_extension, has_grid_transform
 
@@ -158,6 +158,7 @@ export InterpolationStyle, OversamplingStyle, GramStyle,
     RectangularGramStyle, GenericSamplingStyle
 export DirectStyle, InverseStyle, DualStyle, IterativeStyle, AZStyle,
     AZSmoothStyle, TridiagonalProlateStyle
+export SimpleStyle, OptimalStyle, GreedyStyle
 
 # from platform/interface.jl
 export approximate
@@ -184,7 +185,6 @@ include("platform/interface.jl")
 include("platform/approximate.jl")
 include("platform/adaptive.jl")
 include("platform/bases.jl")
-include("platform/generic.jl")
 
 include("frames/extensionframe.jl")
 include("frames/weighted_sum_frame.jl")

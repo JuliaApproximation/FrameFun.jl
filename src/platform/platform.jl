@@ -67,6 +67,7 @@ SolverStyle(p::Platform, dstyle::SamplingStyle) =
 SolverStyle(::BasisStyle, p::Platform, ::InterpolationStyle) = InverseStyle()
 SolverStyle(::BasisStyle, p::Platform, ::OversamplingStyle) = DirectStyle()
 SolverStyle(::BasisStyle, p::Platform, ::GridStyle) = DirectStyle()
+SolverStyle(::BasisStyle, p::Platform, dstyle) = DirectStyle()
 SolverStyle(::FrameStyle, p::Platform, dstyle) = AZStyle()
 SolverStyle(::UnknownDictionaryStyle, p::Platform, dstyle) = DirectStyle()
 

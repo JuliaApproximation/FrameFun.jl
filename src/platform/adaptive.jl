@@ -106,7 +106,7 @@ end
 "SimpleStyle: the number of degrees of freedom is doubled until the tolerance is achieved."
 function adaptive_approximation(::SimpleStyle, f, platform;
             criterium = ErrorStyle(platform),
-            initial_n = 1, maxlength = 2^22, maxiterations = 10,
+            initial_n = 8, maxlength = 2^22, maxiterations = 10,
             threshold = 1e-12, tol=100*threshold, verbose=false, options...)
 
     logbook = emptylogbook()
@@ -117,14 +117,15 @@ function adaptive_approximation(::SimpleStyle, f, platform;
     error = typemax(domaintype(dictionary(F)))
 
     while (error > tol) && (length(F) <= maxlength) && (iterations <= maxiterations)
-        F, A, B, C, S = approximate(f, platform, n; threshold=threshold, options...)
+        iterations += 1
+        verbose_on_first_call = verbose && (iterations==1)
+        F, A, B, C, S = approximate(f, platform, n; threshold=threshold, verbose = verbose_on_first_call, options...)
         error = errormeasure(criterium, platform, f, F, A, B, C, S; options...)
         addlogentry!(logbook, (n, error))
 
         verbose && @printf "Adaptive: error with %d coefficients is %1.3e (tolerance: %1.3e)\n" length(F) error tol
 
         n = nextsize(platform, n)
-        iterations += 1
     end
 
     return F, logbook, n, tol, error, iterations
@@ -134,7 +135,7 @@ end
 "OptimalStyle: the number of degrees of freedom is chosen adaptively and optimally."
 function adaptive_approximation(::OptimalStyle, f, platform;
         criterium = ErrorStyle(platform),
-        initial_n = 1, maxlength = 2^12, maxiterations = 100,
+        initial_n = 8, maxlength = 2^12, maxiterations = 100,
         threshold = 1e-12, tol=100*threshold, verbose=false, options...)
 
     logbook = emptylogbook()
@@ -148,15 +149,16 @@ function adaptive_approximation(::OptimalStyle, f, platform;
     previous_n = n
     next_n = n
     while (error > tol) && (length(F) <= maxlength)
+        iterations += 1
         previous_n = n
         n = next_n
-        F, A, B, C, S = approximate(f, platform, n; threshold=threshold, options...)
+        verbose_on_first_call = verbose && (iterations==1)
+        F, A, B, C, S = approximate(f, platform, n; threshold=threshold, verbose=verbose_on_first_call, options...)
         error = errormeasure(criterium, platform, f, F, A, B, C, S; options...)
         verbose && @printf "Adaptive (phase 1): error with %d coefficients is %1.3e (tolerance: %1.3e)\n" length(F) error tol
 
         addlogentry!(logbook, (n, error))
         next_n = nextsize(platform, n)
-        iterations += 1
     end
 
     if error > tol
