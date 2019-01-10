@@ -56,8 +56,8 @@ import BasisFunctions: tensorproduct, ⊗
 import BasisFunctions: interpolation_grid, left, right, stepsize, sample, support
 
 import BasisFunctions: isbasis, isframe, isorthogonal, isorthonormal, isbiorthogonal,
-    has_transform, has_interpolationgrid, has_derivative,
-    has_antiderivative, has_extension, has_grid_transform
+    hastransform, hasinterpolationgrid, hasderivative,
+    hasantiderivative, hasextension, hasgrid_transform
 
 import BasisFunctions: operator, matrix, isdiagonal, isinplace, ⊕
 
@@ -65,7 +65,7 @@ import BasisFunctions: coefficients, dictionary,
     evaluation_operator, interpolation_operator,
     differentiation_operator, antidifferentiation_operator, approximation_operator,
     extension_size, extension_operator, restriction_operator, approximate,
-    default_approximation_operator, has_extension, wrap_operator, grid_evaluation_operator
+    default_approximation_operator, hasextension, wrap_operator, grid_evaluation_operator
 
 import BasisFunctions: superdict, similar_dictionary,
     promote_domaintype, promote_domainsubtype, promote_coefficienttype

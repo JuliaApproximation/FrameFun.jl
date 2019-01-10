@@ -33,12 +33,12 @@ isorthonormal(f::ExtensionFrame) = false
 
 # The following properties do not hold for extension frames
 # - there is no interpolation grid
-has_interpolationgrid(f::ExtensionFrame) = false
+hasinterpolationgrid(f::ExtensionFrame) = false
 # - there is no unitary transform
-has_transform(f::ExtensionFrame) = false
-has_transform(f::ExtensionFrame, dgs) = false
+hastransform(f::ExtensionFrame) = false
+hastransform(f::ExtensionFrame, dgs) = false
 # - there is no antiderivative (in general)
-has_antiderivative(f::ExtensionFrame) = false
+hasantiderivative(f::ExtensionFrame) = false
 
 name(f::ExtensionFrame) = "An extension frame of " * name(f.basis)
 
