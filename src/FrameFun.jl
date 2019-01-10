@@ -203,7 +203,7 @@ include("approximation/smoothsolver.jl")
 
 include("recipes.jl")
 
-include("diffequation.jl")
+include("applications/diffequation.jl")
 
 include("domains/fourierdomains.jl")
 include("domains/fractals.jl")

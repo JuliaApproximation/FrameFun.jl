@@ -16,7 +16,7 @@ _dualdictionary(dict::Dictionary, gram) = conj(inv(gram)) * dict
 
 function dualdictionary(dict::WeightedDict)
     dtilde = dualdictionary(superdict(dict))
-    invweight = x -> 1/dict.weightfun(x)
+    invweight = x -> conj(1/dict.weightfun(x))
     WeightedDict(dtilde, invweight)
 end
 
