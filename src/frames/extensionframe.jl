@@ -26,19 +26,19 @@ support(f::ExtensionFrame) = f.domain
 similar_dictionary(f::ExtensionFrame, dict::Dictionary) = ExtensionFrame(support(f), dict)
 
 isbasis(f::ExtensionFrame) = false
-is_frame(f::ExtensionFrame) = true
-is_biorthogonal(f::ExtensionFrame) = false
+isframe(f::ExtensionFrame) = true
+isbiorthogonal(f::ExtensionFrame) = false
 isorthogonal(f::ExtensionFrame) = false
 isorthonormal(f::ExtensionFrame) = false
 
 # The following properties do not hold for extension frames
 # - there is no interpolation grid
-has_interpolationgrid(f::ExtensionFrame) = false
+hasinterpolationgrid(f::ExtensionFrame) = false
 # - there is no unitary transform
-has_transform(f::ExtensionFrame) = false
-has_transform(f::ExtensionFrame, dgs) = false
+hastransform(f::ExtensionFrame) = false
+hastransform(f::ExtensionFrame, dgs) = false
 # - there is no antiderivative (in general)
-has_antiderivative(f::ExtensionFrame) = false
+hasantiderivative(f::ExtensionFrame) = false
 
 name(f::ExtensionFrame) = "An extension frame of " * name(f.basis)
 

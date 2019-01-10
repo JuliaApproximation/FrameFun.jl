@@ -138,7 +138,7 @@ end
 
 
 
-has_extension(dg::GridBasis{T,G}) where {T,G <: AbstractSubGrid} = true
+hasextension(dg::GridBasis{T,G}) where {T,G <: AbstractSubGrid} = true
 
 function BasisFunctions.grid_restriction_operator(src::Dictionary, dest::Dictionary, src_grid::G, dest_grid::MaskedGrid{G,M,I,T}; options...) where {G<:AbstractGrid,M,I,T}
     @assert supergrid(dest_grid) == src_grid

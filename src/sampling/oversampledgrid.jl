@@ -2,7 +2,7 @@
 ## Functions to provide oversampled grids for FrameFun approximations.
 
 function oversampledgrid(b::Dictionary, M)
-    if has_interpolationgrid(b)
+    if hasinterpolationgrid(b)
         interpolation_grid(resize(b, M))
     else
         error("Don't know how to compute an oversampled grid")
