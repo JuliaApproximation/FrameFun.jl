@@ -85,10 +85,10 @@ function estimate_plunge_range(A,L,C)
     mid .+ (max(1-mid,-round(Int,C)):min(size(A,2)-mid,round(Int,C)))
 end
 
-apply!(s::FE_TridiagonalSolver, dest, src, coef_dest, coef_src) =
-apply!(s, dest, src, coef_dest, coef_src, s.A, s.A', s.x1, s.x2,s.y,s.y2)
+apply!(s::FE_TridiagonalSolver, coef_dest, coef_src) =
+apply!(s, coef_dest, coef_src, s.A, s.A', s.x1, s.x2,s.y,s.y2)
 
-function apply!(s::FE_TridiagonalSolver, destset, srcset, coef_dest, coef_src, A, At, x1, x2,y,y2)
+function apply!(s::FE_TridiagonalSolver, coef_dest, coef_src, A, At, x1, x2,y,y2)
     # Applying plunge to the right hand side
     BasisFunctions.linearize_coefficients!(dest(A), s.blinear, coef_src)
     mul!(y,s.Ut,s.blinear)

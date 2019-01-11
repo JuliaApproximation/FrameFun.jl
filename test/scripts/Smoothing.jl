@@ -4,7 +4,7 @@ using FrameFun
 using DomainSets
 using Plots
 
-B = FourierBasis(301,-1,1)
+B = Fourier(301,-1,1)
 D = interval(-0.5,0.5)
 f = x -> exp(x)
 fscale = i -> 10.0^-4+abs(i)+abs(i)^2+abs(i)^3
@@ -19,7 +19,7 @@ plot!(F2,f,subplot=4,title="smooth error")
 plot(abs.(coefficients(F)[1:Int(round(end/2))]),yscale=:log10,layout=2,title="unsmoothed coefficients")
 plot!(abs.(coefficients(F2)[1:Int(round(end/2))]),yscale=:log10,subplot=2,title="smoothed coefficients")
 
-B = FourierBasis(301,-1,1)
+B = Fourier(301,-1,1)
 D = interval(-.5,.5)
 f = exp
 fscale = i -> 1.0
@@ -28,7 +28,7 @@ F2 = Fun(f,B,D;solver=AZSmoothSolver, scale=fscale)
 plot(F2,layout=2,plot_ext=true)
 plot!(F2,f,subplot=2)
 
-B = FourierBasis(20,-1,1)⊗FourierBasis(20,-1,1)
+B = Fourier(20,-1,1)⊗Fourier(20,-1,1)
 D = disk(0.5)
 f = (x,y) -> exp(x*y)
 fscale = (i,j) -> 10.0^-4+100*abs((i)^2+abs(j^2))
@@ -44,7 +44,7 @@ fscale = i -> 10.0^-8+(abs(i))^3+(abs(i))^2+(abs(i))
 h = plot()
 colors = linspace(colorant"lightgrey",colorant"blue",10)
 for i =1:10
-    Bi = FourierBasis(2^i+1,-1,1)
+    Bi = Fourier(2^i+1,-1,1)
     F3 = Fun(f,Bi,D,solver=AZSmoothSolver, scale=fscale)
     h = plot!(F3,color=colors[i],plot_ext=true)
 end
@@ -58,7 +58,7 @@ fscale = i -> 10.0^-8+(abs(i))^3+(abs(i))^2+(abs(i))
 h = plot()
 colors = linspace(colorant"lightgrey",colorant"blue",10)
 for i =1:10
-    Bi = ChebyshevBasis(2^i+1,-1,1)
+    Bi = ChebyshevT(2^i+1,-1,1)
     F3 = Fun(f,Bi,D,solver=AZSmoothSolver, scale=fscale)
     h = plot!(F3,color=colors[i],plot_ext=true)
 end

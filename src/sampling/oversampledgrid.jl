@@ -18,7 +18,7 @@ oversampledgrid(b::MappedDict, M) =
 oversampledgrid(dict::ExtensionFrame, M) =
     oversampledgrid(support(dict), basis(dict), M)
 
-function oversampledgrid(domain::AbstractInterval, basis::FourierBasis, M)
+function oversampledgrid(domain::AbstractInterval, basis::Fourier, M)
     area = supremum(domain)-infimum(domain)
     L = ceil(Int,  M/area)-1
     subgrid(oversampledgrid(basis, L), domain)

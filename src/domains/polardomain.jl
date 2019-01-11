@@ -10,7 +10,7 @@ end
 
 function polardomain(char, domain)
     T = subeltype(domain)
-    F = Fun(char, FourierBasis(100, -T(pi), T(pi)), Interval(-T(pi), T(pi)))
+    F = Fun(char, Fourier(100, -T(pi), T(pi)), Interval(-T(pi), T(pi)))
     PolarDomain(F, boundingbox(domain))
 end
 

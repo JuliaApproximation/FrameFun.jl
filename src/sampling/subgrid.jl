@@ -69,46 +69,6 @@ unsafe_getindex(g::MaskedGrid, idx::Int) = unsafe_getindex(g.supergrid, g.indice
 getindex(g::AbstractGrid, idx::BitArray) = MaskedGrid(g, idx)
 
 
-# Efficient extension operator
-function apply!(op::Extension, dest, src::GridBasis{T,G}, coef_dest, coef_src) where {T,G <: MaskedGrid}
-    @assert length(coef_src) == length(src)
-    @assert length(coef_dest) == length(dest)
-    # @assert grid(dest) == supergrid(grid(src))
-
-    grid1 = grid(src)
-    fill!(coef_dest, 0)
-
-    l = 0
-    for i in eachindex(grid1.supergrid)
-        if issubindex(i, grid1)
-            l += 1
-            coef_dest[i] = coef_src[l]
-        end
-    end
-    coef_dest
-end
-
-
-# Efficient restriction operator
-function apply!(op::Restriction, dest::GridBasis{T,G}, src, coef_dest, coef_src) where {T,G <: MaskedGrid}
-    @assert length(coef_src) == length(src)
-    @assert length(coef_dest) == length(dest)
-    # This line below seems to allocate memory...
-    # @assert grid(src) == supergrid(grid(dest))
-
-    grid1 = grid(dest)
-
-    l = 0
-    for i in eachindex(grid1.supergrid)
-        if issubindex(i, grid1)
-            l += 1
-            coef_dest[l] = coef_src[i]
-        end
-    end
-    coef_dest
-end
-
-
 "Create a suitable subgrid that covers a given domain."
 function subgrid(grid::AbstractEquispacedGrid, domain::AbstractInterval)
     a = leftendpoint(domain)

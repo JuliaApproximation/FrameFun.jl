@@ -7,7 +7,7 @@ using DomainSets
 FE = FrameFun
 BA = BasisFunctions
 
-B = FourierBasis(41,-1,1)
+B = Fourier(41,-1,1)
 Dom = interval(-0.5,0.5)
 
 diff = IdentityOperator(B)
@@ -44,7 +44,7 @@ plot!(FN'',subplot=2,title="Second derivative")
 plot!(FN,solN,subplot=3,title="Solution error")
 plot!(FN'',fN,subplot=4,title="Derivative error")
 
-B2 = FourierBasis(31,-1.0,1.0)⊗FourierBasis(31,-1.0,1.0)
+B2 = Fourier(31,-1.0,1.0)⊗Fourier(31,-1.0,1.0)
 D2 = disk(0.8)\disk(0.3)\cube([-0.15,-1.0],[0.15,0.0])
 
 diff2 = IdentityOperator(B2)
@@ -59,7 +59,7 @@ F2D = solve(DE2,solver=DirectSolver)
 
 heatmap(F2D)
 
-B2 = FourierBasis(21,-1.0,1.0)⊗FourierBasis(21,-1.0,1.0)
+B2 = Fourier(21,-1.0,1.0)⊗Fourier(21,-1.0,1.0)
 D2 = cube([-1.0,-0.5],[1.0,0.5])
 
 diff2 = differentiation_operator(B2,(0,1))
@@ -75,7 +75,7 @@ F2N = solve(DE2,solver=AZSolver)
 heatmap(F2N)
 
 using StaticArrays
-B2 = FourierBasis(41,-1.0,1.0)⊗FourierBasis(41,-1.0,1.0)
+B2 = Fourier(41,-1.0,1.0)⊗Fourier(41,-1.0,1.0)
 D2 = disk(0.75)\disk(0.2,SVector(0.3,-0.3))
 
 diff2 = IdentityOperator(B2)

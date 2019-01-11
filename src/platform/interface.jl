@@ -189,7 +189,7 @@ dualsamplingoperator(ap::DictionaryApproximation, S) =
 # # sampling operators.
 Zt_scaling_factor(S::Dictionary, A) = length(supergrid(grid(dest(A))))
 Zt_scaling_factor(S::DerivedDict, A) = Zt_scaling_factor(superdict(S), A)
-Zt_scaling_factor(S::ChebyshevBasis, A) = length(supergrid(grid(dest(A))))/2
+Zt_scaling_factor(S::ChebyshevT, A) = length(supergrid(grid(dest(A))))/2
 
 
 function AZ_Zt(ap::ApproximationProblem, S)

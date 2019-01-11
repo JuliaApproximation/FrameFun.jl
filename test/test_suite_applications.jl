@@ -36,7 +36,7 @@ end
 
 function test_differential_equations_1d()
     @testset "diff 1D dirichlet" for solver in (AZSolver, QR_solver)
-        B = FourierBasis(101,-1,1)
+        B = Fourier(101,-1,1)
         Dom = Interval(-0.5,0.5)
         # Set up Boundary conditions
         BC = DirichletBC(x->0)
@@ -53,7 +53,7 @@ function test_differential_equations_1d()
         @test (error < sqrt(eps(real(codomaintype(B))))*100)
     end
     @testset "diff 1D mixed" for solver in (AZSolver, QR_solver)
-        B = FourierBasis(101,-2,2)
+        B = Fourier(101,-2,2)
         Dom = Interval(-1.0,1.0)
         # Set up Boundary conditions
         BC1 = DirichletBC(x->0, Interval(-2.0,0.0))
@@ -74,7 +74,7 @@ end
 
 function test_differential_equations_2d()
     @testset "diff 2D dirichlet" for solver in (AZSolver, QR_solver)
-        B = FourierBasis(11,-1,1)⊗FourierBasis(11,-1,1)
+        B = Fourier(11,-1,1)⊗Fourier(11,-1,1)
         Dom = disk(0.8)
         # Set up Boundary conditions
         df = (x,y)->x-y
@@ -91,7 +91,7 @@ function test_differential_equations_2d()
         @test (error < 0.3)
     end
     @testset "diff 2D Neumann" for solver in (AZSolver, QR_solver)
-        B = FourierBasis(11,-1,1)⊗FourierBasis(11,-1,1)
+        B = Fourier(11,-1,1)⊗Fourier(11,-1,1)
         Dom = disk(0.8)
         # Set up Boundary conditions
         df = (x,y)->x-y
@@ -112,7 +112,7 @@ end
 
 # We just test the accuracy, not the smoothing properties
 function test_smoothing_1d()
-    @testset "Smoothing $(name(instantiate(Basis,10)))" for Basis in (ChebyshevBasis,)
+    @testset "Smoothing $(name(instantiate(Basis,10)))" for Basis in (ChebyshevT,)
         basis = Basis(101,-1,1)
         domain = -0.5..0.5
         f = exp
@@ -123,7 +123,7 @@ function test_smoothing_1d()
 end
 
 function test_smoothing_2d()
-    @testset "Smoothing $(name(instantiate(Basis,10)))" for Basis in (ChebyshevBasis,)
+    @testset "Smoothing $(name(instantiate(Basis,10)))" for Basis in (ChebyshevT,)
         basis = Basis(20,-1.0,1.0)⊗Basis(20,-1.0,1.0)
         domain = disk(0.5)
         f(x,y) = exp(x*y)

@@ -5,7 +5,7 @@ end
 
 FourierPlatform() = FourierPlatform{Float64}()
 
-dictionary(p::FourierPlatform{T}, n) where {T} = FourierBasis{T}(n)
+dictionary(p::FourierPlatform{T}, n) where {T} = Fourier{T}(n)
 
 dualdictionary(p::FourierPlatform, n; dict = dictionary(p, n)) = dict
 
@@ -23,7 +23,7 @@ end
 
 ChebyshevPlatform() = ChebyshevPlatform{Float64}()
 
-dictionary(p::ChebyshevPlatform{T}, n) where {T} = ChebyshevBasis{T}(n)
+dictionary(p::ChebyshevPlatform{T}, n) where {T} = ChebyshevT{T}(n)
 
 function dualdictionary(p::ChebyshevPlatform{T}, n; dict = dictionary(p, n)) where {T}
     scaling = ScalingOperator(dict, 2/convert(T, pi)) *

@@ -73,7 +73,7 @@ function test_1d_cases()
     n = 61
     T = 1.9
     domain = -1.0..1.0
-    basis = FourierBasis(n, -T, T)
+    basis = Fourier(n, -T, T)
 
     println()
     println("Testing \t solver = $solverstyle, \n\t\t Domain = $domain, \n\t\t Basis = Fourier,\n\t\t ELT = Float64 ")
@@ -95,7 +95,7 @@ function test_1d_cases()
     end
 
     @testset "result" for ELT in (Float32,Float64),
-            Basis in (FourierBasis, ChebyshevBasis),
+            Basis in (Fourier, ChebyshevT),
             domain in [Interval(ELT(-1.5),ELT(0.7)), DomainSets.UnionDomain(Interval(ELT(-1.5),ELT(-0.5)),Interval(ELT(0.5),ELT(1.5)))],
             solverstyle in (AZStyle(), DirectStyle())
 
@@ -128,7 +128,7 @@ end
 function test_bigfloat()
     f(x) = cos(x.^2) - big(1.0)
     g(x) = big(1.0)im * cos(x.^2) - big(1.0)
-    @testset "result" for Basis in (FourierBasis, ChebyshevBasis),
+    @testset "result" for Basis in (Fourier, ChebyshevT),
             domain in [Interval(big(-3.0)/2, big(7.0)/10)]
         println()
         println("Testing \t solver = QR_solver\n\t\t Domain = $domain, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = BigFloat ")
@@ -155,7 +155,7 @@ function test_2d_cases()
 
     f(x,y) = cos(0.5*x)+2*sin(0.2*y)-1.0*x*y
     g(x,y) = 1im*cos(0.5*x)+2*sin(0.2*y)-1.0im*x*y
-    @testset "result" for Basis in (FourierBasis, ChebyshevBasis),
+    @testset "result" for Basis in (Fourier, ChebyshevT),
             domain in [disk(1.2,v[-0.1,-0.2]), cube((-1.0,-1.5),(0.5,0.7))],
             solverstyle in (AZStyle(), DirectStyle())
 
@@ -187,9 +187,9 @@ function test_3d_cases()
     delimit("3D")
 
     f(x,y,z) = cos(x)+sin(y)-x*z
-    # @testset "result" for Basis in (FourierBasis, ChebyshevBasis), D in (Cube((-1.2,-1.0,-0.9),(1.0,0.9,1.2)),FrameFun.tensorproduct(Interval(-1.0,1.0),Disk(1.05)), FrameFun.Ball(1.2,[-0.3,0.25,0.1])), solver in (AZSolver, )
+    # @testset "result" for Basis in (Fourier, ChebyshevT), D in (Cube((-1.2,-1.0,-0.9),(1.0,0.9,1.2)),FrameFun.tensorproduct(Interval(-1.0,1.0),Disk(1.05)), FrameFun.Ball(1.2,[-0.3,0.25,0.1])), solver in (AZSolver, )
     #             show(solver); println()
-    @testset "result" for Basis in (FourierBasis, ChebyshevBasis),
+    @testset "result" for Basis in (Fourier, ChebyshevT),
                 domain in (cube((-1.2,-1.0,-0.9),(1.0,0.9,1.2)), ball(1.2,v[-0.3,0.25,0.1])),
                 solverstyle in (AZStyle(), )
         show(solverstyle); println()
@@ -236,8 +236,8 @@ end
 
 # delimit("Random circles")
 # dom = FrameFun.randomcircles(10)
-# #    b = FourierBasis(21) ⊗ FourierBasis(21)
-# b = FourierBasis(31) ⊗ ChebyshevBasis(31)
+# #    b = Fourier(21) ⊗ Fourier(21)
+# b = Fourier(31) ⊗ ChebyshevT(31)
 # f(x,y) = cos(20*x+22*y)
 # @time F = Fun(f,b,dom,verbose=true)
 

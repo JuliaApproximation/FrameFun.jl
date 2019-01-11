@@ -17,8 +17,8 @@ end
 
 
 # For Dictionary's that have a DC component
-dc_index(b::ChebyshevBasis) = 1
-dc_index(b::FourierBasis) = 1
+dc_index(b::ChebyshevT) = 1
+dc_index(b::Fourier) = 1
 
 function WeightedSmoothingOperator(dict::Dictionary; scaling = default_scaling_function, order = 1, options...)
     if order == 1
