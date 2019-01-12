@@ -192,7 +192,7 @@ function test_3d_cases()
     @testset "result" for Basis in (Fourier, ChebyshevT),
                 domain in (cube((-1.2,-1.0,-0.9),(1.0,0.9,1.2)), ball(1.2,v[-0.3,0.25,0.1])),
                 solverstyle in (AZStyle(), )
-        show(solverstyle); println()
+
         println()
         println("Testing \t solver = $solverstyle \n\t\t Domain = $domain, \n\t\t Basis = $(name(instantiate(Basis,10)⊗instantiate(Basis,10)⊗instantiate(Basis,10))),\n\t\t ELT = Float64 ")
         verbose && println("N\t\t T\t\t Complex?\t abserror\t time\t\t memory   ")

@@ -28,8 +28,12 @@ DictionaryStyle(p::FramePlatform) = FrameStyle()
 abstract type SamplingStyle end
 
 abstract type DiscreteStyle <: SamplingStyle end
+
+"The sampling grid is determined by invoking `interpolation_grid` on the dictionary or platform."
 struct InterpolationStyle <: DiscreteStyle end
+"The sampling grid is determined by invoking `oversampling_grid` on the dictionary or platform."
 struct OversamplingStyle <: DiscreteStyle end
+"The sampling grid is determined by invoking `platform_grid` on the platform."
 struct GridStyle <: DiscreteStyle end
 
 abstract type ProjectionStyle <: SamplingStyle end

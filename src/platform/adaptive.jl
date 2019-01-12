@@ -14,7 +14,6 @@ struct SimpleStyle <: AdaptiveStrategy end
 emptylogbook() = Array{Any,1}(undef,0)
 addlogentry!(log, entry) = push!(log, entry)
 
-
 function errormeasure(::RandomPoints, platform, f, F, args...; numrandompts = 50, options...)
     g = randomgrid(support(F.expansion.dictionary), numrandompts)
     z = sqrt(sum(abs.(f.(g)-F.(g)).^2))/numrandompts
@@ -30,13 +29,25 @@ ErrorStyle(platform, ::BasisStyle) = RandomPoints()
 ErrorStyle(platform, ::FrameStyle) = ResidualStyle()
 ErrorStyle(platform, ::UnknownDictionaryStyle) = RandomPoints()
 
+# Initial values
+
+first_parameters(p::Platform) = (8,8)
+first_sizeparameter(p::Platform) = first_parameters(p)[1]
+first_samplingparameter(p::Platform) = first_parameters(p)[2]
+
+
 
 # Dispatch on the style of the adaptive algorithm
-function approximate(fun, ap::AdaptiveApproximation; adaptivestyle = OptimalStyle(), verbose = false, options...)
+function approximate(fun, ap::AdaptiveApproximation;
+            adaptivestyle = OptimalStyle(), verbose = false, options...)
+
+    # Inform the user that an adaptive computation is starting
     verbose && println("\nAdaptive style: $(adaptivestyle)")
 
+    # Do the actual computation
     F, logbook, n, tol, error, iterations = adaptive_approximation(adaptivestyle, fun, ap.platform; verbose=verbose, options...)
 
+    # Report on the final convergence
     if error > tol
         @warn "Adaptive: convergence to desired tolerance not reached after $(iterations) iterations."
         if verbose
@@ -46,8 +57,10 @@ function approximate(fun, ap::AdaptiveApproximation; adaptivestyle = OptimalStyl
     elseif verbose
         println("\nAdaptive: Tolerance met using $(length(F)) degrees of freedom (n=$n) in $(iterations) iterations.\n")
     end
+
     return F
 end
+
 
 function adaptive_approximation(algorithm::Symbol, args...; options...)
     if algorithm == :greedy
@@ -89,7 +102,9 @@ function adaptive_approximation(::GreedyStyle, f, platform;
 
     while (error > tol) && (length(F) <= maxlength) && (iterations <= maxiterations)
         residual_f = x -> f(x)-F(x)
-        P, A, B, C, S = approximate(residual_f, platform, n; threshold=threshold, options...)
+        verbose_on_first_call = verbose && (iterations==1)
+        verbose_on_first_call && println("Adaptive: initial value of n is $n")
+        P, A, B, C, S = approximate(residual_f, platform, n; verbose=verbose_on_first_call, threshold=threshold, options...)
         error = errormeasure(criterium, platform, residual_f, P, A, B, C, S; options...)
         addlogentry!(logbook, (n, error))
 
@@ -119,6 +134,7 @@ function adaptive_approximation(::SimpleStyle, f, platform;
     while (error > tol) && (length(F) <= maxlength) && (iterations <= maxiterations)
         iterations += 1
         verbose_on_first_call = verbose && (iterations==1)
+        verbose_on_first_call && println("Adaptive: initial value of n is $n")
         F, A, B, C, S = approximate(f, platform, n; threshold=threshold, verbose = verbose_on_first_call, options...)
         error = errormeasure(criterium, platform, f, F, A, B, C, S; options...)
         addlogentry!(logbook, (n, error))
@@ -153,6 +169,7 @@ function adaptive_approximation(::OptimalStyle, f, platform;
         previous_n = n
         n = next_n
         verbose_on_first_call = verbose && (iterations==1)
+        verbose_on_first_call && println("Adaptive: initial value of n is $n")
         F, A, B, C, S = approximate(f, platform, n; threshold=threshold, verbose=verbose_on_first_call, options...)
         error = errormeasure(criterium, platform, f, F, A, B, C, S; options...)
         verbose && @printf "Adaptive (phase 1): error with %d coefficients is %1.3e (tolerance: %1.3e)\n" length(F) error tol
@@ -193,7 +210,7 @@ function adaptive_approximation(::OptimalStyle, f, platform;
         F, A, B, C, S = approximate(f, platform, n; threshold=threshold, options...)
         error = errormeasure(criterium, platform, f, F, A, B, C, S; options...)
     end
-    (error <= tol) && verbose && println("Adaptive: Optimal n is $(n)!")
+    verbose && (error <= tol) && println("Adaptive: Optimal n is $(n)!")
 
     return F, logbook, n, tol, error, iterations
 end

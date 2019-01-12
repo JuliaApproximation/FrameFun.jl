@@ -22,9 +22,10 @@ function dualdictionary(platform::WeightedSumPlatform, i; dict = dictionary(plat
     MultiDict([((x...)->(platform.weights[j](x...)/denom(x...))) * dualdictionary(platform.P, i) for j=1:length(platform.weights)])
 end
 
-oversampledgrid(p::WeightedSumPlatform, param, dict, M) = oversampledgrid(element(dict,1), M)
+oversampling_grid(p::WeightedSumPlatform, param, L; dict, options...) =
+    oversampling_grid(superdict(element(dict,1)), L)
 
-dualsamplingoperator(platform::WeightedSumPlatform, n, m; S = samplingoperator(platform, n; M=m)) =
-    dualsamplingoperator(platform.P, n, m, S=S)
+discrete_normalization(platform::WeightedSumPlatform, n, L; options...) =
+    discrete_normalization(platform.P, n, L; options...)
 
 nextsize(p::WeightedSumPlatform, n) = 2n

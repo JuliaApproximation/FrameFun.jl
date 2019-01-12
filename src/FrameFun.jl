@@ -151,8 +151,7 @@ export operator
 # from approximation
 export AZSolver, AZSmoothSolver, TridiagonalSolver
 
-# from platform/*.jl
-export primal, dual, sampler, matrix_A, matrix_Zt, dual_sampler
+# from platform/platform.jl
 export SamplingStyle, SolverStyle
 export InterpolationStyle, OversamplingStyle, GramStyle,
     RectangularGramStyle, GenericSamplingStyle
@@ -162,20 +161,20 @@ export SimpleStyle, OptimalStyle, GreedyStyle
 
 # from platform/interface.jl
 export approximate
-export samplingoperator, dualsamplingoperator, dualdictionary,
+export samplingoperator, dualsamplingoperator, dictionary, dualdictionary,
     plungeoperator, smoothingoperator, discretization, dualdiscretization,
-    solver, AZ_Zt, oversampledgrid
-export interpolation_grid, oversampledgrid, sampling_grid
+    solver, AZ_A, AZ_Z, AZ_Zt
+export interpolation_grid, oversampling_grid
 
 # from platform/bases.jl
-export FourierPlatform, ChebyshevPlatform, FourierExtensionPlatform
+export FourierPlatform, ChebyshevPlatform, ModelPlatform,
+    FourierExtensionPlatform
 
 
 include("sampling/subgrid.jl")
 include("sampling/boundary.jl")
 
 
-#include("domains/boundingbox.jl")
 include("domains/extensions.jl")
 
 ## Platforms

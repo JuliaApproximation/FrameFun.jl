@@ -1,5 +1,6 @@
 ## Platforms for certain bases and frames
 
+
 struct FourierPlatform{T} <: BasisPlatform
 end
 
@@ -7,15 +8,14 @@ FourierPlatform() = FourierPlatform{Float64}()
 
 dictionary(p::FourierPlatform{T}, n) where {T} = Fourier{T}(n)
 
-dualdictionary(p::FourierPlatform, n; dict = dictionary(p, n)) = dict
+first_parameters(p::FourierPlatform) = (8,8)
 
 SolverStyle(p::FourierPlatform, ::OversamplingStyle) = DualStyle()
 
-dualsamplingoperator(p::FourierPlatform, n, m; S = samplingoperator(p, n; M=m)) =
-    quadraturenormalization(S) * S
+discrete_normalization(p::FourierPlatform, n, L; S = samplingoperator(p, n, L)) =
+    quadraturenormalization(S)
 
-functionspace(p::FourierPlatform{T}) where {T} =
-    L2Space{Complex{T}}(zero(T)..one(T))
+functionspace(p::FourierPlatform{T}) where {T} = BasisFunctions.FourierSpace{T}()
 
 
 struct ChebyshevPlatform{T} <: BasisPlatform
@@ -25,15 +25,35 @@ ChebyshevPlatform() = ChebyshevPlatform{Float64}()
 
 dictionary(p::ChebyshevPlatform{T}, n) where {T} = ChebyshevT{T}(n)
 
-function dualdictionary(p::ChebyshevPlatform{T}, n; dict = dictionary(p, n)) where {T}
-    scaling = ScalingOperator(dict, 2/convert(T, pi)) *
-        BasisFunctions.CoefficientScalingOperator(dict, 1, one(T)/2)
-    scaling * dict
+first_parameters(p::ChebyshevPlatform) = (8,8)
+
+discrete_normalization(p::ChebyshevPlatform, n, L; S = samplingoperator(p, n, L)) =
+    quadraturenormalization(S)
+
+functionspace(p::ChebyshevPlatform{T}) where {T} = BasisFunctions.ChebyshevSpace{T}()
+
+
+"""
+A `ModelPlatform` is a platform based on a model dictionary. The platform is
+defined by resizing the dictionary, using its own implementation of `resize`.
+All other operations are the defaults for the model dictionary.
+
+This platform is convenient to compute adaptive approximations based on an
+example of a dictionary from the desired family.
+"""
+struct ModelPlatform <: Platform
+    model   ::  Dictionary
 end
 
-dualsamplingoperator(p::ChebyshevPlatform, n, m; S = samplingoperator(p, n; M=m)) =
-    quadraturenormalization(S) * S
+model(p::ModelPlatform) = p.model
 
+dictionary(p::ModelPlatform, n) = resize(model(p), n)
+
+first_sizeparameter(p::ModelPlatform) = typeof(model(p)) <: Dictionary1d ? length(model(p)) : size(model(p))
+
+SamplingStyle(p::ModelPlatform) = SamplingStyle(dictionary(p, first_sizeparameter(p)))
+
+SolverStyle(p::ModelPlatform, dstyle::SamplingStyle) = SolverStyle(model(p), dstyle)
 
 
 
@@ -55,13 +75,11 @@ end
 dictionary(p::FourierExtensionPlatform, n) =
     ExtensionFrame(p.domain, dictionary(p.basisplatform, n))
 
-dualdictionary(p::FourierExtensionPlatform, n; dict = dictionary(p, n)) = dict
-
-function dualsamplingoperator(p::FourierExtensionPlatform, n, m; S = samplingoperator(p, n; M=m))
+function discrete_normalization(p::FourierExtensionPlatform, n, L; S = samplingoperator(p, n, L))
     grid1 = grid(dest(S))
     grid2 = supergrid(grid1)
     val = scalar(quadraturenormalization(coefficienttype(dest(S)), grid2))
-    val * S
+    ScalingOperator(dest(S), val)
 end
 
 
@@ -74,17 +92,11 @@ end
 dictionary(p::ExtensionFramePlatform, n) =
     ExtensionFrame(p.domain, dictionary(p.basisplatform, n))
 
-dualdictionary(p::ExtensionFramePlatform, n; dict = dictionary(p, n)) =
-    dualdictionary(p.basisplatform, n; dict=dict)
-
-function dualsamplingoperator(p::ExtensionFramePlatform, n, m; S = samplingoperator(p, n; M=m))
+function discrete_normalization(p::ExtensionFramePlatform, n, L; S = samplingoperator(p, n, L))
     grid1 = grid(dest(S))
     grid2 = supergrid(grid1)
     # TODO: make this more generic
-    # We can not just apply the quadrature normalization of the grid of S to S,
-    # we need the normalization of the underlying basis first, and then we need to
-    # restrict that to a subdomain
     # For now, assume a ScalingOperator from which we can extract the scalar value
     val = scalar(quadraturenormalization(coefficienttype(dest(S)), grid2))
-    val * S
+    ScalingOperator(dest(S), val)
 end
