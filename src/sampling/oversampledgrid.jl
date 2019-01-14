@@ -11,7 +11,11 @@ equispacedgrid(domain::ProductDomain, L::Tuple) =
 
 function oversampling_grid(dict::Dictionary, L)
     if hasinterpolationgrid(dict)
-        resize(interpolation_grid(dict), L)
+        try
+            return resize(interpolation_grid(dict), L)
+        catch
+            return interpolation_grid(resize(dict, L))
+        end
     else
         # If the dictionary does not have an associated grid, we compute an
         # equispaced grid on its support.
@@ -46,6 +50,11 @@ bisect_average(::BisectionType, L1::T, L2::T) where {T} = convert(T, (L1+L2)/2)
 bisect_smaller(bt::BisectionType, L::Tuple) = bisect_smaller.(bt, L)
 bisect_larger(bt::BisectionType, L::Tuple) = bisect_larger.(bt, L)
 bisect_average(bt::BisectionType, L1::Tuple, L2::Tuple) = bisect_average.(bt, L1, L2)
+
+bisect_small(l1) = bisect_smaller(BisectionType(), l1)
+bisect_larger(l1) = bisect_larger(BisectionType(), l2)
+bisect_average(l1, l2) = bisect_average(BisectionType(), l1, l2)
+
 
 """
 Find the root of a monotonically increasing function with a given starting value

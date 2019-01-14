@@ -203,6 +203,13 @@ function samplingparameter(samplingstyle::SamplingStyle, ap::ApproximationProble
     end
 end
 
+function deduce_samplingparameter(::InterpolationStyle, ap;
+            verbose = false, oversamplingfactor = 2, options...)
+    N = length(dictionary(ap))
+    L = match_sampling_parameter(ap, N)
+    L
+end
+
 function deduce_samplingparameter(::OversamplingStyle, ap;
             verbose = false, oversamplingfactor = 2, options...)
     if haskey(options, :L)
@@ -219,6 +226,8 @@ function deduce_samplingparameter(::OversamplingStyle, ap;
     L
 end
 
+# TODO: implement this one better (more general)
+deduce_samplingparameter(::GramStyle, ap; options...) = length(dictionary(ap))
 
 ## Sampling operator
 

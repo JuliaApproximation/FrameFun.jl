@@ -44,11 +44,12 @@ dualsamplingoperator(p::ProductPlatform, n, m; options...) =
 """
 A `ProductPlatformApproximation` corresponds to a product platform.
 """
-struct ProductPlatformApproximation{N} <: ApproximationProblem
+mutable struct ProductPlatformApproximation{N} <: ApproximationProblem
     platform        ::  ProductPlatform{N}
     param
     productparam    ::  NTuple{N,Any}
     dict            ::  TensorProductDict
+    samplingparam
 
     ProductPlatformApproximation{N}(platform, param) where {N} =
         new(platform, param, productparameter(platfor, param), dictionary(platform, param))

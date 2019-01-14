@@ -92,6 +92,8 @@ function approximate(samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun
     dict = dictionary(ap)
 
     verbose && println("Approximate: using sampling style $samplingstyle")
+    # Trigger computation of sampling parameter L first
+    L = samplingparameter(samplingstyle, ap; verbose=verbose, options...)
     S = samplingoperator(samplingstyle, ap; verbose=verbose, options...)
     verbose && showsamplinginformation(samplingstyle, dict, S)
 
@@ -102,7 +104,7 @@ function approximate(samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun
     F = DictFun(dictionary(ap), C)
     err = norm(A*C-B)
     verbose && println("Approximate: ended with residual $err\n")
-    F, A, B, C, S
+    F, A, B, C, S, L
 end
 
 
