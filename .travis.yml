@@ -12,6 +12,6 @@ matrix:
 notifications:
   email: false
 before_script:
-    - julia -e "using Pkg; Pkg.add(PackageSpec(url=\"http://github.com/daanhb/BasisFunctions.jl#${TRAVIS_BRANCH}\"))"
+    - julia -e "using Pkg; Pkg.add(PackageSpec(url=\"http://github.com/daanhb/BasisFunctions.jl\",rev=\"${TRAVIS_BRANCH}\"))"
 after_success:
     - julia -e 'cd(Pkg.dir("FrameFun")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder()); Codecov.submit(process_folder())'
