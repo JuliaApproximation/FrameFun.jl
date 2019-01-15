@@ -10,7 +10,7 @@ function AZSolver_with_smoothing(A, Zt, D;
             threshold = default_threshold(A),
             options...)
 
-    plunge_op = plunge_operator(A, Zt)
+    plunge_op = I-A*Zt
     psolver = inv(D)*REG(plunge_op*A*inv(D); threshold = threshold, rankestimate = rankestimate, options...)
     AZSolver(A, Zt, plunge_op, psolver)
 end
