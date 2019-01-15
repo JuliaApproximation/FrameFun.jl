@@ -67,6 +67,7 @@ function Fun(fun, ap::AdaptiveApproximation; verbose = false, options...)
     approximate(fun, ap; verbose=verbose, options...)
 end
 
+
 Fun(dict::Dictionary, coefficients::AbstractArray) = DictFun(dict, coefficients)
 
 
@@ -80,30 +81,21 @@ approximate(fun, dict::Dictionary, args...; options...) =
 approximate(fun, platform::Platform, args...; options...) =
     approximate(fun, approximationproblem(platform, args...); options...)
 
-SamplingStyle(ap::ApproximationProblem, M::Nothing) = SamplingStyle(ap)
-SamplingStyle(ap::ApproximationProblem, M) = OversamplingStyle()
-
-function approximate(fun, ap::ApproximationProblem;
-        M = nothing,
-        samplingstyle = SamplingStyle(ap, M),
-        solverstyle = SolverStyle(ap, samplingstyle), options...)
-    if M == nothing
-        approximate(samplingstyle, solverstyle, fun, ap; options...)
-    else
-        approximate(samplingstyle, solverstyle, fun, ap; M=M, options...)
-    end
-end
+approximate(fun, ap::ApproximationProblem;
+            samplingstyle = SamplingStyle(ap),
+            solverstyle = SolverStyle(ap, samplingstyle), options...) =
+    approximate(samplingstyle, solverstyle, fun, ap; options...)
 
 
 # Construct the approximation problem and solve it
 function approximate(samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun, ap; verbose = false, options...)
     dict = dictionary(ap)
 
+    verbose && println("Approximate: using sampling style $samplingstyle")
+    # Trigger computation of sampling parameter L first
+    L = samplingparameter(samplingstyle, ap; verbose=verbose, options...)
     S = samplingoperator(samplingstyle, ap; verbose=verbose, options...)
-    if verbose
-        println("Approximate: using sampling style $samplingstyle")
-        showsamplinginformation(samplingstyle, dict, S)
-    end
+    verbose && showsamplinginformation(samplingstyle, dict, S)
 
     A = apply(S, dict)
     B = apply(S, fun)
@@ -112,7 +104,7 @@ function approximate(samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun
     F = DictFun(dictionary(ap), C)
     err = norm(A*C-B)
     verbose && println("Approximate: ended with residual $err\n")
-    F, A, B, C, S
+    F, A, B, C, S, L
 end
 
 
@@ -134,34 +126,20 @@ function showsamplinginformation(dstyle::GramStyle, dict::Dictionary, S::Project
     println(BasisFunctions.print_strings(("Fun: continuous approximation with projection:", BasisFunctions.strings(S))))
 end
 
+
 solve(style::SolverStyle, ap, A, B; options...) =
     solver(style, ap, A; options...) * B
 
 solver(::InverseStyle, ap, A; options...) = inv(A)
 solver(::DirectStyle, ap, A; options...) = directsolver(A; options...)
 
-function solver(::AZStyle, ap, A;
-            S = nothing,
-            Zt = AZ_Zt(ap, S),
-            options...)
-    AZSolver(A, Zt; options...)
-end
+solver(style::AZStyle, ap, A; options...) = solver(style, ap, A, AZ_Zt(ap; options...); options...)
+solver(::AZStyle, ap, A, Zt; options...) = AZSolver(A, Zt; options...)
 
-function solver(::AZSmoothStyle, ap, A;
-            S = nothing,
-            Zt = AZ_Zt(ap, S),
-            options...)
-    # AZSmoothSolver(A, Zt; options...)
-    AZSolver_with_smoothing(A, Zt; options...)
-end
+solver(style::AZSmoothStyle, ap, A; options...) = solver(style, ap, A, AZ_Zt(ap; options...); options...)
+solver(::AZSmoothStyle, ap, A, Zt; options...) = AZSolver_with_smoothing(A, Zt; options...)
 
-
-function solver(::DualStyle, ap, A; S, options...)
-    Stilde = dualsamplingoperator(ap, S)
-    dtilde = dualdictionary(ap)
-    B = apply(Stilde, dtilde)
-    B'
-end
+solver(::DualStyle, ap, A; options...) = dualdiscretization(ap; options...)
 
 solver(::TridiagonalProlateStyle, ap, A; scaling = Zt_scaling_factor(dictionary(ap), A), options...) =
     FE_TridiagonalSolver(A, scaling; options...)

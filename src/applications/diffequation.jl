@@ -133,12 +133,16 @@ struct PDEApproximation <: ApproximationProblem
     D   ::  DiffEquation
 end
 
+# SamplingStyle(ap::PDEApproximation) = OversamplingStyle()
+# SolverStyle(ap::PDEApproximation, ::SamplingStyle) = AZStyle()
+
 function solve(D::DiffEquation; solverstyle=AZStyle(), options...)
     G = grid(dest(D.SMP))
     Adiff = pinv(D.Diff)
     b = rhs(D; options...)
     OP = operator(D; options...)
-    A = solver(solverstyle, PDEApproximation(D), OP; Zt = 1/length(supergrid(G))*OP', options...)
+    Zt = 1/length(supergrid(G))*OP'
+    A = solver(solverstyle, PDEApproximation(D), OP, Zt; options...)
     coef  = A * b
     DictFun(D.D, dest(A), Adiff*coef)
 end
