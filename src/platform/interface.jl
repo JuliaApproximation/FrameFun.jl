@@ -268,6 +268,9 @@ function dualsamplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationPro
     O * S
 end
 
+dualsamplingoperator(::ProductSamplingStyle, ap::ApproximationProblem;
+            S = samplingoperator(samplingstyle, ap), options...) =
+    tensorproduct([dualsamplingoperator(element(ap,i); S=element(S,i), options...) for i in 1:length(elements(ap))]...)
 
 ## Discrete sampling grid
 
@@ -288,12 +291,12 @@ oversampling_grid(ap::PlatformApproximation, L; options...) =
     oversampling_grid(ap.platform, ap.param, L; dict = dictionary(ap), options...)
 
 function sampling_grid(sstyle::OversamplingStyle, ap; options...)
-    # Note that the call below may be the time when the sampling parameter is first computed
     L = samplingparameter(sstyle, ap; options...)
     oversampling_grid(ap, L; options...)
 end
 
-
+sampling_grid(sstyle::ProductSamplingStyle, ap; options...) =
+    tensorproduct(map(x -> sampling_grid(x; options...), elements(ap))...)
 
 
 ## Discretization

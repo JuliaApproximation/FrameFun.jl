@@ -147,7 +147,24 @@ solver(::AZSmoothStyle, ap, A, Zt; options...) = AZSolver_with_smoothing(A, Zt; 
 
 solver(::DualStyle, ap, A; options...) = dualdiscretization(ap; options...)
 
+# TODO: move these to BasisFunctions.jl
 element(op::GridSampling, i) = GridSampling(element(dest(op),i))
+function tensorproduct(ops::GridSampling...)
+	T = promote_type(map(t->coefficienttype(dest(t)), ops)...)
+	g = ProductGrid(map(grid, ops)...)
+	GridSampling(g, T)
+end
+function tensorproduct(op1::AbstractOperator, op2::AbstractOperator, op3::AbstractOperator)
+	@assert dest(op1) isa GridBasis
+	@assert dest(op2) isa GridBasis
+	@assert dest(op3) isa GridBasis
+	# TODO: generalize to longer operators
+	@assert numelements(op1) == 2
+	@assert numelements(op2) == 2
+	@assert numelements(op3) == 2
+	tensorproduct(element(op1,2),element(op2,2),element(op3,2)) * tensorproduct(element(op1,1),element(op2,1),element(op3,1))
+end
+
 
 solver(::ProductSolverStyle, ap, A; S, options...) =
     TensorProductOperator([solver(element(ap,i); S=element(S,i), options...) for i in 1:length(elements(ap))]...)
