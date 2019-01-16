@@ -128,8 +128,10 @@ export ExtensionFrame, extensionframe
 export extension_frame_platform
 
 # from frames/weighted_sum_frame.jl
-export WeightedSumFrame, weightfunctions, WeightedSumPlatform
-export hassuperdict
+export WeightedSumPlatform
+
+# from frames/augmentation.jl
+export AugmentationPlatform, ONB_plus_K
 
 # from DiffEquation.jl
 export DirichletBC, NeumannBC, DiffEquation, solve
@@ -190,6 +192,7 @@ include("platform/bases.jl")
 
 include("frames/extensionframe.jl")
 include("frames/weighted_sum_frame.jl")
+include("frames/augmentation.jl")
 
 include("platform/duality.jl")
 

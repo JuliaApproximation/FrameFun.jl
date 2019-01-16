@@ -23,6 +23,8 @@ function oversampling_grid(dict::Dictionary, L)
     end
 end
 
+oversampling_grid(dict::TensorProductDict, L) = ProductGrid(map(oversampling_grid, elements(dict), L)...)
+
 oversampling_grid(dict::ExtensionFrame, L) = subgrid(oversampling_grid(superdict(dict),L), support(dict))
 
 initialguess(dict::Dictionary1d, M::Int) = M

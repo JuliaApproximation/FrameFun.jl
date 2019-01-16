@@ -43,9 +43,10 @@ mutable struct DictionaryApproximation <: ApproximationProblem
 end
 
 dictionary(ap::DictionaryApproximation) = ap.dict
-samplingparameter(ap::DictionaryApproximation) = ap.samplingparam
 
 coefficienttype(ap::DictionaryApproximation) = coefficienttype(ap.dict)
+
+elements(ap::DictionaryApproximation) = map(approximationproblem, elements(ap.dict))
 
 
 """
@@ -69,7 +70,6 @@ end
 dictionary(ap::PlatformApproximation) = ap.dict
 platform(ap::PlatformApproximation) = ap.platform
 parameter(ap::PlatformApproximation) = ap.param
-samplingparameter(ap::PlatformApproximation) = ap.samplingparam
 
 coefficienttype(ap::PlatformApproximation) = coefficienttype(ap.dict)
 
@@ -103,7 +103,7 @@ function approximationproblem(::Type{T}, dict::Dictionary, domain::Domain) where
     if domain == support(dict)
         approximationproblem(T, dict)
     else
-        approximationproblem(T, ExtensionFrame(domain, promote_coefficienttype(dict, T)))
+        approximationproblem(T, extensionframe(domain, promote_coefficienttype(dict, T)))
     end
 end
 
@@ -129,7 +129,7 @@ approximationproblem(ap::AdaptiveApproximation, param, L) = approximationproblem
 # Below is an exhaustive list of functions that implement the Fun interface.
 
 # The sampling and dual sampling operator
-for op in (:samplingoperator, :dualsamplingoperator)
+for op in (:samplingoperator, :dualsamplingoperator, :samplingparameter)
     @eval $op(dict::Dictionary, args...; options...) = $op(approximationproblem(dict, args...); options...)
     @eval $op(platform::Platform, args...; options...) = $op(approximationproblem(platform, args...); options...)
 end
@@ -192,6 +192,9 @@ SolverStyle(ap::PlatformApproximation, dstyle::SamplingStyle) = SolverStyle(ap.p
 
 ## The sampling parameter
 
+samplingparameter(ap::ApproximationProblem; samplingstyle = SamplingStyle(ap), options...) =
+    samplingparameter(samplingstyle, ap; options...)
+
 function samplingparameter(samplingstyle::SamplingStyle, ap::ApproximationProblem; options...)
     # Has it been computed before or was it supplied by the user?
     if ap.samplingparam != nothing
@@ -229,6 +232,11 @@ end
 # TODO: implement this one better (more general)
 deduce_samplingparameter(::GramStyle, ap; options...) = length(dictionary(ap))
 
+
+samplingparameter(::ProductSamplingStyle, ap::ApproximationProblem; options...) =
+    map(x->samplingparameter(x; options...), elements(ap))
+
+
 ## Sampling operator
 
 # We dispatch on the sampling style
@@ -251,6 +259,8 @@ samplingoperator(samplingstyle::GramStyle, ap::ApproximationProblem;
         measure = measure(dictionary(ap)), options...) =
     ProjectionSampling(dictionary(ap), measure)
 
+samplingoperator(::ProductSamplingStyle, ap::ApproximationProblem; options...) =
+    tensorproduct(map(x -> samplingoperator(x; options...), elements(ap))...)
 
 function dualsamplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationProblem;
             S = samplingoperator(samplingstyle, ap), options...)
