@@ -1,15 +1,14 @@
-# include("test_suite_support.jl")
-# include("test_suite.jl")
-# include("test_suite_applications.jl")
-# include("test_suite_domains.jl")
-# include("test_platforms.jl")
-#
-#
-# include("test_plots.jl")
+include("test_suite_support.jl")
+include("test_suite.jl")
+include("test_suite_applications.jl")
+include("test_suite_domains.jl")
+include("test_platforms.jl")
 
+
+include("test_plots.jl")
+#
 include("test_notebooks.jl")
-# println("Create README.md")
-# run(`$jupyter nbconvert --execute --to markdown --output README.md README.ipynb`)
+# include("create_readme.jl")
 
 
 println("All tests succeeded!!!")

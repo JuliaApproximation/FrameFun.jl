@@ -7,16 +7,18 @@ FrameFun
 
 Exploring practical possibilities of approximating functions with frames rather than with a basis. The package is heavily inspired by the Chebfun project and the Julia package ApproxFun.
 
+
+```julia
+using BasisFunctions, Plots, DomainSets, FrameFun
+gr();
+```
+
 # Frame Approximations in 1D
 
 After choosing a suitable Basis and Domain, any function can be approximated in the resulting frame:
 
 
 ```julia
-using BasisFunctions
-using Plots;gr()
-using DomainSets
-using FrameFun
 B = Fourier(61, -1, 1)
 D = -0.5..0.5
 f = x->x
@@ -77,5 +79,10 @@ P = heatmap(F,plot_ext=true,layout=2,aspect_ratio=1)
 plot!(F,f,plot_ext=true,aspect_ratio=1,subplot=2)
 Plots.savefig(P,"images/mandelbrot")
 ```
+
+    GKS: Rectangle definition is invalid in routine SET_WINDOW
+    GKS: Rectangle definition is invalid in routine CELLARRAY
+    origin outside current window
+
 
 ![](images/mandelbrot.png)
