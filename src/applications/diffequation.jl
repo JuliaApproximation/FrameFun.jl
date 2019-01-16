@@ -126,7 +126,7 @@ function rhs(D::DiffEquation; incboundary = false, options...)
     for i = 1:length(D.BCs)
         push!(rhs,sample(subgrid(BG,D.BCs[i].D),D.BCs[i].dRhs, coefficienttype(src(op))))
     end
-    MultiArray(rhs)
+    BlockVector(rhs...)
 end
 
 struct PDEApproximation <: ApproximationProblem

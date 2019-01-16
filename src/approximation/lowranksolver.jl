@@ -9,7 +9,7 @@ struct RandomizedSvdSolver{T} <: AbstractSolverOperator{T}
     # Keep the original operator
     A          ::  DictionaryOperator
     # Random matrix
-    W           ::  MultiplicationOperator
+    W           ::  BasisFunctions.DenseMatrixOperator{T}
     # Decomposition
     Ut          ::  Array{T,2}
     Sinv        ::  Array{T,1}
@@ -28,7 +28,7 @@ struct RandomizedSvdSolver{T} <: AbstractSolverOperator{T}
 
         Wsrc = DiscreteVectorDictionary{T}(size(W,2))
         Wdest = src(A)
-        WM = MatrixOperator(Wsrc, Wdest, W)
+        WM = ArrayOperator(W, Wsrc, Wdest)
         scratch_src = zeros(T, length(dest(A)))
         scratch_dest = zeros(T, length(src(A)))
         y = zeros(T, size(Vt,2))

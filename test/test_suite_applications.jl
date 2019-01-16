@@ -35,7 +35,7 @@ end
 
 
 function test_differential_equations_1d()
-    @testset "diff 1D dirichlet" for solver in (AZSolver, QR_solver)
+    @testset "diff 1D dirichlet" for solv in (AZSolver, QR_solver)
         B = Fourier(101,-1,1)
         Dom = Interval(-0.5,0.5)
         # Set up Boundary conditions
@@ -45,7 +45,7 @@ function test_differential_equations_1d()
         Diff = differentiation_operator(B)*differentiation_operator(B)
         DE = DiffEquation(B, Dom, Diff, f, (BC,))
         # Actually solve the differential equation
-        F = solve(DE, solver=solver)
+        F = solve(DE, solver=solv)
         sol(x) = x^3/6 - x/24
         error = abserror(sol,F)
         @test (error < sqrt(eps(real(codomaintype(B))))*10)
@@ -114,10 +114,10 @@ end
 function test_smoothing_1d()
     @testset "Smoothing $(name(instantiate(Basis,10)))" for Basis in (ChebyshevT,)
         basis = Basis(101,-1,1)
-        domain = -0.5..0.5
+        dom = -0.5..0.5
         f = exp
         fscale(dict, i) = 10.0^-4+i+i^2+i^3
-        F = Fun(f, basis, domain; solverstyle = AZSmoothStyle(), scaling=fscale)
+        F = Fun(f, basis, dom; solverstyle = AZSmoothStyle(), scaling=fscale)
         @test (abserror(f,F) < 100*sqrt(eps(Float64)))
     end
 end
@@ -125,10 +125,10 @@ end
 function test_smoothing_2d()
     @testset "Smoothing $(name(instantiate(Basis,10)))" for Basis in (ChebyshevT,)
         basis = Basis(20,-1.0,1.0)⊗Basis(20,-1.0,1.0)
-        domain = disk(0.5)
-        f(x,y) = exp(x*y)
+        dom = disk(0.5)
+        f = (x,y) -> exp(x*y)
         fscale(dict, I) = 10.0^-4+100*(I[1]^2+I[2]^2)
-        F = Fun(f, basis, domain; solverstyle = AZSmoothStyle(), scaling=fscale)
+        F = Fun(f, basis, dom; solverstyle = AZSmoothStyle(), scaling=fscale)
         @test (abserror(f,F) < 100*sqrt(sqrt(eps(Float64))))
     end
 end
