@@ -88,6 +88,9 @@ function boundarygrid(D::DiffEquation)
     boundary(supergrid(grid(dest(D.SMP))),D.D)
 end
 
+supergrid(grid::ProductGrid) = grid
+supergrid(grid::ProductGrid{Tuple{Vararg{G}}}) where G<:Union{MaskedGrid,IndexSubGrid} = ProductGrid(map(supergrid, elements(grid))...)
+
 
 function operator(D::DiffEquation; incboundary=false, options...)
     B = D.S
@@ -96,6 +99,9 @@ function operator(D::DiffEquation; incboundary=false, options...)
     G = grid(dest(D.SMP))
 
     op = grid_evaluation_operator(D.S, GridBasis{coefficienttype(D.S)}(G),G)
+    if length(size(dest(op))) > 1
+        op = BasisFunctions.LinearizationOperator(dest(op))*op
+    end
 
     cnt=1
     ops[cnt] = op*D.Diff*ADiff
@@ -117,7 +123,8 @@ function rhs(D::DiffEquation; incboundary = false, options...)
     G = grid(dest(D.SMP))
 
     op = grid_evaluation_operator(D.S, GridBasis{coefficienttype(D.S)}(G),G)
-    push!(rhs,sample(G,D.DRhs, coefficienttype(src(op))))
+    S1 = sample(G,D.DRhs, coefficienttype(src(op)))
+    push!(rhs,reshape(S1,length(S1)))
     BG = boundarygrid(D)
 
     if incboundary
