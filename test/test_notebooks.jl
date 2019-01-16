@@ -13,35 +13,23 @@ function delimit(s::AbstractString)
 end
 
 
-jupyter = homedir()*"/.julia/packages/Conda/S0nV/deps/usr/bin/jupyter"
+jupyter = chomp(read(pipeline(`find $(homedir())/.julia/packages/Conda/  -name "jupyter" -type f`,`head -n 1`),String))
 
-
-
+FRAMEFUNSRC = pathof(FrameFun)
+FRAMEFUNPATH = splitdir(splitdir(FRAMEFUNSRC)[1])[1]
 delimit("Notebooks")
-try
-    cd("test/")
-catch y
-    nothing
-finally
-    run(`$jupyter nbconvert --to script '../examples/*.ipynb'`)
-    run(`mkdir -p scripts/`)
-    run(`./findscripts.sh`)
-    cd("..")
-end
 
-FILE = open("notebookscripts")
+run(`$jupyter nbconvert --to script $FRAMEFUNPATH'/examples/*.ipynb'`)
+a = readdir("$FRAMEFUNPATH/examples/")
+scripts = a[occursin.(".jl",a)]
 try
-    for LINE in eachline(FILE)
+    for LINE in scripts
         println("Run $(LINE)")
-        include(LINE)
-        # Following makes things slow but deletes dependencies between notebooks.
-        # workspace()
+        include("$FRAMEFUNPATH/examples/"*LINE)
     end
-catch y
-    rethrow(y)
 finally
-    close(FILE)
-    run(`examples/test_notebooks_after.sh`)
+    for LINE in scripts
+        rm("$FRAMEFUNPATH/examples/"*LINE)
+    end
 end
-
 end

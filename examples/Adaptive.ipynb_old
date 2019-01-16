@@ -416,7 +416,7 @@
   "anaconda-cloud": {},
   "celltoolbar": "Raw Cell Format",
   "kernelspec": {
-   "display_name": "Julia 0.6.0",
+   "display_name": "Julia 0.6.4",
    "language": "julia",
    "name": "julia-0.6"
   },
@@ -424,7 +424,7 @@
    "file_extension": ".jl",
    "mimetype": "application/julia",
    "name": "julia",
-   "version": "0.6.0"
+   "version": "0.6.4"
   },
   "nbpresent": {
    "slides": {
