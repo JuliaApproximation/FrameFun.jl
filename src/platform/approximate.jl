@@ -126,6 +126,12 @@ function showsamplinginformation(dstyle::GramStyle, dict::Dictionary, S::Project
     println(BasisFunctions.print_strings(("Fun: continuous approximation with projection:", BasisFunctions.strings(S))))
 end
 
+function showsamplinginformation(dstyle::ProductSamplingStyle, dict::Dictionary, S::AbstractOperator)
+    println("Fun: Tensor sampling")
+end
+
+
+
 
 solve(style::SolverStyle, ap, A, B; options...) =
     solver(style, ap, A; options...) * B
@@ -140,6 +146,11 @@ solver(style::AZSmoothStyle, ap, A; options...) = solver(style, ap, A, AZ_Zt(ap;
 solver(::AZSmoothStyle, ap, A, Zt; options...) = AZSolver_with_smoothing(A, Zt; options...)
 
 solver(::DualStyle, ap, A; options...) = dualdiscretization(ap; options...)
+
+element(op::GridSampling, i) = GridSampling(element(dest(op),i))
+
+solver(::ProductSolverStyle, ap, A; S, options...) =
+    TensorProductOperator([solver(element(ap,i); S=element(S,i), options...) for i in 1:length(elements(ap))]...)
 
 solver(::TridiagonalProlateStyle, ap, A; scaling = Zt_scaling_factor(dictionary(ap), A), options...) =
     FE_TridiagonalSolver(A, scaling; options...)

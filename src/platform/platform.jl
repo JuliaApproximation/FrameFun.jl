@@ -41,6 +41,7 @@ struct GramStyle <: ProjectionStyle end
 struct RectangularGramStyle <: ProjectionStyle end
 
 struct GenericSamplingStyle <: SamplingStyle end
+struct ProductSamplingStyle <: SamplingStyle end
 
 
 "A solver style trait"
@@ -53,7 +54,7 @@ struct IterativeStyle <: SolverStyle end
 struct TridiagonalProlateStyle <: SolverStyle end
 struct AZStyle <: SolverStyle end
 struct AZSmoothStyle <: SolverStyle end
-
+struct ProductSolverStyle <: SolverStyle end
 
 
 ## Defaults
@@ -78,6 +79,10 @@ SolverStyle(::UnknownDictionaryStyle, p::Platform, dstyle) = DirectStyle()
 
 # Defaults for dictionaries
 SamplingStyle(dict::Dictionary) = isbasis(dict) ? InterpolationStyle() : OversamplingStyle()
+SamplingStyle(dict::TensorProductDict) = ProductSamplingStyle()
 
-SolverStyle(dict::Dictionary, dstyle::InterpolationStyle) = hastransform(dict) ? InverseStyle() : DirectStyle()
+
 SolverStyle(dict::Dictionary, dstyle::SamplingStyle) = DirectStyle()
+SolverStyle(dict::Dictionary, dstyle::InterpolationStyle) = hastransform(dict) ? InverseStyle() : DirectStyle()
+SolverStyle(dict::TensorProductDict, dstyle::SamplingStyle) = ProductSolverStyle()
+SolverStyle(dict::TensorProductDict, dstyle::InterpolationStyle) = ProductSolverStyle()
