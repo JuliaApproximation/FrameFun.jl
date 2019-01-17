@@ -169,8 +169,10 @@ oversampling_grid(platform::Platform, n, L; dict = dictionary(platform, n), opti
 dualdictionary(platform::Platform, n; dict = dictionary(platform, n)) =
     dualdictionary(dict)
 
-discrete_normalization(p::Platform, n, L; S = samplingoperator(p, n, L), options...) =
-    discrete_normalization(p, n, L, S; options...)
+discrete_normalization(platform::Platform, n, L; S = samplingoperator(platform, n, L), options...) =
+    quadraturenormalization(S, measure(platform))
+
+space(platform::Platform) = space(measure(platform))
 
 
 ########################

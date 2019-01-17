@@ -28,4 +28,6 @@ oversampling_grid(p::WeightedSumPlatform, param, L; dict, options...) =
 discrete_normalization(platform::WeightedSumPlatform, n, L; options...) =
     discrete_normalization(platform.P, n, L; options...)
 
+measure(platform::WeightedSumPlatform) = measure(platform.P)
+
 nextsize(p::WeightedSumPlatform, n) = 2n

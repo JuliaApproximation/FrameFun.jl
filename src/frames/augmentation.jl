@@ -28,6 +28,8 @@ oversampling_grid(platform::AugmentationPlatform, param, L; dict, options...) =
 discrete_normalization(platform::AugmentationPlatform, n, L; options...) =
     discrete_normalization(platform.basis, n, L; options...)
 
+measure(platform::AugmentationPlatform) = measure(platform.basis)
+
 nextsize(p::AugmentationPlatform, n::Int) = 2n
 
 ONB_plus_K(basis::Platform, weightfunction, K) =

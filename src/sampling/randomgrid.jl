@@ -3,8 +3,10 @@
 Compute a scattered grid of M points randomly distributed in `Ω`, using
 the uniform probability measure on `Ω`.
 """
-randomgrid(Ω::Domain, M::Int) =
-    ScatteredGrid([randompoint(Ω, boundingbox(Ω)) for m in 1:M])
+function randomgrid(Ω::Domain, M::Int)
+    points = [randompoint(Ω, boundingbox(Ω)) for m in 1:M]
+    ScatteredGrid(sort(points))
+end
 
 "Generate a single random point inside the given box, with `eltype` `T`."
 function randompoint(dom::ProductDomain)

@@ -1,5 +1,5 @@
 
-discrete_normalization(dict::Dictionary, L; S) = quadraturenormalization(S)
+discrete_normalization(dict::Dictionary, L; S) = quadraturenormalization(S, measure(dict))
 
 dualdictionary(dict::Dictionary) = _dualdictionary(dict, gramoperator(dict))
 _dualdictionary(dict::Dictionary, gram::IdentityOperator) = dict
@@ -44,18 +44,3 @@ dualdictionary(dict::ComplexifiedDict) =
 ## Extension frames
 
 dualdictionary(dict::ExtensionFrame) = ExtensionFrame(support(dict),dualdictionary(basis(dict)))
-
-function discrete_normalization(dict::ExtensionFrame, L; S = samplingoperator(dict; L=L))
-        grid1 = grid(dest(S))
-        grid2 = supergrid(grid1)
-        T = coefficienttype(dest(S))
-        op = quadraturenormalization(T, grid2)
-        if op isa ScalingOperator
-            return ScalingOperator(GridBasis{T}(grid1), scalar(op))
-        else
-            E = extension_operator(GridBasis{T}(grid1),GridBasis{T}(grid2))
-            R = E'
-            tot = R*quadraturenormalization(T, grid2)*E
-            return tot
-        end
-end

@@ -59,6 +59,8 @@ import BasisFunctions: isbasis, isframe, isorthogonal, isorthonormal, isbiorthog
     hastransform, hasinterpolationgrid, hasderivative,
     hasantiderivative, hasextension, hasgrid_transform
 
+import BasisFunctions: hasmeasure, measure
+
 import BasisFunctions: operator, matrix, isdiagonal, isinplace, ⊕
 
 import BasisFunctions: coefficients, dictionary,

@@ -12,10 +12,7 @@ first_parameters(p::FourierPlatform) = (8,8)
 
 SolverStyle(p::FourierPlatform, ::OversamplingStyle) = DualStyle()
 
-discrete_normalization(p::FourierPlatform, n, L; S = samplingoperator(p, n, L)) =
-    quadraturenormalization(S)
-
-functionspace(p::FourierPlatform{T}) where {T} = BasisFunctions.FourierSpace{T}()
+measure(p::FourierPlatform{T}) where {T} = FourierMeasure{T}()
 
 
 struct ChebyshevPlatform{T} <: BasisPlatform
@@ -27,10 +24,7 @@ dictionary(p::ChebyshevPlatform{T}, n) where {T} = ChebyshevT{T}(n)
 
 first_parameters(p::ChebyshevPlatform) = (8,8)
 
-discrete_normalization(p::ChebyshevPlatform, n, L; S = samplingoperator(p, n, L)) =
-    quadraturenormalization(S)
-
-functionspace(p::ChebyshevPlatform{T}) where {T} = BasisFunctions.ChebyshevSpace{T}()
+measure(platform::ChebyshevPlatform{T}) where {T} = ChebyshevMeasure{T}()
 
 
 """
@@ -55,7 +49,7 @@ SamplingStyle(p::ModelPlatform) = SamplingStyle(dictionary(p, first_sizeparamete
 
 SolverStyle(p::ModelPlatform, dstyle::SamplingStyle) = SolverStyle(model(p), dstyle)
 
-discrete_normalization(p::ModelPlatform, n, L, S) = quadraturenormalization(S)
+measure(platform::ModelPlatform) = measure(model(platform))
 
 
 struct FourierExtensionPlatform <: FramePlatform
@@ -76,12 +70,7 @@ end
 dictionary(p::FourierExtensionPlatform, n) =
     ExtensionFrame(p.domain, dictionary(p.basisplatform, n))
 
-function discrete_normalization(p::FourierExtensionPlatform, n, L; S = samplingoperator(p, n, L))
-    grid1 = grid(dest(S))
-    grid2 = supergrid(grid1)
-    val = scalar(quadraturenormalization(coefficienttype(dest(S)), grid2))
-    ScalingOperator(dest(S), val)
-end
+measure(platform::FourierExtensionPlatform) = measure(dictionary(platform, 1))
 
 
 
@@ -93,11 +82,4 @@ end
 dictionary(p::ExtensionFramePlatform, n) =
     ExtensionFrame(p.domain, dictionary(p.basisplatform, n))
 
-function discrete_normalization(p::ExtensionFramePlatform, n, L; S = samplingoperator(p, n, L))
-    grid1 = grid(dest(S))
-    grid2 = supergrid(grid1)
-    # TODO: make this more generic
-    # For now, assume a ScalingOperator from which we can extract the scalar value
-    val = scalar(quadraturenormalization(coefficienttype(dest(S)), grid2))
-    ScalingOperator(dest(S), val)
-end
+measure(platform::ExtensionFramePlatform) = restrict(measure(platform.basisplatform), platform.domain)
