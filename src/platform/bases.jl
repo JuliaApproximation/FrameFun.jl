@@ -55,6 +55,7 @@ SamplingStyle(p::ModelPlatform) = SamplingStyle(dictionary(p, first_sizeparamete
 
 SolverStyle(p::ModelPlatform, dstyle::SamplingStyle) = SolverStyle(model(p), dstyle)
 
+discrete_normalization(p::ModelPlatform, n, L, S) = quadraturenormalization(S)
 
 
 struct FourierExtensionPlatform <: FramePlatform

@@ -81,15 +81,6 @@ function extensionframe(domain::ProductDomain, basis::TensorProductDict)
     tensorproduct(ExtensionFrames...)
 end
 
-# const TensorProductExtensionFrameDict{N,N1,S,T} = TensorProductDict{N,NTuple{N1,DT},S,T} where {N,N1,DT<:ExtensionFrame,S,T}
-#
-# # TODO remove need of this function
-# function flatten(dict::TensorProductExtensionFrameDict)
-#     basis = tensorproduct([superdict(dicti) for dicti in elements(dict)]...)
-#     domain = DomainSets.ProductDomain([FrameFun.support(dicti) for dicti in elements(dict)]...)
-#     ExtensionFrame(domain, basis)
-# end
-
 extensionframe(domain::Domain, basis::Dictionary) = ExtensionFrame(domain, basis)
 extensionframe(basis::Dictionary, domain::Domain) = extensionframe(domain, basis)
 
@@ -98,15 +89,13 @@ rightendpoint(d::ExtensionFrame, args...) = rightendpoint(support(d))
 
 
 import BasisFunctions: measure, restrict
-import BasisFunctions: innerproduct
+import BasisFunctions: innerproduct, innerproduct_native
+
 
 measure(f::ExtensionFrame) = restrict(measure(basis(f)), support(f))
 
-innerproduct(f1::ExtensionFrame, i, f2::ExtensionFrame, j, measure; options...) =
+innerproduct_native(f1::ExtensionFrame, i, f2::ExtensionFrame, j, measure; options...) =
     innerproduct(basis(f1), i, basis(f2), j, measure; options...)
-
-# grid_evaluation_operator(s::TensorProductExtensionFrameDict, dgs::GridBasis, grid::AbstractGrid; options...) =
-#     grid_evaluation_operator(flatten(s), dgs, grid; options...)
 
 
 

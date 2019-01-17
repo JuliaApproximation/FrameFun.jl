@@ -232,9 +232,10 @@ end
 # TODO: implement this one better (more general)
 deduce_samplingparameter(::GramStyle, ap; options...) = length(dictionary(ap))
 
+deduce_samplingparameter(::GridStyle, ap; options...) = nothing
 
-samplingparameter(::ProductSamplingStyle, ap::ApproximationProblem; options...) =
-    map(x->samplingparameter(x; options...), elements(ap))
+samplingparameter(samplingstyle::ProductSamplingStyle, ap::ApproximationProblem; options...) =
+    map((x,style)->samplingparameter(x; samplingstyle=style, options...), elements(ap), samplingstyle.styles)
 
 
 ## Sampling operator
@@ -259,8 +260,10 @@ samplingoperator(samplingstyle::GramStyle, ap::ApproximationProblem;
         measure = measure(dictionary(ap)), options...) =
     ProjectionSampling(dictionary(ap), measure)
 
-samplingoperator(::ProductSamplingStyle, ap::ApproximationProblem; options...) =
-    tensorproduct(map(x -> samplingoperator(x; options...), elements(ap))...)
+samplingoperator(samplingstyle::ProductSamplingStyle, ap::ApproximationProblem; options...) =
+    tensorproduct( map( (x,style) -> samplingoperator(x; samplingstyle=style, options...),
+                        elements(ap), samplingstyle.styles)...
+    )
 
 function dualsamplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationProblem;
             S = samplingoperator(samplingstyle, ap), options...)
@@ -268,9 +271,12 @@ function dualsamplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationPro
     O * S
 end
 
-dualsamplingoperator(::ProductSamplingStyle, ap::ApproximationProblem;
+dualsamplingoperator(samplingstyle::ProductSamplingStyle, ap::ApproximationProblem;
             S = samplingoperator(samplingstyle, ap), options...) =
-    tensorproduct([dualsamplingoperator(element(ap,i); S=element(S,i), options...) for i in 1:length(elements(ap))]...)
+    tensorproduct(
+        map( (x,Sel,style) -> dualsamplingoperator(x; S=Sel, samplingstyle=style, options...),
+             elements(ap), elements(S), samplingstyle.styles)...
+    )
 
 ## Discrete sampling grid
 
@@ -281,8 +287,10 @@ sampling_grid(::InterpolationStyle, ap::PlatformApproximation; options...) =
     interpolation_grid(ap.platform, ap.param; dict = ap.dict, options...)
 
 # - generic grid: we invoke platform_grid on the platform
-sampling_grid(::GridStyle, ap::PlatformApproximation; grid, options...) =
+sampling_grid(::GridStyle, ap::DictionaryApproximation; grid, options...) = grid
+sampling_grid(::GridStyle, ap::PlatformApproximation; options...) =
     platform_grid(ap.platform, ap.param; dict = ap.dict, options...)
+platform_grid(platform::Platform, param; grid, options...) = grid
 
 # - oversampling: we invoke oversampling_grid on the dictionary or platform
 oversampling_grid(ap::DictionaryApproximation, L; options...) =
@@ -295,8 +303,10 @@ function sampling_grid(sstyle::OversamplingStyle, ap; options...)
     oversampling_grid(ap, L; options...)
 end
 
-sampling_grid(sstyle::ProductSamplingStyle, ap; options...) =
-    tensorproduct(map(x -> sampling_grid(x; options...), elements(ap))...)
+sampling_grid(samplingstyle::ProductSamplingStyle, ap; options...) =
+    tensorproduct( map((x,style) -> sampling_grid(x; samplingstyle=style, options...),
+                        elements(ap), samplingstyle.styles)...
+    )
 
 
 ## Discretization

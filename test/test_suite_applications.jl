@@ -35,7 +35,7 @@ end
 
 
 function test_differential_equations_1d()
-    @testset "diff 1D dirichlet" for solv in (AZSolver, QR_solver)
+    @testset "diff 1D dirichlet" for solverstyle in (AZStyle(), DirectStyle())
         B = Fourier(101,-1,1)
         Dom = Interval(-0.5,0.5)
         # Set up Boundary conditions
@@ -45,14 +45,14 @@ function test_differential_equations_1d()
         Diff = differentiation_operator(B)*differentiation_operator(B)
         DE = DiffEquation(B, Dom, Diff, f, (BC,))
         # Actually solve the differential equation
-        F = solve(DE, solver=solv)
+        F = solve(DE, solverstyle=solverstyle, directsolver=:qr)
         sol(x) = x^3/6 - x/24
         error = abserror(sol,F)
         @test (error < sqrt(eps(real(codomaintype(B))))*10)
         error = abserror(f,F'')
         @test (error < sqrt(eps(real(codomaintype(B))))*100)
     end
-    @testset "diff 1D mixed" for solver in (AZSolver, QR_solver)
+    @testset "diff 1D mixed" for solverstyle in (AZStyle(), DirectStyle())
         B = Fourier(101,-2,2)
         Dom = Interval(-1.0,1.0)
         # Set up Boundary conditions
@@ -63,7 +63,7 @@ function test_differential_equations_1d()
         Diff = differentiation_operator(B)*differentiation_operator(B)
         DE = DiffEquation(B, Dom, Diff, f, (BC1,BC2))
         # Actually solve the differential equation
-        F = solve(DE, solver=solver)
+        F = solve(DE, solverstyle=solverstyle, directsolver=:qr)
         sol(x) = x^3/6 - x/2 -1/3
         error = abserror(sol,F)
         @test (error < sqrt(eps(real(codomaintype(B))))*10)
@@ -73,7 +73,8 @@ function test_differential_equations_1d()
 end
 
 function test_differential_equations_2d()
-    @testset "diff 2D dirichlet" for solver in (AZSolver, QR_solver)
+    # @testset "diff 2D dirichlet" for solverstyle in (AZStyle(), DirectStyle())
+    @testset "diff 2D dirichlet" for solverstyle in (AZStyle(),)
         B = Fourier(11,-1,1)⊗Fourier(11,-1,1)
         Dom = disk(0.8)
         # Set up Boundary conditions
@@ -82,33 +83,33 @@ function test_differential_equations_2d()
         # Set up Differential equation
         f(x,y) = 0
         Diff = differentiation_operator(B,(2,0))+differentiation_operator(B,(0,2))
-        DE = DiffEquation(B,Dom,Diff, f, (BC,))
+        DE = DiffEquation(B, Dom, Diff, f, (BC,))
         # Actually solve the differential equation
-        F = solve(DE, solver=solver)
+        F = solve(DE, solverstyle=solverstyle, directsolver=:qr)
         error = abserror(df,F)
         @test (error < 0.3)
         error = abserror(f,∂x(∂x(F))+∂y(∂y(F)))
         @test (error < 0.3)
     end
-    @testset "diff 2D Neumann" for solver in (AZSolver, QR_solver)
-        B = Fourier(11,-1,1)⊗Fourier(11,-1,1)
-        Dom = disk(0.8)
-        # Set up Boundary conditions
-        df = (x,y)->x-y
-        BC = NeumannBC(df,DomainSets.euclideanspace(Val{2}()))
-        # Set up Differential equation
-        f(x,y) = 0
-        Diff = differentiation_operator(B,(2,0))+differentiation_operator(B,(0,2))
-        @warn "test product problem fails"
-        # DE = DiffEquation(B,Dom,Diff, f, (BC,), 10)
-        # # Actually solve the differential equation
-        # F = solve(DE, solver=solver)
-        # # We should find a way to check the boundary condition more easily
-        # berror = sum(abs.(element(operator(DE),2,1)*coefficients(Diff*F)-element(FrameFun.rhs(DE),2)))/length(element(FrameFun.rhs(DE),2))
-        # @test berror < 0.6
-        # error = abserror(f,∂x(∂x(F))+∂y(∂y(F)))
-        # @test (error < 0.3)
-    end
+    # @testset "diff 2D Neumann" for solverstyle in (AZStyle(), DirectStyle())
+    # @testset "diff 2D Neumann" for solverstyle in (AZStyle(),)
+    #     B = Fourier(11,-1,1)⊗Fourier(11,-1,1)
+    #     Dom = disk(0.8)
+    #     # Set up Boundary conditions
+    #     df = (x,y)->x-y
+    #     BC = NeumannBC(df,DomainSets.euclideanspace(Val{2}()))
+    #     # Set up Differential equation
+    #     f(x,y) = 0
+    #     Diff = differentiation_operator(B,(2,0))+differentiation_operator(B,(0,2))
+    #     DE = DiffEquation(B, Dom, Diff, f, (BC,))
+    #     # Actually solve the differential equation
+    #     F = solve(DE, solverstyle=solverstyle, directsolver=:qr)
+    #     # We should find a way to check the boundary condition more easily
+    #     berror = sum(abs.(element(operator(DE),2,1)*coefficients(Diff*F)-element(FrameFun.rhs(DE),2)))/length(element(FrameFun.rhs(DE),2))
+    #     @test berror < 0.6
+    #     error = abserror(f,∂x(∂x(F))+∂y(∂y(F)))
+    #     @test (error < 0.3)
+    # end
 end
 
 # We just test the accuracy, not the smoothing properties
@@ -135,11 +136,11 @@ function test_smoothing_2d()
 end
 
 
-# test_smoothing_1d()
-#
-# test_smoothing_2d()
-#
-# test_differential_equations_1d()
+test_smoothing_1d()
+
+test_smoothing_2d()
+
+test_differential_equations_1d()
 
 test_differential_equations_2d()
 

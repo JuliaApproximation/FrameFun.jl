@@ -24,8 +24,7 @@ function L2error(f::Function, F::DictFun{S,T}; rtol = eps(real(T)), atol = 0, op
 end
 
 function residual(f::Function, F::DictFun; residualtype = :l2, options...)
-    A, S = discretization(dictionary(F); options...)
-    B = apply(S, f)
+    A, B = discretization(f, dictionary(F); options...)
     R = A*coefficients(F)-B
     if residualtype == :l2
         norm(R)

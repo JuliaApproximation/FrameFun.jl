@@ -155,15 +155,16 @@ export AZSolver, AZSmoothSolver, TridiagonalSolver
 
 # from platform/platform.jl
 export SamplingStyle, SolverStyle
-export InterpolationStyle, OversamplingStyle, GramStyle,
-    RectangularGramStyle, GenericSamplingStyle
+export InterpolationStyle, OversamplingStyle, GridStyle, GramStyle,
+    RectangularGramStyle, GenericSamplingStyle, ProductSamplingStyle
 export DirectStyle, InverseStyle, DualStyle, IterativeStyle, AZStyle,
-    AZSmoothStyle, TridiagonalProlateStyle
+    AZSmoothStyle, TridiagonalProlateStyle, ProductSolverStyle
 
 # from platform/interface.jl
 export approximate
-export samplingoperator, dualsamplingoperator, dictionary, dualdictionary,
-    plungeoperator, smoothingoperator, discretization, dualdiscretization,
+export samplingoperator, dualsamplingoperator, samplingparameter,
+    dictionary, dualdictionary, plungeoperator, smoothingoperator,
+    discretization, dualdiscretization,
     solver, AZ_A, AZ_Z, AZ_Zt
 export interpolation_grid, oversampling_grid
 

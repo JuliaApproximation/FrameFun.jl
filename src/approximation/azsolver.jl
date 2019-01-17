@@ -25,8 +25,8 @@ struct AZSolver{T} <: AbstractSolverOperator{T}
     function AZSolver{T}(A::DictionaryOperator, Zt::DictionaryOperator, plunge_op::DictionaryOperator,
             psolver::DictionaryOperator) where {T}
         # Allocate scratch space
-        Pb = zeros(src(psolver))
-        x1 = zeros(src(A))
+        Pb = zeros(T, src(psolver))
+        x1 = zeros(T, src(A))
         new(A, Zt, plunge_op, psolver, Pb, x1)
     end
 end

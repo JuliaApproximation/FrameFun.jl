@@ -27,21 +27,32 @@ DictionaryStyle(p::FramePlatform) = FrameStyle()
 "A sampling style trait"
 abstract type SamplingStyle end
 
+"The sampling operator corresponds to evaluation in a discrete set of points."
 abstract type DiscreteStyle <: SamplingStyle end
 
 "The sampling grid is determined by invoking `interpolation_grid` on the dictionary or platform."
 struct InterpolationStyle <: DiscreteStyle end
 "The sampling grid is determined by invoking `oversampling_grid` on the dictionary or platform."
 struct OversamplingStyle <: DiscreteStyle end
-"The sampling grid is determined by invoking `platform_grid` on the platform."
+"""
+The sampling grid is determined by invoking `platform_grid` on the platform, or
+by providing a `grid=...` argument to the Fun constructor.
+"""
 struct GridStyle <: DiscreteStyle end
 
+
+"The sampling operator corresponds to projections (using inner products)."
 abstract type ProjectionStyle <: SamplingStyle end
 struct GramStyle <: ProjectionStyle end
 struct RectangularGramStyle <: ProjectionStyle end
 
+"The sampling operator is determined by invoking `genericsampling` on the platform."
 struct GenericSamplingStyle <: SamplingStyle end
-struct ProductSamplingStyle <: SamplingStyle end
+
+struct ProductSamplingStyle <: SamplingStyle
+    styles
+end
+ProductSamplingStyle(styles::SamplingStyle...) = ProductSamplingStyle(styles)
 
 
 "A solver style trait"
@@ -54,8 +65,11 @@ struct IterativeStyle <: SolverStyle end
 struct TridiagonalProlateStyle <: SolverStyle end
 struct AZStyle <: SolverStyle end
 struct AZSmoothStyle <: SolverStyle end
-struct ProductSolverStyle <: SolverStyle end
 
+struct ProductSolverStyle <: SolverStyle
+    styles
+end
+ProductSolverStyle(styles::SolverStyle...) = ProductSolverStyle(styles)
 
 ## Defaults
 
@@ -79,10 +93,10 @@ SolverStyle(::UnknownDictionaryStyle, p::Platform, dstyle) = DirectStyle()
 
 # Defaults for dictionaries
 SamplingStyle(dict::Dictionary) = isbasis(dict) ? InterpolationStyle() : OversamplingStyle()
-SamplingStyle(dict::TensorProductDict) = ProductSamplingStyle()
+SamplingStyle(dict::TensorProductDict) = ProductSamplingStyle(map(SamplingStyle, elements(dict)))
 
 
 SolverStyle(dict::Dictionary, dstyle::SamplingStyle) = DirectStyle()
 SolverStyle(dict::Dictionary, dstyle::InterpolationStyle) = hastransform(dict) ? InverseStyle() : DirectStyle()
-SolverStyle(dict::TensorProductDict, dstyle::SamplingStyle) = ProductSolverStyle()
-SolverStyle(dict::TensorProductDict, dstyle::InterpolationStyle) = ProductSolverStyle()
+SolverStyle(dict::TensorProductDict, dstyle::ProductSamplingStyle) =
+    ProductSolverStyle(map(SolverStyle, elements(dict), dstyle.styles))

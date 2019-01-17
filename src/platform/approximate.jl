@@ -92,6 +92,7 @@ function approximate(samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun
     dict = dictionary(ap)
 
     verbose && println("Approximate: using sampling style $samplingstyle")
+	verbose && println("Approximate: using solver style $solverstyle")
     # Trigger computation of sampling parameter L first
     L = samplingparameter(samplingstyle, ap; verbose=verbose, options...)
     S = samplingoperator(samplingstyle, ap; verbose=verbose, options...)
@@ -99,11 +100,10 @@ function approximate(samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun
 
     A = apply(S, dict)
     B = apply(S, fun)
-    verbose && println("Approximate: using solver style $solverstyle")
     C = solve(solverstyle, ap, A, B; S=S, verbose=verbose, options...)
     F = DictFun(dictionary(ap), C)
-    err = norm(A*C-B)
-    verbose && println("Approximate: ended with residual $err\n")
+    res = norm(A*C-B)
+    verbose && println("Approximate: ended with residual $res\n")
     F, A, B, C, S, L
 end
 
@@ -149,6 +149,7 @@ solver(::DualStyle, ap, A; options...) = dualdiscretization(ap; options...)
 
 # TODO: move these to BasisFunctions.jl
 element(op::GridSampling, i) = GridSampling(element(dest(op),i))
+elements(op::GridSampling) = map( s -> GridSampling(s), elements(dest(op)))
 function tensorproduct(ops::GridSampling...)
 	T = promote_type(map(t->coefficienttype(dest(t)), ops)...)
 	g = ProductGrid(map(grid, ops)...)
@@ -166,8 +167,11 @@ function tensorproduct(op1::AbstractOperator, op2::AbstractOperator, op3::Abstra
 end
 
 
-solver(::ProductSolverStyle, ap, A; S, options...) =
-    TensorProductOperator([solver(element(ap,i); S=element(S,i), options...) for i in 1:length(elements(ap))]...)
+solver(solverstyle::ProductSolverStyle, ap, A; S, options...) =
+    TensorProductOperator(
+		map( (ap_el,Ael,Sel,style) -> solver(style, ap_el, Ael; S=Sel, options...),
+				elements(ap), elements(A), elements(S), solverstyle.styles)...
+	)
 
 solver(::TridiagonalProlateStyle, ap, A; scaling = Zt_scaling_factor(dictionary(ap), A), options...) =
     FE_TridiagonalSolver(A, scaling; options...)
