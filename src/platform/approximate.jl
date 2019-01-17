@@ -84,8 +84,14 @@ approximate(fun, platform::Platform, args...; options...) =
 approximate(fun, ap::ApproximationProblem;
             samplingstyle = SamplingStyle(ap),
             solverstyle = SolverStyle(ap, samplingstyle), options...) =
-    approximate(samplingstyle, solverstyle, fun, ap; options...)
+    approximate(promote(samplingstyle, solverstyle)..., fun, ap; options...)
 
+# If the sampling has product structure and a single solverstyle is specified,
+# we turn the solverstyle into a product style as well.
+promote(samplingstyle::SamplingStyle, solverstyle::SolverStyle) = (samplingstyle,solverstyle)
+promote(samplingstyle::ProductSamplingStyle, solverstyle::ProductSolverStyle) = (samplingstyle,solverstyle)
+promote(samplingstyle::ProductSamplingStyle, solverstyle::SolverStyle) =
+	(samplingstyle,ProductSolverStyle(map(x->solverstyle, samplingstyle.styles)))
 
 # Construct the approximation problem and solve it
 function approximate(samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun, ap; verbose = false, options...)
@@ -106,7 +112,6 @@ function approximate(samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun
     verbose && println("Approximate: ended with residual $res\n")
     F, A, B, C, S, L
 end
-
 
 showsamplinginformation(dstyle::DiscreteStyle, dict::Dictionary, S::AbstractOperator) =
     showsamplinginformation(dstyle, element(S, numelements(S)))
