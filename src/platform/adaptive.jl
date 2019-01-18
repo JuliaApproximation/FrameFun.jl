@@ -15,9 +15,9 @@ struct SimpleStyle <: AdaptiveStrategy end
 emptylogbook() = Array{Any,1}(undef,0)
 addlogentry!(log, entry) = push!(log, entry)
 
-# Any error criterium returns a result of the form (converged,error):
+# Any error criterion returns a result of the form (converged,error):
 # - converged: indicates whether the approximation satisfies all convergence criteria
-# - error: a criterium-specific measure of the error
+# - error: a criterion-specific measure of the error
 
 # Verify the average pointwise error in a limited number of random points.
 function errormeasure(::RandomPoints, platform, tolerance, f, F, args...; numrandompts = 50, options...)
@@ -73,15 +73,15 @@ first_samplingparameter(p::Platform) = first_parameters(p)[2]
 
 # Dispatch on the style of the adaptive algorithm
 function approximate(fun, ap::AdaptiveApproximation;
-            adaptivestyle = OptimalStyle(), criterium = ErrorStyle(ap.platform),
+            adaptivestyle = OptimalStyle(), criterion = ErrorStyle(ap.platform),
             verbose = false, options...)
 
     # Inform the user that an adaptive computation is starting
     verbose && println("\nAdaptive style: $(adaptivestyle)")
-    verbose && println("Error Criterium: $criterium")
+    verbose && println("Error Criterium: $criterion")
 
     # Do the actual computation
-    F, logbook, n, tol, error, iterations, converged = adaptive_approximation(adaptivestyle, fun, ap.platform; criterium=criterium, verbose=verbose, options...)
+    F, logbook, n, tol, error, iterations, converged = adaptive_approximation(adaptivestyle, fun, ap.platform; criterion=criterion, verbose=verbose, options...)
 
     # Report on the final convergence
     if !converged
@@ -125,7 +125,7 @@ end
   or at the maximum number of iterations.
 """
 function adaptive_approximation(::GreedyStyle, f, platform;
-            criterium = ErrorStyle(platform),
+            criterion = ErrorStyle(platform),
             initial_n = 1, maxlength = 2^22, maxiterations = 100,
             threshold = 1e-12, tol=100*threshold, verbose=false, options...)
 
@@ -142,7 +142,7 @@ function adaptive_approximation(::GreedyStyle, f, platform;
         verbose_on_first_call = verbose && (iterations==1)
         verbose_on_first_call && println("Adaptive: initial value of n is $n")
         P, A, B, C, S = approximate(residual_f, platform, n; verbose=verbose_on_first_call, threshold=threshold, options...)
-        converged, error = errormeasure(criterium, platform, tol, residual_f, P, n, A, B, C, S; options...)
+        converged, error = errormeasure(criterion, platform, tol, residual_f, P, n, A, B, C, S; options...)
         addlogentry!(logbook, (n, error))
 
         F = F + P
@@ -157,7 +157,7 @@ end
 
 "SimpleStyle: the number of degrees of freedom is doubled until the tolerance is achieved."
 function adaptive_approximation(::SimpleStyle, f, platform;
-            criterium = ErrorStyle(platform),
+            criterion = ErrorStyle(platform),
             initial_n = 8, maxlength = 2^22, maxiterations = 10,
             threshold = 1e-12, tol=100*threshold, verbose=false, options...)
 
@@ -174,7 +174,7 @@ function adaptive_approximation(::SimpleStyle, f, platform;
         verbose_on_first_call = verbose && (iterations==1)
         verbose_on_first_call && println("Adaptive: initial value of n is $n")
         F, A, B, C, S, L = approximate(f, platform, n; threshold=threshold, verbose = verbose_on_first_call, options...)
-        converged, error = errormeasure(criterium, platform, tol, f, F, n, A, B, C, S, L; options...)
+        converged, error = errormeasure(criterion, platform, tol, f, F, n, A, B, C, S, L; options...)
         addlogentry!(logbook, (n, error))
 
         verbose && @printf "Adaptive: N = %d, err = %1.3e, ||x|| = %1.3e\n" length(F) error norm(coefficients(F))
@@ -188,7 +188,7 @@ end
 
 "OptimalStyle: the number of degrees of freedom is chosen adaptively and optimally."
 function adaptive_approximation(::OptimalStyle, f, platform;
-        criterium = ErrorStyle(platform),
+        criterion = ErrorStyle(platform),
         initial_n = 8, maxlength = 2^12, maxiterations = 100,
         threshold = 1e-12, tol=100*threshold, verbose=false, options...)
 
@@ -210,7 +210,7 @@ function adaptive_approximation(::OptimalStyle, f, platform;
         verbose_on_first_call = verbose && (iterations==1)
         verbose_on_first_call && println("Adaptive: initial value of n is $n")
         F, A, B, C, S, L = approximate(f, platform, n; threshold=threshold, verbose=verbose_on_first_call, options...)
-        converged, error = errormeasure(criterium, platform, tol, f, F, n, A, B, C, S, L; options...)
+        converged, error = errormeasure(criterion, platform, tol, f, F, n, A, B, C, S, L; options...)
         verbose && @printf "Adaptive (phase 1): N = %d, err = %1.3e, ||x|| = %1.3e\n" length(F) error norm(coefficients(F))
 
         addlogentry!(logbook, (n, error))
@@ -232,7 +232,7 @@ function adaptive_approximation(::OptimalStyle, f, platform;
         n = (upper_n+lower_n) >> 1
 
         F, A, B, C, S, L = approximate(f, platform, n; threshold=threshold, options...)
-        converged2, error = errormeasure(criterium, platform, tol, f, F, n, A, B, C, S, L; options...)
+        converged2, error = errormeasure(criterion, platform, tol, f, F, n, A, B, C, S, L; options...)
         addlogentry!(logbook, (n, error, lower_n, upper_n))
         if !converged2
             lower_n = n+1
@@ -246,7 +246,7 @@ function adaptive_approximation(::OptimalStyle, f, platform;
         # We should take the upper_n. For simplicity, we recompute the approximation.
         n = upper_n
         F, A, B, C, S, L = approximate(f, platform, n; threshold=threshold, options...)
-        converged2, error = errormeasure(criterium, platform, tol, f, F, n, A, B, C, S, L; options...)
+        converged2, error = errormeasure(criterion, platform, tol, f, F, n, A, B, C, S, L; options...)
     end
     verbose && println("Adaptive: Optimal n is $(n)!")
 
