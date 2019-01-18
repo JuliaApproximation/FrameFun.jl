@@ -19,10 +19,11 @@ struct UnknownDictionaryStyle <: DictionaryStyle end
 struct BasisStyle <: DictionaryStyle end
 struct FrameStyle <: DictionaryStyle end
 
-DictionaryStyle(p::Platform) = UnknownDictionaryStyle()
-DictionaryStyle(p::BasisPlatform) = BasisStyle()
-DictionaryStyle(p::FramePlatform) = FrameStyle()
+DictionaryStyle(platform::Platform) = UnknownDictionaryStyle()
+DictionaryStyle(platform::BasisPlatform) = BasisStyle()
+DictionaryStyle(platform::FramePlatform) = FrameStyle()
 
+getindex(platform::Platform, n) = dictionary(platform, n)
 
 "A sampling style trait"
 abstract type SamplingStyle end

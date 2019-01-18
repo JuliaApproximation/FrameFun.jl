@@ -12,8 +12,8 @@ end
 
 DictFun(e::Expansion, args...) = DictFun{domaintype(dictionary(e)),codomaintype(dictionary(e))}(e, args...)
 
-DictFun(frame::Dictionary{S,T}, coefficients = zeros(frame), args...) where {S,T} =
-    DictFun{S,T}(Expansion(frame, coefficients), args...)
+DictFun(dict::Dictionary{S,T}, coefficients = zeros(dict), args...) where {S,T} =
+    DictFun{S,T}(Expansion(dict, coefficients), args...)
 
 DictFun(domain::Domain, basis::Dictionary, args...) = DictFun(ExtensionFrame(domain, basis), args...)
 
@@ -26,6 +26,9 @@ const DictFun4d{S <: Number,T} = DictFun{SVector{4,S},T}
 expansion(fun::DictFun) = fun.expansion
 
 Base.broadcast(fun::DictFun, x...) = broadcast(expansion(fun), x...)
+
+element(fun::DictFun, i) = DictFun(element(fun.expansion, i))
+superfun(fun::DictFun) = DictFun(superdict(dictionary(fun)), coefficients(fun))
 
 for op in (:dictionary, :dimension, :coefficients, :eltype, :numtype, :length, :size)
     @eval $op(fun::DictFun) = $op(fun.expansion)

@@ -234,6 +234,8 @@ end
 # TODO: implement this one better (more general)
 deduce_samplingparameter(::GramStyle, ap; options...) = length(dictionary(ap))
 
+deduce_samplingparameter(::RectangularGramStyle, ap; projectiondict, options...) = length(projectiondict)
+
 deduce_samplingparameter(::GridStyle, ap; options...) = nothing
 
 samplingparameter(samplingstyle::ProductSamplingStyle, ap::ApproximationProblem; options...) =
@@ -258,9 +260,16 @@ end
 samplingoperator(::GenericSamplingStyle, ap::PlatformApproximation; options...) =
     samplingoperator(ap.platform, ap.param; dict = ap.dict, options...)
 
+measure(ap::DictionaryApproximation) = measure(dictionary(ap))
+measure(ap::PlatformApproximation) = measure(platform(ap))
+
 samplingoperator(samplingstyle::GramStyle, ap::ApproximationProblem;
-        measure = measure(dictionary(ap)), options...) =
+            measure = measure(ap), options...) =
     ProjectionSampling(dictionary(ap), measure)
+
+samplingoperator(samplingstyle::RectangularGramStyle, ap::ApproximationProblem;
+            projectiondict, measure = measure(ap), options...) =
+    ProjectionSampling(projectiondict, measure)
 
 samplingoperator(samplingstyle::ProductSamplingStyle, ap::ApproximationProblem; options...) =
     tensorproduct( map( (x,style) -> samplingoperator(x; samplingstyle=style, options...),
@@ -318,7 +327,7 @@ sampling_grid(samplingstyle::ProductSamplingStyle, ap; options...) =
 discretization(ap::ApproximationProblem; options...) =
     discretization(ap, samplingoperator(ap; options...); options...)
 
-discretization(ap::ApproximationProblem, S; options...) = apply(S, dictionary(ap))
+discretization(ap::ApproximationProblem, S; options...) = apply(S, dictionary(ap); options...)
 
 # Optionally, supplying f as the first argument yields the right hand side as well
 discretization(f, ap::ApproximationProblem; options...) =
@@ -326,7 +335,7 @@ discretization(f, ap::ApproximationProblem; options...) =
 
 function discretization(f, ap::ApproximationProblem, S; options...)
     A = discretization(ap, S; options...)
-    B = apply(S, f)
+    B = apply(S, f; options...)
     A, B
 end
 
@@ -347,7 +356,7 @@ dualdiscretization(ap::ApproximationProblem; options...) =
     dualdiscretization(ap, dualsamplingoperator(ap; options...); options...)
 
 dualdiscretization(ap::ApproximationProblem, Stilde; options...) =
-    apply(Stilde, dualdictionary(ap; options...))
+    apply(Stilde, dualdictionary(ap; options...); options...)
 
 
 ##  Solver
