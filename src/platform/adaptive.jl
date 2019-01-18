@@ -45,13 +45,13 @@ end
 # Measure the error FNA style:
 # - the residual has to meet a threshold
 # - the norm of the coefficients has to be smaller than a value times the estimated norm of the right hand side
-function errormeasure(::FNAStyle, platform, tolerance, f, F, n, A, B, C, S, L; eta = 5.0, options...)
+function errormeasure(::FNAStyle, platform, tolerance, f, F, n, A, B, C, S, L; FNAeta = 5.0, options...)
     residual = norm(A*C-B)
 
     Q = discrete_normalization(platform, n, L; S=S)
     normF = abs(sqrt(sum(Q * B.^2)))
 
-    converged = (norm(C) < eta*normF) && (residual < tolerance)
+    converged = (norm(C) < FNAeta*normF) && (residual < tolerance)
     converged, residual
 end
 
@@ -91,6 +91,7 @@ function approximate(fun, ap::AdaptiveApproximation;
             @printf "     Minimal error: %1.3e\n\n" error
         end
     elseif verbose
+        @printf "     Tolerance: %1.3e\n" tol
         println("\nAdaptive: Tolerance met using $(length(F)) degrees of freedom (n=$n) in $(iterations) iterations.\n")
     end
 
