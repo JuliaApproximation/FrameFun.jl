@@ -104,8 +104,8 @@ function approximate(samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun
     S = samplingoperator(samplingstyle, ap; verbose=verbose, options...)
     verbose && showsamplinginformation(samplingstyle, dict, S)
 
-    A = apply(S, dict)
-    B = apply(S, fun)
+    A = apply(S, dict; options...)
+    B = apply(S, fun; options...)
     C = solve(solverstyle, ap, A, B; S=S, verbose=verbose, options...)
     F = DictFun(dictionary(ap), C)
     res = norm(A*C-B)
@@ -128,7 +128,14 @@ end
 
 
 function showsamplinginformation(dstyle::GramStyle, dict::Dictionary, S::ProjectionSampling)
+	# TODO: make prettier and add measure
     println(BasisFunctions.print_strings(("Fun: continuous approximation with projection:", BasisFunctions.strings(S))))
+end
+
+function showsamplinginformation(dstyle::RectangularGramStyle, dict::Dictionary, S::ProjectionSampling)
+	# TODO: make prettier and add measure
+    println("Fun: continuous sampling projecting onto:")
+	println(dictionary(S))
 end
 
 function showsamplinginformation(dstyle::ProductSamplingStyle, dict::Dictionary, S::AbstractOperator)
