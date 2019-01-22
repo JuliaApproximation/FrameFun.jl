@@ -95,7 +95,7 @@ import BasisFunctions: innerproduct, innerproduct_native
 measure(f::ExtensionFrame) = SubMeasure(measure(basis(f)), support(f))
 
 innerproduct_native(f1::ExtensionFrame, i, f2::ExtensionFrame, j, measure::SubMeasure; options...) =
-    innerproduct(basis(f1), i, basis(f2), j, supermeasure(measure); options...)
+    innerproduct(superdict(f1), i, superdict(f2), j, measure; options...)
 
 
 

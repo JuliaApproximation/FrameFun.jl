@@ -145,7 +145,7 @@ discretization(f, dict::Dictionary, args...; options...) = discretization(f, app
 discretization(f, platform::Platform, args...; options...) = discretization(f, approximationproblem(platform, args...); options...)
 
 # The solvers and related operators
-for op in (:solver, :AZ_A, :AZ_Z, :AZ_Zt, :plungeoperator, :smoothingoperator)
+for op in (:solver, :AZ_A, :AZ_Z, :AZ_Zt, :plungeoperator, :plungematrix, :plungerank, :smoothingoperator)
     @eval $op(dict::Dictionary, args...; options...) = $op(approximationproblem(dict, args...); options...)
     @eval $op(platform::Platform, args...; options...) = $op(approximationproblem(platform, args...); options...)
 end
@@ -252,9 +252,15 @@ dualsamplingoperator(ap::ApproximationProblem; samplingstyle = SamplingStyle(ap)
     dualsamplingoperator(samplingstyle, ap; options...)
 
 
-function samplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationProblem; T = coefficienttype(ap), options...)
+function samplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationProblem;
+            T = coefficienttype(ap), normalizedsampling = false, options...)
     grid = sampling_grid(samplingstyle, ap; options...)
-    GridSampling(grid, T)
+    if normalizedsampling
+        D = sampling_normalization(GridBasis{T}(grid), measure(ap); T=T, options...)
+        D * GridSampling(grid, T)
+    else
+        GridSampling(grid, T)
+    end
 end
 
 samplingoperator(::GenericSamplingStyle, ap::PlatformApproximation; options...) =
@@ -276,17 +282,32 @@ samplingoperator(samplingstyle::ProductSamplingStyle, ap::ApproximationProblem; 
                         elements(ap), samplingstyle.styles)...
     )
 
-function dualsamplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationProblem;
-            S = samplingoperator(samplingstyle, ap), options...)
-    O = discrete_normalization(ap; S=S)
-    O * S
+# First, if necessary, we recompute the samplingoperator using the given options.
+function dualsamplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationProblem; options...)
+    local S
+    if haskey(options, :S)
+        S = options[:S]
+    else
+        S = samplingoperator(samplingstyle, ap; options...)
+    end
+    dualsamplingoperator(samplingstyle, ap, S; options...)
 end
 
-dualsamplingoperator(samplingstyle::ProductSamplingStyle, ap::ApproximationProblem;
-            S = samplingoperator(samplingstyle, ap), options...) =
+function dualsamplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationProblem, S;
+            normalizedsampling = false, options...)
+    if normalizedsampling
+        S
+    else
+        O = discrete_normalization(ap; S=S)
+        O * S
+    end
+end
+
+dualsamplingoperator(samplingstyle::ProductSamplingStyle, ap::ApproximationProblem, S;
+            options...) =
     tensorproduct(
         map( (x,Sel,style) -> dualsamplingoperator(x; S=Sel, samplingstyle=style, options...),
-             elements(ap), elements(S), samplingstyle.styles)...
+             elements(ap), productelements(S), samplingstyle.styles)...
     )
 
 ## Discrete sampling grid
@@ -383,6 +404,21 @@ function plungeoperator(ap::ApproximationProblem; options...)
     Z = dualdiscretization(ap; options...)
     I = IdentityOperator(dest(A))
     I - A*Z'
+end
+
+function plungematrix(ap::ApproximationProblem; options...)
+    A = discretization(ap; options...)
+    P = plungeoperator(ap; options...)
+    P * A
+end
+
+function plungerank(ap::ApproximationProblem;
+            REG = default_regularization,
+            rankestimate = 40,
+            threshold = regularization_threshold(coefficienttype(ap)), options...)
+    C = plungematrix(ap; options...)
+    Q = REG(C; threshold = threshold, rankestimate = rankestimate, options...)
+    length(Q.Sinv)
 end
 
 

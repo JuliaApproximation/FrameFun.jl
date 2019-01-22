@@ -23,6 +23,9 @@ function directsolver(A; directsolver = :svd, verbose = false, options...)
     elseif directsolver == :qr
         verbose && println("Using direct solver: QR")
         QR_solver(A)
+	elseif directsolver == :regsvd
+        verbose && println("Using direct solver: regularized SVD")
+        regularized_SVD_solver(A; verbose=verbose, options...)
     else
         DS = directsolver(A)
         verbose && println("Using direct solver: $DS")
@@ -102,7 +105,12 @@ function approximate(samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun
     # Trigger computation of sampling parameter L first
     L = samplingparameter(samplingstyle, ap; verbose=verbose, options...)
     S = samplingoperator(samplingstyle, ap; verbose=verbose, options...)
-    verbose && showsamplinginformation(samplingstyle, dict, S)
+	if verbose
+		println()
+		println("Approximate: sampling operator has size $(size(S)):")
+		println(S)
+		println()
+	end
 
     A = apply(S, dict; options...)
     B = apply(S, fun; options...)
@@ -113,36 +121,38 @@ function approximate(samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun
     F, A, B, C, S, L
 end
 
-showsamplinginformation(dstyle::DiscreteStyle, dict::Dictionary, S::AbstractOperator) =
-    showsamplinginformation(dstyle, element(S, numelements(S)))
-
-function showsamplinginformation(::DiscreteStyle, dict::Dictionary, S::GridSampling)
-    g = grid(dest(S))
-    N = length(dict)
-    M = length(g)
-    if M > N
-        println("Fun: oversampling with N=$N and M=$M")
-    end
-    println(BasisFunctions.print_strings(("Fun: discrete sampling operator:", BasisFunctions.strings(S))))
-end
-
-
-function showsamplinginformation(dstyle::GramStyle, dict::Dictionary, S::ProjectionSampling)
-	# TODO: make prettier and add measure
-    println(BasisFunctions.print_strings(("Fun: continuous approximation with projection:", BasisFunctions.strings(S))))
-end
-
-function showsamplinginformation(dstyle::RectangularGramStyle, dict::Dictionary, S::ProjectionSampling)
-	# TODO: make prettier and add measure
-    println("Fun: continuous sampling projecting onto:")
-	println(dictionary(S))
-end
-
-function showsamplinginformation(dstyle::ProductSamplingStyle, dict::Dictionary, S::AbstractOperator)
-    println("Fun: Tensor sampling")
-end
-
-
+# showsamplinginformation(dstyle::DiscreteStyle, dict::Dictionary, S::AbstractOperator) =
+#     showsamplinginformation(dstyle, element(S, numelements(S)))
+#
+# function showsamplinginformation(::DiscreteStyle, dict::Dictionary, S::GridSampling)
+#     g = grid(dest(S))
+#     N = length(dict)
+#     M = length(g)
+#     if M > N
+#         println("Fun: oversampling with N=$N and M=$M")
+#     end
+#     println(BasisFunctions.print_strings(("Fun: discrete sampling operator:", BasisFunctions.strings(S))))
+# end
+#
+#
+# function showsamplinginformation(dstyle::GramStyle, dict::Dictionary, S::ProjectionSampling)
+# 	# TODO: make prettier and add measure
+#     println(BasisFunctions.print_strings(("Fun: continuous approximation with projection:", BasisFunctions.strings(S))))
+# 	println("Fun: measure is")
+# 	println(measure(dict))
+# end
+#
+# function showsamplinginformation(dstyle::RectangularGramStyle, dict::Dictionary, S::ProjectionSampling)
+# 	# TODO: make prettier and add measure
+#     println("Fun: continuous sampling projecting onto:")
+# 	println(dictionary(S))
+# 	println("Fun: measure is")
+# 	println(measure(S))
+# end
+#
+# function showsamplinginformation(dstyle::ProductSamplingStyle, dict::Dictionary, S::AbstractOperator)
+#     println("Fun: Tensor sampling")
+# end
 
 
 solve(style::SolverStyle, ap, A, B; options...) =
@@ -159,30 +169,11 @@ solver(::AZSmoothStyle, ap, A, Zt; options...) = AZSolver_with_smoothing(A, Zt; 
 
 solver(::DualStyle, ap, A; options...) = dualdiscretization(ap; options...)
 
-# TODO: move these to BasisFunctions.jl
-element(op::GridSampling, i) = GridSampling(element(dest(op),i))
-elements(op::GridSampling) = map( s -> GridSampling(s), elements(dest(op)))
-function tensorproduct(ops::GridSampling...)
-	T = promote_type(map(t->coefficienttype(dest(t)), ops)...)
-	g = ProductGrid(map(grid, ops)...)
-	GridSampling(g, T)
-end
-function tensorproduct(op1::AbstractOperator, op2::AbstractOperator, op3::AbstractOperator)
-	@assert dest(op1) isa GridBasis
-	@assert dest(op2) isa GridBasis
-	@assert dest(op3) isa GridBasis
-	# TODO: generalize to longer operators
-	@assert numelements(op1) == 2
-	@assert numelements(op2) == 2
-	@assert numelements(op3) == 2
-	tensorproduct(element(op1,2),element(op2,2),element(op3,2)) * tensorproduct(element(op1,1),element(op2,1),element(op3,1))
-end
-
 
 solver(solverstyle::ProductSolverStyle, ap, A; S, options...) =
     TensorProductOperator(
 		map( (ap_el,Ael,Sel,style) -> solver(style, ap_el, Ael; S=Sel, options...),
-				elements(ap), elements(A), elements(S), solverstyle.styles)...
+				elements(ap), productelements(A), productelements(S), solverstyle.styles)...
 	)
 
 solver(::TridiagonalProlateStyle, ap, A; scaling = Zt_scaling_factor(dictionary(ap), A), options...) =
