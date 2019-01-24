@@ -27,6 +27,12 @@ oversampling_grid(dict::TensorProductDict, L) = ProductGrid(map(oversampling_gri
 
 oversampling_grid(dict::ExtensionFrame, L) = subgrid(oversampling_grid(superdict(dict),L), support(dict))
 
+oversampling_grid(dict::WeightedDict, L) = oversampling_grid(superdict(dict), L)
+
+oversampling_grid(dict::MappedDict, L) = apply_map(oversampling_grid(superdict(dict), L), mapping(dict))
+
+oversampling_grid(dict::OperatedDict, L) = oversampling_grid(superdict(dict), L)
+
 initialguess(dict::Dictionary1d, M::Int) = M
 initialguess(dict::Dictionary, M) = size(dict)
 initialguess(ap, M) = initialguess(dictionary(ap), M)

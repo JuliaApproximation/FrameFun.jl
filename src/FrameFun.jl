@@ -51,7 +51,7 @@ import DomainSets: cartesianproduct, ×
 import BasisFunctions: src, dest, matrix, matrix!, apply!, apply_inplace!,
     dimension, codomaintype, domaintype, apply_multiple
 
-import BasisFunctions: tensorproduct, ⊗
+import BasisFunctions: tensorproduct, ⊗, productelements, productelement
 
 import BasisFunctions: interpolation_grid, left, right, stepsize, sample, support
 
@@ -165,9 +165,11 @@ export DirectStyle, InverseStyle, DualStyle, IterativeStyle, AZStyle,
 # from platform/interface.jl
 export approximate
 export samplingoperator, dualsamplingoperator, samplingparameter,
-    dictionary, dualdictionary, plungeoperator, smoothingoperator,
+    dictionary, dualdictionary, solver,
     discretization, dualdiscretization,
-    solver, AZ_A, AZ_Z, AZ_Zt
+    smoothingoperator,
+    plungeoperator, plungematrix, plungerank,
+    AZ_A, AZ_Z, AZ_Zt
 export interpolation_grid, oversampling_grid
 
 # from platform/bases.jl
