@@ -61,7 +61,7 @@ import BasisFunctions: isbasis, isframe, isorthogonal, isorthonormal, isbiorthog
 
 import BasisFunctions: hasmeasure, measure
 
-import BasisFunctions: operator, matrix, isdiagonal, isinplace, ⊕
+import BasisFunctions: operator, matrix, isdiag, isinplace, ⊕
 
 import BasisFunctions: coefficients, dictionary,
     evaluation_operator, interpolation_operator,

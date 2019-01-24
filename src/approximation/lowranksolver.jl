@@ -21,10 +21,22 @@ struct RandomizedSvdSolver{T} <: AbstractSolverOperator{T}
     scratch_dest::  Array{T,1}
 
     smallcoefficients   :: Bool
-    smalltol            :: Float64
+    smallcoefficients_atol            :: Float64
+    smallcoefficients_rtol            :: Float64
 
-    function RandomizedSvdSolver{T}(A::DictionaryOperator; threshold = default_threshold(A), rankestimate = 5, verbose = false, smallcoefficients = false, smalltol = 10, options...) where {T}
+    function RandomizedSvdSolver{T}(A::DictionaryOperator;
+                threshold = default_threshold(A), rankestimate = 5, verbose = false, smallcoefficients = false,
+                smallcoefficients_atol = NaN, smallcoefficients_rtol = NaN, options...) where {T}
         W, U, S, Vt = randomizedsvd(A, threshold = threshold, rankestimate = rankestimate, verbose = verbose)
+
+        # Small coefficients #
+        # One of the tolerances can not be NaN
+        # If we know the norm of the function, we can wet the atol as rtol*\|f\| and rtol to NaN to simulate a relative tolerance using an absolute tolerace.
+        smallcoefficients && (@assert !isnan(smallcoefficients_atol) || !isnan(smallcoefficients_rtol))
+        if verbose && smallcoefficients
+             !isnan(smallcoefficients_atol) && println("Coefficients kept smaller than: $(smallcoefficients_atol)")
+             !isnan(smallcoefficients_rtol) && println("Coefficients kept smaller than: $(smallcoefficients_rtol)||b||")
+        end
 
         Wsrc = DiscreteVectorDictionary{T}(size(W,2))
         Wdest = src(A)
@@ -33,7 +45,7 @@ struct RandomizedSvdSolver{T} <: AbstractSolverOperator{T}
         scratch_dest = zeros(T, length(src(A)))
         y = zeros(T, size(Vt,2))
         sy = zeros(T, length(S))
-        new(A, WM, U', S.^(-1), Vt', y, sy, scratch_src, scratch_dest, smallcoefficients, smalltol)
+        new(A, WM, U', S.^(-1), Vt', y, sy, scratch_src, scratch_dest, smallcoefficients, smallcoefficients_atol, smallcoefficients_rtol)
     end
 end
 
@@ -44,11 +56,11 @@ RandomizedSvdSolver(A::DictionaryOperator; options...) =
 
 apply!(s::RandomizedSvdSolver, coef_dest, coef_src) = _apply!(s, coef_dest, coef_src,
     s.W, s.Ut, s.Sinv, s.V, s.y, s.sy, s.scratch_src, s.scratch_dest,
-    s.smallcoefficients, s.smalltol)
+    s.smallcoefficients, s.smallcoefficients_atol, s.smallcoefficients_rtol)
 
 # We don't need to (de)linearize coefficients when they are already vectors
 function _apply!(s::RandomizedSvdSolver, coef_dest::Vector, coef_src::Vector,
-    W, Ut, Sinv, V, y, sy, scratch_src, scratch_dest, smallcoefficients, smalltol)
+    W, Ut, Sinv, V, y, sy, scratch_src, scratch_dest, smallcoefficients, smallcoefficients_atol, smallcoefficients_rtol)
 
     # Applying the truncated SVD to P*Rhs
     mul!(sy, Ut, coef_src)
@@ -56,20 +68,25 @@ function _apply!(s::RandomizedSvdSolver, coef_dest::Vector, coef_src::Vector,
         sy[i] = sy[i]*Sinv[i]
     end
     if smallcoefficients
-        M = maximum(abs.(coef_src))
-        sy[abs.(sy) .> smalltol*M] = 0
+        if !isnan(smallcoefficients_rtol)
+            M = maximum(abs.(coef_src))
+            sy[abs.(sy) .> smallcoefficients_rtol*M] .= 0
+        end
+        if !isnan(smallcoefficients_atol)
+            sy[abs.(sy) .> smallcoefficients_atol] .= 0
+        end
     end
     mul!(y, V, sy)
     apply!(W, coef_dest, y)
 end
 
 function _apply!(s::RandomizedSvdSolver, coef_dest, coef_src,
-    W, Ut, Sinv, V, y, sy, scratch_src, scratch_dest, smallcoefficients, smalltol)
+    W, Ut, Sinv, V, y, sy, scratch_src, scratch_dest, smallcoefficients, smallcoefficients_atol)
 
     linearize_coefficients!(src(s), scratch_src, coef_src)
     # Call the implementation above for vectors
     _apply!(s, scratch_dest, scratch_src, W, Ut, Sinv, V, y, sy,
-        scratch_src, scratch_dest, smallcoefficients, smalltol)
+        scratch_src, scratch_dest, smallcoefficients, smallcoefficients_atol)
     delinearize_coefficients!(dest(s), coef_dest, scratch_dest)
 end
 
@@ -134,7 +151,9 @@ function apply!(s::ExactSvdSolver, coef_dest, coef_src)
 end
 
 # Function with equal functionality, but allocating memory
-function truncatedsvd_solve(b::Vector, A::DictionaryOperator; threshold = default_threshold(A), R = 5, growth_factor = 2, verbose = false, smallcoefficients=false,smalltol=10,options...)
+function truncatedsvd_solve(b::Vector, A::DictionaryOperator;
+            threshold = default_threshold(A), R = 5, growth_factor = 2, verbose = false,
+            smallcoefficients=false,smallcoefficients_atol=10, options...)
     finished=false
     T = eltype(A)
     R = min(R, size(A,2))
