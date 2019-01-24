@@ -185,10 +185,6 @@ solver(::AZSmoothStyle, ap, A, Zt; options...) = AZSolver_with_smoothing(A, Zt; 
 
 solver(::DualStyle, ap, A; options...) = dualdiscretization(ap; options...)
 
-<<<<<<< HEAD
-=======
-
->>>>>>> e19532a1e8c0e97f2857a1c40cb961810e7e3f4a
 solver(solverstyle::ProductSolverStyle, ap, A; S, options...) =
     TensorProductOperator(
 		map( (ap_el,Ael,Sel,style) -> solver(style, ap_el, Ael; S=Sel, options...),
