@@ -81,12 +81,12 @@ function _apply!(s::RandomizedSvdSolver, coef_dest::Vector, coef_src::Vector,
 end
 
 function _apply!(s::RandomizedSvdSolver, coef_dest, coef_src,
-    W, Ut, Sinv, V, y, sy, scratch_src, scratch_dest, smallcoefficients, smallcoefficients_atol)
+    W, Ut, Sinv, V, y, sy, scratch_src, scratch_dest, smallcoefficients, smallcoefficients_atol, smallcoefficients_rtol)
 
     linearize_coefficients!(src(s), scratch_src, coef_src)
     # Call the implementation above for vectors
     _apply!(s, scratch_dest, scratch_src, W, Ut, Sinv, V, y, sy,
-        scratch_src, scratch_dest, smallcoefficients, smallcoefficients_atol)
+        scratch_src, scratch_dest, smallcoefficients, smallcoefficients_atol, smallcoefficients_rtol)
     delinearize_coefficients!(dest(s), coef_dest, scratch_dest)
 end
 
