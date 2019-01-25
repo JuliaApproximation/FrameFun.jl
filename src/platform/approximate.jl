@@ -124,19 +124,34 @@ end
 
 
 solve(style::SolverStyle, ap, A, B; options...) =
-    solver(style, ap, A; options...) * B
+    solver(style, ap, A; B=B, options...) * B
 
 solver(::InverseStyle, ap, A; options...) = inv(A)
 solver(::DirectStyle, ap, A; options...) = directsolver(A; options...)
 
 solver(style::AZStyle, ap, A; options...) = solver(style, ap, A, AZ_Zt(ap; options...); options...)
-solver(::AZStyle, ap, A, Zt; options...) = AZSolver(A, Zt; options...)
+function solver(::AZStyle, ap, A, Zt;
+            B=nothing, smallcoefficients=false, smallcoefficients_atol=NaN, smallcoefficients_rtol=NaN, verbose=false, options...)
+    if smallcoefficients
+        Q = discrete_normalization(ap; options...)
+        normF = abs(sqrt(sum(Q * B.^2)))
+        if !isnan(smallcoefficients_rtol)
+            verbose && println("Change smallcoefficients relative tolerance to absolute tolerance rtol*||f||")
+            smallcoefficients_atol = smallcoefficients_rtol*normF
+            smallcoefficients_rtol = NaN
+        end
+
+        AZSolver(A, Zt; smallcoefficients=smallcoefficients, smallcoefficients_rtol=smallcoefficients_rtol,
+                smallcoefficients_atol=smallcoefficients_atol, verbose=verbose, options...)
+    else
+        AZSolver(A, Zt; B=B, verbose=verbose, options...)
+    end
+end
 
 solver(style::AZSmoothStyle, ap, A; options...) = solver(style, ap, A, AZ_Zt(ap; options...); options...)
 solver(::AZSmoothStyle, ap, A, Zt; options...) = AZSolver_with_smoothing(A, Zt; options...)
 
 solver(::DualStyle, ap, A; options...) = dualdiscretization(ap; options...)
-
 
 solver(solverstyle::ProductSolverStyle, ap, A; S, options...) =
     TensorProductOperator(
