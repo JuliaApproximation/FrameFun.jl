@@ -13,7 +13,7 @@ function delimit(s::AbstractString)
     println("############")
 end
 
-jupyter = Conda.PYTHONDIR * "jupyter"
+jupyter = PYTHONDIR * "/jupyter"
 
 FRAMEFUNSRC = pathof(FrameFun)
 FRAMEFUNPATH = splitdir(splitdir(FRAMEFUNSRC)[1])[1]
