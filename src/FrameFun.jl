@@ -181,6 +181,8 @@ export GreedyStyle, SimpleStyle, OptimalStyle
 export ResidualStyle, OversampledResidual, RandomPoints, FNAStyle
 
 
+include("util/prettyprint.jl")
+
 include("sampling/subgrid.jl")
 include("sampling/boundary.jl")
 

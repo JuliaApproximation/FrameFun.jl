@@ -59,7 +59,8 @@ end
 function Fun(fun, ap::ApproximationProblem; verbose = false, options...)
     if verbose
         println("Fun: using the following dictionary:")
-        println("$(dictionary(ap))")
+        show(dictionary(ap))
+		println()
     end
     F, A, B, C, S = approximate(fun, ap; verbose=verbose, options...)
     F
@@ -107,7 +108,7 @@ function approximate(samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun
     S = samplingoperator(samplingstyle, ap; verbose=verbose, options...)
 	if verbose
 		println()
-		println("Approximate: sampling operator has size $(size(S)):")
+		println("Approximate: sampling operator with size $(size(S)) is")
 		println(S)
 		println()
 	end
@@ -120,39 +121,6 @@ function approximate(samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun
     verbose && println("Approximate: ended with residual $res\n")
     F, A, B, C, S, L
 end
-
-# showsamplinginformation(dstyle::DiscreteStyle, dict::Dictionary, S::AbstractOperator) =
-#     showsamplinginformation(dstyle, element(S, numelements(S)))
-#
-# function showsamplinginformation(::DiscreteStyle, dict::Dictionary, S::GridSampling)
-#     g = grid(dest(S))
-#     N = length(dict)
-#     M = length(g)
-#     if M > N
-#         println("Fun: oversampling with N=$N and M=$M")
-#     end
-#     println(BasisFunctions.print_strings(("Fun: discrete sampling operator:", BasisFunctions.strings(S))))
-# end
-#
-#
-# function showsamplinginformation(dstyle::GramStyle, dict::Dictionary, S::ProjectionSampling)
-# 	# TODO: make prettier and add measure
-#     println(BasisFunctions.print_strings(("Fun: continuous approximation with projection:", BasisFunctions.strings(S))))
-# 	println("Fun: measure is")
-# 	println(measure(dict))
-# end
-#
-# function showsamplinginformation(dstyle::RectangularGramStyle, dict::Dictionary, S::ProjectionSampling)
-# 	# TODO: make prettier and add measure
-#     println("Fun: continuous sampling projecting onto:")
-# 	println(dictionary(S))
-# 	println("Fun: measure is")
-# 	println(measure(S))
-# end
-#
-# function showsamplinginformation(dstyle::ProductSamplingStyle, dict::Dictionary, S::AbstractOperator)
-#     println("Fun: Tensor sampling")
-# end
 
 
 solve(style::SolverStyle, ap, A, B; options...) =

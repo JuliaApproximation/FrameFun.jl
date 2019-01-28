@@ -40,7 +40,8 @@ hastransform(f::ExtensionFrame, dgs) = false
 # - there is no antiderivative (in general)
 hasantiderivative(f::ExtensionFrame) = false
 
-name(f::ExtensionFrame) = "An extension frame of " * name(f.basis)
+name(f::ExtensionFrame) = "Extension frame"
+
 
 dict_in_support(f::ExtensionFrame, x) = x ∈ support(f)
 dict_in_support(f::ExtensionFrame, idx, x) = x ∈ support(f) && in_support(basis(f), idx, x)
@@ -96,6 +97,17 @@ measure(f::ExtensionFrame) = SubMeasure(measure(basis(f)), support(f))
 
 innerproduct_native(f1::ExtensionFrame, i, f2::ExtensionFrame, j, measure::SubMeasure; options...) =
     innerproduct(superdict(f1), i, superdict(f2), j, measure; options...)
+
+
+## Printing
+
+string(f::ExtensionFrame) = name(f) * " of " * name(f.basis)
+
+modifiersymbol(dict::ExtensionFrame) = PrettyPrintSymbol{:𝔼}(dict)
+
+string(s::PrettyPrintSymbol{:𝔼}) = _string(s, s.object)
+_string(s::PrettyPrintSymbol{:𝔼}, dict::ExtensionFrame) =
+    "Extension frame, from $(support(dict)) to $(support(superdict(dict)))"
 
 
 
