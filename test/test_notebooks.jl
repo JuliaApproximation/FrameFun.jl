@@ -1,6 +1,6 @@
 module test_nodebooks
 
-using Conda.PYTHONDIR
+using Conda: PYTHONDIR
 using DomainSets
 using BasisFunctions
 using FrameFun
