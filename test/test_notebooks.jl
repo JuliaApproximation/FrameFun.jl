@@ -1,5 +1,6 @@
 module test_nodebooks
 
+using Conda.PYTHONDIR
 using DomainSets
 using BasisFunctions
 using FrameFun
@@ -12,8 +13,7 @@ function delimit(s::AbstractString)
     println("############")
 end
 
-
-jupyter = chomp(read(pipeline(`find $(homedir())/.julia/packages/Conda/  -name "jupyter" -type f`,`head -n 1`),String))
+jupyter = Conda.PYTHONDIR * "jupyter"
 
 FRAMEFUNSRC = pathof(FrameFun)
 FRAMEFUNPATH = splitdir(splitdir(FRAMEFUNSRC)[1])[1]
