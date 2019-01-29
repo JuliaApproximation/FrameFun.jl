@@ -1,6 +1,6 @@
 
 import BasisFunctions:
     name, string, strings,
-    has_stencil, stencilarray,
+    hasstencil, stencilarray,
     PrettyPrintSymbol, _string,
     modifiersymbol
