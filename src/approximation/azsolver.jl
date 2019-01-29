@@ -60,19 +60,10 @@ function _apply!(s::AZSolver, coef_dest, coef_src, plunge_op::DictionaryOperator
     apply!(psolver, x1, Pb)
 
     # Step 2: Compute x2 =  Zt*(b-A*x1)
-    # Note: We store A*x1 in b and subtract from the right hand side (which here,
-    # confusingly, is called coef_src and not b)
     apply!(A, Pb, x1)
-    # Ideally, the loop below would become: Pb .= coef_src .- Pb.
-    # Currently, this fails for multiarrays
-    for i in eachindex(Pb)
-        Pb[i] = coef_src[i]-Pb[i]
-    end
+    Pb .= coef_src .- Pb
     apply!(Zt, coef_dest, Pb)
 
     # Step 3: x = x1 + x2
-    # Ideally, the loop below would become: coef_dest .= coef_dest .+ x1
-    for i in eachindex(coef_dest)
-        coef_dest[i] += x1[i]
-    end
+    coef_dest .+= x1
 end
