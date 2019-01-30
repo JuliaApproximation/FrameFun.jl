@@ -47,7 +47,7 @@ abstract type ProjectionStyle <: SamplingStyle end
 struct GramStyle <: ProjectionStyle end
 struct RectangularGramStyle <: ProjectionStyle end
 
-"The sampling operator is determined by invoking `genericsampling` on the platform."
+"The sampling operator is determined by invoking `genericsamplingoperator` on the platform."
 struct GenericSamplingStyle <: SamplingStyle end
 
 struct ProductSamplingStyle <: SamplingStyle

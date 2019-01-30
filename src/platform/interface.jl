@@ -129,7 +129,7 @@ approximationproblem(ap::AdaptiveApproximation, param, L) = approximationproblem
 # Below is an exhaustive list of functions that implement the Fun interface.
 
 # The sampling and dual sampling operator
-for op in (:samplingoperator, :dualsamplingoperator, :samplingparameter)
+for op in (:samplingoperator, :dualsamplingoperator, :samplingparameter, :sampling_grid)
     @eval $op(dict::Dictionary, args...; options...) = $op(approximationproblem(dict, args...); options...)
     @eval $op(platform::Platform, args...; options...) = $op(approximationproblem(platform, args...); options...)
 end
@@ -253,10 +253,10 @@ dualsamplingoperator(ap::ApproximationProblem; samplingstyle = SamplingStyle(ap)
 
 
 function samplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationProblem;
-            T = coefficienttype(ap), normalizedsampling = false, options...)
+            T = coefficienttype(ap), normalizedsampling = false, measure = measure(ap), options...)
     grid = sampling_grid(samplingstyle, ap; options...)
     if normalizedsampling
-        D = sampling_normalization(GridBasis{T}(grid), measure(ap); T=T, options...)
+        D = sampling_normalization(GridBasis{T}(grid), measure; T=T, options...)
         D * GridSampling(grid, T)
     else
         GridSampling(grid, T)
@@ -264,7 +264,7 @@ function samplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationProblem
 end
 
 samplingoperator(::GenericSamplingStyle, ap::PlatformApproximation; options...) =
-    samplingoperator(ap.platform, ap.param; dict = ap.dict, options...)
+    genericsamplingoperator(ap.platform, ap.param; dict = ap.dict, options...)
 
 measure(ap::DictionaryApproximation) = measure(dictionary(ap))
 measure(ap::PlatformApproximation) = measure(platform(ap))
@@ -311,6 +311,9 @@ dualsamplingoperator(samplingstyle::ProductSamplingStyle, ap::ApproximationProbl
     )
 
 ## Discrete sampling grid
+
+sampling_grid(ap::ApproximationProblem; samplingstyle = SamplingStyle(ap), options...) =
+    sampling_grid(samplingstyle, ap; options...)
 
 # - interpolation: we invoke interpolation_grid on the dictionary or platform
 sampling_grid(::InterpolationStyle, ap::DictionaryApproximation; options...) =
