@@ -13,24 +13,36 @@ function delimit(s::AbstractString)
     println("############")
 end
 
-Conda.add("jupyter")
-jupyter = Conda.PYTHONDIR * "/jupyter"
 
-FRAMEFUNSRC = pathof(FrameFun)
-FRAMEFUNPATH = splitdir(splitdir(FRAMEFUNSRC)[1])[1]
-delimit("Notebooks")
-
-run(`$jupyter nbconvert --to script $FRAMEFUNPATH'/examples/*.ipynb'`)
-a = readdir("$FRAMEFUNPATH/examples/")
-scripts = a[occursin.(".jl",a)]
-try
-    for LINE in scripts
-        println("Run $(LINE)")
-        include("$FRAMEFUNPATH/examples/"*LINE)
+jupyter = Sys.which("jupyter")
+if jupyter == nothing
+    jupyter = Sys.which(Conda.PYTHONDIR * "/jupyter")
+    if jupyter == nothing
+        try
+            Conda.add("jupyter")
+        catch
+        end
     end
-finally
-    for LINE in scripts
-        rm("$FRAMEFUNPATH/examples/"*LINE)
+end
+if jupyter == nothing
+    @warn "Jupyter not installed and no internet connection to install, abandoning notebook tests."
+else
+    FRAMEFUNSRC = pathof(FrameFun)
+    FRAMEFUNPATH = splitdir(splitdir(FRAMEFUNSRC)[1])[1]
+    delimit("Notebooks")
+
+    run(`$jupyter nbconvert --to script $FRAMEFUNPATH'/examples/*.ipynb'`)
+    a = readdir("$FRAMEFUNPATH/examples/")
+    scripts = a[occursin.(".jl",a)]
+    try
+        for LINE in scripts
+            println("Run $(LINE)")
+            include("$FRAMEFUNPATH/examples/"*LINE)
+        end
+    finally
+        for LINE in scripts
+            rm("$FRAMEFUNPATH/examples/"*LINE)
+        end
     end
 end
 end

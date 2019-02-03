@@ -160,8 +160,10 @@ end
 # to a value of the platform parameter n.
 # Platforms may choose to override these to enable different behaviour.
 
-interpolation_grid(platform::Platform, n; dict = dictionary(platform, n), options...) =
+function interpolation_grid(platform::Platform, n; dict = dictionary(platform, n), oversamplingfactor=1, options...)
+    oversamplingfactor != 1 && @warn "InterpolationStyle does not support option `oversamplingfactor=$oversamplingfactor`, use `OversamplingStyle()` instead."
     interpolation_grid(dict)
+end
 
 oversampling_grid(platform::Platform, n, L; dict = dictionary(platform, n), options...) =
     oversampling_grid(dict, L)
@@ -169,8 +171,8 @@ oversampling_grid(platform::Platform, n, L; dict = dictionary(platform, n), opti
 dualdictionary(platform::Platform, n; dict = dictionary(platform, n)) =
     dualdictionary(dict)
 
-discrete_normalization(platform::Platform, n, L; S = samplingoperator(platform, n, L), options...) =
-    quadraturenormalization(S, measure(platform))
+discrete_normalization(platform::Platform, n, L; measure=measure(platform), S = samplingoperator(platform, n, L), options...) =
+    quadraturenormalization(S, measure)
 
 space(platform::Platform) = space(measure(platform))
 
@@ -209,7 +211,7 @@ function samplingparameter(samplingstyle::SamplingStyle, ap::ApproximationProble
 end
 
 function deduce_samplingparameter(::InterpolationStyle, ap;
-            verbose = false, oversamplingfactor = 2, options...)
+            verbose = false, oversamplingfactor = 1, options...)
     N = length(dictionary(ap))
     L = match_sampling_parameter(ap, N)
     L
@@ -316,8 +318,10 @@ sampling_grid(ap::ApproximationProblem; samplingstyle = SamplingStyle(ap), optio
     sampling_grid(samplingstyle, ap; options...)
 
 # - interpolation: we invoke interpolation_grid on the dictionary or platform
-sampling_grid(::InterpolationStyle, ap::DictionaryApproximation; options...) =
+function sampling_grid(::InterpolationStyle, ap::DictionaryApproximation; oversamplingfactor=1, options...)
+    oversamplingfactor != 1 && @warn "InterpolationStyle does not support option `oversamplingfactor=$oversamplingfactor`, use `OversamplingStyle()` instead."
     interpolation_grid(dictionary(ap))
+end
 sampling_grid(::InterpolationStyle, ap::PlatformApproximation; options...) =
     interpolation_grid(ap.platform, ap.param; dict = ap.dict, options...)
 

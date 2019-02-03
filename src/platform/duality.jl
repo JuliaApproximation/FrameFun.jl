@@ -1,5 +1,5 @@
 
-discrete_normalization(dict::Dictionary, L; S) = quadraturenormalization(S, measure(dict))
+discrete_normalization(dict::Dictionary, L; measure=measure(dict), S) = quadraturenormalization(S, measure)
 
 dualdictionary(dict::Dictionary) = _dualdictionary(dict, gramoperator(dict))
 _dualdictionary(dict::Dictionary, gram::IdentityOperator) = dict

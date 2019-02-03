@@ -59,7 +59,7 @@ import BasisFunctions: isbasis, isframe, isorthogonal, isorthonormal, isbiorthog
     hastransform, hasinterpolationgrid, hasderivative,
     hasantiderivative, hasextension, hasgrid_transform
 
-import BasisFunctions: hasmeasure, measure
+import BasisFunctions: hasmeasure, measure, gramoperator, dualdictionary
 
 import BasisFunctions: operator, matrix, isdiag, isinplace, ⊕
 
