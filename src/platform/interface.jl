@@ -255,10 +255,10 @@ dualsamplingoperator(ap::ApproximationProblem; samplingstyle = SamplingStyle(ap)
 
 
 function samplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationProblem;
-            T = coefficienttype(ap), normalizedsampling = false, measure = measure(ap), options...)
+            T = coefficienttype(ap), normalizedsampling = false, options...)
     grid = sampling_grid(samplingstyle, ap; options...)
     if normalizedsampling
-        D = sampling_normalization(GridBasis{T}(grid), measure; T=T, options...)
+        D = sampling_normalization(GridBasis{T}(grid), measure(ap; options...); T=T, options...)
         D * GridSampling(grid, T)
     else
         GridSampling(grid, T)
