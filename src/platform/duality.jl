@@ -55,8 +55,8 @@ _dualdictionary(dict::Dictionary, gram) = conj(inv(gram)) * dict
 
 ## Weighted dictionaries
 
-function dualplatformdictionary(dict::WeightedDict)
-    dtilde = dualplatformdictionary(superdict(dict))
+function dualplatformdictionary(dict::WeightedDict; options...)
+    dtilde = dualplatformdictionary(superdict(dict); options...)
     invweight = x -> conj(1/dict.weightfun(x))
     WeightedDict(dtilde, invweight)
 end
@@ -77,17 +77,17 @@ end
 
 ## Product dictionaries
 
-dualplatformdictionary(dict::TensorProductDict) = TensorProductDict(map(dualplatformdictionary, elements(dict))...)
+dualplatformdictionary(dict::TensorProductDict; options...) = TensorProductDict(map(dualplatformdictionary, elements(dict))...)
 
 
 ## Complexified dictionaries
 
 import BasisFunctions: ComplexifiedDict
 
-dualplatformdictionary(dict::ComplexifiedDict) =
-    ComplexifiedDict(dualplatformdictionary(superdict(dict)))
+dualplatformdictionary(dict::ComplexifiedDict; options...) =
+    ComplexifiedDict(dualplatformdictionary(superdict(dict); options...))
 
 
 ## Extension frames
 
-dualplatformdictionary(dict::ExtensionFrame) = ExtensionFrame(support(dict),dualplatformdictionary(basis(dict)))
+dualplatformdictionary(dict::ExtensionFrame; options...) = ExtensionFrame(support(dict),dualplatformdictionary(basis(dict); options...))
