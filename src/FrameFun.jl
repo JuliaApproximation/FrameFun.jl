@@ -59,7 +59,7 @@ import BasisFunctions: isbasis, isframe, isorthogonal, isorthonormal, isbiorthog
     hastransform, hasinterpolationgrid, hasderivative,
     hasantiderivative, hasextension, hasgrid_transform
 
-import BasisFunctions: hasmeasure, measure, gramoperator, dualdictionary
+import BasisFunctions: hasmeasure, measure, gramoperator, dualdictionary, Measure
 
 import BasisFunctions: operator, matrix, isdiag, isinplace, ⊕
 
@@ -165,7 +165,7 @@ export DirectStyle, InverseStyle, DualStyle, IterativeStyle, AZStyle,
 # from platform/interface.jl
 export approximate
 export samplingoperator, dualsamplingoperator, samplingparameter,
-    dictionary, dualdictionary, solver,
+    dictionary, dualplatformdictionary, solver,
     discretization, dualdiscretization,
     smoothingoperator,
     plungeoperator, plungematrix, plungerank,

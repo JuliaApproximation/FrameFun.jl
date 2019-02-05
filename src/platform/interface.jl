@@ -168,9 +168,6 @@ end
 oversampling_grid(platform::Platform, n, L; dict = dictionary(platform, n), options...) =
     oversampling_grid(dict, L)
 
-dualdictionary(platform::Platform, n; dict = dictionary(platform, n)) =
-    dualdictionary(dict)
-
 discrete_normalization(platform::Platform, n, L; measure=measure(platform), S = samplingoperator(platform, n, L), options...) =
     quadraturenormalization(S, measure)
 
@@ -253,7 +250,6 @@ samplingoperator(ap::ApproximationProblem; samplingstyle = SamplingStyle(ap), op
 dualsamplingoperator(ap::ApproximationProblem; samplingstyle = SamplingStyle(ap), options...) =
     dualsamplingoperator(samplingstyle, ap; options...)
 
-
 function samplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationProblem;
             T = coefficienttype(ap), normalizedsampling = false, options...)
     grid = sampling_grid(samplingstyle, ap; options...)
@@ -267,9 +263,6 @@ end
 
 samplingoperator(::GenericSamplingStyle, ap::PlatformApproximation; options...) =
     genericsamplingoperator(ap.platform, ap.param; dict = ap.dict, options...)
-
-measure(ap::DictionaryApproximation) = measure(dictionary(ap))
-measure(ap::PlatformApproximation) = measure(platform(ap))
 
 samplingoperator(samplingstyle::GramStyle, ap::ApproximationProblem;
             measure = measure(ap), options...) =
@@ -367,13 +360,6 @@ function discretization(f, ap::ApproximationProblem, S; options...)
     A, B
 end
 
-
-## Dual dictionary and sampling operator
-
-dualdictionary(ap::DictionaryApproximation; options...) = dualdictionary(dictionary(ap))
-dualdictionary(ap::PlatformApproximation; options...) =
-    dualdictionary(ap.platform, ap.param; dict = dictionary(ap))
-
 discrete_normalization(ap::DictionaryApproximation; options...) =
     discrete_normalization(dictionary(ap), samplingparameter(ap); options...)
 discrete_normalization(ap::PlatformApproximation; options...) =
@@ -384,7 +370,7 @@ dualdiscretization(ap::ApproximationProblem; options...) =
     dualdiscretization(ap, dualsamplingoperator(ap; options...); options...)
 
 dualdiscretization(ap::ApproximationProblem, Stilde; options...) =
-    apply(Stilde, dualdictionary(ap; options...); options...)
+    apply(Stilde, dualplatformdictionary(ap; options...); options...)
 
 
 ##  Solver

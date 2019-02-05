@@ -17,9 +17,9 @@ weight(platform::WeightedSumPlatform, i) = platform.weights[i]
 dictionary(platform::WeightedSumPlatform, i) =
     MultiDict([weight(platform, j) * dictionary(platform.P, i) for j in 1:length(platform.weights)])
 
-function dualdictionary(platform::WeightedSumPlatform, i; dict = dictionary(platform, i))
+function dualplatformdictionary(platform::WeightedSumPlatform, i; dict = dictionary(platform, i))
     denom = (x...)->sum(map(w->abs(w(x...))^2, platform.weights))
-    MultiDict([((x...)->(platform.weights[j](x...)/denom(x...))) * dualdictionary(platform.P, i) for j=1:length(platform.weights)])
+    MultiDict([((x...)->(platform.weights[j](x...)/denom(x...))) * dualplatformdictionary(platform.P, i) for j=1:length(platform.weights)])
 end
 
 oversampling_grid(p::WeightedSumPlatform, param, L; dict, options...) =

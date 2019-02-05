@@ -19,8 +19,8 @@ weightfun(platform::AugmentationPlatform) = platform.weightfun
 dictionary(platform::AugmentationPlatform, i::Int) =
     MultiDict([dictionary(platform.basis, i), platform.functions])
 
-dualdictionary(platform::AugmentationPlatform, i::Int; dict = dictionary(platform, i)) =
-    MultiDict([dualdictionary(platform.basis, i), platform.functions])
+dualplatformdictionary(platform::AugmentationPlatform, i::Int; dict = dictionary(platform, i)) =
+    MultiDict([dualplatformdictionary(platform.basis, i), platform.functions])
 
 oversampling_grid(platform::AugmentationPlatform, param, L; dict, options...) =
     oversampling_grid(platform.basis, param, L)
