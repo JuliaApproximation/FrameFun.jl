@@ -1,54 +1,83 @@
 
 # a dualplatformdictionary does not always need a measure (depending on the discretizationstyle), a dualdictionary does.
-"The dual which is used to create a AZ `Z` matrix."
-dualplatformdictionary(ap::ApproximationProblem; samplingstyle = SamplingStyle(ap), options...) =
+"""
+The dual which is used to create a AZ `Z` matrix.
+
+Can be overwritten at the level of the platform and the dictionary;
+but it needs a specific implementation for `DiscreteStyle` since this
+sampling style does not assume the implementation of `measure`
+"""
+@inline dualplatformdictionary(ap::ApproximationProblem; samplingstyle = SamplingStyle(ap), options...) =
     dualplatformdictionary(samplingstyle, ap; options...)
 
-dualplatformdictionary(::DiscreteStyle, ap::DictionaryApproximation; options...) =
-    dualplatformdictionary(dictionary(ap); options...)
+@inline dualplatformdictionary(samplingstyle::DiscreteStyle, ap::DictionaryApproximation; options...) =
+    dualplatformdictionary(samplingstyle, dictionary(ap); options...)
 
-dualplatformdictionary(::DiscreteStyle, ap::PlatformApproximation; options...) =
-    dualplatformdictionary(ap.platform, ap.param; options... )
+@inline dualplatformdictionary(samplingstyle::DiscreteStyle, ap::PlatformApproximation; options...) =
+    dualplatformdictionary(samplingstyle, ap.platform, ap.param; options...)
 
-dualplatformdictionary(platform::Platform, n; dict = dictionary(platform, n), options...) =
+@inline dualplatformdictionary(samplingstyle::DiscreteStyle, platform::Platform, param;
+            dict=dictionary(platform, param), options...) =
+    dualplatformdictionary(samplingstyle, dict; dict=dict, options...)
+
+@inline dualplatformdictionary(samplingstyle::SamplingStyle, ap::ApproximationProblem; options...) =
+    dualplatformdictionary(samplingstyle, ap, measure(samplingstyle, ap; options...); options...)
+
+@inline dualplatformdictionary(samplingstyle::SamplingStyle, ap::ApproximationProblem, measure::Measure; options...) =
+    dualdictionary(dictionary(ap), measure; options...)
+
+measure(ap::ApproximationProblem; samplingstyle, options...) =
+    haskey(options,:measure) ? options[:measure] : measure(samplingstyle, ap; options...)
+measure(samplingstyle::SamplingStyle, ap::ApproximationProblem; options...) =
+    haskey(options,:measure) ? options[:measure] : measure(dictionary(ap); options...)
+# Possibility on stackoverflow, but if neither measure with options or without options exists, this is an indication of an other problem.
+# Other possibility. measure can never have optional arguments.
+using InteractiveUtils
+function measure(dict::Dictionary; options...)
+    method = @which(measure(dict::Dictionary))
+    if (String(method.file) == @__FILE__()) && (method.line == @__LINE__()-1)
+        error("Implement `measure(::$(typeof(dict)))`")
+    end
+    measure(dict)
+end
+
+restrict(measure::BasisFunctions.DiscreteMeasure, domain::Domain) =
+    BasisFunctions.DiscreteSubMeasure(subgrid(grid(measure), domain), weights(measure))
+
+measure(::DiscreteGramStyle, ap::ApproximationProblem; options...) = discrete_gram_measure(ap; options...)
+
+
+"""
+
+
+Can be specialized for platforms and dictionaries a the level of `discrete_gram_measure`
+or at the level of `oversampling_grid`, `oversampling_weight`
+"""
+function discrete_gram_measure(ap; options...)
+    L = samplingparameter(OversamplingStyle(), ap; options...)
+    discrete_gram_measure(ap, L; options...)
+end
+
+discrete_gram_measure(ap::DictionaryApproximation, L; options...) =
+    discrete_gram_measure(dictionary(ap), L)
+discrete_gram_measure(ap::PlatformApproximation, L; options...) =
+    discrete_gram_measure(ap.platform, ap.param, L; options...)
+discrete_gram_measure(platform::Platform, n, L=n; dict = dictionary(platform, n), options...) =
+    discrete_gram_measure(dict, L)
+
+function discrete_gram_measure(dict::Dictionary, L)
+    grid = oversampling_grid(dict, L)
+    weight = oversampling_weight(dict, grid)
+    BasisFunctions.DiscreteMeasure(grid, weight)
+end
+
+oversampling_weight(dict::Dictionary, grid::AbstractGrid) = Ones{coefficienttype(dict)}(size(grid)...)
+oversampling_weight(dict::Dictionary, grid::AbstractSubGrid) = Ones{coefficienttype(dict)}(size(supergrid(grid))...)
+
+@inline dualplatformdictionary(::DiscreteStyle, dict::Dictionary; options...) =
     dualplatformdictionary(dict; options...)
 
-
-function dualplatformdictionary(::SamplingStyle, ap::ApproximationProblem; options...)
-    if iskey(options, :measure)
-        measure = options[:measure]
-    else
-        measure = measure(ap; options...)
-    end
-    dualplatformdictionary(ap, measure; options...)
-end
-dualplatformdictionary(ap::DictionaryApproximation, measure::Measure; options...) =
-    dualdictionary(ap, measure; options...)
-
-dualplatformdictionary(ap::PlatformApproximation, measure::Measure; options...) =
-    dualplatformdictionary(ap.platform, ap.param, measure; options... )
-
-dualplatformdictionary(platform::Platform, n, measure::Measure; dict=platform(dict, n), options...) =
-    dualdictionary(dict, measure; options...)
-
-measure(ap::ApproximationProblem; options...) =
-    haskey(options,:measure) ? options[:measure] : measure(ap)
-measure(ap::DictionaryApproximation; options...) =
-    haskey(options,:measure) ? options[:measure] : measure(dictionary(ap); options...)
-measure(ap::PlatformApproximation; options...) =
-    haskey(options,:measure) ? options[:measure] : measure(platform(ap), ap.param; options...)
-measure(platform::Platform, n; dict = dictionary(platform, n), options...) =
-    measure(dict; options...)
-
-
-
-
-
-
-
-discrete_normalization(dict::Dictionary, L; S) = quadraturenormalization(S, measure(dict))
-
-dualplatformdictionary(dict::Dictionary; options...) = _dualdictionary(dict, gramoperator(dict))
+@inline dualplatformdictionary(dict::Dictionary; options...) = _dualdictionary(dict, gramoperator(dict))
 _dualdictionary(dict::Dictionary, gram::IdentityOperator) = dict
 _dualdictionary(dict::Dictionary, gram) = conj(inv(gram)) * dict
 

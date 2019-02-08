@@ -14,6 +14,9 @@ SolverStyle(p::FourierPlatform, ::OversamplingStyle) = DualStyle()
 
 measure(p::FourierPlatform{T}) where {T} = FourierMeasure{T}()
 
+# discrete_gram_measure(p::FourierPlatform, n, L; dict = dictionary(p, n), options...) =
+#     BasisFunctions.DiracCombProbabilityMeasure(oversampling_grid(dict, L))
+
 
 struct ChebyshevPlatform{T} <: BasisPlatform
 end
@@ -68,10 +71,12 @@ function FourierExtensionPlatform(domain::Domain{T}) where {T}
 end
 
 dictionary(p::FourierExtensionPlatform, n) =
-    ExtensionFrame(p.domain, dictionary(p.basisplatform, n))
+    extensionframe(p.domain, dictionary(p.basisplatform, n))
 
 measure(platform::FourierExtensionPlatform) = measure(dictionary(platform, 1))
 
+# discrete_gram_measure(p::FourierExtensionPlatform, n, L; dict = dictionary(p, n), options...) =
+#     restrict(BasisFunctions.DiracCombProbabilityMeasure(oversampling_grid(dictionary(p.basisplatform, n), L)), p.domain)
 
 
 struct ExtensionFramePlatform <: FramePlatform

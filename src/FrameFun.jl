@@ -1,8 +1,6 @@
 module FrameFun
 
-using Base.Cartesian
-using StaticArrays
-using RecipesBase
+using Base.Cartesian, StaticArrays, RecipesBase, FillArrays
 
 using DomainSets
 using BasisFunctions
@@ -59,7 +57,7 @@ import BasisFunctions: isbasis, isframe, isorthogonal, isorthonormal, isbiorthog
     hastransform, hasinterpolationgrid, hasderivative,
     hasantiderivative, hasextension, hasgrid_transform
 
-import BasisFunctions: hasmeasure, measure, gramoperator, dualdictionary, Measure
+import BasisFunctions: hasmeasure, measure, gramoperator, dualdictionary, Measure, weights, grid, restrict
 
 import BasisFunctions: operator, matrix, isdiag, isinplace, ⊕
 
@@ -158,14 +156,14 @@ export AZSolver, AZSmoothSolver, TridiagonalSolver
 # from platform/platform.jl
 export SamplingStyle, SolverStyle
 export InterpolationStyle, OversamplingStyle, GridStyle, GramStyle,
-    RectangularGramStyle, GenericSamplingStyle, ProductSamplingStyle
+    RectangularGramStyle, GenericSamplingStyle, ProductSamplingStyle, DiscreteGramStyle
 export DirectStyle, InverseStyle, DualStyle, IterativeStyle, AZStyle,
     AZSmoothStyle, TridiagonalProlateStyle, ProductSolverStyle
 
 # from platform/interface.jl
 export approximate
 export samplingoperator, dualsamplingoperator, samplingparameter,
-    dictionary, dualplatformdictionary, solver,
+    dictionary, dualplatformdictionary, solver, measure,
     discretization, dualdiscretization,
     smoothingoperator,
     plungeoperator, plungematrix, plungerank,

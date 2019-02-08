@@ -8,7 +8,15 @@ or dual dictionary.
 """
 abstract type Platform end
 
+"""
+A `BasisPlatform` represents a family of bases.
+"""
 abstract type BasisPlatform <: Platform end
+
+"""
+A `FramePlatform` represents a family of frames
+(or ill-conditioned bases which are in the limit a frame).
+"""
 abstract type FramePlatform <: Platform end
 
 
@@ -45,6 +53,7 @@ struct GridStyle <: DiscreteStyle end
 "The sampling operator corresponds to projections (using inner products)."
 abstract type ProjectionStyle <: SamplingStyle end
 struct GramStyle <: ProjectionStyle end
+struct DiscreteGramStyle <: ProjectionStyle end
 struct RectangularGramStyle <: ProjectionStyle end
 
 "The sampling operator is determined by invoking `genericsamplingoperator` on the platform."

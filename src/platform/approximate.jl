@@ -87,7 +87,7 @@ approximate(fun, platform::Platform, args...; options...) =
 
 approximate(fun, ap::ApproximationProblem;
             samplingstyle = SamplingStyle(ap),
-            solverstyle = SolverStyle(ap, samplingstyle), options...) =
+            solverstyle = SolverStyle(samplingstyle, ap), options...) =
     approximate(promote(samplingstyle, solverstyle)..., fun, ap; options...)
 
 # If the sampling has product structure and a single solverstyle is specified,

@@ -16,10 +16,10 @@ productparameter(p::ProductPlatform{N}, n::NTuple{N,Any}) where {N} = n
 SolverStyle(p::ProductPlatform, dstyle) = ProductSolverStyle()
 
 dictionary(p::ProductPlatform, n::Int) = dictionary(p, productparameter(p, n))
-dualplatformdictionary(p::ProductPlatform, n::Int) = dualplatformdictionary(p, productparameter(p, n))
+dualplatformdictionary(sstyle::DiscreteStyle, p::ProductPlatform, n::Int; options...) = dualplatformdictionary(sstyle, p, productparameter(p, n); options...)
 
 dictionary(p::ProductPlatform, n) = tensorproduct(map(dictionary, elements(p), n)...)
-dualplatformdictionary(p::ProductPlatform, n) = tensorproduct(map(dualplatformdictionary, elements(p), n)...)
+dualplatformdictionary(sstyle::ProductSamplingStyle, p::ProductPlatform, n; options...) = tensorproduct(map((x,y,z)->dualplatformdictionary(x,y,z; options...), elements(sstyle), elements(p), n)...)
 
 discretization(p::ProductPlatform, S; options...) =
     tensorproduct(map(discretization, elements(p))...)
