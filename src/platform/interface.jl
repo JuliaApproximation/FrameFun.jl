@@ -200,6 +200,9 @@ SolverStyle(samplingstyle::SamplingStyle, ap::PlatformApproximation) = SolverSty
 samplingparameter(ap::ApproximationProblem; samplingstyle = SamplingStyle(ap), options...) =
     samplingparameter(samplingstyle, ap; options...)
 
+samplingparameter(samplingstyle::DiscreteGramStyle, ap::ApproximationProblem; options...) =
+    samplingparameter(OversamplingStyle(), ap; options...)
+
 function samplingparameter(samplingstyle::SamplingStyle, ap::ApproximationProblem; options...)
     # Has it been computed before or was it supplied by the user?
     if ap.samplingparam != nothing
@@ -276,6 +279,11 @@ samplingoperator(samplingstyle::GramStyle, ap::ApproximationProblem;
             options...) =
     ProjectionSampling(dictionary(ap), measure(samplingstyle, ap; options...))
 
+dualsamplingoperator(samplingstyle::GramStyle, ap::ApproximationProblem; options...) =
+    ProjectionSampling(
+        haskey(options, :dualdict) ? options[:dualdict] : dualplatformdictionary(samplingstyle, ap; options...),
+            measure(samplingstyle, ap; options...))
+
 samplingoperator(samplingstyle::RectangularGramStyle, ap::ApproximationProblem;
             projectiondict, options...) =
     ProjectionSampling(projectiondict, measure(samplingstyle, ap; options...))
@@ -306,15 +314,8 @@ function dualsamplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationPro
     end
 end
 
-function dualsamplingoperator(samplingstyle::DiscreteGramStyle, ap::ApproximationProblem; options...)
-    local S
-    if haskey(options, :S)
-        S = options[:S]
-    else
-        S = samplingoperator(samplingstyle, ap; options...)
-    end
-    S
-end
+dualsamplingoperator(samplingstyle::SamplingStyle, ap::ApproximationProblem; options...) =
+    samplingoperator(samplingstyle, ap; options...)
 
 dualsamplingoperator(samplingstyle::ProductSamplingStyle, ap::ApproximationProblem, S;
             options...) =
@@ -363,19 +364,30 @@ sampling_grid(samplingstyle::ProductSamplingStyle, ap; options...) =
 
 ## Discretization
 
-# The discretization requires the sampling operator. If it is not supplied, we
-# compute it first.
-discretization(ap::ApproximationProblem; options...) =
-    discretization(ap, samplingoperator(ap; options...); options...)
+# # The discretization requires the sampling operator. If it is not supplied, we
+# # compute it first.
+# discretization(ap::ApproximationProblem; options...) =
+#     discretization(ap, samplingoperator(ap; options...); options...)
 
-discretization(ap::ApproximationProblem, S; options...) = apply(S, dictionary(ap); options...)
+# The discretization requires the sampling operator only in the discrete case.
+discretization(ap::ApproximationProblem; samplingstyle = SamplingStyle(ap), options...) =
+    discretization(samplingstyle, ap; options...)
+
+discretization(sstyle::SamplingStyle, ap::ApproximationProblem; options...) =
+    discretization(sstyle, ap, samplingoperator(sstyle, ap; options...); options...)
+
+discretization(::SamplingStyle, ap::ApproximationProblem, S; options...) = apply(S, dictionary(ap); options...)
+
 
 # Optionally, supplying f as the first argument yields the right hand side as well
-discretization(f, ap::ApproximationProblem; options...) =
-    discretization(f, ap, samplingoperator(ap; options...); options...)
+discretization(f, ap::ApproximationProblem; samplingstyle=SamplingStyle(ap), options...) =
+    discretization(f, samplingstyle, ap; options...)
 
-function discretization(f, ap::ApproximationProblem, S; options...)
-    A = discretization(ap, S; options...)
+discretization(f, sstyle::SamplingStyle, ap; options...) =
+    discretization(f, sstyle, ap, samplingoperator(sstyle, ap; options...); options...)
+
+function discretization(f, sstyle::SamplingStyle, ap::ApproximationProblem, S; options...)
+    A = discretization(sstyle, ap, S; options...)
     B = apply(S, f; options...)
     A, B
 end
@@ -386,40 +398,65 @@ discrete_normalization(ap::PlatformApproximation; options...) =
     discrete_normalization(ap.platform, ap.param, samplingparameter(ap; options...); options...)
 
 
-dualdiscretization(ap::ApproximationProblem; options...) =
-    dualdiscretization(ap, dualsamplingoperator(ap; options...); options...)
+dualdiscretization(ap::ApproximationProblem; samplingstyle=SamplingStyle(ap), options...) =
+    dualdiscretization(samplingstyle, ap; options...)
 
-dualdiscretization(ap::ApproximationProblem, Stilde; options...) =
-    apply(Stilde, dualplatformdictionary(ap; options...); options...)
+function dualdiscretization(sstyle::SamplingStyle, ap::ApproximationProblem; options...)
+    dualdict = dualplatformdictionary(sstyle, ap; options...)
+    dualdiscretization(sstyle, ap, dualsamplingoperator(sstyle, ap; dualdict=dualdict, options...); dualdict=dualdict, options...)
+end
 
+function dualdiscretization(sstyle::SamplingStyle, ap::ApproximationProblem, Stilde; options...)
+    dualdict = haskey(options, :dualdict) ? options[:dualdict] : dualplatformdictionary(sstyle, ap; options...)
+    apply(Stilde, dualdict; options...)
+end
 
 ##  Solver
 
-function solver(ap::ApproximationProblem;
-            samplingstyle = SamplingStyle(ap),
-            solverstyle = SolverStyle(samplingstyle, samplingstyle), options...)
+solver(ap::ApproximationProblem;
+            problemstyle = ProblemStyle(ap),
+            solverstyle = SolverStyle(samplingstyle, samplingstyle), options...) =
+        solver(problemstyle, solverstyle, ap; options...)
+
+function solver(pstyle::DictionaryOperatorStyle, sstyle::SolverStyle, ap::ApproximationProblem;
+            samplingstyle = SamplingStyle(ap), options...)
     S = samplingoperator(samplingstyle, ap; options...)
-    A = discretization(ap, S; samplingstyle=samplingstyle, options...)
+    A = discretization(samplingstyle, ap, S; options...)
     solver(solverstyle, ap, A; S = S, options...)
 end
 
 
-
 ## The AZ algorithm
+@inline AZ_A(ap::ApproximationProblem; problemstyle=ProblemStyle(ap), options...) =
+    AZ_A(problemstyle, ap; options...)
+@inline AZ_Z(ap::ApproximationProblem; problemstyle=ProblemStyle(ap), options...) =
+    AZ_Z(problemstyle, ap; options...)
+@inline AZ_Zt(ap::ApproximationProblem; problemstyle=ProblemStyle(ap), options...) =
+    AZ_Zt(problemstyle, ap; options...)
+@inline plungeoperator(ap::ApproximationProblem; problemstyle=ProblemStyle(ap), options...) =
+    plungeoperator(problemstyle, ap; options...)
+@inline plungematrix(ap::ApproximationProblem; problemstyle=ProblemStyle(ap), options...) =
+    plungematrix(problemstyle, ap; options...)
 
-AZ_A(ap::ApproximationProblem; options...) = discretization(ap; options...)
+AZ_A(::DictionaryOperatorStyle, ap; options...) =
+    discretization(ap; options...)
 
-AZ_Z(ap::ApproximationProblem; options...) = dualdiscretization(ap; options...)
-AZ_Zt(ap::ApproximationProblem; options...) = AZ_Z(ap; options...)'
+AZ_Z(::DictionaryOperatorStyle, ap; options...) =
+    dualdiscretization(ap; options...)
 
-function plungeoperator(ap::ApproximationProblem; options...)
-    A = discretization(ap; options...)
-    Z = dualdiscretization(ap; options...)
-    I = IdentityOperator(dest(A))
-    I - A*Z'
+AZ_Zt(pstyle::ProblemStyle, ap::ApproximationProblem; options...) = AZ_Z(pstyle, ap; options...)'
+
+
+function plungeoperator(problemstyle::ProblemStyle, ap::ApproximationProblem; options...)
+    A = AZ_A(problemstyle, ap; options...)
+    Zt = AZ_Zt(problemstyle, ap; options...)
+    # A = discretization(ap; options...)
+    # Z = dualdiscretization(ap; options...)
+    # I = IdentityOperator(dest(A))
+    I - A*Zt
 end
 
-function plungematrix(ap::ApproximationProblem; options...)
+function plungematrix(::DictionaryOperatorStyle, ap::ApproximationProblem; options...)
     A = discretization(ap; options...)
     P = plungeoperator(ap; options...)
     P * A
@@ -443,3 +480,19 @@ Zt_scaling_factor(S::ChebyshevT, A) = length(supergrid(grid(dest(A))))/2
 
 smoothingoperator(ap::ApproximationProblem; options...) =
     WeightedSmoothingOperator(dictionary(ap); options...)
+
+###
+# GenericOperator Interface
+###
+
+## The AZ algorithm
+
+AZ_A(::GenericOperatorStyle, ap::ApproximationProblem; options...) = SynthesisOperator(dictionary(ap), measure(ap; options...))
+AZ_Z(::GenericOperatorStyle, ap::ApproximationProblem; options...) = SynthesisOperator(dualplatformdictionary(ap; options...), measure(ap; options...))
+function plungematrix(pstyle::GenericOperatorStyle, ap::ApproximationProblem; options...)
+    S = samplingoperator(ap; options...)
+    A = AZ_A(pstyle, ap; options...)
+    Zt = AZ_Zt(pstyle, ap; options...)
+    tmp = apply(S, A; options...)
+    tmp - tmp*apply(Zt, A; options...)
+end

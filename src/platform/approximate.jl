@@ -87,8 +87,9 @@ approximate(fun, platform::Platform, args...; options...) =
 
 approximate(fun, ap::ApproximationProblem;
             samplingstyle = SamplingStyle(ap),
-            solverstyle = SolverStyle(samplingstyle, ap), options...) =
-    approximate(promote(samplingstyle, solverstyle)..., fun, ap; options...)
+            solverstyle = SolverStyle(samplingstyle, ap),
+            problemstyle = ProblemStyle(ap), options...) =
+    approximate(problemstyle, promote(samplingstyle, solverstyle)..., fun, ap; options...)
 
 # If the sampling has product structure and a single solverstyle is specified,
 # we turn the solverstyle into a product style as well.
@@ -98,7 +99,8 @@ promote(samplingstyle::ProductSamplingStyle, solverstyle::SolverStyle) =
 	(samplingstyle,ProductSolverStyle(map(x->solverstyle, samplingstyle.styles)))
 
 # Construct the approximation problem and solve it
-function approximate(samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun, ap; verbose = false, options...)
+function approximate(::DictionaryOperatorStyle, samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun, ap;
+            verbose = false, options...)
     dict = dictionary(ap)
 
     verbose && println("Approximate: using sampling style $samplingstyle")
@@ -115,21 +117,55 @@ function approximate(samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun
 
     A = apply(S, dict; options...)
     B = apply(S, fun; options...)
-    C = solve(solverstyle, ap, A, B; S=S, verbose=verbose, options...)
+    C = solve(solverstyle, ap, A, B; S=S, verbose=verbose, samplingstyle=samplingstyle, options...)
     F = DictFun(dictionary(ap), C)
     res = norm(A*C-B)
     verbose && println("Approximate: ended with residual $res\n")
     F, A, B, C, S, L
 end
 
+# Construct the approximation problem and solve it
+function approximate(pstyle::GenericOperatorStyle, samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun, ap;
+            verbose = false, options...)
+    dict = dictionary(ap)
 
-solve(style::SolverStyle, ap, A, B; options...) =
+    verbose && println("Approximate: using problemstyle style $pstyle")
+    verbose && println("Approximate: using sampling style $samplingstyle")
+	verbose && println("Approximate: using solver style $solverstyle")
+    # Trigger computation of sampling parameter L first
+    L = samplingparameter(samplingstyle, ap; verbose=verbose, options...)
+    S = samplingoperator(samplingstyle, ap; verbose=verbose, options...)
+	if verbose
+		println()
+		println("Approximate: sampling operator with size $(size(S)) is")
+		println(S)
+		println()
+	end
+
+    A = AZ_A(pstyle, ap; samplingstyle=samplingstyle, options...)
+    B = apply(S, fun; options...) # calculated just to keep the same interface.
+    C = solve(solverstyle, ap, A, fun; verbose=verbose, problemstyle=pstyle, samplingstyle=samplingstyle, options...)
+    F = DictFun(dictionary(ap), C)
+    res = norm(apply(S,A; options...)*C-B)
+    verbose && println("Approximate: ended with residual $res\n")
+    F, A, B, C, S, L
+end
+
+
+solve(style::SolverStyle, ap, A::DictionaryOperator, B; options...) =
     solver(style, ap, A; B=B, options...) * B
+solve(style::SolverStyle, ap, A::AbstractOperator, fun; options...) =
+    apply(solver(style, ap, A; options...), fun; options...)
 
 solver(::InverseStyle, ap, A; options...) = inv(A)
 solver(::DirectStyle, ap, A; options...) = directsolver(A; options...)
 
-solver(style::AZStyle, ap, A; options...) = solver(style, ap, A, AZ_Zt(ap; options...); options...)
+solver(style::AZStyle, ap, A; problemstyle=ProblemStyle(ap), options...) =
+    solver(problemstyle, style, ap, A; options...)
+
+solver(::DictionaryOperatorStyle, style::AZStyle, ap, A; options...) =
+    solver(style, ap, A, AZ_Zt(ap; options...); options...)
+
 function solver(::AZStyle, ap, A, Zt;
             B=nothing, smallcoefficients=false, smallcoefficients_atol=NaN, smallcoefficients_rtol=NaN, verbose=false, options...)
     if smallcoefficients
@@ -153,11 +189,16 @@ solver(::AZSmoothStyle, ap, A, Zt; options...) = AZSolver_with_smoothing(A, Zt; 
 
 solver(::DualStyle, ap, A; options...) = dualdiscretization(ap; options...)
 
-solver(solverstyle::ProductSolverStyle, ap, A; S, options...) =
+solver(solverstyle::ProductSolverStyle, ap, A; samplingstyle=SamplingStyle(ap), options...) =
+    solver(solverstyle, samplingstyle, ap, A; options...)
+solver(solverstyle::ProductSolverStyle, samplingstyle::ProductSamplingStyle, ap, A; S, options...) =
     TensorProductOperator(
-		map( (ap_el,Ael,Sel,style) -> solver(style, ap_el, Ael; S=Sel, options...),
-				elements(ap), productelements(A), productelements(S), solverstyle.styles)...
+		map( (ap_el,Ael,Sel,style,sstyle) -> solver(style, ap_el, Ael; S=Sel, samplingstyle=sstyle, options...),
+				elements(ap), productelements(A), productelements(S), solverstyle.styles, samplingstyle.styles)...
 	)
 
 solver(::TridiagonalProlateStyle, ap, A; scaling = Zt_scaling_factor(dictionary(ap), A), options...) =
     FE_TridiagonalSolver(A, scaling; options...)
+
+solver(pstyle::GenericOperatorStyle, solverstyle::AZStyle, ap::ApproximationProblem, A; options...) =
+    GenericAZSolver(ap, A; options...)

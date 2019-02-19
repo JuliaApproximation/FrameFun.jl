@@ -100,25 +100,26 @@ innerproduct_native(f1::ExtensionFrame, i, f2::ExtensionFrame, j, measure::SubMe
 
 # # Just to insert the :extensionframe_spantype as default for ExtensionFrame
 # @inline dualdictionary(dict::ExtensionFrame, measure::Measure=measure(dict), space::BasisFunctions.FunctionSpace=Span(dict);
-#             dualtype=:extensionframe_spantype) =
-#     BasisFunctions._dualdictionary(dict, measure, space; dualtype=dualtype)
+#             dualtype=:extensionframe_spantype, options...) =
+#     BasisFunctions._dualdictionary(dict, measure, space; dualtype=dualtype, options...)
 
 function BasisFunctions._dualdictionary(dict::DICT, measure::Measure, space::Span, spandict::DICT;
-            warnslow = BasisFunctions.BF_WARNSLOW, dualtype=:extensionframe_spantype) where DICT <: ExtensionFrame
+            warnslow = BasisFunctions.BF_WARNSLOW, dualtype=:extensionframe_spantype, options...) where DICT <: ExtensionFrame
     if dualtype == :spantype
         warnslow && @warn "Are you sure you want `dualtype=:spantype` and not `:extensionframe_spantype`"
-        BasisFunctions.spantype_dualdictionary(dict, measure, space, spandict)
+        BasisFunctions.spantype_dualdictionary(dict, measure, space, spandict; warnslow=warnslow, options...)
     elseif dualtype == :extensionframe_spantype
-        extensionframe_spantype_dualdictionary(dict, measure, space, spandict)
+        extensionframe_spantype_dualdictionary(dict, measure, space, spandict; warnslow=warnslow, options...)
     else
         @warn "Only `:spantype` and `:extensionframe_spantype` implemented/known."
     end
 end
 
 "Create a dual dictionary based on the superdict of the ExtensionFrame"
-function extensionframe_spantype_dualdictionary(dict::DICT, measure::Measure, space::Span, spandict::DICT) where DICT <: Dictionary
+function extensionframe_spantype_dualdictionary(dict::DICT, measure::Measure, space::Span, spandict::DICT; options...) where DICT <: Dictionary
     @assert size(dict) == size(spandict)
-    conj(inv( wrap_operator(dict, dict, gramoperator(superdict(dict), supermeasure(measure))))) * dict
+    dual_superdict = BasisFunctions.spantype_dualdictionary(superdict(dict), supermeasure(measure), Span(superdict(dict)), superdict(spandict); options...)
+    extensionframe(support(dict), dual_superdict)
 end
 
 ## Printing

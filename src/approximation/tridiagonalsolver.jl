@@ -5,7 +5,7 @@ is isolated using a projection operator.
 For more details, see the paper 'Fast algorithms for the computation of Fourier extensions of arbitrary length'
 http://arxiv.org/abs/1509.00206
 """
-struct FE_TridiagonalSolver{ELT} <: AbstractSolverOperator{ELT}
+struct FE_TridiagonalSolver{ELT} <: DictionarySolverOperator{ELT}
     Ut      :: Array{ELT,2}
     V       :: Array{ELT,2}
     Sinv    :: Array{ELT,1}

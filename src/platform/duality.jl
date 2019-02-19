@@ -106,9 +106,15 @@ end
 
 ## Product dictionaries
 
-dualplatformdictionary(dict::TensorProductDict; options...) = TensorProductDict(map(dualplatformdictionary, elements(dict))...)
+dualplatformdictionary(dict::TensorProductDict; options...) = TensorProductDict(map(x->dualplatformdictionary(x;options...), elements(dict))...)
+@inline function dualplatformdictionary(samplingstyle::ProductSamplingStyle, ap::ApproximationProblem; options...)
+    @show ap
+    @show elements(ap), samplingstyle.styles
+    TensorProductDict(   map( (x,style) ->dualplatformdictionary(style, x; options...), elements(ap), samplingstyle.styles         )...      )
+end
 
-
+@inline dualplatformdictionary(samplingstyle::ProductSamplingStyle, ap::ApproximationProblem, measure::ProductMeasure; options...) =
+    TensorProductDict(   map( (x,style, m) ->dualplatformdictionary(style, x, m; options...), elements(ap), samplingstyle.styles, elements(measure)         )...      )
 ## Complexified dictionaries
 
 import BasisFunctions: ComplexifiedDict

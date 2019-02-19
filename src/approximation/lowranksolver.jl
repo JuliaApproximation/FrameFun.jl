@@ -5,7 +5,7 @@ If A is MxN, and of rank R, the cost of constructing this solver is MR^2.
 
 For tensor product operators it returns a decomposition of the linearized system
 """
-struct RandomizedSvdSolver{T} <: AbstractSolverOperator{T}
+struct RandomizedSvdSolver{T} <: DictionarySolverOperator{T}
     # Keep the original operator
     A          ::  DictionaryOperator
     # Random matrix
@@ -97,7 +97,7 @@ The cost is equal to the computation of the SVD of A.
 
 For tensor product operators it returns a decomposition of the linearized system
 """
-struct ExactSvdSolver{T} <: AbstractSolverOperator{T}
+struct ExactSvdSolver{T} <: DictionarySolverOperator{T}
     # Keep the original operator
     A          ::  DictionaryOperator
     # Decomposition

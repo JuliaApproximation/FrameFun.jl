@@ -110,3 +110,10 @@ SolverStyle(dict::Dictionary, dstyle::SamplingStyle) = DirectStyle()
 SolverStyle(dict::Dictionary, dstyle::InterpolationStyle) = hastransform(dict) ? InverseStyle() : DirectStyle()
 SolverStyle(dict::TensorProductDict, dstyle::ProductSamplingStyle) =
     ProductSolverStyle(map(SolverStyle, elements(dict), dstyle.styles))
+
+"A problem style trait"
+abstract type ProblemStyle end
+
+struct DictionaryOperatorStyle <: ProblemStyle  end
+struct GenericOperatorStyle <: ProblemStyle  end
+ProblemStyle(a) = DictionaryOperatorStyle()

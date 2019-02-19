@@ -14,7 +14,7 @@ Can be done fast if Zt and A are fast.
 3. x = x1+x2
 This is the solution.
 """
-struct AZSolver{T} <: AbstractSolverOperator{T}
+struct AZSolver{T} <: DictionarySolverOperator{T}
     A           ::  DictionaryOperator # Store for application in step 2
     Zt          ::  DictionaryOperator # Store for application in step 2
     plunge_op   ::  DictionaryOperator # (A*Zt-I), store because it allocates memory

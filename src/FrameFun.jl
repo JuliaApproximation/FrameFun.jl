@@ -46,7 +46,7 @@ import DomainSets: cartesianproduct, ×
 
 
 ## - Imports from BasisFunctions
-import BasisFunctions: src, dest, matrix, matrix!, apply!, apply_inplace!,
+import BasisFunctions: src, dest, matrix, matrix!, apply, apply!, apply_inplace!,
     dimension, codomaintype, domaintype, apply_multiple
 
 import BasisFunctions: tensorproduct, ⊗, productelements, productelement
@@ -94,7 +94,8 @@ import BasisFunctions: AbstractSubGrid, IndexSubGrid, issubindex, supergrid,
 
 import BasisFunctions: discrete_approximation_operator, continuous_approximation_operator
 
-import BasisFunctions: AbstractSolverOperator, GridSampling, ProjectionSampling
+import BasisFunctions: DictionarySolverOperator, GridSampling, ProjectionSampling,
+            AbstractSolverOperator, SamplingOperator
 
 # Function spaces
 import BasisFunctions: quadraturenormalization
@@ -151,7 +152,7 @@ export FeFun, FeFunNd
 export operator
 
 # from approximation
-export AZSolver, AZSmoothSolver, TridiagonalSolver
+export AZSolver, AZSmoothSolver, TridiagonalSolver, GenericAZSolver
 
 # from platform/platform.jl
 export SamplingStyle, SolverStyle
@@ -208,6 +209,7 @@ include("approximation/randomized.jl")
 
 include("approximation/lowranksolver.jl")
 include("approximation/azsolver.jl")
+include("approximation/generic_azsolver.jl")
 include("approximation/tridiagonalsolver.jl")
 include("approximation/smoothsolver.jl")
 
