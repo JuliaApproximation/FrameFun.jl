@@ -125,7 +125,7 @@ export boundingbox
 export distance, normal, volume
 
 # from frames/extensionframe.jl
-export ExtensionFrame, extensionframe
+export ExtensionFrame, extensionframe, basis
 export extension_frame_platform
 
 # from frames/weighted_sum_frame.jl
@@ -155,11 +155,12 @@ export operator
 export AZSolver, AZSmoothSolver, TridiagonalSolver, GenericAZSolver
 
 # from platform/platform.jl
-export SamplingStyle, SolverStyle
+export SamplingStyle, SolverStyle, ProblemStyle
 export InterpolationStyle, OversamplingStyle, GridStyle, GramStyle,
     RectangularGramStyle, GenericSamplingStyle, ProductSamplingStyle, DiscreteGramStyle
 export DirectStyle, InverseStyle, DualStyle, IterativeStyle, AZStyle,
     AZSmoothStyle, TridiagonalProlateStyle, ProductSolverStyle
+export GenericOperatorStyle, DictionaryOperatorStyle
 
 # from platform/interface.jl
 export approximate

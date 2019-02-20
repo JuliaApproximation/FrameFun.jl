@@ -268,18 +268,21 @@ function samplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationProblem
     end
 end
 
-samplingoperator(samplingstyle::DiscreteGramStyle, ap::ApproximationProblem;
-            T = coefficienttype(ap), options...) =
-    GridSampling(measure(samplingstyle, ap; options...), T)
+samplingoperator(samplingstyle::DiscreteGramStyle, ap::ApproximationProblem; options...) =
+    ProjectionSampling(dictionary(ap), measure(samplingstyle, ap; options...))
 
 samplingoperator(::GenericSamplingStyle, ap::PlatformApproximation; options...) =
     genericsamplingoperator(ap.platform, ap.param; dict = ap.dict, options...)
 
-samplingoperator(samplingstyle::GramStyle, ap::ApproximationProblem;
-            options...) =
+samplingoperator(samplingstyle::GramStyle, ap::ApproximationProblem; options...) =
     ProjectionSampling(dictionary(ap), measure(samplingstyle, ap; options...))
 
 dualsamplingoperator(samplingstyle::GramStyle, ap::ApproximationProblem; options...) =
+    ProjectionSampling(
+        haskey(options, :dualdict) ? options[:dualdict] : dualplatformdictionary(samplingstyle, ap; options...),
+            measure(samplingstyle, ap; options...))
+
+dualsamplingoperator(samplingstyle::DiscreteGramStyle, ap::ApproximationProblem; options...) =
     ProjectionSampling(
         haskey(options, :dualdict) ? options[:dualdict] : dualplatformdictionary(samplingstyle, ap; options...),
             measure(samplingstyle, ap; options...))
