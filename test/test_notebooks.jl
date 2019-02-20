@@ -16,10 +16,9 @@ end
 
 
 
-global jupyter
-jupyter = Sys.which("jupyter")
+jupyter = nothing #Sys.which("jupyter")
 if jupyter == nothing
-    jupyter = Sys.which(Conda.PYTHONDIR * "/jupyter")
+    global jupyter = Sys.which(Conda.PYTHONDIR * "/jupyter")
     if jupyter == nothing
         try
             @info "Trying to install jupyter using the Conda package"
@@ -27,7 +26,7 @@ if jupyter == nothing
             @show Conda.PYTHONDIR
             @show Base.Filesystem.readdir(Conda.PYTHONDIR)
             @show Sys.which(Conda.PYTHONDIR * "/jupyter")
-            jupyter = Sys.which(Conda.PYTHONDIR * "/jupyter")
+            global jupyter = Sys.which(Conda.PYTHONDIR * "/jupyter")
             @show jupyter
         catch error
             @warn Conda could not add jupyter
