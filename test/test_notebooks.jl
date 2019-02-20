@@ -27,7 +27,9 @@ if jupyter == nothing
             Conda.add("jupyter")
             @show Conda.PYTHONDIR
             @show Base.Filesystem.readdir(Conda.PYTHONDIR)
+            @show Sys.which(Conda.PYTHONDIR * "/jupyter")
             jupyter = Sys.which(Conda.PYTHONDIR * "/jupyter")
+            @show jupyter
         catch error
             @warn Conda could not add jupyter
             bt = catch_backtrace()
@@ -36,6 +38,7 @@ if jupyter == nothing
         end
     end
 end
+@show jupyter
 if jupyter == nothing
     @warn "Jupyter not installed and no internet connection to install, abandoning notebook tests."
 else
