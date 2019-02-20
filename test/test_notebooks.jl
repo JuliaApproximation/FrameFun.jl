@@ -18,11 +18,15 @@ end
 
 
 jupyter = Sys.which("jupyter")
+jupyter = nothing
 if jupyter == nothing
     jupyter = Sys.which(Conda.PYTHONDIR * "/jupyter")
     if jupyter == nothing
         try
+            @info "Trying to install jupyter using the Conda package"
             Conda.add("jupyter")
+            @show Conda.PYTHONDIR
+            @show Base.Filesystem.readdir(Conda.PYTHONDIR)
             jupyter = Sys.which(Conda.PYTHONDIR * "/jupyter")
         catch error
             @warn Conda could not add jupyter
