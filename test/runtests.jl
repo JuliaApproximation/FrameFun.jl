@@ -3,8 +3,6 @@
 # include("test_suite_applications.jl")
 # include("test_suite_domains.jl")
 # include("test_platforms.jl")
-#
-#
 # include("test_plots.jl")
 
 include("test_notebooks.jl")
