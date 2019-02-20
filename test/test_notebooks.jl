@@ -23,6 +23,7 @@ if jupyter == nothing
     if jupyter == nothing
         try
             Conda.add("jupyter")
+            jupyter = Sys.which(Conda.PYTHONDIR * "/jupyter")
         catch error
             @warn Conda could not add jupyter
             bt = catch_backtrace()
