@@ -15,6 +15,4 @@ before_script:
     - julia -e "using Pkg; Pkg.add(PackageSpec(url=\"http://github.com/daanhb/BasisFunctions.jl\",rev=\"development\"))"
     - julia -e "using Pkg; Pkg.add(PackageSpec(url=\"https://github.com/JuliaApproximation/DomainSets.jl\",rev=\"master\"))"
 after_success:
-    if: os = linux
-        if: julia = 1.1
-            - julia -e 'cd(Pkg.dir("FrameFun")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder()); Codecov.submit(process_folder())'
+    - julia -e 'cd(Pkg.dir("FrameFun")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder()); Codecov.submit(process_folder())'
