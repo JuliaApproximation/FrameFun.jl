@@ -14,13 +14,20 @@ function delimit(s::AbstractString)
 end
 
 
+
+
+
 jupyter = Sys.which("jupyter")
 if jupyter == nothing
     jupyter = Sys.which(Conda.PYTHONDIR * "/jupyter")
     if jupyter == nothing
         try
             Conda.add("jupyter")
-        catch
+        catch error
+            @warn Conda could not add jupyter
+            bt = catch_backtrace()
+            msg = sprint(showerror, error, bt)
+            @info msg
         end
     end
 end
