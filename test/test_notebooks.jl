@@ -16,9 +16,8 @@ end
 
 
 
-
+global jupyter
 jupyter = Sys.which("jupyter")
-global jupyter = nothing
 if jupyter == nothing
     jupyter = Sys.which(Conda.PYTHONDIR * "/jupyter")
     if jupyter == nothing
