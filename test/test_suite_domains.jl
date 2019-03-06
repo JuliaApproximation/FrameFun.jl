@@ -1,16 +1,10 @@
-using DomainSets, BasisFunctions, FrameFun
+using DomainSets, BasisFunctions, FrameFun, BasisFunctions.Test
 
 using Test
 
 FE = FrameFun
 BA = BasisFunctions
 
-function delimit(s::AbstractString)
-    println()
-    println("############")
-    println("# ",s)
-    println("############")
-end
 
 function test_extended_domains_3d()
     domains = (atomium(),)

@@ -108,8 +108,6 @@ end
 
 dualplatformdictionary(dict::TensorProductDict; options...) = TensorProductDict(map(x->dualplatformdictionary(x;options...), elements(dict))...)
 @inline function dualplatformdictionary(samplingstyle::ProductSamplingStyle, ap::ApproximationProblem; options...)
-    @show ap
-    @show elements(ap), samplingstyle.styles
     TensorProductDict(   map( (x,style) ->dualplatformdictionary(style, x; options...), elements(ap), samplingstyle.styles         )...      )
 end
 

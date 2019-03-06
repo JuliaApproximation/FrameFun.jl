@@ -24,6 +24,8 @@ function oversampling_grid(dict::Dictionary, L)
 end
 
 oversampling_grid(dict::TensorProductDict, L) = ProductGrid(map(oversampling_grid, elements(dict), L)...)
+oversampling_grid(dict::TensorProductDict, L::CartesianIndex) = oversampling_grid(dict, L.I)
+oversampling_grid(dict::TensorProductDict, L::Int) = error("Expects a tuple or a CartesianIndex")
 
 oversampling_grid(dict::ExtensionFrame, L) = subgrid(oversampling_grid(superdict(dict),L), support(dict))
 

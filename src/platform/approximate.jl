@@ -134,7 +134,7 @@ function approximate(pstyle::GenericOperatorStyle, samplingstyle::SamplingStyle,
 	verbose && println("Approximate: using solver style $solverstyle")
     # Trigger computation of sampling parameter L first
     L = samplingparameter(samplingstyle, ap; verbose=verbose, options...)
-    S = samplingoperator(samplingstyle, ap; verbose=verbose, options...)
+    S = samplingoperator(pstyle, ap; samplingstyle=samplingstyle, verbose=verbose, options...)
 	if verbose
 		println()
 		println("Approximate: sampling operator with size $(size(S)) is")

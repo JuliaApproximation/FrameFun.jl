@@ -492,10 +492,14 @@ smoothingoperator(ap::ApproximationProblem; options...) =
 
 AZ_A(::GenericOperatorStyle, ap::ApproximationProblem; options...) = SynthesisOperator(dictionary(ap), measure(ap; options...))
 AZ_Z(::GenericOperatorStyle, ap::ApproximationProblem; options...) = SynthesisOperator(dualplatformdictionary(ap; options...), measure(ap; options...))
+samplingoperator(pstyle::GenericOperatorStyle, ap; options...) = AZ_Zt(pstyle, ap; options...)
+samplingoperator(pstyle::DictionaryOperatorStyle, ap; options...) = samplingoperator(ap; options...)
+
 function plungematrix(pstyle::GenericOperatorStyle, ap::ApproximationProblem; options...)
-    S = samplingoperator(ap; options...)
+    S = samplingoperator(pstyle, ap; options...)
     A = AZ_A(pstyle, ap; options...)
     Zt = AZ_Zt(pstyle, ap; options...)
-    tmp = apply(S, A; options...)
-    tmp - tmp*apply(Zt, A; options...)
+    tmp1 = apply(Zt, A; options...)
+    tmp2 = apply(S, A; options...)
+    tmp2 - tmp2*tmp1
 end

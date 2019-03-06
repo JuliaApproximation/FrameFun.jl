@@ -20,7 +20,7 @@ ExtensionFrame(domain::Domain, basis::Dictionary{S,T}) where {S,T} =
 # superdict is the function for DerivedDict's to obtain the underlying set
 superdict(f::ExtensionFrame) = f.basis
 
-basis(f::ExtensionFrame) = f.basis
+basis(f::ExtensionFrame) = superdict(f)
 support(f::ExtensionFrame) = f.domain
 
 similar_dictionary(f::ExtensionFrame, dict::Dictionary) = ExtensionFrame(support(f), dict)
@@ -82,6 +82,8 @@ function extensionframe(domain::ProductDomain, basis::TensorProductDict)
     tensorproduct(ExtensionFrames...)
 end
 
+const ExtensionFrameTensor = TensorProductDict{D,NTuple{D,DICT}} where D where {DICT<:ExtensionFrame}
+
 extensionframe(domain::Domain, basis::Dictionary) = ExtensionFrame(domain, basis)
 extensionframe(basis::Dictionary, domain::Domain) = extensionframe(domain, basis)
 
@@ -93,7 +95,7 @@ import BasisFunctions: measure, restrict
 import BasisFunctions: innerproduct, innerproduct_native
 
 hasmeasure(::ExtensionFrame) = true
-measure(f::ExtensionFrame) = SubMeasure(measure(basis(f)), support(f))
+measure(f::ExtensionFrame) = BasisFunctions.submeasure(measure(basis(f)), support(f))
 
 innerproduct_native(f1::ExtensionFrame, i, f2::ExtensionFrame, j, measure::SubMeasure; options...) =
     innerproduct(superdict(f1), i, superdict(f2), j, measure; options...)
@@ -104,7 +106,7 @@ innerproduct_native(f1::ExtensionFrame, i, f2::ExtensionFrame, j, measure::SubMe
 #     BasisFunctions._dualdictionary(dict, measure, space; dualtype=dualtype, options...)
 
 function BasisFunctions._dualdictionary(dict::DICT, measure::Measure, space::Span, spandict::DICT;
-            warnslow = BasisFunctions.BF_WARNSLOW, dualtype=:extensionframe_spantype, options...) where DICT <: ExtensionFrame
+            warnslow = BasisFunctions.BF_WARNSLOW, dualtype=:extensionframe_spantype, options...) where DICT <: Union{ExtensionFrame,ExtensionFrameTensor}
     if dualtype == :spantype
         warnslow && @warn "Are you sure you want `dualtype=:spantype` and not `:extensionframe_spantype`"
         BasisFunctions.spantype_dualdictionary(dict, measure, space, spandict; warnslow=warnslow, options...)
@@ -121,6 +123,9 @@ function extensionframe_spantype_dualdictionary(dict::DICT, measure::Measure, sp
     dual_superdict = BasisFunctions.spantype_dualdictionary(superdict(dict), supermeasure(measure), Span(superdict(dict)), superdict(spandict); options...)
     extensionframe(support(dict), dual_superdict)
 end
+
+superdict(dict::ExtensionFrameTensor) = TensorProductDict(map(superdict, elements(dict))...)
+support(dict::ExtensionFrameTensor) = ProductDomain((map(support, elements(dict)))...)
 
 ## Printing
 

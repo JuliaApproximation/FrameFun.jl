@@ -96,9 +96,11 @@ function subgrid(grid::MaskedGrid, domain::Domain)
     # ScatteredGrid(points)
 end
 
-
+subgrid(grid::ProductGrid, domain::ProductDomain) =
+    ProductGrid(map(subgrid, elements(grid), elements(domain))...)
 
 hasextension(dg::GridBasis{T,G}) where {T,G <: AbstractSubGrid} = true
+hasextension(dg::GridBasis{T,G}) where {T,G <: BasisFunctions.TensorSubGrid} = true
 
 function BasisFunctions.grid_restriction_operator(src::Dictionary, dest::Dictionary, src_grid::G, dest_grid::MaskedGrid{G,M,I,T}; options...) where {G<:AbstractGrid,M,I,T}
     @assert supergrid(dest_grid) == src_grid

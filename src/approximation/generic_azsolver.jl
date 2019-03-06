@@ -15,7 +15,7 @@ function GenericAZSolver(ap::ApproximationProblem, A;
     Zt = AZ_Zt(pstyle, ap; options...)
     P = plungeoperator(pstyle, ap; options...)
     M = plungematrix(pstyle, ap; options...) # TODO some inner products are calculated twice.
-    S = samplingoperator(ap; options...)
+    S = samplingoperator(pstyle, ap; options...)
 
     psolver = REG(M; threshold = threshold, rankestimate = rankestimate, options...)
 
