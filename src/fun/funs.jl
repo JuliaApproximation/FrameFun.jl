@@ -71,7 +71,7 @@ function (*)(op::DictionaryOperator, fun::DictFun)
 end
 
 # Delegate all calling to the underlying expansion.
-(fun::DictFun)(x...) = expansion(fun)(x...)
+(fun::DictFun)(x...; options...) = expansion(fun)(x...; options...)
 
 
 # show(io::IO, fun::DictFun) = show(io, fun, set(fun))

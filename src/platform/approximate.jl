@@ -26,6 +26,12 @@ function directsolver(A; directsolver = :svd, verbose = false, options...)
 	elseif directsolver == :regsvd
         verbose && println("Using direct solver: regularized SVD")
         regularized_SVD_solver(A; verbose=verbose, options...)
+    elseif directsolver == :lsqr
+        verbose && println("Using iterative solver: LSQR")
+        LSQR_solver(A; verbose=verbose, options...)
+    elseif directsolver == :lsmr
+        verbose && println("Using iterative solver: LSMR")
+        LSMR_solver(A; verbose=verbose, options...)
     else
         DS = directsolver(A)
         verbose && println("Using direct solver: $DS")

@@ -8,9 +8,9 @@ function abserror(f::Function, F::DictFun; vals = 200)
 end
 
 # Get the max approximation error in random interior points
-function maxerror(f::Function, F::DictFun; vals = 200)
+function maxerror(f::Function, F::DictFun; vals = 200, options...)
     rgrid = randomgrid(domain(F),vals)
-    Fval = F(rgrid)
+    Fval = F(rgrid; options...)
     fval = sample(rgrid,f,eltype(F))
     maximum(abs.(Fval-fval))
 end
