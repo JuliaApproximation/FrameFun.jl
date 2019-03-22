@@ -73,7 +73,11 @@ parameter(ap::PlatformApproximation) = ap.param
 
 coefficienttype(ap::PlatformApproximation) = coefficienttype(ap.dict)
 
+elements(ap::PlatformApproximation) = map(PlatformApproximation, elements(platform(ap)), elements(parameter(ap)))
 
+element(ap::PlatformApproximation, i) = PlatformApproximation(element(platform(ap), i), element(parameter(ap), i))
+
+elements(t::NTuple) = t
 
 """
 An `AdaptiveApproximation` only stores a platform, with which to compute adaptive

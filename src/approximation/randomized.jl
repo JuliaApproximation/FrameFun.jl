@@ -27,7 +27,7 @@ function randomizedsvd(A; threshold = regularization_threshold(eltype(A)), verbo
         iter += 1
     end
     if iter == maxiter
-        warning("Maximum number of iteration reached in randomizedsvd")
+        warn("Maximum number of iteration reached in randomizedsvd")
     end
     USV = svd(C, full=false)
     U = USV.U
@@ -68,7 +68,7 @@ function randomizedqr(A; threshold = regularization_threshold(eltype(A)), verbos
         iter += 1
     end
     if iter == maxiter
-        warning("Maximum number of iteration reached in randomizedsvd")
+        warn("Maximum number of iteration reached in randomizedqr")
     end
     QR = qr(C, full=false)
     rank = findlast(diag(R) .> threshold)

@@ -56,6 +56,10 @@ SolverStyle(p::ModelPlatform, dstyle::SamplingStyle) = SolverStyle(model(p), dst
 
 measure(platform::ModelPlatform) = measure(model(platform))
 
+elements(platform::ModelPlatform) = map(ModelPlatform, elements(model(platform)))
+
+element(platform::ModelPlatform, i) = ModelPlatform(element(model(platform), i))
+
 
 struct FourierExtensionPlatform <: FramePlatform
     basisplatform   ::  FourierPlatform

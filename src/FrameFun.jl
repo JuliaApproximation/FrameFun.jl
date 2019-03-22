@@ -196,6 +196,7 @@ include("platform/interface.jl")
 include("platform/approximate.jl")
 include("platform/adaptive.jl")
 include("platform/bases.jl")
+include("platform/productplatform.jl")
 
 include("frames/extensionframe.jl")
 include("frames/weighted_sum_frame.jl")
