@@ -27,6 +27,8 @@ oversampling_grid(dict::TensorProductDict, L) = ProductGrid(map(oversampling_gri
 oversampling_grid(dict::TensorProductDict, L::CartesianIndex) = oversampling_grid(dict, L.I)
 oversampling_grid(dict::TensorProductDict, L::Int) = error("Expects a tuple or a CartesianIndex")
 
+oversampling_grid(dict::BasisFunctions.CompositeDict, L) = oversampling_grid(element(dict,1), L)
+
 oversampling_grid(dict::ExtensionFrame, L) = subgrid(oversampling_grid(superdict(dict),L), support(dict))
 
 oversampling_grid(dict::WeightedDict, L) = oversampling_grid(superdict(dict), L)
@@ -37,6 +39,7 @@ oversampling_grid(dict::OperatedDict, L) = oversampling_grid(superdict(dict), L)
 
 initialguess(dict::Dictionary1d, M::Int) = M
 initialguess(dict::Dictionary, M) = size(dict)
+initialguess(dict::BasisFunctions.CompositeDict, M) = initialguess(element(dict,1), M)
 initialguess(ap, M) = initialguess(dictionary(ap), M)
 
 match_sampling_parameter(dict, M::Int) = match_sampling_parameter(dict, M, initialguess(dict, M))
