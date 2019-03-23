@@ -48,11 +48,10 @@ model(p::ModelPlatform) = p.model
 
 dictionary(p::ModelPlatform, n) = resize(model(p), n)
 
-first_sizeparameter(p::ModelPlatform) = typeof(model(p)) <: Dictionary1d ? length(model(p)) : size(model(p))
+param_first(p::ModelPlatform) = isa(model(p),Dictionary1d) ? length(model(p)) : size(model(p))
 
-SamplingStyle(p::ModelPlatform) = SamplingStyle(dictionary(p, first_sizeparameter(p)))
-
-SolverStyle(p::ModelPlatform, dstyle::SamplingStyle) = SolverStyle(model(p), dstyle)
+SamplingStyle(p::ModelPlatform) = SamplingStyle(model(p))
+SolverStyle(p::ModelPlatform, samplingstyle::SamplingStyle) = SolverStyle(model(p), samplingstyle)
 
 measure(platform::ModelPlatform) = measure(model(platform))
 

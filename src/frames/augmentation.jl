@@ -30,7 +30,7 @@ discrete_normalization(platform::AugmentationPlatform, n, L; options...) =
 
 measure(platform::AugmentationPlatform) = measure(platform.basis)
 
-nextsize(p::AugmentationPlatform, n::Int) = 2n
+param_next(p::AugmentationPlatform, n::Int) = 2n
 
 ONB_plus_K(basis::Platform, weightfunction, K) =
     AugmentationPlatform(basis, weightfunction * dictionary(basis, K))

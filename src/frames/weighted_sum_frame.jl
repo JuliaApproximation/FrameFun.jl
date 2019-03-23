@@ -30,4 +30,4 @@ discrete_normalization(platform::WeightedSumPlatform, n, L; options...) =
 
 measure(platform::WeightedSumPlatform) = measure(platform.P)
 
-nextsize(p::WeightedSumPlatform, n) = 2n
+param_next(p::WeightedSumPlatform, n) = 2n

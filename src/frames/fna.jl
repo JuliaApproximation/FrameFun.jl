@@ -1,7 +1,5 @@
 
 function FNA2_kappa_lambda(platform, N, M, threshold; options...)
-    local G_N
-
     # Computation of the Gram matrix may be expensive: check if it was passed as an argument
     if haskey(options, :G_N)
         G_N = options[:G_N]

@@ -50,8 +50,10 @@ end
 # the operators that were computed and simply returns the function.
 # Users wanting to access the operators can call `approximate` directly.
 
+guess_coefficienttype(dict, fun) = promote_type(codomaintype(dict), determine_return_type(fun, domaintype(dict)))
+
 function Fun(fun, dict::Dictionary, args...;
-        coefficienttype = promote_type(codomaintype(dict), determine_return_type(fun, domaintype(dict))),
+        coefficienttype = guess_coefficienttype(dict, fun),
         options...)
     ap = approximationproblem(coefficienttype, dict, args...)
     Fun(fun, ap; options...)

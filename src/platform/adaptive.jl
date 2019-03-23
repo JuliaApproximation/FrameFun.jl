@@ -56,19 +56,22 @@ function errormeasure(::FNAStyle, platform, tolerance, f, F, n, A, B, C, S, L; F
 end
 
 
-nextsize(platform::Platform, n; dict = dictionary(platform, n)) = extension_size(dict)
-
 ErrorStyle(platform::Platform) = ErrorStyle(platform, DictionaryStyle(platform))
 ErrorStyle(platform, ::BasisStyle) = RandomPoints()
 ErrorStyle(platform, ::FrameStyle) = ResidualStyle()
 ErrorStyle(platform, ::UnknownDictionaryStyle) = RandomPoints()
 
-# Initial values
 
-first_parameters(p::Platform) = (8,8)
-first_sizeparameter(p::Platform) = first_parameters(p)[1]
-first_samplingparameter(p::Platform) = first_parameters(p)[2]
+# Parameter values
 
+param_first(platform::Platform) = 1
+param_next(platform::Platform, n) = extension_size(dictionary(platform, n))
+
+param_increment(platform::Platform, n::Int) = n+1
+param_increment(platform::Platform, n::Tuple) = n .+ 1
+
+param_inbetween(platform::Platform, n1::Int, n2::Int) = (n1+n2) >> 1
+param_inbetween(platform::Platform, n1::Tuple, n2::Tuple) = (n1 .+ n2) .>> 1
 
 
 # Dispatch on the style of the adaptive algorithm
@@ -127,14 +130,13 @@ end
 """
 function adaptive_approximation(::GreedyStyle, f, platform;
             criterion = ErrorStyle(platform),
-            initial_n = 1, maxlength = 2^22, maxiterations = 100,
+            p0 = param_first(platform), maxlength = 2^22, maxiterations = 100,
             threshold = 1e-12, tol=100*threshold, verbose=false, options...)
 
-    local error
     iterations = 0
     logbook = emptylogbook()
 
-    n = initial_n
+    n = p0
     F = DictFun(dictionary(platform, n))
 
     converged = false
@@ -159,14 +161,13 @@ end
 "SimpleStyle: the number of degrees of freedom is doubled until the tolerance is achieved."
 function adaptive_approximation(::SimpleStyle, f, platform;
             criterion = ErrorStyle(platform),
-            initial_n = 8, maxlength = 2^22, maxiterations = 10,
+            p0 = param_first(platform), maxlength = 2^22, maxiterations = 10,
             threshold = 1e-12, tol=100*threshold, verbose=false, options...)
 
-    local error
     iterations = 0
     logbook = emptylogbook()
 
-    n = initial_n
+    n = p0
     F = DictFun(dictionary(platform, n))
 
     converged = false
@@ -180,7 +181,7 @@ function adaptive_approximation(::SimpleStyle, f, platform;
 
         verbose && @printf "Adaptive: N = %d, err = %1.3e, ||x|| = %1.3e\n" length(F) error norm(coefficients(F))
 
-        n = nextsize(platform, n)
+        n = param_next(platform, n)
     end
 
     return F, logbook, n, tol, error, iterations, converged
@@ -190,14 +191,13 @@ end
 "OptimalStyle: the number of degrees of freedom is chosen adaptively and optimally."
 function adaptive_approximation(::OptimalStyle, f, platform;
         criterion = ErrorStyle(platform),
-        initial_n = 8, maxlength = 2^12, maxiterations = 100,
+        p0 = param_first(platform), maxlength = 2^12, maxiterations = 100,
         threshold = 1e-12, tol=100*threshold, verbose=false, options...)
 
-    local error
     iterations = 0
     logbook = emptylogbook()
 
-    n = initial_n
+    n = p0
     F = DictFun(dictionary(platform, n))
 
     # First let the size grow until the tolerance is reached
@@ -215,7 +215,7 @@ function adaptive_approximation(::OptimalStyle, f, platform;
         verbose && @printf "Adaptive (phase 1): N = %d, err = %1.3e, ||x|| = %1.3e\n" length(F) error norm(coefficients(F))
 
         addlogentry!(logbook, (n, error))
-        next_n = nextsize(platform, n)
+        next_n = param_next(platform, n)
     end
 
     if !converged
@@ -230,17 +230,22 @@ function adaptive_approximation(::OptimalStyle, f, platform;
 
     converged2 = false
     while lower_n < upper_n
-        n = (upper_n+lower_n) >> 1
+        n = param_inbetween(platform, lower_n, upper_n)
 
         F, A, B, C, S, L = approximate(f, platform, n; threshold=threshold, options...)
         converged2, error = errormeasure(criterion, platform, tol, f, F, n, A, B, C, S, L; options...)
         addlogentry!(logbook, (n, error, lower_n, upper_n))
         if !converged2
-            lower_n = n+1
+            # At this stage, we know that lower_n does not meet the criterium, but the
+            # new value of n does not either. It could be that lower_n==n, for example
+            # when lower_n = 3 and upper_n = 4, and the param_inbetween method above
+            # just returns 3 again. In order to avoid this, we increment lower_n.
+            lower_n = param_increment(platform, lower_n)
         else
             upper_n = n
         end
-        verbose && @printf "Adaptive (phase 2): N = %d, err = %1.3e, ||x|| = %1.3e. Optimal n in [%d,%d].\n" length(F) error norm(coefficients(F)) lower_n upper_n
+        verbose && @printf "Adaptive (phase 2): N = %d, err = %1.3e, ||x|| = %1.3e." length(F) error norm(coefficients(F))
+        verbose && println("Optimal n in [$(lower_n),$(upper_n)].")
         iterations += 1
     end
     if n != lower_n

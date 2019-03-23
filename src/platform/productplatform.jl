@@ -1,9 +1,15 @@
 
+"""
+A `ProductPlatform` corresponds to the product of two or more platforms. It results in a product
+dictionary, product sampling operator, product solver, ... etcetera.
+"""
 struct ProductPlatform{N} <: Platform
     platforms   ::  NTuple{N,Platform}
 end
 
 ProductPlatform(platforms::Platform...) = ProductPlatform(platforms)
+
+ProductPlatform(platform::Platform, n::Int) = ProductPlatform(ntuple(x->platform, n)...)
 
 iscomposite(p::ProductPlatform) = true
 elements(p::ProductPlatform) = p.platforms
@@ -13,7 +19,9 @@ platform(p::ProductPlatform, i) = p.platforms[i]
 productparameter(p::ProductPlatform{N}, n::Int) where {N} = ntuple(x->n, N)
 productparameter(p::ProductPlatform{N}, n::NTuple{N,Any}) where {N} = n
 
-SolverStyle(p::ProductPlatform, dstyle) = ProductSolverStyle()
+SamplingStyle(platform::ProductPlatform) = ProductSamplingStyle(map(SamplingStyle, elements(platform)))
+SolverStyle(p::ProductPlatform, samplingstyle) =
+    ProductSolverStyle(map(SolverStyle, elements(p), elements(samplingstyle)))
 
 dictionary(p::ProductPlatform, n::Int) = dictionary(p, productparameter(p, n))
 dualplatformdictionary(sstyle::DiscreteStyle, p::ProductPlatform, n::Int; options...) = dualplatformdictionary(sstyle, p, productparameter(p, n); options...)
@@ -52,8 +60,15 @@ mutable struct ProductPlatformApproximation{N} <: ApproximationProblem
     samplingparam
 
     ProductPlatformApproximation{N}(platform, param) where {N} =
-        new(platform, param, productparameter(platfor, param), dictionary(platform, param))
+        new(platform, param, productparameter(platform, param), dictionary(platform, param))
 end
 
 approximationproblem(platform::ProductPlatform{N}, param) where {N} =
     ProductPlatformApproximation{N}(platform, param)
+
+SamplingStyle(ap::ProductPlatformApproximation) = SamplingStyle(ap.platform)
+SolverStyle(samplingstyle::SamplingStyle, ap::ProductPlatformApproximation) = SolverStyle(ap.platform, samplingstyle)
+
+elements(ap::ProductPlatformApproximation) = map(approximationproblem, elements(ap.platform), ap.productparam)
+
+dictionary(ap::ProductPlatformApproximation) = ap.dict

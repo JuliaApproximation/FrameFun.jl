@@ -101,7 +101,7 @@ innerproduct_native(f1::ExtensionFrame, i, f2::ExtensionFrame, j, measure::SubMe
     innerproduct(superdict(f1), i, superdict(f2), j, measure; options...)
 
 # # Just to insert the :extensionframe_spantype as default for ExtensionFrame
-# @inline dualdictionary(dict::ExtensionFrame, measure::Measure=measure(dict), space::BasisFunctions.FunctionSpace=Span(dict);
+# dualdictionary(dict::ExtensionFrame, measure::Measure=measure(dict), space::BasisFunctions.FunctionSpace=Span(dict);
 #             dualtype=:extensionframe_spantype, options...) =
 #     BasisFunctions._dualdictionary(dict, measure, space; dualtype=dualtype, options...)
 

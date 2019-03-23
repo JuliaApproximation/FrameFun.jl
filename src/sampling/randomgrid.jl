@@ -16,8 +16,9 @@ end
 
 # Don't return an SVector in 1d, just a value
 function randompoint(dom::AbstractInterval)
-    val = rand(eltype(dom))
-    convert(eltype(dom),val * infimum(dom) + (1-val) * supremum(dom))
+    T = float(eltype(dom))
+    val = rand(T)
+    convert(T,val * infimum(dom) + (1-val) * supremum(dom))
 end
 
 

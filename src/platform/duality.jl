@@ -7,23 +7,23 @@ Can be overwritten at the level of the platform and the dictionary;
 but it needs a specific implementation for `DiscreteStyle` since this
 sampling style does not assume the implementation of `measure`
 """
-@inline dualplatformdictionary(ap::ApproximationProblem; samplingstyle = SamplingStyle(ap), options...) =
+dualplatformdictionary(ap::ApproximationProblem; samplingstyle = SamplingStyle(ap), options...) =
     dualplatformdictionary(samplingstyle, ap; options...)
 
-@inline dualplatformdictionary(samplingstyle::DiscreteStyle, ap::DictionaryApproximation; options...) =
+dualplatformdictionary(samplingstyle::DiscreteStyle, ap::DictionaryApproximation; options...) =
     dualplatformdictionary(samplingstyle, dictionary(ap); options...)
 
-@inline dualplatformdictionary(samplingstyle::DiscreteStyle, ap::PlatformApproximation; options...) =
+dualplatformdictionary(samplingstyle::DiscreteStyle, ap::PlatformApproximation; options...) =
     dualplatformdictionary(samplingstyle, ap.platform, ap.param; options...)
 
-@inline dualplatformdictionary(samplingstyle::DiscreteStyle, platform::Platform, param;
+dualplatformdictionary(samplingstyle::DiscreteStyle, platform::Platform, param;
             dict=dictionary(platform, param), options...) =
     dualplatformdictionary(samplingstyle, dict; dict=dict, options...)
 
-@inline dualplatformdictionary(samplingstyle::SamplingStyle, ap::ApproximationProblem; options...) =
+dualplatformdictionary(samplingstyle::SamplingStyle, ap::ApproximationProblem; options...) =
     dualplatformdictionary(samplingstyle, ap, measure(samplingstyle, ap; options...); options...)
 
-@inline dualplatformdictionary(samplingstyle::SamplingStyle, ap::ApproximationProblem, measure::Measure; options...) =
+dualplatformdictionary(samplingstyle::SamplingStyle, ap::ApproximationProblem, measure::Measure; options...) =
     dualdictionary(dictionary(ap), measure; options...)
 
 measure(ap::ApproximationProblem; samplingstyle, options...) =
@@ -74,10 +74,10 @@ end
 oversampling_weight(dict::Dictionary, grid::AbstractGrid) = Ones{coefficienttype(dict)}(size(grid)...)
 oversampling_weight(dict::Dictionary, grid::AbstractSubGrid) = Ones{coefficienttype(dict)}(size(supergrid(grid))...)
 
-@inline dualplatformdictionary(::DiscreteStyle, dict::Dictionary; options...) =
+dualplatformdictionary(::DiscreteStyle, dict::Dictionary; options...) =
     dualplatformdictionary(dict; options...)
 
-@inline dualplatformdictionary(dict::Dictionary; options...) = _dualdictionary(dict, gramoperator(dict))
+dualplatformdictionary(dict::Dictionary; options...) = _dualdictionary(dict, gramoperator(dict))
 _dualdictionary(dict::Dictionary, gram::IdentityOperator) = dict
 _dualdictionary(dict::Dictionary, gram) = conj(inv(gram)) * dict
 
@@ -107,11 +107,11 @@ end
 ## Product dictionaries
 
 dualplatformdictionary(dict::TensorProductDict; options...) = TensorProductDict(map(x->dualplatformdictionary(x;options...), elements(dict))...)
-@inline function dualplatformdictionary(samplingstyle::ProductSamplingStyle, ap::ApproximationProblem; options...)
+function dualplatformdictionary(samplingstyle::ProductSamplingStyle, ap::ApproximationProblem; options...)
     TensorProductDict(   map( (x,style) ->dualplatformdictionary(style, x; options...), elements(ap), samplingstyle.styles         )...      )
 end
 
-@inline dualplatformdictionary(samplingstyle::ProductSamplingStyle, ap::ApproximationProblem, measure::ProductMeasure; options...) =
+dualplatformdictionary(samplingstyle::ProductSamplingStyle, ap::ApproximationProblem, measure::ProductMeasure; options...) =
     TensorProductDict(   map( (x,style, m) ->dualplatformdictionary(style, x, m; options...), elements(ap), samplingstyle.styles, elements(measure)         )...      )
 ## Complexified dictionaries
 

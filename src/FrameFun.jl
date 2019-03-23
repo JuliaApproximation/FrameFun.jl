@@ -76,7 +76,7 @@ import BasisFunctions: eval_element, eval_element_derivative, eval_expansion,
 
 import BasisFunctions: differentiate, ∂x, ∂y, ∂z, ∫∂x, ∫∂y, ∫∂z, ∫, iscompatible
 
-import BasisFunctions: True, False, resize, promote_eltype
+import BasisFunctions: resize, promote_eltype
 
 import BasisFunctions: show_setexpansion
 
@@ -191,7 +191,6 @@ include("domains/extensions.jl")
 
 ## Platforms
 include("platform/platform.jl")
-include("platform/parameters.jl")
 include("platform/interface.jl")
 include("platform/approximate.jl")
 include("platform/adaptive.jl")

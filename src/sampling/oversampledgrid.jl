@@ -1,7 +1,7 @@
 
 ## Functions to provide oversampled grids for FrameFun approximations.
 
-BasisFunctions.resize(grid::ProductGrid, n) = ProductGrid(map(resize, elements(grid), n)...)
+resize(grid::ProductGrid, n) = ProductGrid(map(resize, elements(grid), n)...)
 
 equispacedgrid(domain::AbstractInterval, L::Int) =
     EquispacedGrid(L, infimum(domain), supremum(domain))

@@ -302,7 +302,6 @@ samplingoperator(samplingstyle::ProductSamplingStyle, ap::ApproximationProblem; 
 
 # First, if necessary, we recompute the samplingoperator using the given options.
 function dualsamplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationProblem; options...)
-    local S
     if haskey(options, :S)
         S = options[:S]
     else
@@ -422,10 +421,11 @@ end
 
 solver(ap::ApproximationProblem;
             problemstyle = ProblemStyle(ap),
-            solverstyle = SolverStyle(samplingstyle, samplingstyle), options...) =
+            samplingstyle = SamplingStyle(ap),
+            solverstyle = SolverStyle(samplingstyle, ap), options...) =
         solver(problemstyle, solverstyle, ap; options...)
 
-function solver(pstyle::DictionaryOperatorStyle, sstyle::SolverStyle, ap::ApproximationProblem;
+function solver(pstyle::DictionaryOperatorStyle, solverstyle::SolverStyle, ap::ApproximationProblem;
             samplingstyle = SamplingStyle(ap), options...)
     S = samplingoperator(samplingstyle, ap; options...)
     A = discretization(samplingstyle, ap, S; options...)
@@ -434,15 +434,15 @@ end
 
 
 ## The AZ algorithm
-@inline AZ_A(ap::ApproximationProblem; problemstyle=ProblemStyle(ap), options...) =
+AZ_A(ap::ApproximationProblem; problemstyle=ProblemStyle(ap), options...) =
     AZ_A(problemstyle, ap; options...)
-@inline AZ_Z(ap::ApproximationProblem; problemstyle=ProblemStyle(ap), options...) =
+AZ_Z(ap::ApproximationProblem; problemstyle=ProblemStyle(ap), options...) =
     AZ_Z(problemstyle, ap; options...)
-@inline AZ_Zt(ap::ApproximationProblem; problemstyle=ProblemStyle(ap), options...) =
+AZ_Zt(ap::ApproximationProblem; problemstyle=ProblemStyle(ap), options...) =
     AZ_Zt(problemstyle, ap; options...)
-@inline plungeoperator(ap::ApproximationProblem; problemstyle=ProblemStyle(ap), options...) =
+plungeoperator(ap::ApproximationProblem; problemstyle=ProblemStyle(ap), options...) =
     plungeoperator(problemstyle, ap; options...)
-@inline plungematrix(ap::ApproximationProblem; problemstyle=ProblemStyle(ap), options...) =
+plungematrix(ap::ApproximationProblem; problemstyle=ProblemStyle(ap), options...) =
     plungematrix(problemstyle, ap; options...)
 
 AZ_A(::DictionaryOperatorStyle, ap; options...) =

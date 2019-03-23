@@ -59,10 +59,12 @@ struct RectangularGramStyle <: ProjectionStyle end
 "The sampling operator is determined by invoking `genericsamplingoperator` on the platform."
 struct GenericSamplingStyle <: SamplingStyle end
 
+"The sampling operator has product structure"
 struct ProductSamplingStyle <: SamplingStyle
     styles
 end
 ProductSamplingStyle(styles::SamplingStyle...) = ProductSamplingStyle(styles)
+elements(style::ProductSamplingStyle) = style.styles
 
 
 "A solver style trait"
@@ -76,10 +78,12 @@ struct TridiagonalProlateStyle <: SolverStyle end
 struct AZStyle <: SolverStyle end
 struct AZSmoothStyle <: SolverStyle end
 
+"The solver operator has product structure"
 struct ProductSolverStyle <: SolverStyle
     styles
 end
 ProductSolverStyle(styles::SolverStyle...) = ProductSolverStyle(styles)
+elements(style::ProductSolverStyle) = style.styles
 
 ## Defaults
 
@@ -90,8 +94,8 @@ SamplingStyle(::BasisStyle, p::Platform) = InterpolationStyle()
 SamplingStyle(::FrameStyle, p::Platform) = OversamplingStyle()
 
 
-SolverStyle(p::Platform, dstyle::SamplingStyle) =
-    SolverStyle(DictionaryStyle(p), p, dstyle)
+SolverStyle(p::Platform, samplingstyle) =
+    SolverStyle(DictionaryStyle(p), p, samplingstyle)
 
 SolverStyle(::BasisStyle, p::Platform, ::InterpolationStyle) = InverseStyle()
 SolverStyle(::BasisStyle, p::Platform, ::OversamplingStyle) = DirectStyle()
