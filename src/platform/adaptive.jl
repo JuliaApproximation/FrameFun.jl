@@ -48,7 +48,8 @@ end
 function errormeasure(::FNAStyle, platform, tolerance, f, F, n, A, B, C, S, L; FNAeta = 5.0, options...)
     residual = norm(A*C-B)
 
-    Q = discrete_normalization(platform, n, L; S=S)
+    # Note: we pass on options, because it may contain a measure
+    Q = discrete_normalization(platform, n, L; S=S, options...)
     normF = abs(sqrt(sum(Q * B.^2)))
 
     converged = (norm(C) < FNAeta*normF) && (residual < tolerance)
@@ -62,16 +63,24 @@ ErrorStyle(platform, ::FrameStyle) = ResidualStyle()
 ErrorStyle(platform, ::UnknownDictionaryStyle) = RandomPoints()
 
 
-# Parameter values
+# Parameter values: we define param_first, param_next and param_inbetween
 
 param_first(platform::Platform) = 1
 param_next(platform::Platform, n) = extension_size(dictionary(platform, n))
 
-param_increment(platform::Platform, n::Int) = n+1
-param_increment(platform::Platform, n::Tuple) = n .+ 1
+# `addone(x)` adds one to x if x is a number, else it calls addone recursively on
+# the elements of x
+addone(x::Number) = x+1
+addone(x) = map(addone, x)
 
-param_inbetween(platform::Platform, n1::Int, n2::Int) = (n1+n2) >> 1
-param_inbetween(platform::Platform, n1::Tuple, n2::Tuple) = (n1 .+ n2) .>> 1
+# `inbetween(n1,n2)` returns an element between n1 and n2 if they are integers,
+# else it calls inbetween recursively on all elements of n1 and n2.
+inbetween(n1::Int, n2::Int) = (n1+n2) >> 1
+inbetween(n1::T, n2::T) where {T} = map(inbetween, n1, n2)
+
+param_increment(platform::Platform, n) = addone(n)
+param_inbetween(platform::Platform, n1, n2) = inbetween(n1, n2)
+
 
 
 # Dispatch on the style of the adaptive algorithm
@@ -239,8 +248,9 @@ function adaptive_approximation(::OptimalStyle, f, platform;
             # At this stage, we know that lower_n does not meet the criterium, but the
             # new value of n does not either. It could be that lower_n==n, for example
             # when lower_n = 3 and upper_n = 4, and the param_inbetween method above
-            # just returns 3 again. In order to avoid this, we increment lower_n.
-            lower_n = param_increment(platform, lower_n)
+            # just returns 3 again. In order to avoid this, we increment n before
+            # assigning to lower_n
+            lower_n = param_increment(platform, n)
         else
             upper_n = n
         end

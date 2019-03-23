@@ -172,9 +172,11 @@ export samplingoperator, dualsamplingoperator, samplingparameter,
     AZ_A, AZ_Z, AZ_Zt
 export interpolation_grid, oversampling_grid
 
+# from platform/model.jl
+export ModelPlatform
+
 # from platform/bases.jl
-export FourierPlatform, ChebyshevPlatform, ModelPlatform,
-    FourierExtensionPlatform
+export FourierPlatform, ChebyshevPlatform, FourierExtensionPlatform
 
 # from platform/adaptive.jl
 export GreedyStyle, SimpleStyle, OptimalStyle
@@ -192,10 +194,11 @@ include("domains/extensions.jl")
 ## Platforms
 include("platform/platform.jl")
 include("platform/interface.jl")
+include("platform/productplatform.jl")
+include("platform/model.jl")
 include("platform/approximate.jl")
 include("platform/adaptive.jl")
 include("platform/bases.jl")
-include("platform/productplatform.jl")
 
 include("frames/extensionframe.jl")
 include("frames/weighted_sum_frame.jl")
