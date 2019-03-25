@@ -65,9 +65,6 @@ ErrorStyle(platform, ::UnknownDictionaryStyle) = RandomPoints()
 
 # Parameter values: we define param_first, param_next and param_inbetween
 
-param_first(platform::Platform) = 1
-param_next(platform::Platform, n) = extension_size(dictionary(platform, n))
-
 # `addone(x)` adds one to x if x is a number, else it calls addone recursively on
 # the elements of x
 addone(x::Number) = x+1
@@ -78,9 +75,11 @@ addone(x) = map(addone, x)
 inbetween(n1::Int, n2::Int) = (n1+n2) >> 1
 inbetween(n1::T, n2::T) where {T} = map(inbetween, n1, n2)
 
+param_first(platform::Platform) = 1
+param_next(platform::Platform, n) = extension_size(dictionary(platform, n))
+
 param_increment(platform::Platform, n) = addone(n)
 param_inbetween(platform::Platform, n1, n2) = inbetween(n1, n2)
-
 
 
 # Dispatch on the style of the adaptive algorithm
