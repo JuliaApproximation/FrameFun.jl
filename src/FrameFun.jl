@@ -230,5 +230,7 @@ include("domains/polardomain.jl")
 include("sampling/randomgrid.jl")
 include("sampling/oversampledgrid.jl")
 
+include("applications/weighted.jl")
+
 
 end # module

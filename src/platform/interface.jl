@@ -113,11 +113,11 @@ end
 
 
 # 2. An approximation problem from a platform and a concrete parameter value
-approximationproblem(platform, param) = PlatformApproximation(platform, param)
-approximationproblem(platform, param, L) = PlatformApproximation(platform, param, L)
+approximationproblem(platform::Platform, param) = PlatformApproximation(platform, param)
+approximationproblem(platform::Platform, param, L) = PlatformApproximation(platform, param, L)
 
 # 3. An adaptive approximation problem from a platform
-approximationproblem(platform) = AdaptiveApproximation(platform)
+approximationproblem(platform::Platform) = AdaptiveApproximation(platform)
 
 # From the adaptive approximation problem we can create a concrete platform
 # approximation by specifying a parameter value.
@@ -463,11 +463,18 @@ function plungeoperator(problemstyle::ProblemStyle, ap::ApproximationProblem; op
     I - A*Zt
 end
 
-function plungematrix(::DictionaryOperatorStyle, ap::ApproximationProblem; options...)
-    A = discretization(ap; options...)
-    P = plungeoperator(ap; options...)
+
+function plungematrix(pstyle::ProblemStyle, ap::ApproximationProblem; options...)
+    A = AZ_A(pstyle, ap; options...)
+    P = plungeoperator(pstyle, ap; options...)
     P * A
 end
+
+# function plungematrix(::DictionaryOperatorStyle, ap::ApproximationProblem; options...)
+#     A = discretization(ap; options...)
+#     P = plungeoperator(ap; options...)
+#     P * A
+# end
 
 function plungerank(ap::ApproximationProblem;
             REG = default_regularization,
