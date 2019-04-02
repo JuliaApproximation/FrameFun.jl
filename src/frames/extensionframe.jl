@@ -100,6 +100,32 @@ measure(f::ExtensionFrame) = BasisFunctions.submeasure(measure(basis(f)), suppor
 innerproduct_native(f1::ExtensionFrame, i, f2::ExtensionFrame, j, measure::SubMeasure; options...) =
     innerproduct(superdict(f1), i, superdict(f2), j, measure; options...)
 
+# This routine will be called if we have two mapped dictionaries, where the measure is a subset of a
+# mapped measure. We check for this case and undo the mapping.
+innerproduct_native(dict1::MappedDict, i, dict2::MappedDict, j, measure::SubMeasure; options...) =
+    _innerproduct_native(support(measure), supermeasure(measure), dict1, i, dict2, j, measure; options...)
+
+function _innerproduct_native(domain::AbstractInterval, superμ::MappedMeasure, dict1::MappedDict, i, dict2::MappedDict, j, measure::SubMeasure; options...)
+    if iscompatible(dict1, dict2) && iscompatible(mapping(dict1), mapping(superμ))
+        supermap = mapping(superμ)
+        newdomain = Interval(applymap(inv(supermap), infimum(domain)), applymap(inv(supermap), supremum(domain)))
+        innerproduct_native(superdict(dict1), i, superdict(dict2), j, SubMeasure(supermeasure(superμ), newdomain))
+    else
+        dict_default_innerproduct(dict1, i, dict2, j, measure; options...)
+    end
+end
+
+function _innerproduct_native(domain::UnionDomain, superμ::MappedMeasure, dict1::MappedDict, i, dict2::MappedDict, j, measure::SubMeasure; options...)
+    z = zero(coefficienttype(dict1))
+    for d in elements(domain)
+        z += _innerproduct_native(d, superμ, dict1, i, dict2, j, measure; options...)
+    end
+    z
+end
+
+_innerproduct_native(domain, superμ, dict1::MappedDict, i, dict2::MappedDict, j, measure::SubMeasure; options...) =
+    default_dict_innerproduct(dict1, i, dict2, j, measure; options...)
+
 # # Just to insert the :extensionframe_spantype as default for ExtensionFrame
 # dualdictionary(dict::ExtensionFrame, measure::Measure=measure(dict), space::BasisFunctions.FunctionSpace=Span(dict);
 #             dualtype=:extensionframe_spantype, options...) =
