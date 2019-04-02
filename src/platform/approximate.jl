@@ -152,7 +152,7 @@ function approximate(pstyle::GenericOperatorStyle, samplingstyle::SamplingStyle,
 
     A = AZ_A(pstyle, ap; samplingstyle=samplingstyle, options...)
     B = apply(S, fun; options...) # calculated just to keep the same interface.
-    C = solve(solverstyle, wap, A, fun; verbose=verbose, problemstyle=pstyle, samplingstyle=samplingstyle, options...)
+    C = solve(solverstyle, ap, A, fun; verbose=verbose, problemstyle=pstyle, samplingstyle=samplingstyle, options...)
     F = DictFun(dictionary(ap), C)
     res = norm(apply(S,A; options...)*C-B)
     verbose && println("Approximate: ended with residual $res\n")

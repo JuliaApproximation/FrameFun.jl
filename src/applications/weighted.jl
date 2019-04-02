@@ -48,5 +48,5 @@ AZ_A(pstyle::WeightedApproximationStyle, ap; options...) =
 AZ_Z(pstyle::WeightedApproximationStyle, ap; weight_epsilon=1e-12, options...) =
     pinv(WAZ_W(pstyle, ap; options...), weight_epsilon)*AZ_Z(DictionaryOperatorStyle(), ap; options...)
 
-WAZ_W(pstyle, ap::ApproximationProblem; samplingstyle=SamplingStyle(wap), options...) =
+WAZ_W(pstyle, ap::ApproximationProblem; samplingstyle=SamplingStyle(ap), options...) =
     DiagonalOperator(apply(samplingoperator(samplingstyle, ap; options...), pstyle.weight; options...))
