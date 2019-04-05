@@ -12,8 +12,7 @@ matrix:
 notifications:
   email: false
 before_script:
-    - julia -e "using Pkg; Pkg.add(PackageSpec(url=\"http://github.com/daanhb/BasisFunctions.jl\",rev=\"development\"))"
-    - julia -e "using Pkg; Pkg.add(PackageSpec(url=\"https://github.com/JuliaApproximation/DomainSets.jl\",rev=\"master\"))"
+    - cp test/Manifest.toml ..
 after_success:
   - julia --project=coverage/ -e 'using Pkg; Pkg.instantiate()'
   - julia --project=coverage/ coverage/coverage.jl
