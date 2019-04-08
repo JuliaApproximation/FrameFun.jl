@@ -90,8 +90,8 @@ function subgrid(grid::ScatteredGrid, domain::Domain)
 end
 
 function subgrid(grid::MaskedGrid, domain::Domain)
-    mask = in.(supergrid(grid), domain)
-    MaskedGrid(supergrid(grid), mask .& BasisFunctions.mask(grid))
+    submask = in.(supergrid(grid), Ref(domain))
+    MaskedGrid(supergrid(grid), submask .& mask(grid))
     # points = grid.points[mask]
     # ScatteredGrid(points)
 end
