@@ -14,7 +14,7 @@ dualplatformdictionary(samplingstyle::DiscreteStyle, ap::DictionaryApproximation
     dualplatformdictionary(samplingstyle, dictionary(ap); options...)
 
 dualplatformdictionary(samplingstyle::DiscreteStyle, ap::PlatformApproximation; options...) =
-    dualplatformdictionary(samplingstyle, ap.platform, ap.param; options...)
+    dualplatformdictionary(samplingstyle, ap.platform, ap.param; approximationproblem=ap, options...)
 
 dualplatformdictionary(samplingstyle::DiscreteStyle, platform::Platform, param;
             dict=dictionary(platform, param), options...) =
@@ -46,6 +46,9 @@ restrict(measure::BasisFunctions.DiscreteMeasure, domain::Domain) =
 
 measure(::DiscreteGramStyle, ap::ApproximationProblem; options...) = discrete_gram_measure(ap; options...)
 
+measure(sstyle::DiscreteStyle, ap::ApproximationProblem; options...) =
+    DiscreteMeasure(sampling_grid(sstyle, ap; options...))
+
 
 """
 
@@ -74,8 +77,21 @@ end
 oversampling_weight(dict::Dictionary, grid::AbstractGrid) = Ones{coefficienttype(dict)}(size(grid)...)
 oversampling_weight(dict::Dictionary, grid::AbstractSubGrid) = Ones{coefficienttype(dict)}(size(supergrid(grid))...)
 
-dualplatformdictionary(::DiscreteStyle, dict::Dictionary; options...) =
-    dualplatformdictionary(dict; options...)
+function dualplatformdictionary(sstyle::SamplingStyle, dict::Dictionary; verbose=false, dualtype=:simple_type, options...)
+    if dualtype == :simple_type
+        verbose && @info "Taking the simple dual platform. "
+        dualplatformdictionary(dict; verbose=verbose, options...)
+    else
+        # Try to create measure
+        verbose && @info "Trying to create measure"
+        if sstyle isa DiscreteStyle && haskey(options, :approximationproblem)
+            m = measure(sstyle, options[:approximationproblem])
+            dualdictionary(dict, m; verbose=verbose, dualtype=dualtype, options...)
+        else
+            error("No way to determine dual of $(dict) with sampling style $(sstyle)")
+        end
+    end
+end
 
 dualplatformdictionary(dict::Dictionary; options...) = _dualdictionary(dict, gramoperator(dict))
 _dualdictionary(dict::Dictionary, gram::IdentityOperator) = dict
@@ -119,8 +135,5 @@ import BasisFunctions: ComplexifiedDict
 
 dualplatformdictionary(dict::ComplexifiedDict; options...) =
     ComplexifiedDict(dualplatformdictionary(superdict(dict); options...))
-
-
-## Extension frames
-
-dualplatformdictionary(dict::ExtensionFrame; options...) = ExtensionFrame(support(dict),dualplatformdictionary(basis(dict); options...))
+dualplatformdictionary(dict::ExtensionFrame; options...) =
+    ExtensionFrame(support(dict),dualplatformdictionary(basis(dict); options...))

@@ -264,11 +264,11 @@ dualsamplingoperator(ap::ApproximationProblem; samplingstyle = SamplingStyle(ap)
 function samplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationProblem;
             T = coefficienttype(ap), normalizedsampling = false, options...)
     grid = sampling_grid(samplingstyle, ap; options...)
-    if normalizedsampling
+    if normalizedsampling == nothing || !normalizedsampling
+        GridSampling(grid, T)
+    else
         D = sampling_normalization(GridBasis{T}(grid), measure(samplingstyle, ap; options...); T=T, options...)
         D * GridSampling(grid, T)
-    else
-        GridSampling(grid, T)
     end
 end
 
@@ -312,7 +312,7 @@ end
 
 function dualsamplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationProblem, S;
             normalizedsampling = false, options...)
-    if normalizedsampling
+    if normalizedsampling==nothing ||  normalizedsampling
         S
     else
         O = discrete_normalization(ap; S=S)
@@ -355,7 +355,7 @@ oversampling_grid(ap::DictionaryApproximation, L; options...) =
 oversampling_grid(ap::PlatformApproximation, L; options...) =
     oversampling_grid(ap.platform, ap.param, L; dict = dictionary(ap), options...)
 
-function sampling_grid(sstyle::OversamplingStyle, ap; options...)
+function sampling_grid(sstyle::OversamplingStyle, ap::ApproximationProblem; options...)
     L = samplingparameter(sstyle, ap; options...)
     oversampling_grid(ap, L; options...)
 end
