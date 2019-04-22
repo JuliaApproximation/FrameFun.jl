@@ -45,7 +45,6 @@ oversampling_grid(dict::OperatedDict, L) = oversampling_grid(superdict(dict), L)
 # of its support.
 initialguess(ap, M) = initialguess(dictionary(ap), M)
 initialguess(dict::Dictionary1d, M::Int) = M
-initialguess(dict::Dictionary, M) = size(dict)
 initialguess(dict::BasisFunctions.CompositeDict, M) = initialguess(element(dict,1), M)
 initialguess(dict::BasisFunctions.CompositeDict, M::Int) = initialguess(element(dict,1), M)
 initialguess(dict::Dictionary, M) = _initialguess(dict, M, support(dict), size(dict))
