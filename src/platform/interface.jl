@@ -311,8 +311,8 @@ function dualsamplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationPro
 end
 
 function dualsamplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationProblem, S;
-            normalizedsampling = false, options...)
-    if normalizedsampling==nothing ||  normalizedsampling
+            normalizedsampling = false, discretenormalization = true, options...)
+    if normalizedsampling==nothing || normalizedsampling || !discretenormalization
         S
     else
         O = discrete_normalization(ap; S=S)
@@ -408,7 +408,7 @@ dualdiscretization(ap::ApproximationProblem; samplingstyle=SamplingStyle(ap), op
     dualdiscretization(samplingstyle, ap; options...)
 
 function dualdiscretization(sstyle::SamplingStyle, ap::ApproximationProblem; options...)
-    dualdict = dualplatformdictionary(sstyle, ap; options...)
+    dualdict = haskey(options, :dualdict) ? options[:dualdict] : dualplatformdictionary(sstyle, ap; options...)
     dualdiscretization(sstyle, ap, dualsamplingoperator(sstyle, ap; dualdict=dualdict, options...); dualdict=dualdict, options...)
 end
 
@@ -423,7 +423,7 @@ solver(ap::ApproximationProblem;
             problemstyle = ProblemStyle(ap),
             samplingstyle = SamplingStyle(ap),
             solverstyle = SolverStyle(samplingstyle, ap), options...) =
-        solver(problemstyle, solverstyle, ap; options...)
+        solver(problemstyle, solverstyle, ap; samplingstyle=samplingstyle, options...)
 
 function solver(pstyle::DictionaryOperatorStyle, solverstyle::SolverStyle, ap::ApproximationProblem;
             samplingstyle = SamplingStyle(ap), options...)

@@ -48,6 +48,7 @@ import DomainSets: cartesianproduct, ×
 ## - Imports from BasisFunctions
 import BasisFunctions: src, dest, matrix, matrix!, apply, apply!, apply_inplace!,
     dimension, codomaintype, domaintype, apply_multiple
+import BasisFunctions: Domain1d, Domain2d, Domain3d, Domain4d
 
 import BasisFunctions: tensorproduct, ⊗, productelements, productelement
 

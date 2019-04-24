@@ -195,7 +195,7 @@ end
 solver(style::AZSmoothStyle, ap, A; options...) = solver(style, ap, A, AZ_Zt(ap; options...); options...)
 solver(::AZSmoothStyle, ap, A, Zt; options...) = AZSolver_with_smoothing(A, Zt; options...)
 
-solver(::DualStyle, ap, A; options...) = dualdiscretization(ap; options...)
+solver(::DualStyle, ap, A; options...) = dualdiscretization(ap; options...)'
 
 solver(solverstyle::ProductSolverStyle, ap, A; samplingstyle=SamplingStyle(ap), options...) =
     solver(solverstyle, samplingstyle, ap, A; options...)

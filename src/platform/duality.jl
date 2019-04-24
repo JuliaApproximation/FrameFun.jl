@@ -93,7 +93,8 @@ function dualplatformdictionary(sstyle::SamplingStyle, dict::Dictionary; verbose
     end
 end
 
-dualplatformdictionary(dict::Dictionary; options...) = _dualdictionary(dict, gramoperator(dict))
+dualplatformdictionary(dict::Dictionary; measure = measure(dict), options...) =
+    _dualdictionary(dict, gramoperator(dict, measure))
 _dualdictionary(dict::Dictionary, gram::IdentityOperator) = dict
 _dualdictionary(dict::Dictionary, gram) = conj(inv(gram)) * dict
 

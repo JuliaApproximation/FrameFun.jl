@@ -9,6 +9,8 @@ equispacedgrid(domain::AbstractInterval, L::Int) =
 equispacedgrid(domain::ProductDomain, L::Tuple) =
     cartesianproduct(map(equispacedgrid, elements(domain), L))
 
+equispacedgrid(domain::Domain, L::Tuple) = subgrid(equispacedgrid(boundingbox(domain), L), domain)
+
 function oversampling_grid(dict::Dictionary, L)
     if hasinterpolationgrid(dict)
         try
@@ -38,11 +40,20 @@ oversampling_grid(dict::MappedDict, L) = apply_map(oversampling_grid(superdict(d
 
 oversampling_grid(dict::OperatedDict, L) = oversampling_grid(superdict(dict), L)
 
+# Make an initial guess for the sampling parameter L. The problem is that we have to
+# determine the type of L. We try to infer this from the dimension of the dictionary and/or
+# of its support.
+initialguess(ap, M) = initialguess(dictionary(ap), M)
 initialguess(dict::Dictionary1d, M::Int) = M
-initialguess(dict::Dictionary, M) = size(dict)
 initialguess(dict::BasisFunctions.CompositeDict, M) = initialguess(element(dict,1), M)
 initialguess(dict::BasisFunctions.CompositeDict, M::Int) = initialguess(element(dict,1), M)
-initialguess(ap, M) = initialguess(dictionary(ap), M)
+initialguess(dict::Dictionary, M) = _initialguess(dict, M, support(dict), size(dict))
+_initialguess(dict::Dictionary, M, domain::Domain, size) = size
+_initialguess(dict::Dictionary, M, domain::Domain1d, size::Tuple{Int}) = M
+function _initialguess(dict::Dictionary, M, domain::Domain2d, size::Tuple{Int})
+    n = round(Int,sqrt(size[1]))
+    (n,n)
+end
 
 match_sampling_parameter(dict, M::Int) = match_sampling_parameter(dict, M, initialguess(dict, M))
 
