@@ -11,8 +11,8 @@ matrix:
         - julia: nightly
 notifications:
   email: false
-before_script:
-    - cp test/Manifest.toml ..
+# before_script:
+    # - cp test/Manifest.toml .
 after_success:
   - julia --project=coverage/ -e 'using Pkg; Pkg.instantiate()'
   - julia --project=coverage/ coverage/coverage.jl
