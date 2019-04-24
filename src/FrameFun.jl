@@ -1,6 +1,6 @@
 module FrameFun
 
-using Base.Cartesian, StaticArrays, RecipesBase, FillArrays
+using Base.Cartesian, StaticArrays, RecipesBase
 
 using DomainSets
 using BasisFunctions
