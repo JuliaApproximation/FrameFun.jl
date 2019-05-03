@@ -1,18 +1,27 @@
-language:
-    - julia
+language: julia
 os:
   - linux
   - osx
 julia:
+  - 1.1
   - nightly
-  - 1.0
 matrix:
     allow_failures:
         - julia: nightly
 notifications:
   email: false
-# before_script:
-    # - cp test/Manifest.toml .
+
+before_script:
+  - julia --color=yes -e 'using Pkg;Pkg.Registry.add(RegistrySpec(url="https://github.com/vincentcp/FrameFunRegistry"));'
+
 after_success:
-  - julia --project=coverage/ -e 'using Pkg; Pkg.instantiate()'
-  - julia --project=coverage/ coverage/coverage.jl
+  - julia --project=coverage/ --color=yes coverage/coverage.jl
+
+jobs:
+    include:
+        - stage: "Documentation"
+          julia: 1.1
+          os: linux
+          script:
+            - julia --project=docs/ --color=yes docs/make.jl deploy
+          after_success: skip

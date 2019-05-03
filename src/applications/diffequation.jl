@@ -84,13 +84,8 @@ end
 
 # DiffEquation(S::Dictionary, D::Domain, Diff::DictionaryOperator, DRhs::Function, BC::BoundaryCondition, oversamplingfactor=2) = DiffEquation(S,D,Diff,DRhs,(BC,), oversamplingfactor)
 
-function boundarygrid(D::DiffEquation)
-    boundary(supergrid(grid(dest(D.SMP))),D.D)
-end
 
-supergrid(grid::ProductGrid) = grid
-supergrid(grid::ProductGrid{Tuple{Vararg{G}}}) where G<:Union{MaskedGrid,IndexSubGrid} = ProductGrid(map(supergrid, elements(grid))...)
-
+boundarygrid(D::DiffEquation) = boundary(supergrid(grid(dest(D.SMP))),D.D)
 
 function operator(D::DiffEquation; incboundary=false, options...)
     B = D.S

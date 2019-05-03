@@ -87,9 +87,6 @@ const ExtensionFrameTensor = TensorProductDict{D,NTuple{D,DICT}} where D where {
 extensionframe(domain::Domain, basis::Dictionary) = ExtensionFrame(domain, basis)
 extensionframe(basis::Dictionary, domain::Domain) = extensionframe(domain, basis)
 
-leftendpoint(d::ExtensionFrame, args...) = leftendpoint(support(d))
-rightendpoint(d::ExtensionFrame, args...) = rightendpoint(support(d))
-
 
 import BasisFunctions: measure, restrict
 import BasisFunctions: innerproduct, innerproduct_native

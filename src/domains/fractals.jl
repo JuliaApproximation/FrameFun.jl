@@ -16,8 +16,8 @@ function mandelbrot(maxiter = 1000, threshold = 1000.0)
     box = rectangle(-1.0, 0.35, -0.65, 0.65)
     M1 = 136
     M2 = 200
-    mask1 = computemandelbrotgrid(equispaced_grid(box, (M1,M1)), maxiter, threshold)
-    mask2 = computemandelbrotgrid(equispaced_grid(box, (M2,M2)), maxiter, threshold)
+    mask1 = computemandelbrotgrid(EquispacedGrid(M1,-1.0, 0.3)× EquispacedGrid(M2,-0.65, 0.65), maxiter, threshold)
+    mask2 = computemandelbrotgrid(EquispacedGrid(M1,-1.0, 0.3)× EquispacedGrid(M2,-0.65, 0.65), maxiter, threshold)
     cache = Dict{Int,BitArray{2}}()
     cache[M1] = mask1
     cache[M2] = mask2
@@ -89,8 +89,8 @@ end
 function juliaset(c = -0.122565+0.744866im, maxiter = 1000)
     box = rectangle(-0.2, 1.2, -0.4, 0.4)
 
-    mask1 = computejuliasetgrid(equispaced_grid(box, (100,100)), c, maxiter)
-    mask2 = computejuliasetgrid(equispaced_grid(box, (200,200)), c, maxiter)
+    mask1 = computejuliasetgrid(EquispacedGrid(200,-0.2, 1.2)× EquispacedGrid(200,-0.4, 0.4), c, maxiter)
+    mask2 = computejuliasetgrid(EquispacedGrid(200,-0.2, 1.2)× EquispacedGrid(200,-0.4, 0.4), c, maxiter)
     cache = Dict{Int,BitArray{2}}()
     cache[100] = mask1
     cache[200] = mask2

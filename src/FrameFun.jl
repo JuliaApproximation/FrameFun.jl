@@ -2,8 +2,8 @@ module FrameFun
 
 using Base.Cartesian, StaticArrays, RecipesBase
 
-using DomainSets
-using BasisFunctions
+using DomainSets, BasisFunctions, Grids
+import Grids:boundingbox
 
 using LinearAlgebra
 using Printf
@@ -52,7 +52,7 @@ import BasisFunctions: Domain1d, Domain2d, Domain3d, Domain4d
 
 import BasisFunctions: tensorproduct, ⊗, productelements, productelement
 
-import BasisFunctions: interpolation_grid, left, right, stepsize, sample, support
+import BasisFunctions: interpolation_grid, left, right, sample, support
 
 import BasisFunctions: isbasis, isframe, isorthogonal, isorthonormal, isbiorthogonal,
     hastransform, hasinterpolationgrid, hasderivative,
@@ -186,9 +186,6 @@ export ResidualStyle, OversampledResidual, RandomPoints, FNAStyle
 
 include("util/prettyprint.jl")
 
-include("sampling/subgrid.jl")
-include("sampling/boundary.jl")
-
 
 include("domains/extensions.jl")
 
@@ -228,7 +225,6 @@ include("domains/atomium.jl")
 include("domains/characteristic.jl")
 include("domains/polardomain.jl")
 
-include("sampling/randomgrid.jl")
 include("sampling/oversampledgrid.jl")
 
 include("applications/weighted.jl")
