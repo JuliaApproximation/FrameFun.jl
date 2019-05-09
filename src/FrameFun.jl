@@ -1,6 +1,6 @@
 module FrameFun
 
-using Base.Cartesian, StaticArrays, RecipesBase
+using Base.Cartesian, StaticArrays, RecipesBase, FillArrays
 
 using DomainSets, BasisFunctions, Grids
 import Grids:boundingbox

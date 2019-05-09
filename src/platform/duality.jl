@@ -46,8 +46,8 @@ restrict(measure::BasisFunctions.DiscreteMeasure, domain::Domain) =
 
 measure(::DiscreteGramStyle, ap::ApproximationProblem; options...) = discrete_gram_measure(ap; options...)
 
-measure(sstyle::DiscreteStyle, ap::ApproximationProblem; options...) =
-    DiscreteMeasure(sampling_grid(sstyle, ap; options...))
+# measure(sstyle::DiscreteStyle, ap::ApproximationProblem; options...) =
+#     DiscreteMeasure(sampling_grid(sstyle, ap; options...))
 
 
 """

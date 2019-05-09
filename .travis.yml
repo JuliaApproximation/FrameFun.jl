@@ -13,6 +13,7 @@ notifications:
 
 before_script:
   - julia --color=yes -e 'using Pkg;Pkg.Registry.add(RegistrySpec(url="https://github.com/vincentcp/FrameFunRegistry"));'
+  - julia --color=yes -e 'using Pkg;Pkg.Registry.add(RegistrySpec(url="https://github.com/JuliaRegistries/General"));'
 
 after_success:
   - julia --project=coverage/ --color=yes coverage/coverage.jl
