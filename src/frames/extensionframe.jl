@@ -123,28 +123,14 @@ end
 _innerproduct_native(domain, superμ, dict1::MappedDict, i, dict2::MappedDict, j, measure::SubMeasure; options...) =
     default_dict_innerproduct(dict1, i, dict2, j, measure; options...)
 
-# # Just to insert the :extensionframe_spantype as default for ExtensionFrame
-# dualdictionary(dict::ExtensionFrame, measure::Measure=measure(dict), space::BasisFunctions.FunctionSpace=Span(dict);
-#             dualtype=:extensionframe_spantype, options...) =
-#     BasisFunctions._dualdictionary(dict, measure, space; dualtype=dualtype, options...)
+extensiondual(dict::ExtensionFrame, measure; options...) =
+    extensionframe(support(dict), gramdual(superdict(dict), supermeasure(measure); options...),)
 
-function BasisFunctions._dualdictionary(dict::DICT, measure::Measure, space::Span, spandict::DICT;
-            warnslow = BasisFunctions.BF_WARNSLOW, dualtype=:extensionframe_spantype, options...) where DICT <: Union{ExtensionFrame,ExtensionFrameTensor}
-    if dualtype == :spantype
-        warnslow && @warn "Are you sure you want `dualtype=:spantype` and not `:extensionframe_spantype`"
-        BasisFunctions.spantype_dualdictionary(dict, measure, space, spandict; warnslow=warnslow, options...)
-    elseif dualtype == :extensionframe_spantype
-        extensionframe_spantype_dualdictionary(dict, measure, space, spandict; warnslow=warnslow, options...)
-    else
-        @warn "Only `:spantype` and `:extensionframe_spantype` implemented/known."
-    end
-end
-
-"Create a dual dictionary based on the superdict of the ExtensionFrame"
-function extensionframe_spantype_dualdictionary(dict::DICT, measure::Measure, space::Span, spandict::DICT; options...) where DICT <: Dictionary
-    @assert size(dict) == size(spandict)
-    dual_superdict = BasisFunctions.spantype_dualdictionary(superdict(dict), supermeasure(measure), Span(superdict(dict)), superdict(spandict); options...)
-    extensionframe(support(dict), dual_superdict)
+function BasisFunctions.gramdual(dict::ExtensionFrame, measure::Measure; options...)
+    @debug "Are you sure you want `dualtype=gramdual` and not `extensiondual`"
+    @warn "Changing to extensiondual"
+    extensiondual(dict, measure; options...)
+    # BasisFunctions.default_gramdual(dict, measure; options...)
 end
 
 superdict(dict::ExtensionFrameTensor) = TensorProductDict(map(superdict, elements(dict))...)

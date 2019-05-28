@@ -111,6 +111,7 @@ end
 function mideigs(N,M,L,irange)
     J2 = Chamzas(L,M-1,N)
     J1 = Chamzas(L,N-1,M)
+
     E,V1 = eigen(J1,irange)
     for i = 1:size(V1,1)
         for j = 1:size(V1,2)

@@ -58,7 +58,7 @@ import BasisFunctions: isbasis, isframe, isorthogonal, isorthonormal, isbiorthog
     hastransform, hasinterpolationgrid, hasderivative,
     hasantiderivative, hasextension, hasgrid_transform
 
-import BasisFunctions: hasmeasure, measure, gramoperator, dualdictionary, Measure, weights, grid, restrict
+import BasisFunctions: hasmeasure, measure, gramoperator, dual, Measure, weights, grid, restrict, discretemeasure
 
 import BasisFunctions: operator, matrix, isdiag, isinplace, ⊕
 
@@ -126,7 +126,7 @@ export boundingbox
 export distance, normal, volume
 
 # from frames/extensionframe.jl
-export ExtensionFrame, extensionframe, basis
+export ExtensionFrame, extensionframe, basis, extensiondual
 export extension_frame_platform
 
 # from frames/weighted_sum_frame.jl
@@ -196,7 +196,6 @@ include("platform/productplatform.jl")
 include("platform/model.jl")
 include("platform/approximate.jl")
 include("platform/adaptive.jl")
-include("platform/bases.jl")
 
 include("frames/extensionframe.jl")
 include("frames/weighted_sum_frame.jl")
@@ -228,6 +227,7 @@ include("domains/polardomain.jl")
 include("sampling/oversampledgrid.jl")
 
 include("applications/weighted.jl")
+include("platform/bases.jl")
 
 
 end # module

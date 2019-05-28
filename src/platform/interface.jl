@@ -172,13 +172,6 @@ end
 oversampling_grid(platform::Platform, n, L; dict = dictionary(platform, n), options...) =
     oversampling_grid(dict, L)
 
-discrete_normalization(platform::Platform, n, L;
-            measure=measure(platform), S = samplingoperator(platform, n, L), options...) =
-    quadraturenormalization(S, measure)
-
-discrete_normalization(dict::Dictionary, L; S, measure=measure(dict)) =
-    quadraturenormalization(S, measure)
-
 space(platform::Platform) = space(measure(platform))
 
 
@@ -262,14 +255,15 @@ dualsamplingoperator(ap::ApproximationProblem; samplingstyle = SamplingStyle(ap)
     dualsamplingoperator(samplingstyle, ap; options...)
 
 function samplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationProblem;
-            T = coefficienttype(ap), normalizedsampling = false, options...)
-    grid = sampling_grid(samplingstyle, ap; options...)
-    if normalizedsampling == nothing || !normalizedsampling
-        GridSampling(grid, T)
-    else
-        D = sampling_normalization(GridBasis{T}(grid), measure(samplingstyle, ap; options...); T=T, options...)
-        D * GridSampling(grid, T)
-    end
+            T = coefficienttype(ap), options...)
+            # grid = sampling_grid(samplingstyle, ap; options...)
+    dmeasure = haskey(options,:samplingmeasure) ? options[:samplingmeasure] :
+                    discretemeasure(samplingstyle, ap; options...)
+    g  = grid(dmeasure)
+    w = BasisFunctions.weights(dmeasure)
+    GS = GridSampling(g, T)
+    D = DiagonalOperator(dest(GS), dest(GS), sqrt.(w))
+    D*GS
 end
 
 samplingoperator(samplingstyle::DiscreteGramStyle, ap::ApproximationProblem; options...) =
@@ -307,17 +301,7 @@ function dualsamplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationPro
     else
         S = samplingoperator(samplingstyle, ap; options...)
     end
-    dualsamplingoperator(samplingstyle, ap, S; options...)
-end
-
-function dualsamplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationProblem, S;
-            normalizedsampling = false, discretenormalization = true, options...)
-    if normalizedsampling==nothing || normalizedsampling || !discretenormalization
-        S
-    else
-        O = discrete_normalization(ap; S=S)
-        O * S
-    end
+    S
 end
 
 dualsamplingoperator(samplingstyle::SamplingStyle, ap::ApproximationProblem; options...) =
@@ -369,20 +353,17 @@ sampling_grid(samplingstyle::ProductSamplingStyle, ap; options...) =
 
 
 ## Discretization
-
-# # The discretization requires the sampling operator. If it is not supplied, we
-# # compute it first.
-# discretization(ap::ApproximationProblem; options...) =
-#     discretization(ap, samplingoperator(ap; options...); options...)
-
 # The discretization requires the sampling operator only in the discrete case.
 discretization(ap::ApproximationProblem; samplingstyle = SamplingStyle(ap), options...) =
     discretization(samplingstyle, ap; options...)
 
+# The discretization requires the sampling operator. If it is not supplied, we
+# compute it first.
 discretization(sstyle::SamplingStyle, ap::ApproximationProblem; options...) =
     discretization(sstyle, ap, samplingoperator(sstyle, ap; options...); options...)
 
-discretization(::SamplingStyle, ap::ApproximationProblem, S; options...) = apply(S, dictionary(ap); options...)
+discretization(::SamplingStyle, ap::ApproximationProblem, S; options...) =
+    apply(S, dictionary(ap); options...)
 
 
 # Optionally, supplying f as the first argument yields the right hand side as well
@@ -398,12 +379,6 @@ function discretization(f, sstyle::SamplingStyle, ap::ApproximationProblem, S; o
     A, B
 end
 
-discrete_normalization(ap::DictionaryApproximation; options...) =
-    discrete_normalization(dictionary(ap), samplingparameter(ap; options...); options...)
-discrete_normalization(ap::PlatformApproximation; options...) =
-    discrete_normalization(ap.platform, ap.param, samplingparameter(ap; options...); options...)
-
-
 dualdiscretization(ap::ApproximationProblem; samplingstyle=SamplingStyle(ap), options...) =
     dualdiscretization(samplingstyle, ap; options...)
 
@@ -415,6 +390,15 @@ end
 function dualdiscretization(sstyle::SamplingStyle, ap::ApproximationProblem, Stilde; options...)
     dualdict = haskey(options, :dualdict) ? options[:dualdict] : dualplatformdictionary(sstyle, ap; options...)
     apply(Stilde, dualdict; options...)
+end
+
+normalizationoperator(::DictionaryOperatorStyle, ap::ApproximationProblem; sstyle=SamplingStyle(ap), opts...) =
+    normalizationoperator(sstyle, ap; opts...)
+
+function normalizationoperator(sstyle::DiscreteStyle, ap::ApproximationProblem; T=coefficienttype(ap), options...)
+    grid = sampling_grid(sstyle, ap; options...)
+    sampling_normalization(GridBasis{T}(grid), discretemeasure(sstyle, ap; options...),
+        measure(sstyle, ap; options...); T=T, options...)
 end
 
 ##  Solver
@@ -445,14 +429,24 @@ plungeoperator(ap::ApproximationProblem; problemstyle=ProblemStyle(ap), options.
 plungematrix(ap::ApproximationProblem; problemstyle=ProblemStyle(ap), options...) =
     plungematrix(problemstyle, ap; options...)
 
-AZ_A(::DictionaryOperatorStyle, ap; options...) =
-    discretization(ap; options...)
+default_aznormalization(a...) = false
 
-AZ_Z(::DictionaryOperatorStyle, ap; options...) =
-    dualdiscretization(ap; options...)
+AZ_A(pstyle::ProblemStyle, ap; normalizedsampling=default_aznormalization(ap), options...) =
+    normalizedsampling ?
+        normalizationoperator(pstyle, ap;options...)*_AZ_A(pstyle, ap; options...) :
+        _AZ_A(pstyle, ap; options...)
+
+AZ_Z(pstyle::ProblemStyle, ap; normalizedsampling=default_aznormalization(ap), options...) =
+    normalizedsampling ?
+        inv(normalizationoperator(pstyle,ap; options...))*_AZ_Z(pstyle, ap; options...) :
+        _AZ_Z(pstyle, ap; options...)
 
 AZ_Zt(pstyle::ProblemStyle, ap::ApproximationProblem; options...) = AZ_Z(pstyle, ap; options...)'
 
+_AZ_A(::DictionaryOperatorStyle, ap; samplingstyle = SamplingStyle(ap), options...) =
+    discretization(samplingstyle, ap, samplingoperator(samplingstyle, ap; options...); options...)
+_AZ_Z(::DictionaryOperatorStyle, ap; samplingstyle = SamplingStyle(ap), options...) =
+    dualdiscretization(samplingstyle, ap, dualsamplingoperator(samplingstyle, ap; options...); options...)
 
 function plungeoperator(problemstyle::ProblemStyle, ap::ApproximationProblem; options...)
     A = AZ_A(problemstyle, ap; options...)
@@ -485,13 +479,6 @@ function plungerank(ap::ApproximationProblem;
     length(Q.Sinv)
 end
 
-
-# # TODO: clean up these scaling factors. They have to do with a normalization of the
-# # sampling operators.
-Zt_scaling_factor(S::Dictionary, A) = length(supergrid(grid(dest(A))))
-Zt_scaling_factor(S::DerivedDict, A) = Zt_scaling_factor(superdict(S), A)
-Zt_scaling_factor(S::ChebyshevT, A) = length(supergrid(grid(dest(A))))/2
-
 smoothingoperator(ap::ApproximationProblem; options...) =
     WeightedSmoothingOperator(dictionary(ap); options...)
 
@@ -500,7 +487,6 @@ smoothingoperator(ap::ApproximationProblem; options...) =
 ###
 
 ## The AZ algorithm
-
 AZ_A(::GenericOperatorStyle, ap::ApproximationProblem; options...) = SynthesisOperator(dictionary(ap), measure(ap; options...))
 AZ_Z(::GenericOperatorStyle, ap::ApproximationProblem; options...) = SynthesisOperator(dualplatformdictionary(ap; options...), measure(ap; options...))
 samplingoperator(pstyle::GenericOperatorStyle, ap; options...) = AZ_Zt(pstyle, ap; options...)

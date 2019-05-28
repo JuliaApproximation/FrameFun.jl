@@ -7,7 +7,7 @@ function FNA2_kappa_lambda(platform, N, M, threshold; options...)
         G_N = matrix(discretization(platform, N, samplingstyle=GramStyle(); options...))
     end
 
-    G_MN = solver(platform, N, samplingstyle=OversamplingStyle(), M=M, solverstyle=DirectStyle(), directsolver=:svd, warnslow=false, options...)
+    G_MN = solver(platform, N, samplingstyle=OversamplingStyle(), M=M, solverstyle=DirectStyle(), directsolver=:svd, options...)
     U = G_MN.solver.U
     S = G_MN.solver.S
     V = collect(G_MN.solver.V)

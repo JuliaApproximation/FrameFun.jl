@@ -123,7 +123,7 @@ function approximate(::DictionaryOperatorStyle, samplingstyle::SamplingStyle, so
 		println()
 	end
 
-    A = apply(S, dict; options...)
+    A = AZ_A(ap; verbose=verbose, S=S, samplingstyle=samplingstyle, options...)
     B = apply(S, fun; options...)
     C = solve(solverstyle, ap, A, B; S=S, verbose=verbose, samplingstyle=samplingstyle, options...)
     F = DictFun(dictionary(ap), C)
@@ -171,8 +171,8 @@ solver(::DirectStyle, ap, A; options...) = directsolver(A; options...)
 solver(style::AZStyle, ap, A; problemstyle=ProblemStyle(ap), options...) =
     solver(problemstyle, style, ap, A; options...)
 
-solver(::DictionaryOperatorStyle, style::AZStyle, ap, A; options...) =
-    solver(style, ap, A, AZ_Zt(ap; options...); options...)
+solver(pstyle::DictionaryOperatorStyle, style::AZStyle, ap, A; options...) =
+    solver(style, ap, A, AZ_Zt(pstyle, ap; options...); options...)
 
 function solver(::AZStyle, ap, A, Zt;
             B=nothing, smallcoefficients=false, smallcoefficients_atol=NaN, smallcoefficients_rtol=NaN, verbose=false, options...)
@@ -205,7 +205,13 @@ solver(solverstyle::ProductSolverStyle, samplingstyle::ProductSamplingStyle, ap,
 				elements(ap), productelements(A), productelements(S), solverstyle.styles, samplingstyle.styles)...
 	)
 
-solver(::TridiagonalProlateStyle, ap, A; scaling = Zt_scaling_factor(dictionary(ap), A), options...) =
+# They have to do with a normalization of the
+# sampling operators.
+Zt_scaling_factor(S::Dictionary, A) = length(supergrid(grid(dest(A))))
+Zt_scaling_factor(S::DerivedDict, A) = Zt_scaling_factor(superdict(S), A)
+Zt_scaling_factor(S::ChebyshevT, A) = length(supergrid(grid(dest(A))))/2
+solver(::TridiagonalProlateStyle, ap, A; scaling = Zt_scaling_factor(dictionary(ap), A)
+    , options...) =
     FE_TridiagonalSolver(A, scaling; options...)
 
 solver(pstyle::GenericOperatorStyle, solverstyle::AZStyle, ap::ApproximationProblem, A; options...) =

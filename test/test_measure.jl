@@ -6,11 +6,11 @@ using BasisFunctions, Test
 @test BasisFunctions.DiracCombProbabilityMeasure(EquispacedGrid(10)) isa BasisFunctions.UniformDiracCombMeasure
 @test BasisFunctions.DiracCombProbabilityMeasure(EquispacedGrid(10)) isa BasisFunctions.WeightedDiracCombMeasure
 @test BasisFunctions.DiracCombProbabilityMeasure(EquispacedGrid(10)) isa BasisFunctions.DiracCombProbabilityMeasure
-@test BasisFunctions.DiscreteMeasure(EquispacedGrid(10),rand(10)) isa BasisFunctions.WeightedDiracCombMeasure
+@test discretemeasure(EquispacedGrid(10),rand(10)) isa BasisFunctions.WeightedDiracCombMeasure
 
 
 @test !(BasisFunctions.DiracCombMeasure(EquispacedGrid(10)) isa BasisFunctions.DiracCombProbabilityMeasure)
 @test !(BasisFunctions.DiracCombProbabilityMeasure(EquispacedGrid(10)) isa BasisFunctions.DiracCombMeasure)
-@test !(BasisFunctions.DiscreteMeasure(EquispacedGrid(10),rand(10)) isa BasisFunctions.DiracCombProbabilityMeasure)
-@test !(BasisFunctions.DiscreteMeasure(EquispacedGrid(10),rand(10)) isa BasisFunctions.UniformDiracCombMeasure)
+@test !(discretemeasure(EquispacedGrid(10),rand(10)) isa BasisFunctions.DiracCombProbabilityMeasure)
+@test !(discretemeasure(EquispacedGrid(10),rand(10)) isa BasisFunctions.UniformDiracCombMeasure)
 end

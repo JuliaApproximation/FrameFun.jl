@@ -1,30 +1,19 @@
-
-# a dualplatformdictionary does not always need a measure (depending on the discretizationstyle), a dualdictionary does.
 """
-The dual which is used to create a AZ `Z` matrix.
+    dualplatformdictionary(ap::ApproximationProblem; options...)
 
-Can be overwritten at the level of the platform and the dictionary;
-but it needs a specific implementation for `DiscreteStyle` since this
-sampling style does not assume the implementation of `measure`
+The dual that is used to create a AZ `Z` matrix.
 """
 dualplatformdictionary(ap::ApproximationProblem; samplingstyle = SamplingStyle(ap), options...) =
     dualplatformdictionary(samplingstyle, ap; options...)
 
-dualplatformdictionary(samplingstyle::DiscreteStyle, ap::DictionaryApproximation; options...) =
-    dualplatformdictionary(samplingstyle, dictionary(ap); options...)
-
-dualplatformdictionary(samplingstyle::DiscreteStyle, ap::PlatformApproximation; options...) =
-    dualplatformdictionary(samplingstyle, ap.platform, ap.param; approximationproblem=ap, options...)
-
-dualplatformdictionary(samplingstyle::DiscreteStyle, platform::Platform, param;
-            dict=dictionary(platform, param), options...) =
-    dualplatformdictionary(samplingstyle, dict; dict=dict, options...)
+dualplatformdictionary(samplingstyle::DiscreteStyle, ap::ApproximationProblem; options...) =
+    dualplatformdictionary(samplingstyle, ap, discretemeasure(samplingstyle, ap); options...)
 
 dualplatformdictionary(samplingstyle::SamplingStyle, ap::ApproximationProblem; options...) =
     dualplatformdictionary(samplingstyle, ap, measure(samplingstyle, ap; options...); options...)
 
 dualplatformdictionary(samplingstyle::SamplingStyle, ap::ApproximationProblem, measure::Measure; options...) =
-    dualdictionary(dictionary(ap), measure; options...)
+    dual(dictionary(ap), measure; options...)
 
 measure(ap::ApproximationProblem; samplingstyle, options...) =
     haskey(options,:measure) ? options[:measure] : measure(samplingstyle, ap; options...)
@@ -42,61 +31,49 @@ function measure(dict::Dictionary; options...)
 end
 
 restrict(measure::BasisFunctions.DiscreteMeasure, domain::Domain) =
-    BasisFunctions.DiscreteSubMeasure(subgrid(grid(measure), domain), weights(measure))
+    BasisFunctions.DiscreteSubMeasure(measure, subindices(subgrid(grid(measure),domain)))
 
-measure(::DiscreteGramStyle, ap::ApproximationProblem; options...) = discrete_gram_measure(ap; options...)
-
-# measure(sstyle::DiscreteStyle, ap::ApproximationProblem; options...) =
-#     DiscreteMeasure(sampling_grid(sstyle, ap; options...))
-
+measure(ss::DiscreteGramStyle, ap::ApproximationProblem; options...) =
+    discrete_gram_measure(ss, ap; options...)
 
 """
+    @aptoplatform `function`
 
-
-Can be specialized for platforms and dictionaries a the level of `discrete_gram_measure`
-or at the level of `oversampling_grid`, `oversampling_weight`
+Implement the function at the level of the dictionary.
 """
-function discrete_gram_measure(ap; options...)
-    L = samplingparameter(OversamplingStyle(), ap; options...)
-    discrete_gram_measure(ap, L; options...)
-end
-
-discrete_gram_measure(ap::DictionaryApproximation, L; options...) =
-    discrete_gram_measure(dictionary(ap), L)
-discrete_gram_measure(ap::PlatformApproximation, L; options...) =
-    discrete_gram_measure(ap.platform, ap.param, L; options...)
-discrete_gram_measure(platform::Platform, n, L=n; dict = dictionary(platform, n), options...) =
-    discrete_gram_measure(dict, L)
-
-function discrete_gram_measure(dict::Dictionary, L)
-    grid = oversampling_grid(dict, L)
-    weight = oversampling_weight(dict, grid)
-    BasisFunctions.DiscreteMeasure(grid, weight)
-end
-
-oversampling_weight(dict::Dictionary, grid::AbstractGrid) = Ones{coefficienttype(dict)}(size(grid)...)
-oversampling_weight(dict::Dictionary, grid::AbstractSubGrid) = Ones{coefficienttype(dict)}(size(supergrid(grid))...)
-
-function dualplatformdictionary(sstyle::SamplingStyle, dict::Dictionary; verbose=false, dualtype=:simple_type, options...)
-    if dualtype == :simple_type
-        verbose && @info "Taking the simple dual platform. "
-        dualplatformdictionary(dict; verbose=verbose, options...)
-    else
-        # Try to create measure
-        verbose && @info "Trying to create measure"
-        if sstyle isa DiscreteStyle && haskey(options, :approximationproblem)
-            m = measure(sstyle, options[:approximationproblem])
-            dualdictionary(dict, m; verbose=verbose, dualtype=dualtype, options...)
-        else
-            error("No way to determine dual of $(dict) with sampling style $(sstyle)")
-        end
+macro aptoplatform(ex)
+    def = Meta.parse("default_"*string(ex))
+    ret = quote
+        $(ex)(ss::SamplingStyle, ap::ApproximationProblem; options...) =
+            $(ex)(ss, ap, samplingparameter(ss, ap; options...); options...)
+        $(ex)(ss::SamplingStyle, ap::DictionaryApproximation, L; options...) =
+            $(ex)(ss, dictionary(ap), L)
+        $(ex)(ss::SamplingStyle, ap::PlatformApproximation, L; options...) =
+            $(ex)(ss, ap.platform, ap.param, L; options...)
+        $(ex)(ss::SamplingStyle, platform::Platform, n, L=n; dict = dictionary(platform, n), options...) =
+            $(ex)(ss, dict, L)
+        $(ex)(ss::SamplingStyle, dict::Dictionary, L; options...) =
+            $(def)(ss, dict, L)
     end
+    esc(ret)
 end
+
+@aptoplatform discrete_gram_measure
+
+default_discrete_gram_measure(ss::DiscreteGramStyle, dict::Dictionary, L) =
+    discretemeasure(oversampling_grid(dict, L))
+
+@aptoplatform discretemeasure
+
+default_discretemeasure(ss::DiscreteStyle, dict::Dictionary, L) =
+    discretemeasure(oversampling_grid(dict, L))
+
+
 
 dualplatformdictionary(dict::Dictionary; measure = measure(dict), options...) =
-    _dualdictionary(dict, gramoperator(dict, measure))
-_dualdictionary(dict::Dictionary, gram::IdentityOperator) = dict
-_dualdictionary(dict::Dictionary, gram) = conj(inv(gram)) * dict
+    _dual(dict, gramoperator(dict, measure))
+_dual(dict::Dictionary, gram::IdentityOperator) = dict
+_dual(dict::Dictionary, gram) = conj(inv(gram)) * dict
 
 
 ## Weighted dictionaries
