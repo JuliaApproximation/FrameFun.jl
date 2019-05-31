@@ -397,7 +397,7 @@ normalizationoperator(::DictionaryOperatorStyle, ap::ApproximationProblem; sstyl
 function normalizationoperator(sstyle::DiscreteStyle, ap::ApproximationProblem; T=coefficienttype(ap), options...)
     grid = sampling_grid(sstyle, ap; options...)
     sampling_normalization(GridBasis{T}(grid),
-        measure(sstyle, ap; options...); options...)
+        measure(sstyle, ap; options...))
 end
 
 ##  Solver
