@@ -128,9 +128,7 @@ extensiondual(dict::ExtensionFrame, measure; options...) =
 
 function BasisFunctions.gramdual(dict::ExtensionFrame, measure::Measure; options...)
     @debug "Are you sure you want `dualtype=gramdual` and not `extensiondual`"
-    @warn "Changing to extensiondual"
-    extensiondual(dict, measure; options...)
-    # BasisFunctions.default_gramdual(dict, measure; options...)
+    BasisFunctions.default_gramdual(dict, measure; options...)
 end
 
 superdict(dict::ExtensionFrameTensor) = TensorProductDict(map(superdict, elements(dict))...)

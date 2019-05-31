@@ -134,8 +134,12 @@ end
 struct PDEApproximation <: ApproximationProblem
     D   ::  DiffEquation
 end
+coefficienttype(ap::PDEApproximation) = coefficienttype(ap.D.S)
 
-function AZ_Zt(ap::PDEApproximation; options...)
+AZ_A(pstyle::ProblemStyle, ap::PDEApproximation; options...) =
+        _AZ_A(pstyle, ap; options...)
+
+function AZ_Zt(pstyle::ProblemStyle, ap::PDEApproximation; options...)
     D = ap.D
     G = grid(dest(D.SMP))
     OP = operator(D; options...)

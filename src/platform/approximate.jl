@@ -177,8 +177,8 @@ solver(pstyle::DictionaryOperatorStyle, style::AZStyle, ap, A; options...) =
 function solver(::AZStyle, ap, A, Zt;
             B=nothing, smallcoefficients=false, smallcoefficients_atol=NaN, smallcoefficients_rtol=NaN, verbose=false, options...)
     if smallcoefficients
-        Q = discrete_normalization(ap; options...)
-        normF = abs(sqrt(sum(Q * B.^2)))
+        w = BasisFunctions.gaussweights(sampling_grid(ap; options...), measure(ap; options...))
+        normF = abs(sqrt(sum(w .* B.^2)))
         if !isnan(smallcoefficients_rtol)
             verbose && println("Change smallcoefficients relative tolerance to absolute tolerance rtol*||f||")
             smallcoefficients_atol = smallcoefficients_rtol*normF

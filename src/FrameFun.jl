@@ -98,11 +98,6 @@ import BasisFunctions: discrete_approximation_operator, continuous_approximation
 import BasisFunctions: DictionarySolverOperator, GridSampling, ProjectionSampling,
             AbstractSolverOperator, SamplingOperator
 
-# Function spaces
-import BasisFunctions: quadraturenormalization
-import BasisFunctions: L2
-
-
 ###############################
 ## Exhaustive list of exports
 ###############################

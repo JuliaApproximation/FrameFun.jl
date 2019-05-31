@@ -49,8 +49,9 @@ function errormeasure(::FNAStyle, platform, tolerance, f, F, n, A, B, C, S, L; F
     residual = norm(A*C-B)
 
     # Note: we pass on options, because it may contain a measure
-    Q = discrete_normalization(platform, n, L; S=S, options...)
-    normF = abs(sqrt(sum(Q * B.^2)))
+    # Q = discrete_normalization(platform, n, L; S=S, options...)
+    w = BasisFunctions.gaussweights(grid(dest(S)), measure(platform))
+    normF = abs(sqrt(sum(w .* B.^2)))
 
     converged = (norm(C) < FNAeta*normF) && (residual < tolerance)
     converged, residual

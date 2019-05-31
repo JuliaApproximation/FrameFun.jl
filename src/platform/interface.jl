@@ -191,7 +191,6 @@ SolverStyle(samplingstyle::SamplingStyle, ap::DictionaryApproximation) = SolverS
 SamplingStyle(ap::PlatformApproximation) = SamplingStyle(ap.platform)
 SolverStyle(samplingstyle::SamplingStyle, ap::PlatformApproximation) = SolverStyle(ap.platform, samplingstyle)
 
-
 ## The sampling parameter
 
 samplingparameter(ap::ApproximationProblem; samplingstyle = SamplingStyle(ap), options...) =
@@ -397,8 +396,8 @@ normalizationoperator(::DictionaryOperatorStyle, ap::ApproximationProblem; sstyl
 
 function normalizationoperator(sstyle::DiscreteStyle, ap::ApproximationProblem; T=coefficienttype(ap), options...)
     grid = sampling_grid(sstyle, ap; options...)
-    sampling_normalization(GridBasis{T}(grid), discretemeasure(sstyle, ap; options...),
-        measure(sstyle, ap; options...); T=T, options...)
+    sampling_normalization(GridBasis{T}(grid),
+        measure(sstyle, ap; options...); options...)
 end
 
 ##  Solver

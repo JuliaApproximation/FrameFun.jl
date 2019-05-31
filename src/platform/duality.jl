@@ -13,7 +13,20 @@ dualplatformdictionary(samplingstyle::SamplingStyle, ap::ApproximationProblem; o
     dualplatformdictionary(samplingstyle, ap, measure(samplingstyle, ap; options...); options...)
 
 dualplatformdictionary(samplingstyle::SamplingStyle, ap::ApproximationProblem, measure::Measure; options...) =
-    dual(dictionary(ap), measure; options...)
+    azdual(dictionary(ap), measure; options...)
+
+azdual(dict::Dictionary, measure; options...) =
+    BasisFunctions.default_gramdual(dict, measure; options...)
+
+azdual(dict::ExtensionFrame, measure; options...) =
+    extensionframe(support(dict), azdual(superdict(dict), supermeasure(measure); options...),)
+
+function azdual(dict::MultiDict, measure::Measure; options...)
+    dictionary = dict.dicts[1].superdict
+    weights = map(weightfunction, elements(dict))
+    denom = (x...)->sum(map(w->abs(w(x...))^2, weights))
+    MultiDict([((x...)->(weights[j](x...)/denom(x...))) * azdual(dictionary, measure; options...) for j=1:length(weights)])
+end
 
 measure(ap::ApproximationProblem; samplingstyle, options...) =
     haskey(options,:measure) ? options[:measure] : measure(samplingstyle, ap; options...)
@@ -29,9 +42,6 @@ function measure(dict::Dictionary; options...)
     end
     measure(dict)
 end
-
-restrict(measure::BasisFunctions.DiscreteMeasure, domain::Domain) =
-    BasisFunctions.DiscreteSubMeasure(measure, subindices(subgrid(grid(measure),domain)))
 
 measure(ss::DiscreteGramStyle, ap::ApproximationProblem; options...) =
     discrete_gram_measure(ss, ap; options...)

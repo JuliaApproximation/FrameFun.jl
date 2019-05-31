@@ -29,8 +29,7 @@ weightedsumdual(dict::MultiDict, measure::Measure; options...) = _weightedsumdua
 
 function BasisFunctions.gramdual(dict::MultiDict, measure::Measure; options...)
     @debug "Are you sure you want `dualtype=gramdual` and not `weightedsumdual`"
-    # BasisFunctions.default_gramdual(dict, measure; options...)
-    weightedsumdual(dict, measure; options...)
+    BasisFunctions.default_gramdual(dict, measure; options...)
 end
 #
 # function dualplatformdictionary(sstyle::DiscreteStyle, platform::WeightedSumPlatform, i; options...)
