@@ -108,7 +108,7 @@ promote(samplingstyle::ProductSamplingStyle, solverstyle::SolverStyle) =
 
 # Construct the approximation problem and solve it
 function approximate(::DictionaryOperatorStyle, samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun, ap;
-            verbose = false, options...)
+            verbose = false, normalizedsampling=default_aznormalization(ap), options...)
     dict = dictionary(ap)
 
     verbose && println("Approximate: using sampling style $samplingstyle")
@@ -122,9 +122,7 @@ function approximate(::DictionaryOperatorStyle, samplingstyle::SamplingStyle, so
 		println(S)
 		println()
 	end
-
-    A = AZ_A(ap; verbose=verbose, S=S, samplingstyle=samplingstyle, options...)
-    B = apply(S, fun; options...)
+    A, B = discretization(fun, samplingstyle, ap;S=S,normalizedsampling=normalizedsampling,options...)
     C = solve(solverstyle, ap, A, B; S=S, verbose=verbose, samplingstyle=samplingstyle, options...)
     F = DictFun(dictionary(ap), C)
     res = norm(A*C-B)

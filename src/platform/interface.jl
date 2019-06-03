@@ -369,12 +369,15 @@ discretization(::SamplingStyle, ap::ApproximationProblem, S; options...) =
 discretization(f, ap::ApproximationProblem; samplingstyle=SamplingStyle(ap), options...) =
     discretization(f, samplingstyle, ap; options...)
 
-discretization(f, sstyle::SamplingStyle, ap; options...) =
-    discretization(f, sstyle, ap, samplingoperator(sstyle, ap; options...); options...)
+discretization(f, sstyle::SamplingStyle, ap::ApproximationProblem; options...) =
+    discretization(f, sstyle, ap, haskey(options,:S) ? options[:S] : samplingoperator(sstyle, ap; options...); options...)
 
-function discretization(f, sstyle::SamplingStyle, ap::ApproximationProblem, S; options...)
-    A = discretization(sstyle, ap, S; options...)
+function discretization(f, sstyle::SamplingStyle, ap::ApproximationProblem, S; normalizedsampling=default_aznormalization(ap), options...)
+    A = AZ_A(ap; S=S,samplingstyle=sstyle,normalizedsampling=normalizedsampling,options...)
     B = apply(S, f; options...)
+    if normalizedsampling
+        B = normalizationoperator(sstyle, ap; S=S,options...)*B
+    end
     A, B
 end
 
