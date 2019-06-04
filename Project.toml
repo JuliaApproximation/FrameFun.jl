@@ -12,6 +12,7 @@ GenericLinearAlgebra = "14197337-ba66-59df-a3e3-ca00e7dcff7a"
 Grids = "356ae075-8bc9-5ef9-a342-46c9ba26438c"
 InteractiveUtils = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+LowRankApprox = "898213cb-b102-5a47-900c-97e73b919f73"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 QuadGK = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
@@ -20,8 +21,8 @@ Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
-julia = "1.0"
 BasisFunctions = "0.0.1"
+julia = "1.0"
 
 [extras]
 Calculus = "49dc2e85-a5d0-5ad3-a950-438e2897f1b9"

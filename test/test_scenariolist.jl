@@ -6,7 +6,8 @@ using BasisFunctions, LinearAlgebra, DomainSets, Grids, Test, StaticArrays, Fram
 
     @test dictionary(FrameFun.approximationproblem(Fourier(100),0.0..0.5)) == extensionframe(Fourier(100),0.0..0.5)
     # Test defaults
-    @test AZ_A(FrameFun.approximationproblem(Fourier(100),0.0..0.5);samplingstyle=OversamplingStyle(),oversamplingfactor=2,normalizedsampling=false)≈AZ_A(ap)
+    @test AZ_A(FrameFun.approximationproblem(Fourier(100),0.0..0.5);samplingstyle=OversamplingStyle(),oversamplingfactor=2,normalizedsampling=false)≈
+        AZ_A(FrameFun.approximationproblem(Fourier(100),0.0..0.5))
 
 
     A = AZ_A(FrameFun.approximationproblem(Fourier(100),0.0..0.5);samplingstyle=OversamplingStyle(),oversamplingfactor=2,normalizedsampling=false)

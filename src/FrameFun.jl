@@ -148,7 +148,7 @@ export FeFun, FeFunNd
 export operator
 
 # from approximation
-export AZSolver, AZSmoothSolver, TridiagonalSolver, GenericAZSolver
+export AZSolver, AZSmoothSolver, TridiagonalSolver, GenericAZSolver, pQR_solver, pSVD_solver, rSVD_solver
 
 # from platform/platform.jl
 export SamplingStyle, SolverStyle, ProblemStyle

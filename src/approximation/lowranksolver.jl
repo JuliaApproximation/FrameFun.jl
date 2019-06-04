@@ -1,3 +1,16 @@
+using LowRankApprox: pqrfact, psvdfact
+LinearAlgebra.ishermitian(::DictionaryOperator) = false
+function pQR_solver(A::DictionaryOperator; threshold=default_threshold(A), verbose=false, options...)
+    verbose && println("Calculating partial QR factorization (LowRankApprox.jl)")
+    BasisFunctions.GenericSolverOperator(A, pqrfact(A;verb=verbose,rtol=threshold))
+end
+function pSVD_solver(A::DictionaryOperator; threshold=default_threshold(A), verbose=false, options...)
+    verbose && println("Calculating partial SVD factorization (LowRankApprox.jl)")
+    BasisFunctions.GenericSolverOperator(A, psvdfact(A;verb=verbose,rtol=threshold))
+end
+rSVD_solver(A::DictionaryOperator; options...) =
+    RandomizedSvdSolver(A; options...)
+
 
 """
 A Randomized Truncated SVD solver storing a decomposition of an operator A.
