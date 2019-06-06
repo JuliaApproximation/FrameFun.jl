@@ -90,7 +90,7 @@ Plots.savefig(P,"images/mandelbrot")
 
 ## Installation
 
-FrameFun.jl is not added to the Julia General registry and depends on the unregistered packages Grids.jl and BasisFunctions.jl
+FrameFun.jl is not added to the Julia General registry and depends on the unregistered packages GridArrays.jl and BasisFunctions.jl
 
 ### Recomanded
 For Julia 1.1 or higher, you can add the FrameFun registry.
@@ -105,7 +105,7 @@ pkg> add FrameFun
 In Julia 1.0, the packages can be installed by cloning their git repository. From the Julia REPL, type `]` to enter Pkg mode and run
 
 ```julia
-pkg> add https://github.com/vincentcp/Grids.jl
+pkg> add https://github.com/vincentcp/GridArrays.jl
 pkg> add https://github.com/daanhb/BasisFunctions.jl
 pkg> add https://github.com/daanhb/FrameFun.jl
 ```
@@ -114,7 +114,7 @@ or in a file you could use
 
 ```julia
 using Pkg
-pkg"add https://github.com/vincentcp/Grids.jl"
+pkg"add https://github.com/vincentcp/GridArrays.jl"
 pkg"add https://github.com/daanhb/BasisFunctions.jl"
 pkg"add https://github.com/daanhb/FrameFun.jl"
 ```

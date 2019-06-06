@@ -2,8 +2,8 @@ module FrameFun
 
 using Base.Cartesian, StaticArrays, RecipesBase, FillArrays
 
-using DomainSets, BasisFunctions, Grids
-import Grids:boundingbox
+using DomainSets, BasisFunctions, GridArrays
+import GridArrays:boundingbox
 
 using LinearAlgebra
 using Printf
