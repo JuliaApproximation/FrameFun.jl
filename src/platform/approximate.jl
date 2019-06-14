@@ -123,7 +123,8 @@ function approximate(::DictionaryOperatorStyle, samplingstyle::SamplingStyle, so
 		println()
 	end
     A, B = discretization(fun, samplingstyle, ap;S=S,normalizedsampling=normalizedsampling,options...)
-    C = solve(solverstyle, ap, A, B; S=S, verbose=verbose, samplingstyle=samplingstyle, options...)
+    C = solve(solverstyle, ap, A, B; normalizedsampling=normalizedsampling,
+        S=S, verbose=verbose, samplingstyle=samplingstyle, options...)
     F = DictFun(dictionary(ap), C)
     res = norm(A*C-B)
     verbose && println("Approximate: ended with residual $res\n")
@@ -170,7 +171,7 @@ solver(style::AZStyle, ap, A; problemstyle=ProblemStyle(ap), options...) =
     solver(problemstyle, style, ap, A; options...)
 
 solver(pstyle::DictionaryOperatorStyle, style::AZStyle, ap, A; options...) =
-    solver(style, ap, A, AZ_Zt(pstyle, ap; options...); options...)
+    solver(style, ap, A, AZ_Zt(pstyle, ap; (options)...); options...)
 
 function solver(::AZStyle, ap, A, Zt;
             B=nothing, smallcoefficients=false, smallcoefficients_atol=NaN, smallcoefficients_rtol=NaN, verbose=false, options...)

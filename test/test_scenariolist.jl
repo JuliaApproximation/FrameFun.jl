@@ -64,4 +64,7 @@ using BasisFunctions, LinearAlgebra, DomainSets, GridArrays, Test, StaticArrays,
     F = approximate(exp,FrameFun.approximationproblem(Fourier(100),0.0..0.5);samplingstyle=OversamplingStyle(),oversamplingfactor=2,normalizedsampling=false)
     @test abs(F[1](.2)-exp(.2) )< 1e-12
 
+    P = WeightedSumPlatform(FourierPlatform(),x->1,x->sqrt(x))
+    ap = FrameFun.approximationproblem(P,10)
+    azdual_dict(ap)
 end

@@ -7,7 +7,7 @@ using Test
     F = FourierExtensionPlatform(0.0..0.5)
     opts = (samplingstyle=FrameFun.DiscreteGramStyle(), dualtype=:extensionframe_spantype)
     P = dictionary(F, 4)
-    D = dualplatformdictionary(F,4;opts...)
+    D = azdual(F,4;opts...)
     M = measure(F,4;opts...)
     A = SynthesisOperator(P, M)
     Z = SynthesisOperator(D, M)
@@ -23,7 +23,7 @@ end
     F = FourierExtensionPlatform(0.0..0.5)
     opts = (samplingstyle=FrameFun.GramStyle(), dualtype=:extensionframe_spantype)
     P = dictionary(F, 4)
-    D = dualplatformdictionary(F,4;opts...)
+    D = azdual(F,4;opts...)
     M = measure(F,4;opts...)
     A = SynthesisOperator(P, M)
     Z = SynthesisOperator(D, M)
@@ -65,7 +65,7 @@ end
     n = 12
     domain = 0.0..0.5
     P = FourierExtensionPlatform(domain)
-    WP = WeightedSumPlatform(P,[x->sqrt(x),x->1])
+    WP = WeightedSumPlatform(P,x->sqrt(x),x->1)
     f = x->sqrt(x)*(1-x)-exp(x)
     F = Fun(f, WP, n, solverstyle=AZStyle())
     rgrid = randomgrid(domain, 200)

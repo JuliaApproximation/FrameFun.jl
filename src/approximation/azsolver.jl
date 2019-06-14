@@ -36,7 +36,7 @@ AZSolver(A::DictionaryOperator{T}, Zt::DictionaryOperator{T}, plunge_op::Diction
 
 operator(s::AZSolver) = s.A
 
-default_regularization(A; options...) = rSVD_solver(A; options...)
+default_regularization(A; options...) = pQR_solver(A; options...)
 
 function AZSolver(A::DictionaryOperator, Zt::DictionaryOperator;
             REG = default_regularization,

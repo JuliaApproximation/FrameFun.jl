@@ -24,10 +24,10 @@ SolverStyle(p::ProductPlatform, samplingstyle) =
     ProductSolverStyle(map(SolverStyle, elements(p), elements(samplingstyle)))
 
 dictionary(p::ProductPlatform, n::Int) = dictionary(p, productparameter(p, n))
-dualplatformdictionary(sstyle::DiscreteStyle, p::ProductPlatform, n::Int; options...) = dualplatformdictionary(sstyle, p, productparameter(p, n); options...)
+azdual_dict(sstyle::DiscreteStyle, p::ProductPlatform, n::Int; options...) = azdual_dict(sstyle, p, productparameter(p, n); options...)
 
 dictionary(p::ProductPlatform, n) = tensorproduct(map(dictionary, elements(p), n)...)
-dualplatformdictionary(sstyle::ProductSamplingStyle, p::ProductPlatform, n; options...) = tensorproduct(map((x,y,z)->dualplatformdictionary(x,y,z; options...), elements(sstyle), elements(p), n)...)
+azdual_dict(sstyle::ProductSamplingStyle, p::ProductPlatform, n; options...) = tensorproduct(map((x,y,z)->azdual_dict(x,y,z; options...), elements(sstyle), elements(p), n)...)
 
 discretization(p::ProductPlatform, S; options...) =
     tensorproduct(map(discretization, elements(p))...)

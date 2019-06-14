@@ -70,6 +70,9 @@ dictionary(p::ExtensionFramePlatform, n) =
 
 measure(platform::ExtensionFramePlatform) = restrict(measure(platform.basisplatform), platform.domain)
 
+azdual_dict(sstyle::SamplingStyle, platform::ExtensionFramePlatform, param, L, measure::Measure; options...) =
+   extensionframe(azdual_dict(sstyle, platform.basisplatform, param, L, supermeasure(measure); options...), platform.domain)
+
 struct OPSExtensionFramePlatform <: FramePlatform
     basisplatform   ::Platform
     domain          ::Domain

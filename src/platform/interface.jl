@@ -139,7 +139,7 @@ for op in (:samplingoperator, :dualsamplingoperator, :samplingparameter, :sampli
 end
 
 # The discretization and dualdiscretization
-for op in (:discretization, :dualdiscretization, :measure, :dualplatformdictionary)
+for op in (:discretization, :dualdiscretization, :azdual_dict)
     @eval $op(dict::Dictionary, args...; options...) = $op(approximationproblem(dict, args...); options...)
     @eval $op(platform::Platform, args...; options...) = $op(approximationproblem(platform, args...); options...)
 end
@@ -276,12 +276,12 @@ samplingoperator(samplingstyle::GramStyle, ap::ApproximationProblem; options...)
 
 dualsamplingoperator(samplingstyle::GramStyle, ap::ApproximationProblem; options...) =
     ProjectionSampling(
-        haskey(options, :dualdict) ? options[:dualdict] : dualplatformdictionary(samplingstyle, ap; options...),
+        haskey(options, :dualdict) ? options[:dualdict] : azdual_dict(samplingstyle, ap; options...),
             measure(samplingstyle, ap; options...))
 
 dualsamplingoperator(samplingstyle::DiscreteGramStyle, ap::ApproximationProblem; options...) =
     ProjectionSampling(
-        haskey(options, :dualdict) ? options[:dualdict] : dualplatformdictionary(samplingstyle, ap; options...),
+        haskey(options, :dualdict) ? options[:dualdict] : azdual_dict(samplingstyle, ap; options...),
             measure(samplingstyle, ap; options...))
 
 samplingoperator(samplingstyle::RectangularGramStyle, ap::ApproximationProblem;
@@ -385,12 +385,12 @@ dualdiscretization(ap::ApproximationProblem; samplingstyle=SamplingStyle(ap), op
     dualdiscretization(samplingstyle, ap; options...)
 
 function dualdiscretization(sstyle::SamplingStyle, ap::ApproximationProblem; options...)
-    dualdict = haskey(options, :dualdict) ? options[:dualdict] : dualplatformdictionary(sstyle, ap; options...)
+    dualdict = haskey(options, :dualdict) ? options[:dualdict] : azdual_dict(sstyle, ap; options...)
     dualdiscretization(sstyle, ap, dualsamplingoperator(sstyle, ap; dualdict=dualdict, options...); dualdict=dualdict, options...)
 end
 
 function dualdiscretization(sstyle::SamplingStyle, ap::ApproximationProblem, Stilde; options...)
-    dualdict = haskey(options, :dualdict) ? options[:dualdict] : dualplatformdictionary(sstyle, ap; options...)
+    dualdict = haskey(options, :dualdict) ? options[:dualdict] : azdual_dict(sstyle, ap; options...)
     apply(Stilde, dualdict; options...)
 end
 
@@ -421,7 +421,7 @@ end
 
 ## The AZ algorithm
 AZ_A(ap::ApproximationProblem; problemstyle=ProblemStyle(ap), options...) =
-    AZ_A(problemstyle, ap; options...)
+    AZ_A(problemstyle,  ap; options...)
 AZ_Z(ap::ApproximationProblem; problemstyle=ProblemStyle(ap), options...) =
     AZ_Z(problemstyle, ap; options...)
 AZ_Zt(ap::ApproximationProblem; problemstyle=ProblemStyle(ap), options...) =
@@ -490,7 +490,7 @@ smoothingoperator(ap::ApproximationProblem; options...) =
 
 ## The AZ algorithm
 AZ_A(::GenericOperatorStyle, ap::ApproximationProblem; options...) = SynthesisOperator(dictionary(ap), measure(ap; options...))
-AZ_Z(::GenericOperatorStyle, ap::ApproximationProblem; options...) = SynthesisOperator(dualplatformdictionary(ap; options...), measure(ap; options...))
+AZ_Z(::GenericOperatorStyle, ap::ApproximationProblem; options...) = SynthesisOperator(azdual_dict(ap; options...), measure(ap; options...))
 samplingoperator(pstyle::GenericOperatorStyle, ap; options...) = AZ_Zt(pstyle, ap; options...)
 samplingoperator(pstyle::DictionaryOperatorStyle, ap; options...) = samplingoperator(ap; options...)
 

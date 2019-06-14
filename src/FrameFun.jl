@@ -161,7 +161,7 @@ export GenericOperatorStyle, DictionaryOperatorStyle
 # from platform/interface.jl
 export approximate
 export samplingoperator, dualsamplingoperator, samplingparameter,
-    dictionary, dualplatformdictionary, solver, measure,
+    dictionary, azdual_dict, solver, measure,
     discretization, dualdiscretization,
     smoothingoperator,
     plungeoperator, plungematrix, plungerank,
