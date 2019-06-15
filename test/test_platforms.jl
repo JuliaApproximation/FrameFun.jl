@@ -5,9 +5,9 @@ using Test
 
 @testset "FourierExtensionPlatform: DiscreteGramStyle" begin
     F = FourierExtensionPlatform(0.0..0.5)
-    opts = (samplingstyle=FrameFun.DiscreteGramStyle(), dualtype=:extensionframe_spantype)
+    opts = (samplingstyle=FrameFun.DiscreteGramStyle(),)
     P = dictionary(F, 4)
-    D = azdual(F,4;opts...)
+    D = azdual_dict(F,4;opts...)
     M = measure(F,4;opts...)
     A = SynthesisOperator(P, M)
     Z = SynthesisOperator(D, M)
@@ -21,9 +21,9 @@ end
 
 @testset "FourierExtensionPlatform: GramStyle" begin
     F = FourierExtensionPlatform(0.0..0.5)
-    opts = (samplingstyle=FrameFun.GramStyle(), dualtype=:extensionframe_spantype)
+    opts = (samplingstyle=FrameFun.GramStyle(),)
     P = dictionary(F, 4)
-    D = azdual(F,4;opts...)
+    D = azdual_dict(F,4;opts...)
     M = measure(F,4;opts...)
     A = SynthesisOperator(P, M)
     Z = SynthesisOperator(D, M)
@@ -38,7 +38,7 @@ end
 
     n = 101
     F = FourierExtensionPlatform(0.0..0.5)
-    opts = (samplingstyle=FrameFun.GramStyle(), dualtype=:extensionframe_spantype,warnslow=false)
+    opts = (samplingstyle=FrameFun.GramStyle(),warnslow=false)
     A = AZ_A(F, n; opts...)
     Z = AZ_Z(F, n; opts...)
     MG = Z'*A
@@ -47,14 +47,14 @@ end
 
 @testset "FourierExtensionPlatform: GenericOperatorStyle" begin
     F = FourierExtensionPlatform(0.0..0.5)
-    opts = (samplingstyle=FrameFun.GramStyle(), dualtype=:extensionframe_spantype,
+    opts = (samplingstyle=FrameFun.GramStyle(),
             problemstyle=FrameFun.GenericOperatorStyle(), atol=1e-4,rtol=1e-4,warnslow=false)
     n = 11
     f = Fun(exp, F, n; opts...)
     x = .1923
     @test abs(f(x) - exp(x)) < 1e-3
 
-    opts = (samplingstyle=FrameFun.DiscreteGramStyle(), dualtype=:extensionframe_spantype,
+    opts = (samplingstyle=FrameFun.DiscreteGramStyle(),
             problemstyle=FrameFun.GenericOperatorStyle(), atol=1e-4,rtol=1e-4,warnslow=false)
     f = Fun(exp, F, n; opts...)
     @test abs(f(x) - exp(x)) < 1e-3

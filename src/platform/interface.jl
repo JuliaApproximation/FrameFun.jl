@@ -139,7 +139,7 @@ for op in (:samplingoperator, :dualsamplingoperator, :samplingparameter, :sampli
 end
 
 # The discretization and dualdiscretization
-for op in (:discretization, :dualdiscretization, :azdual_dict)
+for op in (:discretization, :dualdiscretization, :azdual_dict, :measure)
     @eval $op(dict::Dictionary, args...; options...) = $op(approximationproblem(dict, args...); options...)
     @eval $op(platform::Platform, args...; options...) = $op(approximationproblem(platform, args...); options...)
 end

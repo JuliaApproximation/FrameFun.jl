@@ -110,7 +110,7 @@ function test_1d_cases()
                 for func in (f,g)
 
                     basis = Basis{ELT}(n, -T, T)
-                    F = @timed Fun(func, basis, domain; solverstyle=solverstyle, dualtype=extensiondual)
+                    F = @timed Fun(func, basis, domain; solverstyle=solverstyle)
                     error = abserror(func, F[1])
                     if verbose
                         print("$n\t $T\t\t")
@@ -136,7 +136,7 @@ function test_bigfloat()
         for T in (big(17.0)/10,)
             for func in (f,g)
                 basis = Basis(91, -T, T)
-                F = @timed Fun(func, basis, domain; solverstyle = DirectStyle(), directsolver=:qr, dualtype=extensiondual)
+                F = @timed Fun(func, basis, domain; solverstyle = DirectStyle(), directsolver=:qr)
                 error = abserror(func, F[1])
                 if verbose
                     @printf("91\t %3.2e\t\t",T)
@@ -144,7 +144,7 @@ function test_bigfloat()
                     @printf("%3.2e\t %3.2e s\t %3.2e bytes \n",error, F[2],F[3])
                 end
                 @test error < 1e-20
-                show_mv_timings(basis, domain, func; solverstyle = DirectStyle(), directsolver=:qr, dualtype=extensiondual)
+                show_mv_timings(basis, domain, func; solverstyle = DirectStyle(), directsolver=:qr)
             end
         end
     end

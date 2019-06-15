@@ -8,7 +8,7 @@ macro aptoplatform(ex)
     intermediate = Meta.parse("_"*string(ex))
     ret = quote
         $(ex)(ap::ApproximationProblem, args...; samplingstyle=SamplingStyle(ap),options...) =
-            $(ex)(samplingstyle, ap, samplingparameter(samplingstyle, ap; options...), args...; options...)
+            $(intermediate)(samplingstyle, ap, samplingparameter(samplingstyle, ap; options...), args...; options...)
         $(ex)(ss::SamplingStyle, ap::ApproximationProblem, args...; options...) =
             $(intermediate)(ss, ap, samplingparameter(ss, ap; options...), args...; options...)
         $(intermediate)(ss::SamplingStyle, ap::DictionaryApproximation, L, args...; options...) =
@@ -28,14 +28,14 @@ end
 
 The dual that is used to create a AZ `Z` matrix.
 """
-azdual_dict(ap::ApproximationProblem; samplingstyle = SamplingStyle(ap), options...) =
-    azdual_dict(samplingstyle, ap; options...)
-
 azdual_dict(samplingstyle::DiscreteStyle, ap::ApproximationProblem; options...) =
     azdual_dict(samplingstyle, ap, discretemeasure(samplingstyle, ap); options...)
 
 azdual_dict(samplingstyle::SamplingStyle, ap::ApproximationProblem; options...) =
     azdual_dict(samplingstyle, ap, measure(samplingstyle, ap; options...); options...)
+
+azdual_dict(ap::ApproximationProblem; samplingstyle=SamplingStyle(ap), options...) =
+    azdual_dict(samplingstyle, ap; options...)
 
 @aptoplatform azdual_dict
 
@@ -48,28 +48,15 @@ function azdual_dict(dict::MultiDict, measure::Measure; options...)
     dictionary = dict.dicts[1].superdict
     weights = map(weightfunction, elements(dict))
     denom = (x...)->sum(map(w->abs(w(x...))^2, weights))
-    MultiDict([((x...)->(weights[j](x...)/denom(x...))) * azdual(dictionary, measure; options...) for j=1:length(weights)])
+    MultiDict([((x...)->(weights[j](x...)/denom(x...))) * azdual_dict(dictionary, measure; options...) for j=1:length(weights)])
 end
 
 @aptoplatform measure
 default_measure(::SamplingStyle, dict::Dictionary, L; options...) =
     measure(dict)
 
-# # Possibility on stackoverflow, but if neither measure with options or without options exists, this is an indication of an other problem.
-# # Other possibility. measure can never have optional arguments.
-# using InteractiveUtils
-# function measure(dict::Dictionary)
-#     method = @which(measure(dict::Dictionary))
-#     if (String(method.file) == @__FILE__()) && (method.line == @__LINE__()-1)
-#         error("Implement `measure(::$(typeof(dict)))`")
-#     end
-#     measure(dict)
-# end
-
 measure(ss::DiscreteGramStyle, ap::ApproximationProblem; options...) =
     discrete_gram_measure(ss, ap; options...)
-
-
 
 @aptoplatform discrete_gram_measure
 
@@ -80,8 +67,6 @@ default_discrete_gram_measure(ss::DiscreteGramStyle, dict::Dictionary, L) =
 
 default_discretemeasure(ss::DiscreteStyle, dict::Dictionary, L) =
     discretemeasure(oversampling_grid(dict, L))
-
-
 
 azdual_dict(dict::Dictionary; measure = measure(dict), options...) =
     _dual(dict, gramoperator(dict, measure))
