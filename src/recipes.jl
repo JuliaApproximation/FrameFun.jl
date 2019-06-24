@@ -4,12 +4,12 @@
 ## Plot full DictFun as the underlying expansion
 @recipe function f(F::DictFun; plot_ext = false)
     # plot_ext || (title --> "DictFun")
-    plot_ext ? Expansion(basis(F),coefficients(F)) : expansion(F)
+    plot_ext ? Expansion(dictionary(F),coefficients(F)) : expansion(F)
 end
 
 # When supplying a function along with the DictFun, plot the error
 @recipe function f(F::DictFun, target::Function; plot_ext = true)
-    plot_ext ? (Expansion(basis(F),coefficients(F)), target) : (expansion(F), target)
+    plot_ext ? (Expansion(dictionary(F),coefficients(F)), target) : (expansion(F), target)
 end
 
 # Postprocessing when the set is a frame: set values outside the domain to NaN

@@ -1,76 +1,56 @@
-module test_suite_applications
+using Test, FrameFun.Platforms, BasisFunctions
 
-using BasisFunctions, DomainSets, FrameFun, LinearAlgebra
-using Test
+@testset "Generic Platforms" begin
+    P = platform(Fourier(10))
+    @test dictionary(P,param(Fourier(10))) == Fourier(10)
+    @test P[10] == Fourier(10)
+    @test operator(dualdictionary(P,10,measure(P))) ≈ operator(dual(Fourier(10)))
+    @test DictionaryStyle(P)==BasisStyle()
+    @test SamplingStyle(P) == InterpolationStyle()
+    @test SolverStyle(P,SamplingStyle(P)) == InverseStyle()
+    @test param_first(P) == 10
+    @test param_next(P,10) == 20
+    @test param_increment(P,10) == 11
+    @test param_inbetween(P,10,20) == 15
 
-@testset "FourierExtensionPlatform: DiscreteGramStyle" begin
-    F = FourierExtensionPlatform(0.0..0.5)
-    opts = (samplingstyle=FrameFun.DiscreteGramStyle(),)
-    P = dictionary(F, 4)
-    D = azdual_dict(F,4;opts...)
-    M = measure(F,4;opts...)
-    A = SynthesisOperator(P, M)
-    Z = SynthesisOperator(D, M)
-    Zt = Z'
-    G1 = Zt*A
-    G2 = BasisFunctions.default_mixedgramoperator(D, P, M;warnslow=false)
-    G3 = BasisFunctions.mixedgramoperator(D, P, M)
-    @test Matrix(G1) ≈ Matrix(G2)
-    @test Matrix(G2) ≈ Matrix(G3)
+    @test elements(platform(Fourier(10)^2)) == (P,P)
+    @test element(platform(Fourier(10)^2),1) == P
+
+    P = platform(Fourier(10)^2)
+    @test param_first(P) == (10,10)
+    @test param_next(P,(10,20)) == (20,40)
+    @test param_increment(P,(10,11)) == (11,12)
+    @test param_inbetween(P,(10,10),(20,10)) == (15,10)
+    @test ProductPlatform(platform(Fourier(10)),2) == P
+    @test element(P,1) == platform(Fourier(10))
+    length(elements(P))==2
+    @test dictionary(P,10) == Fourier(10)^2
+    @test dictionary(P,param(Fourier(10)^2)) == Fourier(10)^2
+    @test P[10] == Fourier(10)^2
+    @test dictionary(P,(11,12)) == Fourier(11)⊗Fourier(12)
+    @test dualdictionary(P,(10,10), measure(Fourier(10)^2)) isa TensorProductDict
+    isbasis(Fourier(10)^2)
+    @test DictionaryStyle(P)==BasisStyle()
+    @test SamplingStyle(P) == ProductSamplingStyle(InterpolationStyle(),InterpolationStyle())
+    @test SolverStyle(P,SamplingStyle(P)) == ProductSolverStyle(InverseStyle(),InverseStyle())
 end
 
-@testset "FourierExtensionPlatform: GramStyle" begin
-    F = FourierExtensionPlatform(0.0..0.5)
-    opts = (samplingstyle=FrameFun.GramStyle(),)
-    P = dictionary(F, 4)
-    D = azdual_dict(F,4;opts...)
-    M = measure(F,4;opts...)
-    A = SynthesisOperator(P, M)
-    Z = SynthesisOperator(D, M)
-    @info "Two `Slow computation of Gram matrix entrywise.` warnings follow."
-    Zt = Z'
-    G1 = Zt*A
-    G2 = BasisFunctions.default_mixedgramoperator(D, P, M;warnslow=false)
-    G3 = BasisFunctions.mixedgramoperator(D, P, M)
-    @test Matrix(G1) ≈ Matrix(G2)
-    @test Matrix(G2) ≈ Matrix(G3)
+@testset "Platform Styles" begin
+    @test SamplingStyle(platform(Fourier(10))) == InterpolationStyle()
+    @test SolverStyle(platform(Fourier(10)), InterpolationStyle()) == InverseStyle()
+    @test SolverStyle(platform(Fourier(10)), OversamplingStyle()) == DirectStyle()
+    @test SolverStyle(platform(Fourier(10)), GridStyle()) == DirectStyle()
+    @test SolverStyle(platform(Fourier(10)), GenericSamplingStyle()) == DirectStyle()
 
 
-    n = 101
-    F = FourierExtensionPlatform(0.0..0.5)
-    opts = (samplingstyle=FrameFun.GramStyle(),warnslow=false)
-    A = AZ_A(F, n; opts...)
-    Z = AZ_Z(F, n; opts...)
-    MG = Z'*A
-    @test sum(.0001 .< svdvals(MG) .< .9999) == 9
+    @test SolverStyle(FrameStyle(), platform(Fourier(10)), InterpolationStyle()) == AZStyle()
+    @test SolverStyle(FrameStyle(), platform(Fourier(10)), OversamplingStyle()) == AZStyle()
+    @test SolverStyle(FrameStyle(), platform(Fourier(10)), GridStyle()) == AZStyle()
+    @test SolverStyle(FrameStyle(), platform(Fourier(10)), GenericSamplingStyle()) == AZStyle()
+
+    @test DictionaryStyle(platform(Fourier(10))) == BasisStyle()
+    @test DictionaryStyle(platform(MultiDict((Fourier(10),Fourier(10))))) == UnknownDictionaryStyle()
+    @test elements(SolverStyle(platform(Fourier(10)^2), SamplingStyle(platform(Fourier(10)^2)))) == (InverseStyle(), InverseStyle())
+    @test ProblemStyle(platform(Fourier(10)))  == DictionaryOperatorStyle()
+
 end
-
-@testset "FourierExtensionPlatform: GenericOperatorStyle" begin
-    F = FourierExtensionPlatform(0.0..0.5)
-    opts = (samplingstyle=FrameFun.GramStyle(),
-            problemstyle=FrameFun.GenericOperatorStyle(), atol=1e-4,rtol=1e-4,warnslow=false)
-    n = 11
-    f = Fun(exp, F, n; opts...)
-    x = .1923
-    @test abs(f(x) - exp(x)) < 1e-3
-
-    opts = (samplingstyle=FrameFun.DiscreteGramStyle(),
-            problemstyle=FrameFun.GenericOperatorStyle(), atol=1e-4,rtol=1e-4,warnslow=false)
-    f = Fun(exp, F, n; opts...)
-    @test abs(f(x) - exp(x)) < 1e-3
-end
-
-@testset "WeightedSumPlatform" begin
-    # Simple platform construction test
-    n = 12
-    domain = 0.0..0.5
-    P = FourierExtensionPlatform(domain)
-    WP = WeightedSumPlatform(P,x->sqrt(x),x->1)
-    f = x->sqrt(x)*(1-x)-exp(x)
-    F = Fun(f, WP, n, solverstyle=AZStyle())
-    rgrid = randomgrid(domain, 200)
-    abserror = sum(abs.(F.(rgrid)-f.(rgrid)))/length(rgrid)
-    @test abserror<1e-7
-end
-
-end # module
