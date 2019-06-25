@@ -1,6 +1,6 @@
 
-[![Build Status](https://travis-ci.org/daanhb/FrameFun.jl.svg?branch=master)](https://travis-ci.org/daanhb/FrameFun.jl)
-[![Coverage Status](https://coveralls.io/repos/github/daanhb/FrameFun.jl/badge.svg)](https://coveralls.io/github/daanhb/FrameFun.jl)
+[![Build Status](https://travis-ci.org/JuliaApproximation/FrameFun.jl.svg?branch=master)](https://travis-ci.org/JuliaApproximation/BasisFunctions.jl.svg?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/JuliaApproximation/FrameFun.jl/badge.svg)](https://coveralls.io/github/JuliaApproximation/FrameFun.jl)
 
 FrameFun
 ========
