@@ -1,5 +1,5 @@
 ## Series
-
+import BasisFunctions: plotgrid, postprocess
 
 ## Plot full DictFun as the underlying expansion
 @recipe function f(F::DictFun; plot_ext = false)
@@ -45,12 +45,3 @@ plotgrid(B::ExtensionFrame, n) = plotgrid(basis(B),n)
     plotdata = distance ? dist.(grid, Ref(dom)) : in.(grid, Ref(dom))
     collect(xrange),collect(yrange),plotdata
 end
-
-# @recipe function f(dom::Domain2d; n=300)
-#     seriescolor --> :blues
-#     seriestype --> :heatmap
-#     B = boundingbox(dom)
-#     grid = equispaced_aspect_grid(B,n)
-#     Z = indomain_broadcast(grid, dom)
-#     grid, 1./Z
-# end
