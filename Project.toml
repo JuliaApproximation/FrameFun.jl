@@ -1,7 +1,7 @@
 name = "FrameFun"
 uuid = "bbafa164-4497-5d18-87cf-33e911f89480"
 authors = ["daanhb, roelmatthysen,marcusdavidwebb vincentcp"]
-version = "0.0.1"
+version = "0.0.3"
 
 [deps]
 BasisFunctions = "4343a256-5453-507d-8aad-01a9d7189916"
@@ -21,7 +21,8 @@ Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
-BasisFunctions = "0.0.1"
+BasisFunctions = "0.0.3"
+GridArrays = "≥ 0.1.1"
 julia = "1.0"
 
 [extras]
