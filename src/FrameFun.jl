@@ -9,7 +9,7 @@ include("FrameFunDomains//FrameFunDomains.jl")
 include("generic/Platforms/Platforms.jl")
 @reexport using .Platforms
 
-include("ExtensionFrames.jl")
+include("ExtensionFrames/ExtensionFrames.jl")
 @reexport using .ExtensionFrames
 
 include("generic/ApproximationProblems.jl")

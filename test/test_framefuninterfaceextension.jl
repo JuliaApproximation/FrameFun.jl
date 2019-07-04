@@ -56,8 +56,8 @@ end
     @test samplingparameter(ap3) == (18,18)
     @test samplingparameter(ap4) == (36,36)
 
-    @test samplingparameter(wap1) == (20)
-    @test samplingparameter(wap2) == (15,15)
+    @test samplingparameter(wap1) == (40)
+    @test samplingparameter(wap2) == (30,30)
 
 
     @test samplingparameter(plat1...)  == samplingparameter(ap1)
@@ -68,7 +68,6 @@ end
     @test samplingparameter(wplat2...) == samplingparameter(wap2)
 end
 
-
 @testset "oversampling_grid" begin
 
     @test oversampling_grid(ap1) isa IndexSubGrid
@@ -76,15 +75,15 @@ end
     @test oversampling_grid(ap3) isa GridArrays.MaskedGrid
     @test oversampling_grid(ap4) isa GridArrays.MaskedGrid
 
-    @test oversampling_grid(wap1) == FourierGrid(20)
-    @test oversampling_grid(wap2) == FourierGrid(15)^2
+    @test oversampling_grid(wap1) == FourierGrid(40)
+    @test oversampling_grid(wap2) == FourierGrid(30)^2
 
     @test oversampling_grid(plat1...) isa IndexSubGrid
     @test oversampling_grid(plat2...) isa TensorSubGrid
     @test oversampling_grid(plat3...) isa GridArrays.MaskedGrid
     @test oversampling_grid(plat4...) isa GridArrays.MaskedGrid
-    @test oversampling_grid(wplat1...) == FourierGrid(20)
-    @test oversampling_grid(wplat2...) == FourierGrid(15)^2
+    @test oversampling_grid(wplat1...) == FourierGrid(40)
+    @test oversampling_grid(wplat2...) == FourierGrid(30)^2
 end
 
 @testset "samplingoperator" begin
@@ -337,7 +336,7 @@ end
     @test plungerank(plat3[1],(30,30);threshold=1e-6) <= 600
     @test plungerank(plat4[1],(30,30);threshold=1e-6) <= 600
     @test plungerank(wplat1[1],100;threshold=1e-6) <= 30
-    @test plungerank(wplat2[1],(15,15);threshold=1e-6)  <= 300
+    @test plungerank(wplat2[1],(15,15);threshold=1e-6)  <= 400
 
 end
 

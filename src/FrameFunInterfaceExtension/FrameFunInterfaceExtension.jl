@@ -71,6 +71,6 @@ end
 deduce_samplingparameter(ss::SamplingStyle, platform::WeightedSumPlatform, param; options...) =
     deduce_samplingparameter(ss, platform.P, param; options...)
 deduce_samplingparameter(ss::OversamplingStyle, platform::WeightedSumPlatform, param; options...) =
-    FrameFunInterface.deduce_oversampling_parameter(ss, platform.P, param; options...)
+    length(platform.weights).*FrameFunInterface.deduce_oversampling_parameter(ss, platform.P, param; options...)
 
 end

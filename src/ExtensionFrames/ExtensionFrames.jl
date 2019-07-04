@@ -1,8 +1,12 @@
 
 module ExtensionFrames
+
+
+include("submeasure.jl")
+
 using BasisFunctions, DomainSets
 
-using BasisFunctions: PrettyPrintSymbol, default_in_support, unsafe_eval_element
+using BasisFunctions: PrettyPrintSymbol, default_in_support, unsafe_eval_element, default_dict_innerproduct, _default_unsafe_eval_element_in_grid
 
 import BasisFunctions: superdict, support, similar_dictionary, isbasis, isframe,
     isbiorthogonal, isorthogonal, isorthonormal, hasinterpolationgrid, hastransform,
@@ -84,7 +88,7 @@ unsafe_eval_element1(dict::ExtensionFrame, idx::Int, x) =
 unsafe_eval_element1(dict::ExtensionFrame, idx, x) =
     in_support(dict, idx, x) ? unsafe_eval_element(basis(dict), idx, x) : zero(codomaintype(dict))
 unsafe_eval_element1(dict::ExtensionFrame, idx, grid::AbstractGrid) =
-    BasisFunctions._default_unsafe_eval_element_in_grid(dict, idx, grid)
+    _default_unsafe_eval_element_in_grid(dict, idx, grid)
 in_support(dict::ExtensionFrame, idx::Int, x) =
     default_in_support(dict, idx, x)
 in_support(dict::ExtensionFrame, idx, x) =
@@ -151,7 +155,7 @@ export ExtensionFrameTensor, ExtensionFrameSuper
 
 
 hasmeasure(::ExtensionFrame) = true
-measure(f::ExtensionFrame) = BasisFunctions.SubMeasure(measure(basis(f)), support(f))
+measure(f::ExtensionFrame) = SubMeasure(measure(basis(f)), support(f))
 
 innerproduct_native(f1::ExtensionFrame, i, f2::ExtensionFrame, j, measure::SubMeasure; options...) =
     innerproduct(superdict(f1), i, superdict(f2), j, measure; options...)
@@ -180,7 +184,7 @@ function _innerproduct_native(domain::UnionDomain, superμ::MappedMeasure, dict1
 end
 
 _innerproduct_native(domain, superμ, dict1::MappedDict, i, dict2::MappedDict, j, measure::SubMeasure; options...) =
-    default_dict_innerproduct(dict1, i, dict2, j, measure; options...)
+    BasisFunctions.default_dict_innerproduct(dict1, i, dict2, j, measure; options...)
 
 export extensiondual
 """
@@ -196,7 +200,7 @@ extensiondual(dict::ExtensionFrameTensor, measure::Measure; options...) =
 
 function gramdual(dict::ExtensionFrame, measure::Measure; options...)
     @debug "Are you sure you want `dualtype=gramdual` and not `extensiondual`"
-    BasisFunctions.default_gramdual(dict, measure; options...)
+    default_gramdual(dict, measure; options...)
 end
 
 for f in (:superdict, :basis,)
@@ -214,13 +218,7 @@ string(s::PrettyPrintSymbol{:𝔼}) = _string(s, s.object)
 _string(s::PrettyPrintSymbol{:𝔼}, dict::ExtensionFrame) =
     "Extension frame, from $(support(dict)) to $(support(superdict(dict)))"
 
-
-
-##################
-# platform
-##################
-
-GridSampling(dgs::GridBasis, grid::AbstractGrid, domain::Domain, scaling) =
+GridSampzling(dgs::GridBasis, grid::AbstractGrid, domain::Domain, scaling) =
     GridSampling(GridBasis{coefficienttype(dgs)}(subgrid(grid, domain)), scaling=scaling)
 
 end
