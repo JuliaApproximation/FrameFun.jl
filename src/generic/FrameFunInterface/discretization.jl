@@ -1,7 +1,7 @@
 discretization(ss::SamplingStyle, ap::ApproximationProblem; options...) =
     discretization(ss, ap, haskey(options,:S) ? options[:S] : samplingoperator(ss, ap; options...); options...)
-discretization(::SamplingStyle, ap::ApproximationProblem, S::AbstractOperator; options...) =
-    apply(S, dictionary(ap); options...)
+default_discretization(::SamplingStyle, dict::Dictionary, S::AbstractOperator; options...) =
+    apply(S, dict; options...)
 discretization(ss::ProductSamplingStyle, ap::ApproximationProblem, S::AbstractOperator; options...) =
     tensorproduct( elements(discretization, ss, ap,
         BasisFunctions.productelements(S); options...)... )
@@ -32,9 +32,8 @@ function dualdiscretization(ss::SamplingStyle, ap::ApproximationProblem, S::Abst
     dualdiscretization(ss, ap, S, dualdict; options...)
 end
 
-dualdiscretization(ss::SamplingStyle, ap::ApproximationProblem, Stilde::AbstractOperator, dualdict::Dictionary; options...) =
+default_dualdiscretization(ss::SamplingStyle, dict::Dictionary, Stilde::AbstractOperator, dualdict::Dictionary; options...) =
     apply(Stilde, dualdict; options...)
-
 dualdiscretization(ss::ProductSamplingStyle, ap::ApproximationProblem, S::AbstractOperator, dualdict::TensorProductDict; options...) =
     tensorproduct( elements(dualdiscretization, ss, ap,
         BasisFunctions.productelements(S), elements(dualdict); options...)... )
