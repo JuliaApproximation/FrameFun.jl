@@ -57,7 +57,7 @@ end
     @test samplingparameter(ap4) == (36,36)
 
     @test samplingparameter(wap1) == (40)
-    @test samplingparameter(wap2) == (30,30)
+    @test samplingparameter(wap2) == (21,21)
 
 
     @test samplingparameter(plat1...)  == samplingparameter(ap1)
@@ -76,14 +76,14 @@ end
     @test oversampling_grid(ap4) isa GridArrays.MaskedGrid
 
     @test oversampling_grid(wap1) == FourierGrid(40)
-    @test oversampling_grid(wap2) == FourierGrid(30)^2
+    @test oversampling_grid(wap2) == FourierGrid(21)^2
 
     @test oversampling_grid(plat1...) isa IndexSubGrid
     @test oversampling_grid(plat2...) isa TensorSubGrid
     @test oversampling_grid(plat3...) isa GridArrays.MaskedGrid
     @test oversampling_grid(plat4...) isa GridArrays.MaskedGrid
     @test oversampling_grid(wplat1...) == FourierGrid(40)
-    @test oversampling_grid(wplat2...) == FourierGrid(30)^2
+    @test oversampling_grid(wplat2...) == FourierGrid(21)^2
 end
 
 @testset "samplingoperator" begin
@@ -315,7 +315,7 @@ end
         @test AZ_Zt(ap) ≈ AZ_Zt(plat...)
         @test plungeoperator(ap) ≈ plungeoperator(plat...)
         @test firstAZstepoperator(ap) ≈ firstAZstepoperator(plat...)
-        @test plungerank(ap) ≈ plungerank(plat...)
+        @test abs(plungerank(ap) - plungerank(plat...)) < 3
     end
 
     for (ap, dict) in ((ap1,dict1),(ap2,dict2),(ap3,dict3),(ap4,dict4),)
@@ -323,7 +323,7 @@ end
         @test AZ_Zt(ap) ≈ AZ_Zt(dict)
         @test plungeoperator(ap) ≈ plungeoperator(dict)
         @test firstAZstepoperator(ap) ≈ firstAZstepoperator(dict)
-        @test plungerank(ap) ≈ plungerank(dict)
+        @test abs(plungerank(ap) - plungerank(dict)) < 3
     end
 
     for ap in (ap1,ap2,ap3,ap4,wap1,wap2)

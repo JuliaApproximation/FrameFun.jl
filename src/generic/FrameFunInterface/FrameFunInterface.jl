@@ -167,13 +167,17 @@ export sampling_grid, platform_grid
 @platformtoap sampling_grid
 @trial platform_grid
 include("grids.jl")
+default_sampling_grid(ss::SamplingStyle, dict::Dictionary, L; options...) = oversampling_grid(dict, L)
 
 
 export discretemeasure
 @trial discretemeasure
+discretemeasure(ss::ProductSamplingStyle, ap::ApproximationProblem; options...) =
+    productmeasure(elements(discretemeasure, ss, ap; options...)...)
 discretemeasure(ss::SamplingStyle, ap::ApproximationProblem; options...) =
+    discretemeasure(ss, platform(ap), parameter(ap), ap; options...)
+discretemeasure(ss::SamplingStyle, platform::Platform, param, ap; options...) =
     discretemeasure(sampling_grid(ss, ap; options...))
-
 
 export measure
 @trial measure
@@ -271,11 +275,10 @@ const firstAZstepoperator = plungematrix
 export plungerank
 @platformtoap plungerank
 function plungerank(ap::ApproximationProblem;
-            REG = default_regularization,
             rankestimate = 40,
             options...)
     C = plungematrix(ap; options...)
-    Q = REG(C; rankestimate = rankestimate, options...)
+    Q = rSVD_solver(C; rankestimate = rankestimate, options...)
     length(Q.Sinv)
 end
 

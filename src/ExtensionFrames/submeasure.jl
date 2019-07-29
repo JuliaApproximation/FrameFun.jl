@@ -59,6 +59,7 @@ struct DiscreteSubMeasure{T,M<:DiscreteMeasure{T},G<:AbstractGrid} <: DiscreteMe
     supermeasure   :: M
     subgrid        :: G
     DiscreteSubMeasure(measure::DiscreteMeasure{T}, grid::AbstractGrid) where T = new{T,typeof(measure),typeof(grid)}(measure, grid)
+    DiscreteSubMeasure(measure::DiscreteSubMeasure{T}, grid::AbstractGrid) where T = error()
 end
 
 submeasure(measure::DiscreteMeasure, domain::Domain) = _discretesubmeasure(subgrid(grid(measure), domain), weights(measure))

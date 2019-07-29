@@ -1,7 +1,9 @@
 module FrameFunInterfaceExtension
 
 using ..FrameFunInterface, ..Platforms, BasisFunctions, DomainSets, ..ExtensionFrames
-import ..FrameFunInterface: oversampling_grid, azdual_dict, correct_sampling_parameter, approximationproblem, deduce_samplingparameter, solver
+import ..FrameFunInterface: oversampling_grid, azdual_dict, correct_sampling_parameter,
+    approximationproblem, deduce_samplingparameter, solver, discretemeasure
+using ..ApproximationProblems: setsamplingparam!
 
 approximationproblem(dict::Dictionary, domain::Domain) =
     approximationproblem(promote_type(coefficienttype(dict),eltype(domain)), dict, domain)
@@ -32,6 +34,11 @@ Zt_scaling_factor(S::ChebyshevT, A) = length(supergrid(grid(dest(A))))/2
 using ..ExtensionFrames, ..ExtensionFramePlatforms
 oversampling_grid(dict::ExtensionFrame, L) = subgrid(oversampling_grid(superdict(dict),L), support(dict))
 
+discretemeasure(ss::SamplingStyle, platform::ExtensionFramePlatform, param, ap_old; options...) =
+    restrict(discretemeasure(ss, platform.basisplatform, param,
+        (ap=approximationproblem(platform.basisplatform, param);setsamplingparam!(ap,samplingparameter(ap_old));ap)
+            ; options...), platform.domain)
+
 azdual_dict(sstyle::SamplingStyle, platform::ExtensionFramePlatform, param, L, measure::Measure; options...) =
    extensionframe(azdual_dict(sstyle, platform.basisplatform, param, L, supermeasure(measure); options...), platform.domain)
 
@@ -44,9 +51,6 @@ azdual_dict(sstyle::SamplingStyle, platform::AugmentationPlatform, param, L, mea
 
 oversampling_grid(samplingstyle::SamplingStyle, platform::AugmentationPlatform, param, L; options...) =
    oversampling_grid(samplingstyle, platform.basis, param, L; options...)
-
-
-
 
 using ..WeightedSumPlatforms
 function azdual_dict(sstyle::SamplingStyle, platform::WeightedSumPlatform, param, L, measure::Measure; options...)
@@ -70,7 +74,9 @@ end
 
 deduce_samplingparameter(ss::SamplingStyle, platform::WeightedSumPlatform, param; options...) =
     deduce_samplingparameter(ss, platform.P, param; options...)
-deduce_samplingparameter(ss::OversamplingStyle, platform::WeightedSumPlatform, param; options...) =
-    length(platform.weights).*FrameFunInterface.deduce_oversampling_parameter(ss, platform.P, param; options...)
+function deduce_samplingparameter(ss::OversamplingStyle, platform::WeightedSumPlatform, param; options...)
+    a = FrameFunInterface.deduce_oversampling_parameter(ss, platform.P, param; options...)
+    map(x->round(Int,x), (length(platform.weights).^(1/length(param))).*a)
+end
 
 end
