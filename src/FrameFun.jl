@@ -26,8 +26,10 @@ include("generic/FrameFunInterface/FrameFunInterface.jl")
 include("platforms/AugmentationPlatforms.jl")
 include("platforms/ExtensionFramePlatforms.jl")
 include("platforms/WeightedSumPlatforms.jl")
+include("platforms/SumPlatforms.jl")
 include("platforms/FrameFunPlatforms.jl")
-@reexport using .AugmentationPlatforms, .ExtensionFramePlatforms, .WeightedSumPlatforms, .FrameFunPlatforms
+@reexport using .AugmentationPlatforms, .ExtensionFramePlatforms,
+    .WeightedSumPlatforms, .SumPlatforms, .FrameFunPlatforms
 
 include("FrameFunInterfaceExtension/FrameFunInterfaceExtension.jl")
 using .FrameFunInterfaceExtension

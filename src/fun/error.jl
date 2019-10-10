@@ -20,7 +20,7 @@ end
 using QuadGK
 
 function L2error(f::Function, F::DictFun{S,T}; rtol = eps(real(T)), atol = eps(real(T)), options...) where {S,T}
-    I = QuadGK.quadgk(x->abs(F(x)-f(x))^2, leftendpoint(support(dictionary(F))), rightendpoint(support(dictionary(F))), rtol=rtol, atol=atol)
+    I = QuadGK.quadgk(x->abs(F(x)-f(x))^2, infimum(support(dictionary(F))), supremum(support(dictionary(F))), rtol=rtol, atol=atol)
     @assert I[2] < 100max(rtol*I[1],atol)
     sqrt(I[1])
 end

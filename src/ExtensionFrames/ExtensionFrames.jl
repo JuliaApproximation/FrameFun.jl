@@ -29,18 +29,18 @@ See also [`extensionframe`](@ref)
 julia> extensionframe(Fourier(10),0.0..0.5)
 ```
 """
-struct ExtensionFrame{S,T} <: DerivedDict{S,T}
-    domain      ::  Domain
-    basis       ::  Dictionary{S,T}
+struct ExtensionFrame{S,T,DICT<:Dictionary{S,T},DOM<:Domain} <: DerivedDict{S,T}
+    domain      ::  DOM
+    basis       ::  DICT
 
-    function ExtensionFrame{S,T}(domain::Domain, basis::Dictionary) where {S,T}
+    function ExtensionFrame{S,T,DICT,DOM}(domain::DOM, basis::DICT) where {S,T,DICT<:Dictionary{S,T},DOM<:Domain}
         # @assert isbasis(basis)
         new(domain, basis)
     end
 end
 
 ExtensionFrame(domain::Domain, basis::Dictionary{S,T}) where {S,T} =
-    ExtensionFrame{S,T}(domain, basis)
+    ExtensionFrame{S,T,typeof(basis),typeof(domain)}(domain, basis)
 
 # superdict is the function for DerivedDict's to obtain the underlying set
 superdict(f::ExtensionFrame) = f.basis
@@ -148,7 +148,10 @@ function extensionframe(domain::ProductDomain, basis::TensorProductDict)
     tensorproduct(ExtensionFrames...)
 end
 
-const ExtensionFrameTensor = TensorProductDict{D,NTuple{D,DICT}} where D where {DICT<:ExtensionFrame}
+const ExtensionFrameTensor = Union{TensorProductDict{D,NTuple{D,DICT}} where D where {DICT<:ExtensionFrame},
+    TensorProductDict{2,Tuple{DICT1,DICT2}} where {DICT1<:ExtensionFrame,DICT2<:ExtensionFrame},
+    TensorProductDict{3,Tuple{DICT1,DICT2,DICT3}} where {DICT1<:ExtensionFrame,DICT2<:ExtensionFrame,DICT3<:ExtensionFrame},
+    TensorProductDict{4,Tuple{DICT1,DICT2,DICT3,DICT4}} where {DICT1<:ExtensionFrame,DICT2<:ExtensionFrame,DICT3<:ExtensionFrame,DICT4<:ExtensionFrame}}
 const ExtensionFrameSuper = Union{<:ExtensionFrame,<:ExtensionFrameTensor}
 export ExtensionFrameTensor, ExtensionFrameSuper
 
@@ -203,9 +206,8 @@ function gramdual(dict::ExtensionFrame, measure::Measure; options...)
     default_gramdual(dict, measure; options...)
 end
 
-for f in (:superdict, :basis,)
-    @eval $f(dict::ExtensionFrameTensor) = TensorProductDict(map($f, elements(dict))...)
-end
+superdict(dict::ExtensionFrameTensor) = TensorProductDict(map(superdict, elements(dict))...)
+basis(dict::ExtensionFrameTensor) = TensorProductDict(map(basis, elements(dict))...)
 support(dict::ExtensionFrameTensor) = ProductDomain((map(support, elements(dict)))...)
 
 ## Printing

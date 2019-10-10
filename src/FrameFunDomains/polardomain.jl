@@ -10,8 +10,9 @@ end
 export polardomain
 function polardomain(char, domain)
     T = subeltype(domain)
-    F = Fun(char, Fourier(100, -T(pi), T(pi)), Interval(-T(pi), T(pi)))
-    PolarDomain(F, boundingbox(domain))
+    # F = Fun(char, Fourier(100, -T(pi), T(pi)), Interval(-T(pi), T(pi)))
+    # PolarDomain(F, boundingbox(domain))
+    PolarDomain(char, boundingbox(domain))
 end
 
 indomain(x, c::PolarDomain) = sqrt(x[1]^2+x[2]^2) < real(c.charFun(atan(x[2],x[1])))

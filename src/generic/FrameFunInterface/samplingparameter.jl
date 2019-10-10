@@ -46,6 +46,7 @@ function deduce_oversampling_parameter(ss::OversamplingStyle, args...; dict=dict
     # In the absence of L, we deduce M and then find the best matching L
     # M is either supplied, or we compute it based on the (default) oversamplingfactor
     M = haskey(options, :M) ? options[:M] : round(Int, oversamplingfactor * length(dict))
+    verbose && println("Sampling parameter: oversamplingfactor=$oversamplingfactor, length=$(length(dict)), M=$M")
     L = match_and_correct_sampling_parameter(args..., M; samplingstyle=ss, options...)
     verbose && println("Sampling parameter: best match for M = $M is L = $L")
     L
