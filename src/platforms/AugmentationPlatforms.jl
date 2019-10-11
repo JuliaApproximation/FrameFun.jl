@@ -24,7 +24,8 @@ SolverStyle(platform::AugmentationPlatform, ::SamplingStyle) = AZStyle()
 dictionary(platform::AugmentationPlatform, i::Int) =
     MultiDict([dictionary(platform.basis, i), platform.functions])
 dualdictionary(platform::AugmentationPlatform, param, measure::Measure) =
-    dualdictionary(platform.basis, param, measure)
+    error("`dualdictionary` of `AugmentationPlatform` Not implemented.")
+    # dualdictionary(platform.basis, param, measure)
 
 measure(platform::AugmentationPlatform) = measure(platform.basis)
 

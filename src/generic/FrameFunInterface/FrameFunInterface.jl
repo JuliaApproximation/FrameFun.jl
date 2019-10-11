@@ -29,6 +29,12 @@ function elements(fun, ss::ProductSamplingStyle, ap::ProductPlatformApproximatio
     map((ssi, api, argi)->fun(ssi, api, argi...; options...), elements(ss), elements(ap), zip(args...))
 end
 
+function elements(fun, ss::ProductSamplingStyle, ap::ProductPlatformApproximation; options...)
+    samplingparameter(ss, ap; options...)
+    @assert length(elements(ss))==length(elements(ap))
+    map((ssi, api)->fun(ssi, api; options...), elements(ss), elements(ap))
+end
+
 
 INTERFACEFUNCTIONS = (:samplingoperator, :dualsamplingoperator, :samplingparameter,
     :sampling_grid, :interpolation_grid, :platform_grid, :discretization, :dualdiscretization,
