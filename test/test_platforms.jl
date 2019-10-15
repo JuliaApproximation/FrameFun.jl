@@ -12,11 +12,16 @@ using Test, FrameFun.Platforms, BasisFunctions
     @test param_next(P,10) == 20
     @test param_increment(P,10) == 11
     @test param_inbetween(P,10,20) == 15
+    @test correctparamformat(P,10)
+    @test !correctparamformat(P,(10,))
 
     @test elements(platform(Fourier(10)^2)) == (P,P)
     @test element(platform(Fourier(10)^2),1) == P
 
     P = platform(Fourier(10)^2)
+    @test correctparamformat(P,(10,10))
+    @test !correctparamformat(P,(10,))
+    @test !correctparamformat(P,10)
     @test param_first(P) == (10,10)
     @test param_next(P,(10,20)) == (20,40)
     @test param_increment(P,(10,11)) == (11,12)

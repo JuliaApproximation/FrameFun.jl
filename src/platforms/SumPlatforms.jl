@@ -2,7 +2,8 @@ module SumPlatforms
 using ..Platforms
 using  BasisFunctions
 using BasisFunctions: ZeroOperator, Domain
-import ..Platforms: SolverStyle, dictionary, dualdictionary, measure, param_next
+import ..Platforms: SolverStyle, dictionary, dualdictionary, measure, param_next,
+    unsafe_dictionary, correctparamformat
 
 import BasisFunctions: elements, size, length, support,
     grid_evaluation_operator
@@ -35,8 +36,9 @@ length(dict::ZeroDict) = dict.n
 support(dict::ZeroDict) = dict.domain
 elements(platform::SumPlatform) = (platform.platform1,platform.platform2)
 SolverStyle(platform::SumPlatform, ::SamplingStyle) = AZStyle()
-
-dictionary(platform::SumPlatform, param) =
+correctparamformat(platform::SumPlatform, param) =
+    correctparamformat(platform.platform1, param) && correctparamformat(platform.platform2, param)
+unsafe_dictionary(platform::SumPlatform, param) =
     MultiDict([map(dictionary, elements(platform), platform.param(param))...])
 
 function dualdictionary(platform::SumPlatform, param, measure::Measure; options...)

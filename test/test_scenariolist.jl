@@ -68,6 +68,6 @@ using BasisFunctions, LinearAlgebra, DomainSets, GridArrays, Test, StaticArrays,
     @test abs(F[1](.2)-exp(.2) )< 1e-12
 
     P = WeightedSumPlatform(FourierPlatform(),x->1,x->sqrt(x))
-    ap = FrameFun.approximationproblem(P,10)
+    ap = FrameFun.approximationproblem(P,(10,10))
     azdual_dict(ap)
 end

@@ -3,6 +3,17 @@ module FrameFunInterface
 using ..Platforms, ..ApproximationProblems, BasisFunctions, ..DictFuns
 import BasisFunctions: discretemeasure, measure, interpolation_grid, elements
 
+abstract type SamplingStrategy end
+"""
+The default strategy tries to keep the oversamplingfactor correct by distributing equally over all degrees of freedom.
+
+"""
+struct DefaultSamplingStrategy <: SamplingStrategy end
+
+
+
+
+
 
 
 default_aznormalization(a...) = false
@@ -21,7 +32,7 @@ function normalizationoperator(sstyle::DiscreteStyle, ap::ApproximationProblem; 
         measure(sstyle, ap; options...))
 end
 
-
+# Utility functions to create tensor FrameFunInterface functions
 
 function elements(fun, ss::ProductSamplingStyle, ap::ProductPlatformApproximation, args...; options...)
     samplingparameter(ss, ap; options...)
@@ -60,9 +71,9 @@ macro aptoplatform(ex)
     intermediate = Meta.parse("_"*string(ex))
     ret = quote
         $(ex)(ap::ApproximationProblem, args...; samplingstyle=SamplingStyle(ap),options...) =
-            $(intermediate)(samplingstyle, ap, (samplingparameter(samplingstyle, ap; options...)), args...; options...)
+            $(intermediate)(samplingstyle, ap, samplingparameter(samplingstyle, ap; options...), args...; options...)
         $(ex)(ss::SamplingStyle, ap::ApproximationProblem, args...; options...) =
-            $(intermediate)(ss, ap, (samplingparameter(ss, ap; options...)), args...; options...)
+            $(intermediate)(ss, ap, samplingparameter(ss, ap; options...), args...; options...)
         $(intermediate)(ss::SamplingStyle, ap::ApproximationProblem, L, args...; options...) =
             $(ex)(ss, platform(ap), parameter(ap), L, args...; options...)
         $(ex)(ss::SamplingStyle, platform::Platform, param, L, args...; dict = dictionary(platform, param), options...) =

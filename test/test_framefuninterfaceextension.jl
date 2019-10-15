@@ -14,8 +14,8 @@ d1 = 0.0..0.5
     plat3 = platform(extensionframe(Fourier(10)^2,d3)), (10,10)
     plat4 = platform(extensionframe(Fourier(10,-1,1)^2,d3)), (10,10)
 
-    wplat1 = WeightedSumPlatform(platform(Fourier(10)), x->1., sqrt), (10)
-    wplat2 = WeightedSumPlatform(platform(Fourier(10)^2), (x,y)->1., (x,y)->sqrt(x^2+y^2)), (10,10)
+    wplat1 = WeightedSumPlatform(platform(Fourier(10)), x->1., sqrt), (10,10)
+    wplat2 = WeightedSumPlatform(platform(Fourier(10)^2), (x,y)->1., (x,y)->sqrt(x^2+y^2)), ((10,10),(10,10))
 
 
     ap1 = approximationproblem(Fourier(10),d1)
@@ -335,8 +335,8 @@ end
     @test plungerank(plat2[1],(30,30);threshold=1e-6) <= 700
     @test plungerank(plat3[1],(30,30);threshold=1e-6) <= 600
     @test plungerank(plat4[1],(30,30);threshold=1e-6) <= 600
-    @test plungerank(wplat1[1],100;threshold=1e-6) <= 30
-    @test plungerank(wplat2[1],(15,15);threshold=1e-6)  <= 400
+    @test plungerank(wplat1[1],(100,100);threshold=1e-6) <= 30
+    @test plungerank(wplat2[1],((15,15),(15,15));threshold=1e-6)  <= 400
 
 end
 
