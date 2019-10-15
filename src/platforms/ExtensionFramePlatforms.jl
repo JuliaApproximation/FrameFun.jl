@@ -1,6 +1,7 @@
 module ExtensionFramePlatforms
 using ..Platforms
-import ..Platforms: platform, SolverStyle, SamplingStyle, measure, dictionary, dualdictionary
+import ..Platforms: platform, SolverStyle, SamplingStyle, measure, dictionary,
+    dualdictionary, correctparamformat, unsafe_dictionary
 using ..ExtensionFrames
 import ..ExtensionFrames: support
 using DomainSets, BasisFunctions
@@ -18,14 +19,17 @@ struct ExtensionFramePlatform <: FramePlatform
     domain          ::  Domain
 end
 
+correctparamformat(platform::ExtensionFramePlatform, param) =
+    correctparamformat(platform.basisplatform, param)
+
 support(platform::ExtensionFramePlatform) = platform.domain
 
 SolverStyle(dict::ExtensionFrame, ::OversamplingStyle) = AZStyle()
 
 SamplingStyle(p::ExtensionFramePlatform) = OversamplingStyle()
 
-dictionary(p::ExtensionFramePlatform, n) =
-    extensionframe(p.domain, dictionary(p.basisplatform, n))
+unsafe_dictionary(p::ExtensionFramePlatform, n) =
+    extensionframe(p.domain, unsafe_dictionary(p.basisplatform, n))
 
 measure(platform::ExtensionFramePlatform) = restrict(measure(platform.basisplatform), platform.domain)
 

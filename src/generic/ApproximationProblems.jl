@@ -187,8 +187,8 @@ approximationproblem(dict::Dictionary) =
 
 
 # 2. An approximation problem from a platform and a concrete parameter value
-approximationproblem(platform::Platform, param) = PlatformApproximation(platform, param)
-approximationproblem(platform::Platform, param, L) = PlatformApproximation(platform, param, L)
+approximationproblem(platform::Platform, param) = (@assert correctparamformat(platform, param);PlatformApproximation(platform, param))
+approximationproblem(platform::Platform, param, L) = (@assert correctparamformat(platform, param);PlatformApproximation(platform, param, L))
 
 # 3. An adaptive approximation problem from a platform
 approximationproblem(platform::Platform) = AdaptiveApproximation(platform)

@@ -9,7 +9,9 @@ export ResidualStyle, OversampledResidual, RandomPoints, FNAStyle
 struct ResidualStyle <: ErrorStyle end
 struct OversampledResidual <: ErrorStyle end
 struct RandomPoints <: ErrorStyle end
-struct FNAStyle <: ErrorStyle end
+struct FNAStyle{CREL,EREL} <: ErrorStyle
+    FNAStyle() = new{true,true}()
+end
 
 export AdaptiveStrategy
 abstract type AdaptiveStrategy end
@@ -27,11 +29,13 @@ addlogentry!(log, entry) = push!(log, entry)
 # - error: a criterion-specific measure of the error
 
 # Verify the average pointwise error in a limited number of random points.
-function errormeasure(::RandomPoints, platform, tolerance, f, F, args...; numrandompts = 50, options...)
+function errormeasure(::RandomPoints, platform, tolerance, f, F, args...; numrandompts = 50, verbose=false, options...)
     g = randomgrid(support(F.expansion.dictionary), numrandompts)
     z = sample(g, f)
-    mean_error = sqrt(sum(abs.(z-F.(g)).^2))/numrandompts
-    mean_error < tolerance, mean_error
+    max_error = norm(z-F.(g), Inf)
+    converged = max_error < tolerance
+    verbose && @info "Errormeasure: Maximum error in $numrandompts random points did $(converged ? "" : "not ")converge "*@sprintf("%1.3e (%1.3e)",max_error,tolerance)
+    converged, max_error
 end
 
 # Measure the norm of the residual of the system Ax=B.
@@ -52,16 +56,42 @@ end
 # Measure the error FNA style:
 # - the residual has to meet a threshold
 # - the norm of the coefficients has to be smaller than a value times the estimated norm of the right hand side
-function errormeasure(::FNAStyle, platform, tolerance, f, F, n, A, B, C, S, L; FNAeta = 5.0, options...)
+function errormeasure(::FNAStyle{CREL,EREL}, platform, tolerance, f, F, n, A, B, C, S, L; optimizefase=false,
+        numrandompts = 2, FNAcoef = 5.0, FNAerr = 5.0, verbose=false, Sbest=nothing, Bbest=nothing,options...) where {CREL, EREL}
     residual = norm(A*C-B)
 
     # Note: we pass on options, because it may contain a measure
     # Q = discrete_normalization(platform, n, L; S=S, options...)
-    w = BasisFunctions.gaussweights(grid(dest(S)), measure(platform))
-    normF = abs(sqrt(sum(w .* B.^2)))
+    if optimizefase
+        w = BasisFunctions.gaussweights(grid(dest(Sbest)), measure(platform))
+        normF = abs(sqrt(sum(w .* Bbest.^2)))
+    else
+        w = BasisFunctions.gaussweights(grid(dest(S)), measure(platform))
+        normF = abs(sqrt(sum(w .* B.^2)))
+    end
+    normErr = residual
+    normCoef = norm(C)
+    verbose && @info @sprintf("Errormeasure: approximate ||f|| %1.3e\n",normF)
 
-    converged = (norm(C) < FNAeta*normF) && (residual < tolerance)
-    converged, residual
+    errConverged = EREL ? (normErr < FNAerr*normF) : (normErr < FNAerr)
+    coefConverged = CREL ? (normCoef < FNAcoef*normF) : (normErr < FNAcoef)
+
+    verbose && @info "Errormeasure: error did $(errConverged ? "" : "not ")converge: " * @sprintf("error=%1.3e, ||f||=%1.3e, c=%1.3e\n",normErr,normF,FNAerr)
+    verbose && @info "Errormeasure: coefficients did $(coefConverged ? "" : "not ")converge: " * @sprintf("||c||=%1.3e, ||f||=%1.3e, c=%1.3e\n",normCoef,normF,FNAcoef)
+
+    converged = errConverged && coefConverged
+    if converged
+        if optimizefase
+            converged, residual
+        else
+            # If N is too small the norm of `f` might not be good enough. User random points for robustness.
+            verbose && @info "Errormeasure: Check random points for FNA robustness. "
+            converged, _ = errormeasure(RandomPoints(), platform, normF*FNAerr, f, F; numrandompts = numrandompts, verbose=verbose, options...)
+            converged, residual
+        end
+    else
+        converged, residual
+    end
 end
 
 
@@ -140,14 +170,17 @@ function adaptive_approximation(::GreedyStyle, f, platform;
 
     converged = false
     while (!converged) && (length(F) <= maxlength) && (iterations <= maxiterations)
-        residual_f = x -> f(x)-F(x)
+        # residual_f = x -> f(x)-F(x)
         verbose_on_first_call = verbose && (iterations==1)
         verbose_on_first_call && println("Adaptive: initial value of n is $n")
-        P, A, B, C, S = approximate(residual_f, platform, n; verbose=verbose_on_first_call, threshold=threshold, options...)
-        converged, error = errormeasure(criterion, platform, tol, residual_f, P, n, A, B, C, S; options...)
+        # P, A, B, C, S, L = approximate(residual_f, platform, n; verbose=verbose_on_first_call, threshold=threshold, options...)
+        # converged, error = errormeasure(criterion, platform, tol, residual_f, P, n, A, B, C, S, L; verbose=verbose, options...)
+        P, A, B, C, S, L = approximate(f, platform, n; verbose=verbose_on_first_call, threshold=threshold, options...)
+        converged, error = errormeasure(criterion, platform, tol, f, P, n, A, B, C, S, L; verbose=verbose, options...)
         addlogentry!(logbook, (n, error))
 
-        F = F + P
+        # F = F + P
+        F = P
 
         verbose && @printf "Adaptive: N = %d, err = %1.3e, ||x|| = %1.3e\n" length(F) error norm(coefficients(F))
 
@@ -199,6 +232,7 @@ function adaptive_approximation(::OptimalStyle, f, platform;
     F = DictFun(dictionary(platform, n))
 
     # First let the size grow until the tolerance is reached
+    A=nothing;B=nothing;C=nothing;S=nothing;L=nothing;
     previous_n = n
     next_n = n
     converged = false
@@ -209,8 +243,8 @@ function adaptive_approximation(::OptimalStyle, f, platform;
         verbose_on_first_call = verbose && (iterations==1)
         verbose_on_first_call && println("Adaptive: initial value of n is $n")
         F, A, B, C, S, L = approximate(f, platform, n; threshold=threshold, verbose=verbose_on_first_call, options...)
-        converged, error = errormeasure(criterion, platform, tol, f, F, n, A, B, C, S, L; options...)
-        verbose && @printf "Adaptive (phase 1): N = %d, err = %1.3e, ||x|| = %1.3e\n" length(F) error norm(coefficients(F))
+        converged, error = errormeasure(criterion, platform, tol, f, F, n, A, B, C, S, L; verbose=verbose, options...)
+        verbose && println(@sprintf("Adaptive (phase 1): N = %d, err = %1.3e, ||x|| = %1.3e ",length(F),error,norm(coefficients(F)))*" did $(converged ? "" : "not ")converge.")
 
         addlogentry!(logbook, (n, error))
         next_n = param_next(platform, n)
@@ -224,6 +258,7 @@ function adaptive_approximation(::OptimalStyle, f, platform;
 
     # Next, bisect until minimal n is found that achieves the tolerance
     lower_n = previous_n
+    Fbest=F;Abest=A;Bbest=B;Cbest=C;Sbest=S;Lbest=L;
     upper_n = n
 
     converged2 = false
@@ -231,7 +266,8 @@ function adaptive_approximation(::OptimalStyle, f, platform;
         n = param_inbetween(platform, lower_n, upper_n)
 
         F, A, B, C, S, L = approximate(f, platform, n; threshold=threshold, options...)
-        converged2, error = errormeasure(criterion, platform, tol, f, F, n, A, B, C, S, L; options...)
+        converged2, error = errormeasure(criterion, platform, tol, f, F, n, A, B, C, S, L;
+            optimizefase=true,Sbest=Sbest,Bbest=Bbest,verbose=verbose, options...)
         addlogentry!(logbook, (n, error, lower_n, upper_n))
         if !converged2
             # At this stage, we know that lower_n does not meet the criterium, but the
@@ -243,7 +279,7 @@ function adaptive_approximation(::OptimalStyle, f, platform;
         else
             upper_n = n
         end
-        verbose && @printf "Adaptive (phase 2): N = %d, err = %1.3e, ||x|| = %1.3e." length(F) error norm(coefficients(F))
+        verbose && @printf "Adaptive (phase 2): N = %d, err = %1.3e, ||x|| = %1.3e.\n" length(F) error norm(coefficients(F))
         verbose && println("Optimal n in [$(lower_n),$(upper_n)].")
         iterations += 1
     end
@@ -251,7 +287,8 @@ function adaptive_approximation(::OptimalStyle, f, platform;
         # We should take the upper_n. For simplicity, we recompute the approximation.
         n = upper_n
         F, A, B, C, S, L = approximate(f, platform, n; threshold=threshold, options...)
-        converged2, error = errormeasure(criterion, platform, tol, f, F, n, A, B, C, S, L; options...)
+        converged2, error = errormeasure(criterion, platform, tol, f, F, n, A, B, C, S, L;
+            optimizefase=true,Sbest=Sbest,Bbest=Bbest,verbose=verbose, options...)
     end
     verbose && println("Adaptive: Optimal n is $(n)!")
 

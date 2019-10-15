@@ -23,6 +23,12 @@ See also [`BasisPlatform`](@ref), `FramePlatform`](@ref)
 """
 abstract type Platform end
 getindex(platform::Platform, param) = dictionary(platform, param)
+function dictionary(platform::Platform, param)
+    if !correctparamformat(platform, param)
+        ArgumentError("Parameter $param not suited for platform $platform. ")
+    end
+    unsafe_dictionary(platform, param)
+end
 
 export dictionary, dualdictionary
 
@@ -77,13 +83,16 @@ struct ModelPlatform <: Platform
 end
 
 model(p::ModelPlatform) = p.model
-dictionary(p::ModelPlatform, param) = resize(model(p), param)
+unsafe_dictionary(p::ModelPlatform, param) = resize(model(p), param)
 
 param_first(p::ModelPlatform) = dimensions(model(p))
 DictionaryStyle(p::ModelPlatform) = isbasis(model(p)) ? BasisStyle() : UnknownDictionaryStyle()
 SamplingStyle(p::ModelPlatform) = isbasis(model(p)) ? InterpolationStyle() : OversamplingStyle()
 SolverStyle(p::ModelPlatform, samplingstyle::SamplingStyle) = SolverStyle(DictionaryStyle(p), p, samplingstyle)
 
+export correctparamformat
+correctparamformat(p::ModelPlatform, param)  =
+    param isa typeof(dimensions(model(p)))
 
 export measure
 measure(platform::ModelPlatform) = measure(model(platform))
@@ -142,13 +151,18 @@ SolverStyle(p::ProductPlatform, samplingstyle) =
 
 dictionary(p::ProductPlatform, n::Int) = dictionary(p, productparameter(p, n))
 
-dictionary(p::ProductPlatform, n) = tensorproduct(map(dictionary, elements(p), n)...)
+unsafe_dictionary(p::ProductPlatform, n) = tensorproduct(map(dictionary, elements(p), n)...)
 
 dualdictionary(platform::ProductPlatform, param, measure::Union{ProductMeasure,DiscreteProductMeasure}; options...) =
     tensorproduct(map((platformi, parami, mi)->dualdictionary(platformi, parami, mi; options...),
         elements(platform), param, elements(measure))...)
 
 measure(platform::ProductPlatform) = productmeasure(map(measure, elements(platform))...)
+
+correctparamformat(p::ProductPlatform{N}, param::NTuple{N,Int}) where N =
+    all(map(correctparamformat, p.platforms, param))
+
+correctparamformat(::ProductPlatform, param) = false
 
 export param, platform
 """

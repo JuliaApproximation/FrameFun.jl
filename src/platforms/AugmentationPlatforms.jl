@@ -1,7 +1,8 @@
 module AugmentationPlatforms
 using ..Platforms
 using  BasisFunctions: Dictionary, Measure, MultiDict
-import ..Platforms: SolverStyle, dictionary, dualdictionary, measure, param_next
+import ..Platforms: SolverStyle, dictionary, dualdictionary, measure, param_next,
+    correctparamformat, unsafe_dictionary
 
 export AugmentationPlatform
 """
@@ -19,10 +20,13 @@ struct AugmentationPlatform <: FramePlatform
     functions       ::  Dictionary
 end
 
+correctparamformat(platform::AugmentationPlatform, param) =
+    correctparamformat(platform.basis, param)
+
 SolverStyle(platform::AugmentationPlatform, ::SamplingStyle) = AZStyle()
 
-dictionary(platform::AugmentationPlatform, i::Int) =
-    MultiDict([dictionary(platform.basis, i), platform.functions])
+unsafe_dictionary(platform::AugmentationPlatform, i::Int) =
+    MultiDict([unsafe_dictionary(platform.basis, i), platform.functions])
 dualdictionary(platform::AugmentationPlatform, param, measure::Measure) =
     error("`dualdictionary` of `AugmentationPlatform` Not implemented.")
     # dualdictionary(platform.basis, param, measure)

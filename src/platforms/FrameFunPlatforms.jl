@@ -1,7 +1,8 @@
 ## Platforms for certain bases and frames
 module FrameFunPlatforms
 using ..Platforms
-import ..Platforms: dictionary, SolverStyle, measure, dualdictionary
+import ..Platforms: dictionary, SolverStyle, measure, dualdictionary,
+    correctparamformat, unsafe_dictionary
 using ..FrameFunInterface
 import ..FrameFunInterface: discrete_gram_measure
 using BasisFunctions, ..ExtensionFrames, DomainSets
@@ -15,9 +16,12 @@ A platform of Fourier series on [0,1]
 struct FourierPlatform{T} <: BasisPlatform
 end
 
+correctparamformat(::FourierPlatform, ::Int) = true
+correctparamformat(::FourierPlatform, _) = false
+
 FourierPlatform() = FourierPlatform{Float64}()
 
-dictionary(p::FourierPlatform{T}, n) where {T} = Fourier{T}(n)
+unsafe_dictionary(p::FourierPlatform{T}, n) where {T} = Fourier{T}(n)
 
 SolverStyle(p::FourierPlatform, ::OversamplingStyle) = DualStyle()
 
@@ -37,9 +41,12 @@ A platform of ChebyshevT dictionaries on [-1,1]
 struct ChebyshevPlatform{T} <: BasisPlatform
 end
 
+correctparamformat(::ChebyshevPlatform, ::Int) = true
+correctparamformat(::ChebyshevPlatform, _) = false
+
 ChebyshevPlatform() = ChebyshevPlatform{Float64}()
 
-dictionary(p::ChebyshevPlatform{T}, n) where {T} = ChebyshevT{T}(n)
+unsafe_dictionary(p::ChebyshevPlatform{T}, n) where {T} = ChebyshevT{T}(n)
 
 measure(platform::ChebyshevPlatform{T}) where {T} = ChebyshevMeasure{T}()
 
@@ -59,13 +66,16 @@ struct FourierExtensionPlatform <: FramePlatform
     end
 end
 
+correctparamformat(platform::FourierExtensionPlatform, param) =
+    correctparamformat(platform.basisplatform, param)
+
 function FourierExtensionPlatform(domain::Domain{T}) where {T}
     basisplatform = FourierPlatform{T}()
     FourierExtensionPlatform(basisplatform, domain)
 end
 
-dictionary(p::FourierExtensionPlatform, n) =
-    extensionframe(p.domain, dictionary(p.basisplatform, n))
+unsafe_dictionary(p::FourierExtensionPlatform, n) =
+    extensionframe(p.domain, unsafe_dictionary(p.basisplatform, n))
 
 dualdictionary(platform::FourierExtensionPlatform, param, measure::Measure; options...) =
    extensionframe(dualdictionary(platform.basisplatform, param, supermeasure(measure); options...), platform.domain)
@@ -92,9 +102,12 @@ struct OPSExtensionFramePlatform <: FramePlatform
     end
 end
 
+correctparamformat(p::OPSExtensionFramePlatform, param) =
+    correctparamformat(p.basisplatform, param)
 
-dictionary(p::OPSExtensionFramePlatform, n) =
-    ExtensionFrame(p.domain, dictionary(p.basisplatform, n))
+
+unsafe_dictionary(p::OPSExtensionFramePlatform, n) =
+    ExtensionFrame(p.domain, unsafe_dictionary(p.basisplatform, n))
 
 measure(platform::OPSExtensionFramePlatform) = restrict(measure(platform.basisplatform), platform.domain)
 

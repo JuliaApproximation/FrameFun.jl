@@ -55,16 +55,16 @@ function _initialguess(dict::Dictionary, M, domain::Domain2d, size::Tuple{Int})
 end
 
 # TODO Should everything be implemented for Dictionaries and Platforms or do we shift to platforms only
-match_and_correct_sampling_parameter(platform::Platform, param, M; dict=dictionary(platform, param), options...) =
-    match_and_correct_sampling_parameter(platform, param, M, initialguess(dict, M); dict=dict, options...)
-match_and_correct_sampling_parameter(dict::Dictionary, M; options...) =
+match_and_correct_sampling_parameter(strategy::SamplingStrategy, platform::Platform, param, M; dict=dictionary(platform, param), options...) =
+    match_and_correct_sampling_parameter(strategy, platform, param, M, initialguess(dict, M); dict=dict, options...)
+match_and_correct_sampling_parameter(::SamplingStrategy, dict::Dictionary, M; options...) =
     match_and_correct_sampling_parameter(dict, M, initialguess(dict, M); options...)
 
-function match_and_correct_sampling_parameter(platform::Platform, param, M, L_init; dict=dictionary(platform, param), options...)
+function match_and_correct_sampling_parameter(strategy::SamplingStrategy, platform::Platform, param, M, L_init; dict=dictionary(platform, param), options...)
     L_trial = match_sampling_parameter(dict, M, L_init)
     # The above does not always return a suitable L since it does not account for the platform/Dictionary
     # correct the result to a suitable one if necesarry
-    correct_sampling_parameter(platform, param, L_trial; dict=dict, options...)
+    correct_sampling_parameter(strategy, platform, param, L_trial; dict=dict, options...)
 end
 
 function match_and_correct_sampling_parameter(dict::Dictionary, M, L_init; options...)
@@ -75,7 +75,7 @@ function match_and_correct_sampling_parameter(dict::Dictionary, M, L_init; optio
 end
 
 correct_sampling_parameter(dict::Dictionary, L_trial; options...) = L_trial
-correct_sampling_parameter(platform::Platform, param, L_trial; options...) = L_trial
+correct_sampling_parameter(strategy::SamplingStrategy, platform::Platform, param, L_trial; options...) = L_trial
 correct_sampling_parameter(p::ProductPlatform, param, L; options...) =
     tuple(map(x->correct_sampling_parameter(x...; options...), zip(elements(p), param, L))...)
 
