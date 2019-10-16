@@ -36,4 +36,11 @@ measure(platform::ExtensionFramePlatform) = restrict(measure(platform.basisplatf
 dualdictionary(platform::ExtensionFramePlatform, param, measure::Measure; options...) =
    extensionframe(dualdictionary(platform.basisplatform, param, supermeasure(measure); options...), platform.domain)
 
+
+import ..ParameterPaths: default_param_path
+
+default_param_path(platform::ExtensionFramePlatform) =
+   default_param_path(platform.basisplatform)
+
+
 end

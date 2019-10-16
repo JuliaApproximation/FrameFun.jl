@@ -23,9 +23,10 @@ See also [`BasisPlatform`](@ref), `FramePlatform`](@ref)
 """
 abstract type Platform end
 getindex(platform::Platform, param) = dictionary(platform, param)
+correctparamformat(platform::Platform, _) = false
 function dictionary(platform::Platform, param)
     if !correctparamformat(platform, param)
-        ArgumentError("Parameter $param not suited for platform $platform. ")
+        throw(ArgumentError("Parameter $param not suited for platform $platform. "))
     end
     unsafe_dictionary(platform, param)
 end

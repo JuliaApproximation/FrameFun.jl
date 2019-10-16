@@ -9,7 +9,7 @@ using Test, FrameFun.Platforms, BasisFunctions
     @test SamplingStyle(P) == InterpolationStyle()
     @test SolverStyle(P,SamplingStyle(P)) == InverseStyle()
     @test param_first(P) == 10
-    @test param_next(P,10) == 20
+    @test param_double(P,10) == 20
     @test param_increment(P,10) == 11
     @test param_inbetween(P,10,20) == 15
     @test correctparamformat(P,10)
@@ -23,7 +23,7 @@ using Test, FrameFun.Platforms, BasisFunctions
     @test !correctparamformat(P,(10,))
     @test !correctparamformat(P,10)
     @test param_first(P) == (10,10)
-    @test param_next(P,(10,20)) == (20,40)
+    @test param_double(P,(10,20)) == (20,40)
     @test param_increment(P,(10,11)) == (11,12)
     @test param_inbetween(P,(10,10),(20,10)) == (15,10)
     @test ProductPlatform(platform(Fourier(10)),2) == P

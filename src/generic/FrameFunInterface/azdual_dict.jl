@@ -13,7 +13,7 @@ azdual_dict(samplingstyle::SamplingStyle, ap::ApproximationProblem; options...) 
 azdual_dict(ss::ProductSamplingStyle, ap::ApproximationProblem; options...) =
     TensorProductDict( elements(azdual_dict, ss, ap; options...)... )
 
-azdual_dict(samplingstyle::SamplingStyle, ap::Platform, param, measure::Measure; options...) =
+azdual_dict(samplingstyle::SamplingStyle, ap::Platform, param, measure; options...) =
     dualdictionary(ap, param, measure; samplingstyle=samplingstyle, options...)
-default_azdual_dict(::SamplingStyle, dict::Dictionary, measure::Measure; options...) =
+default_azdual_dict(::SamplingStyle, dict::Dictionary, measure; options...) =
     (@warn "azdualdict on dictionary is deprecated";BasisFunctions.default_gramdual(dict, measure; options...))
