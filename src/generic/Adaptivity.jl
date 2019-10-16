@@ -213,7 +213,7 @@ function adaptive_approximation(::SimpleStyle, f, platform;
 
         verbose && @printf "Adaptive: N = %d, err = %1.3e, ||x|| = %1.3e\n" length(F) error norm(coefficients(F))
 
-        n = param_next(platform, n)
+        n = param_double(platform, n)
     end
 
     return F, logbook, n, tol, error, iterations, converged
@@ -241,13 +241,13 @@ function adaptive_approximation(::OptimalStyle, f, platform;
         previous_n = n
         n = next_n
         verbose_on_first_call = verbose && (iterations==1)
-        verbose_on_first_call && println("Adaptive: initial value of n is $n")
+        verbose_on_first_call && println("Adaptive: initial value of param is $n")
         F, A, B, C, S, L = approximate(f, platform, n; threshold=threshold, verbose=verbose_on_first_call, options...)
         converged, error = errormeasure(criterion, platform, tol, f, F, n, A, B, C, S, L; verbose=verbose, options...)
-        verbose && println(@sprintf("Adaptive (phase 1): N = %d, err = %1.3e, ||x|| = %1.3e ",length(F),error,norm(coefficients(F)))*" did $(converged ? "" : "not ")converge.")
+        verbose && println(@sprintf("Adaptive (phase 1): N = %d, err = %1.3e, ||x|| = %1.3e ",length(F),error,norm(coefficients(F)))*" did $(converged ? "" : "not ")converge (param=$n).")
 
         addlogentry!(logbook, (n, error))
-        next_n = param_next(platform, n)
+        next_n = param_double(platform, n)
     end
 
     if !converged
@@ -262,7 +262,7 @@ function adaptive_approximation(::OptimalStyle, f, platform;
     upper_n = n
 
     converged2 = false
-    while lower_n < upper_n
+    while lower_n + 1e-4 < upper_n
         n = param_inbetween(platform, lower_n, upper_n)
 
         F, A, B, C, S, L = approximate(f, platform, n; threshold=threshold, options...)
@@ -280,7 +280,7 @@ function adaptive_approximation(::OptimalStyle, f, platform;
             upper_n = n
         end
         verbose && @printf "Adaptive (phase 2): N = %d, err = %1.3e, ||x|| = %1.3e.\n" length(F) error norm(coefficients(F))
-        verbose && println("Optimal n in [$(lower_n),$(upper_n)].")
+        verbose && println("Optimal param in [$(lower_n),$(upper_n)].")
         iterations += 1
     end
     if n != lower_n

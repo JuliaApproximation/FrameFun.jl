@@ -24,7 +24,9 @@ end
 @testset "FrameFunInterfaceExtension" begin
     include("test_framefuninterfaceextension.jl")
 end
-
+@testset "Adaptivity" begin
+    include("test_adaptivity.jl")
+end
 include("test_scenariolist.jl")
 include("test_suite.jl")
 include("test_suite_applications.jl")

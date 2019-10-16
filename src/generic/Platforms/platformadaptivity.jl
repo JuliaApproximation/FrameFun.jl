@@ -1,12 +1,12 @@
-export param_first, param_next, param_increment, param_inbetween
+export param_first, param_double, param_increment, param_inbetween
 """
     param_first(platform::Platform)
 """
 param_first(platform::Platform) = 1
 """
-    param_next(platform::Platform, param)
+    param_double(platform::Platform, param)
 """
-param_next(platform::Platform, param) =
+param_double(platform::Platform, param) =
     extension_size(dictionary(platform, param))
 """
     param_increment(platform::Platform, param)

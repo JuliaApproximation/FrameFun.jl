@@ -8,6 +8,8 @@ include("FrameFunDomains//FrameFunDomains.jl")
 @reexport using .FrameFunDomains
 include("generic/Platforms/Platforms.jl")
 @reexport using .Platforms
+include("generic/Platforms/ParameterPaths/ParameterPaths.jl")
+@reexport using .ParameterPaths 
 
 include("ExtensionFrames/ExtensionFrames.jl")
 @reexport using .ExtensionFrames

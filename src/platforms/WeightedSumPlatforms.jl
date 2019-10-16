@@ -1,7 +1,7 @@
 module WeightedSumPlatforms
-using ..Platforms
+using ..Platforms, ..ParameterPaths
 import ..Platforms: SolverStyle, dictionary, measure, dualdictionary, param_first,
-    param_next, correctparamformat, unsafe_dictionary
+    param_double, correctparamformat, unsafe_dictionary, param_inbetween
 using BasisFunctions: Dictionary, Measure, MultiDict
 
 export WeightedSumPlatform
@@ -17,7 +17,8 @@ end
 correctparamformat(platform::WeightedSumPlatform, param::NTuple) =
     all(map(parami->correctparamformat(platform.P, parami), param))
 
-correctparamformat(::WeightedSumPlatform, _) = false
+unsafe_dictionary(platform::WeightedSumPlatform, i::NTuple) =
+    MultiDict([weight(platform, j) * unsafe_dictionary(platform.P, i[j]) for j in 1:length(platform.weights)])
 
 WeightedSumPlatform(platform::Platform, weights::Function...) where N = WeightedSumPlatform(platform, weights)
 
@@ -28,8 +29,6 @@ weight(platform::WeightedSumPlatform, i) = platform.weights[i]
 # dictionary(platform::WeightedSumPlatform, i) =
 #     MultiDict([weight(platform, j) * dictionary(platform.P, i) for j in 1:length(platform.weights)])
 
-unsafe_dictionary(platform::WeightedSumPlatform, i::NTuple) =
-    MultiDict([weight(platform, j) * unsafe_dictionary(platform.P, i[j]) for j in 1:length(platform.weights)])
 
 
 function dualdictionary(platform::WeightedSumPlatform, param::NTuple, measure::Measure; options...)
@@ -41,7 +40,18 @@ end
 measure(platform::WeightedSumPlatform) = measure(platform.P)
 
 param_first(platform::WeightedSumPlatform) = ntuple(k->param_first(platform.P),Val(length(platform.weights)))
-param_next(platform::WeightedSumPlatform, param::NTuple) =
-    ntuple(k->param_next(platform.P, param[k]), Val(length(platform.weights)))
+param_double(platform::WeightedSumPlatform, param::NTuple) =
+    ntuple(k->param_double(platform.P, param[k]), Val(length(platform.weights)))
+param_inbetween(platform::WeightedSumPlatform, param1::NTuple, param2::NTuple) =
+    ntuple(k->param_inbetween(platform.P, param1[k], param2[k]), Val(length(platform.weights)))
+
+using ..ParameterPaths:  default_param_path, NTupleParameterPath, HierarchyPath
+import ..ParameterPaths: default_param_path
+
+function default_param_path(platform::WeightedSumPlatform)
+    firstpath = default_param_path(platform.P)
+    secondpath = NTupleParameterPath{length(platform.weights)}(first(firstpath))
+    HierarchyPath(firstpath, secondpath)
+end
 
 end

@@ -2,7 +2,7 @@ module SumPlatforms
 using ..Platforms
 using  BasisFunctions
 using BasisFunctions: ZeroOperator, Domain
-import ..Platforms: SolverStyle, dictionary, dualdictionary, measure, param_next,
+import ..Platforms: SolverStyle, dictionary, dualdictionary, measure, param_double,
     unsafe_dictionary, correctparamformat
 
 import BasisFunctions: elements, size, length, support,

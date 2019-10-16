@@ -247,3 +247,24 @@ end
     @test plungerank(dict1) <= 1
     @test plungerank(dict2) <= 1
 end
+
+@testset begin "ParameterPath"
+    p = IncrementalCartesianParameterPath{2}()
+    P = ExtensionFramePlatform(WeightedSumPlatform(platform(ChebyshevT(10,-1,1)^2), (x,y)->1.,
+                (x,y)->sqrt(x^2+y^2)),.9*UnitDisk())
+    path = HierarchyPath(p,ProductPath(p,p))
+    paramP = parametrizedplatform(P, path)
+
+    paramPparam=45
+    Pparam = path[paramPparam]
+
+    @test SamplingStyle(P)==SamplingStyle(paramP)
+    @test SolverStyle(P, SamplingStyle(P)) == SolverStyle(paramP, SamplingStyle(P))
+    @test sampling_grid(P,Pparam)≈sampling_grid(paramP, paramPparam)
+    @test dimensions(dictionary(P,Pparam)) == dimensions(dictionary(paramP,paramPparam))
+    @test dimensions(azdual_dict(P,Pparam))==dimensions(azdual_dict(paramP, paramPparam))
+    @test AZ_A(P,Pparam)≈AZ_A(paramP, paramPparam)
+    @test AZ_Zt(P,Pparam)≈AZ_Zt(paramP, paramPparam)
+    @test AZ_A(P,Pparam)≈AZ_A(paramP, paramPparam)
+    @test typeof(solver(P,Pparam))==typeof(solver(paramP,paramPparam))
+end

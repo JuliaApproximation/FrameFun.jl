@@ -1,6 +1,7 @@
 module FrameFunInterface
 
 using ..Platforms, ..ApproximationProblems, BasisFunctions, ..DictFuns
+using ..ParameterPaths: ParametrizedPlatform
 import BasisFunctions: discretemeasure, measure, interpolation_grid, elements
 
 abstract type SamplingStrategy end
@@ -9,12 +10,6 @@ The default strategy tries to keep the oversamplingfactor correct by distributin
 
 """
 struct DefaultSamplingStrategy <: SamplingStrategy end
-
-
-
-
-
-
 
 default_aznormalization(a...) = false
 
@@ -78,6 +73,8 @@ macro aptoplatform(ex)
             $(ex)(ss, platform(ap), parameter(ap), L, args...; options...)
         $(ex)(ss::SamplingStyle, platform::Platform, param, L, args...; dict = dictionary(platform, param), options...) =
             $(ex)(ss, dict, L, args...)
+        $(ex)(ss::SamplingStyle, platform::ParametrizedPlatform, param, L, args...; options...) =
+            $(ex)(ss, platform.platform, platform.path[param], L, args...; options...)
         $(ex)(ss::SamplingStyle, dict::Dictionary, L, args...; options...) =
             $(def)(ss, dict, L, args...)
     end
@@ -99,6 +96,8 @@ macro trial(ex)
             $(ex)(ss, platform(ap), parameter(ap), args...; options...)
         $(ex)(ss::SamplingStyle, platform::Platform, param, args...; dict = dictionary(platform, param), options...) =
             $(ex)(ss, dict, args...; options...)
+        $(ex)(ss::SamplingStyle, platform::ParametrizedPlatform, param, args...; options...) =
+            $(ex)(ss, platform.platform, platform.path[param], args...; options...)
         $(ex)(ss::SamplingStyle, dict::Dictionary, args...; options...) =
             $(def)(ss, dict, args...; options...)
     end
@@ -303,5 +302,6 @@ end
 import BasisFunctions: approximate
 export Fun
 include("approximate.jl")
+
 
 end

@@ -67,10 +67,10 @@ end
     P = FourierExtensionPlatform(domain)
     WP = WeightedSumPlatform(P,x->sqrt(x),x->1)
     f = x->sqrt(x)*(1-x)-exp(x)
-    F = Fun(f, WP, n, solverstyle=AZStyle())
+    F = Fun(f, WP, (n,n), solverstyle=AZStyle())
     rgrid = randomgrid(domain, 200)
     abserror = sum(abs.(F.(rgrid)-f.(rgrid)))/length(rgrid)
-    @test abserror<1e-7
+    @test abserror<2e-7
 end
 
 end # module
