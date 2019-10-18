@@ -76,8 +76,8 @@ end
 
 correct_sampling_parameter(dict::Dictionary, L_trial; options...) = L_trial
 correct_sampling_parameter(strategy::SamplingStrategy, platform::Platform, param, L_trial; options...) = L_trial
-correct_sampling_parameter(p::ProductPlatform, param, L; options...) =
-    tuple(map(x->correct_sampling_parameter(x...; options...), zip(elements(p), param, L))...)
+correct_sampling_parameter(strategy::SamplingStrategy, p::ProductPlatform, param, L; options...) =
+    tuple(map(x->correct_sampling_parameter(strategy, x...; options...), zip(elements(p), param, L))...)
 
 function match_sampling_parameter(samplingobject::Dictionary, M, L_init)
     objective(L) = length(oversampling_grid(samplingobject, L))-M
