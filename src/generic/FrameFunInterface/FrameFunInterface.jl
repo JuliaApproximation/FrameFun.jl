@@ -4,7 +4,10 @@ using ..Platforms, ..ApproximationProblems, BasisFunctions, ..DictFuns
 using ..ParameterPaths: ParametrizedPlatform
 import BasisFunctions: discretemeasure, measure, interpolation_grid, elements
 
+export SamplingStrategy
 abstract type SamplingStrategy end
+
+export DefaultSamplingStrategy
 """
 The default strategy tries to keep the oversamplingfactor correct by distributing equally over all degrees of freedom.
 
