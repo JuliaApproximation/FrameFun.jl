@@ -36,8 +36,6 @@ include("platforms/FrameFunPlatforms.jl")
 include("FrameFunInterfaceExtension/FrameFunInterfaceExtension.jl")
 using .FrameFunInterfaceExtension
 
-
-
 export residual, abserror, maxerror, L2error
 include("fun/error.jl")
 
@@ -45,6 +43,7 @@ include("applications/DiffEquations.jl")
 @reexport using .DiffEquations
 include("applications/WeightedApproximation.jl")
 @reexport using .WeightedApproximation
+include("applications/high_dimensional.jl")
 
 include("generic/Adaptivity.jl")
 @reexport using .Adaptivity
