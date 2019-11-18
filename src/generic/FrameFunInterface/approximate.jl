@@ -88,7 +88,10 @@ function Fun(fun, ap::AdaptiveApproximation; verbose = false, options...)
 end
 
 
-Fun(dict::Dictionary, coefficients::AbstractArray) = DictFun(dict, coefficients)
+function Fun(dict::Dictionary, coefficients::AbstractArray; verbose = false, options...)
+	verbose && println("Fun: coefficients are given, no approximation problem is solved")
+	DictFun(dict, coefficients)
+end
 
 
 ############################
@@ -129,7 +132,7 @@ function approximate(::DictionaryOperatorStyle, samplingstyle::SamplingStyle, so
 		println(S)
 		println()
 	end
-    A, B = normalized_discretization(fun, samplingstyle, ap, S; options...)
+    A, B = normalized_discretization(fun, samplingstyle, ap, S; verbose=verbose, options...)
     C = solve(solverstyle, ap, A, B; S=S, verbose=verbose, samplingstyle=samplingstyle, options...)
     F = DictFun(dictionary(ap), C)
     res = norm(A*C-B)

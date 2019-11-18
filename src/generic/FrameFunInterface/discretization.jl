@@ -20,6 +20,15 @@ function discretization(f, ss::SamplingStyle, ap::ApproximationProblem, S::Abstr
     B = apply(S, f; options...)
     A, B
 end
+function discretization(f::AbstractArray, ss::SamplingStyle, ap::ApproximationProblem, S::AbstractOperator; verbose = false, options...)
+    A = discretization(ss, ap, S; options...)
+    if size(S,1) == length(f)
+        verbose && println("Discretization: sampled data is given, omitting sampling operation")
+        A, f
+    else
+        error("Sample data is given, but the array size is not compatible with the sampling operator.")
+    end
+end
 
 function dualdiscretization(ss::SamplingStyle, ap::ApproximationProblem; options...)
     dualdict = haskey(options, :dualdict) ? options[:dualdict] : azdual_dict(ss, ap; options...)
