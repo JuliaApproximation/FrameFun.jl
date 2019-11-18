@@ -262,7 +262,7 @@ function adaptive_approximation(::OptimalStyle, f, platform;
     upper_n = n
 
     converged2 = false
-    while lower_n + 1e-4 < upper_n
+    while all(lower_n .+ 1e-4 .< upper_n)
         n = param_inbetween(platform, lower_n, upper_n)
 
         F, A, B, C, S, L = approximate(f, platform, n; threshold=threshold, options...)
