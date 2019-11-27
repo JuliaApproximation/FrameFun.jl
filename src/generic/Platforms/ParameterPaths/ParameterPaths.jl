@@ -92,12 +92,12 @@ unsafe_getindex(path::CartesianParameterPath{N}, index::Vararg{<:Real,N}) where 
     unsafe_getindex(path, index)
 unsafe_getindex(path::CartesianParameterPath{N}, index::CartesianIndex{N}) where N =
     unsafe_getindex(path, index.I)
-unsafe_getindex(path::CartesianParameterPath{N}, index::NTuple{<:Real,N}) where N =
+unsafe_getindex(path::CartesianParameterPath{N}, index::NTuple{N,<:Real}) where N =
     round.(Int, (index).*path.constant)
 correctparamformat(::CartesianParameterPath, ::Real) = true
 correctparamformat(::CartesianParameterPath{N}, ::NTuple{N,<:Real}) where N = true
 correctparamformat(::CartesianParameterPath{N}, ::CartesianIndex{N}) where N = true
-correctparamformat(::CartesianParameterPath{N}, ::Vararg{N,<:Real}) where N = true
+correctparamformat(::CartesianParameterPath{N}, ::Vararg{<:Real,N}) where N = true
 
 
 export IncrementalCartesianParameterPath
