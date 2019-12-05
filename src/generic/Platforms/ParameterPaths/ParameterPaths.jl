@@ -197,7 +197,7 @@ param_inbetween(path::ProductPath, param1, param2) =
 
 default_param_path(platform::ProductPlatform) where N =
     ProductPath(map(default_param_path, elements(platform))...)
-
+export ParametrizedPlatform
 struct ParametrizedPlatform{PLATFORM<:Platform, PATH<:ParameterPath} <: Platform
     platform :: PLATFORM
     path     :: PATH

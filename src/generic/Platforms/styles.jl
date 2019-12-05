@@ -96,7 +96,7 @@ struct GridStyle <: DiscreteStyle end
 
 The sampling operator corresponds to projections (using inner products).
 The kind of inner product is specified by
-[`ProjectionStyle`](@ref), [`DiscreteGramStyle`](@ref),
+[`GramStyle`](@ref), [`DiscreteGramStyle`](@ref),
 [`RectangularGramStyle`](@ref)
 """
 abstract type ProjectionStyle <: SamplingStyle end

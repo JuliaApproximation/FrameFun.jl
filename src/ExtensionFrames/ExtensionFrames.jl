@@ -220,7 +220,7 @@ string(s::PrettyPrintSymbol{:𝔼}) = _string(s, s.object)
 _string(s::PrettyPrintSymbol{:𝔼}, dict::ExtensionFrame) =
     "Extension frame, from $(support(dict)) to $(support(superdict(dict)))"
 
-GridSampzling(dgs::GridBasis, grid::AbstractGrid, domain::Domain, scaling) =
+GridSampling(dgs::GridBasis, grid::AbstractGrid, domain::Domain, scaling) =
     GridSampling(GridBasis{coefficienttype(dgs)}(subgrid(grid, domain)), scaling=scaling)
 
 end
