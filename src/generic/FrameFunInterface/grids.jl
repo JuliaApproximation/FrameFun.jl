@@ -16,8 +16,6 @@ sampling_grid(samplingstyle::GridStyle, ap::ApproximationProblem; options...) =
     haskey(options,:grid) ? options[:grid] : platform_grid(samplingstyle, platform(ap), parameter(ap); options...)
 platform_grid(samplingstyle::GridStyle, ap::ApproximationProblem, args...; options...) =
     haskey(options,:grid) ? options[:grid] : platform_grid(samplingstyle, platform(ap), parameter(ap); options...)
-platform_grid(samplingstyle::SamplingStyle, ap::ApproximationProblem, args...; options...) =
-    haskey(options,:grid) ? options[:grid] : platform_grid(samplingstyle, platform(ap), parameter(ap); options...)
 sampling_grid(ss::DiscreteGramStyle, ap::ApproximationProblem; options...) =
     oversampling_grid(ss, platform(ap), parameter(ap), samplingparameter(ss,ap;options...); options...)
 
