@@ -9,7 +9,7 @@ include("FrameFunDomains//FrameFunDomains.jl")
 include("generic/Platforms/Platforms.jl")
 @reexport using .Platforms
 include("generic/Platforms/ParameterPaths/ParameterPaths.jl")
-@reexport using .ParameterPaths 
+@reexport using .ParameterPaths
 
 include("ExtensionFrames/ExtensionFrames.jl")
 @reexport using .ExtensionFrames
@@ -49,5 +49,6 @@ include("generic/Adaptivity.jl")
 @reexport using .Adaptivity
 
 include("recipes.jl")
+include("pgfplots.jl")
 
 end # module

@@ -18,8 +18,11 @@ sampling_grid(ss::GridStyle, ap::ApproximationProblem; options...) =
 sampling_grid(ss::DiscreteGramStyle, ap::ApproximationProblem; options...) =
     oversampling_grid(ss, platform(ap), parameter(ap), samplingparameter(ss,ap;options...); options...)
 
+
 sampling_grid(ss::OversamplingStyle, ap::ApproximationProblem; options...) =
     oversampling_grid(ss, platform(ap) ,parameter(ap), samplingparameter(ss,ap;options...);options...)
 
-platform_grid(samplingstyle::SamplingStyle, platform::Platform, param; options...) =
-    haskey(options, :grid) ? options[:grid] : error("optional parameter `grid` should be provided using `GridStyle` and platform_grid")
+sampling_grid(samplingstyle::GridStyle, platform::Platform, param, args...; options...) =
+    platform_grid(samplingstyle, platform, param; options...)
+sampling_grid(samplingstyle::OversamplingStyle, platform::Platform, param, L, args...; options...) =
+    oversampling_grid(samplingstyle, platform, param, L; options...)
