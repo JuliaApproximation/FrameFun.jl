@@ -1,4 +1,4 @@
-using PGFPlotsX, FrameFun, BasisFunctions
+using PGFPlotsX, FrameFun, BasisFunctions, DomainSets, BasisFunctions
 
 f = exp
 F1 = Fun(f, ChebyshevT(10))
@@ -19,3 +19,5 @@ end
 Plot(F3;plot_extension=true)
 
 Axis(Plot(F4;plot_complex=true)...)
+
+nothing
