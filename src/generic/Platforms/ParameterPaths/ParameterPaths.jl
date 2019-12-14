@@ -89,7 +89,7 @@ param_increment(path::CartesianParameterPath{N}, param::NTuple{N}) where N =
 unsafe_getindex(path::CartesianParameterPath{N}, index::Real) where N =
     round.(Int, (index^(1/N)).*path.constant)
 unsafe_getindex(path::CartesianParameterPath{N}, index::Vararg{<:Real,N}) where N =
-   unsafe_getindex(path, index)
+    unsafe_getindex(path, index)
 unsafe_getindex(path::CartesianParameterPath{N}, index::CartesianIndex{N}) where N =
     unsafe_getindex(path, index.I)
 unsafe_getindex(path::CartesianParameterPath{N}, index::NTuple{N,<:Real}) where N =
@@ -198,6 +198,7 @@ param_inbetween(path::ProductPath, param1, param2) =
 default_param_path(platform::ProductPlatform) where N =
     ProductPath(map(default_param_path, elements(platform))...)
 
+export ParametrizedPlatform
 struct ParametrizedPlatform{PLATFORM<:Platform, PATH<:ParameterPath} <: Platform
     platform :: PLATFORM
     path     :: PATH

@@ -187,6 +187,7 @@ export sampling_grid, platform_grid
 @trial platform_grid
 include("grids.jl")
 default_sampling_grid(ss::SamplingStyle, dict::Dictionary, L; options...) = oversampling_grid(dict, L)
+default_platform_grid(ss::SamplingStyle, dict::Dictionary, args...; grid, options...) = grid
 
 
 export discretemeasure
