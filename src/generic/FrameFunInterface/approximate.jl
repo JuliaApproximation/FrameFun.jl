@@ -3,12 +3,12 @@
 # Helper functions
 ###################
 
-determine_return_type(fun, ::Type{S}) where {S} = Base.Core.Compiler.return_type(fun, (S,))
-determine_return_type(fun, S::Type{<:Tuple}) = Base.Core.Compiler.return_type(fun, S)
+determine_return_type(fun, S) = Base.promote_op(fun, S)
+determine_return_type(fun, S::Type{<:Tuple}) = Base.promote_op(fun, S...)
 
 function promote_dictionary(dict, fun)
     T = promote_type(codomaintype(dict), determine_return_type(fun, domaintype(dict)))
-    promote_coefficienttype(dict, T)
+    ensure_coefficienttype(T, dict)
 end
 
 function directsolver(A::DiagonalOperator; verbose = false, options...)
