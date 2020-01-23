@@ -35,12 +35,12 @@ using BasisFunctions, FrameFun.AugmentationPlatforms, FrameFun.WeightedSumPlatfo
         @test dimensions(dict) == [20,5]
     end
 
-    @test_throws Exception dualdictionary(plat1,20,measure(plat1))
-    @test_throws Exception dualdictionary(plat2,20,measure(plat2))
-    @test_throws Exception dualdictionary(plat3,20,measure(plat3))
-    @test_throws Exception dualdictionary(plat4,20,measure(plat4))
-    @test_throws Exception dualdictionary(plat5,20,measure(plat5))
-    @test_throws Exception dualdictionary(plat6,20,measure(plat6))
+    # @test_throws Exception dualdictionary(plat1,20,measure(plat1))
+    # @test_throws Exception dualdictionary(plat2,20,measure(plat2))
+    # @test_throws Exception dualdictionary(plat3,20,measure(plat3))
+    # @test_throws Exception dualdictionary(plat4,20,measure(plat4))
+    # @test_throws Exception dualdictionary(plat5,20,measure(plat5))
+    # @test_throws Exception dualdictionary(plat6,20,measure(plat6))
 
     # TODO Product platform tests
 

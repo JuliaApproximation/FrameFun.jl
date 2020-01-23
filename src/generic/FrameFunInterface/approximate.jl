@@ -4,12 +4,15 @@
 ###################
 
 determine_return_type(fun, S) = Base.promote_op(fun, S)
-determine_return_type(fun, S::Type{<:Tuple}) = Base.promote_op(fun, S...)
+determine_return_type(fun, S::Type{Tuple{A}}) where {A} = Base.promote_op(fun, A)
+determine_return_type(fun, S::Type{Tuple{A,B}}) where {A,B} = Base.promote_op(fun, A, B)
+determine_return_type(fun, S::Type{Tuple{A,B,C}}) where {A,B,C} = Base.promote_op(fun, A, B, C)
 
-function promote_dictionary(dict, fun)
-    T = promote_type(codomaintype(dict), determine_return_type(fun, domaintype(dict)))
-    ensure_coefficienttype(T, dict)
-end
+
+promote_dictionary(dict, fun) = _promote_dictionary(dict, fun, determine_return_type(fun, domaintype(dict)))
+_promote_dictionary(dict, fun, ::Union{}) = dict
+_promote_dictionary(dict, fun, ::Type{T}) where {T} = ensure_coefficienttype(promote_type(codomaintype(dict),T), dict)
+
 
 function directsolver(A::DiagonalOperator; verbose = false, options...)
     verbose && println("Using direct solver: inverse of diagonal matrix")
