@@ -114,7 +114,7 @@ end
 
 # We just test the accuracy, not the smoothing properties
 function test_smoothing_1d()
-    @testset "Smoothing $(name(instantiate(Basis,10)))" for Basis in (ChebyshevT,)
+    @testset "Smoothing $(name(Basis(10)))" for Basis in (ChebyshevT,)
         basis = Basis(101,-1,1)
         dom = -0.5..0.5
         f = exp
@@ -125,7 +125,7 @@ function test_smoothing_1d()
 end
 
 function test_smoothing_2d()
-    @testset "Smoothing $(name(instantiate(Basis,10)))" for Basis in (ChebyshevT,)
+    @testset "Smoothing $(name(Basis(10)))" for Basis in (ChebyshevT,)
         basis = Basis(20,-1.0,1.0)⊗Basis(20,-1.0,1.0)
         dom = disk(0.5)
         f = (x,y) -> exp(x*y)
