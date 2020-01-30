@@ -1,6 +1,9 @@
 export AZSolver_with_smoothing
-function AZSolver_with_smoothing(A::DictionaryOperator, Zt::DictionaryOperator; options...)
-    D = WeightedSmoothingOperator(src(A); options...)
+
+function AZSolver_with_smoothing(A::DictionaryOperator, Zt::DictionaryOperator; D = nothing, options...)
+    if D == nothing
+        D = WeightedSmoothingOperator(src(A); options...)
+    end
     AZSolver_with_smoothing(A, Zt, D; options...)
 end
 
