@@ -6,7 +6,7 @@ using BasisFunctions, ..FrameFunInterface, GridArrays, DomainSets,
 import BasisFunctions: operator, coefficienttype, src, dest, apply!, grid
 import ..FrameFunInterface: AZ_A, AZ_Zt
 
-using BasisFunctions: grid_evaluation_operator
+using BasisFunctions: evaluation
 
 """
 A DiffEquation describes a differential equation, with or without boundary conditions.
@@ -45,31 +45,31 @@ end
 
 function operator(BC :: DirichletBC, S::Dictionary, G::AbstractGrid, D::Domain)
     G = subgrid(G,BC.D)
-    BC.factor*grid_evaluation_operator(S,GridBasis{coefficienttype(S)}(G),G)
+    BC.factor*evaluation(coefficienttype(S), S, G)
 end
 
 function operator(BC :: NeumannBC, S::Dictionary2d, G::AbstractGrid, D::Domain2d)
     G = subgrid(G,BC.D)
-    GE = grid_evaluation_operator(S, GridBasis{coefficienttype(S)}(G),G)
+    GE = evaluation(coefficienttype(S), S, G)
     dx = Float64[]
     dy = Float64[]
     for i=1:length(G)
         push!(dx, normal(G[i],D)[1])
         push!(dy, normal(G[i],D)[2])
     end
-    X = DiagonalOperator(dest(GE), dx)*GE*differentiation_operator(S,(1,0))
-    Y = DiagonalOperator(dest(GE), dy)*GE*differentiation_operator(S,(0,1))
+    X = DiagonalOperator(dest(GE), dx)*GE*differentiation(S,(1,0))
+    Y = DiagonalOperator(dest(GE), dy)*GE*differentiation(S,(0,1))
     X + Y
 end
 
 function operator(BC :: NeumannBC, S::Dictionary1d, G::AbstractGrid1d, D::Domain1d)
     G = subgrid(G,BC.D)
-    GE = grid_evaluation_operator(S,GridBasis{coefficienttype(S)}(G),G)
+    GE = evaluation(coefficienttype(S), S, G)
     dx = Float64[]
     for i=1:length(G)
         push!(dx, normal(G[i],D)[1])
     end
-    DiagonalOperator(dest(GE), dx)*GE*differentiation_operator(S,1)
+    DiagonalOperator(dest(GE), dx)*GE*differentiation(S,1)
 end
 
 export DiffEquation
@@ -98,7 +98,7 @@ function operator(D::DiffEquation; incboundary=false, options...)
     ops = incboundary ? Array{DictionaryOperator}(undef, length(D.BCs)+2,1) : Array{DictionaryOperator}(undef, length(D.BCs)+1,1)
     G = grid(dest(D.SMP))
 
-    op = grid_evaluation_operator(D.S, GridBasis{coefficienttype(D.S)}(G),G)
+    op = evaluation(coefficienttype(D.S), D.S, G)
     if length(size(dest(op))) > 1
         op = BasisFunctions.LinearizationOperator(dest(op))*op
     end
@@ -108,7 +108,7 @@ function operator(D::DiffEquation; incboundary=false, options...)
     BG = boundarygrid(D)
     if incboundary
         cnt=cnt+1
-        ops[cnt] = grid_evaluation_operator(D.S, GridBasis{coefficienttype(D.S)}(BG),BG)
+        ops[cnt] = evaluation(coefficienttype(D.S), D.S, BG)
     end
     for i = 1:length(D.BCs)
         Ac = operator(D.BCs[i],D.S,BG,D.D)*ADiff
@@ -122,7 +122,7 @@ function rhs(D::DiffEquation; incboundary = false, options...)
     rhs = Array{Array{coefficienttype(src(op)),1}}(undef,0)
     G = grid(dest(D.SMP))
 
-    op = grid_evaluation_operator(D.S, GridBasis{coefficienttype(D.S)}(G),G)
+    op = evaluation(coefficienttype(D.S), D.S, G)
     S1 = sample(G,D.DRhs, coefficienttype(src(op)))
     push!(rhs,reshape(S1,length(S1)))
     BG = boundarygrid(D)
@@ -196,15 +196,15 @@ function FECollocationOperator(feframe::ExtensionFrame,pd::Vector{S1},ax::Vector
     pD = map(p->pseudodifferential_operator(feframe,p),pd)
     gridbasis = GridBasis{coefficienttype(feframe)}(oversampledgrid(feframe,round(Int,samplingfactor*length(feframe))))
     aX = map(a->grid_multiplication_operator(a,gridbasis),ax)
-    sampler = evaluation_operator(feframe,grid(gridbasis))
+    sampler = evaluation(feframe,grid(gridbasis))
     FECollocationOperator(feframe,pD,aX,sampler)
 end
 FECollocationOperator(feframe::ExtensionFrame,pd::Vector{S1},ax::Vector{S2}) where {S1<:Function,S2<:Function} = FECollocationOperator(feframe,pd,ax,2)
-FECollocationOperator(dom::Domain,ambientdom::Domain,n::Int,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real) where {S1<:Function,S2<:Function} = FECollocationOperator(ExtensionFrame(dom,Fourier(n,leftendpoint(ambientdom),rightendpoint(ambientdom))),pd,ax,samplingfactor)
+FECollocationOperator(dom::Domain,ambientdom::Domain,n::Int,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real) where {S1<:Function,S2<:Function} = FECollocationOperator(ExtensionFrame(dom,Fourier(n) ⇒ ambientdom),pd,ax,samplingfactor)
 FECollocationOperator(dom::Domain,ambientdom::Domain,n,pd::Vector{S1},ax::Vector{S2}) where {S1<:Function,S2<:Function} = FECollocationOperator(dom,ambientdom,n,pd,ax,2)
 
 # Constructors for higher dimensional domains:
-FECollocationOperator(dom::Domain,ambientdom::ProductDomain,nn::Tuple,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real) where {S1<:Function,S2<:Function} = FECollocationOperator(ExtensionFrame(dom,tensorproduct(map((x,y)->Fourier(x,leftendpoint(y),rightendpoint(y)),nn, elements(ambientdom)))),pd,ax,samplingfactor)
+FECollocationOperator(dom::Domain,ambientdom::ProductDomain,nn::Tuple,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real) where {S1<:Function,S2<:Function} = FECollocationOperator(ExtensionFrame(dom,tensorproduct(map((x,y)->Fourier(x) ⇒ y,nn, elements(ambientdom)) )),pd,ax,samplingfactor)
 FECollocationOperator(dom::Domain,ambientdom::ProductDomain,nn::Tuple,pd::Vector{S1},ax::Vector{S2}) where {S1<:Function,S2<:Function} = FECollocationOperator(dom,ambientdom,nn,pd,ax,2)
 
 src(L::FECollocationOperator) = L.feframe

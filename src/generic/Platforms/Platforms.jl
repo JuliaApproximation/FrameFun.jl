@@ -1,7 +1,7 @@
 module Platforms
 
 using BasisFunctions: Dictionary, TensorProductDict, Dictionary1d, tensorproduct,
-    extension_size, gramdual, Measure, ProductMeasure, DiscreteProductMeasure, resize,
+    extensionsize, gramdual, Measure, ProductMeasure, DiscreteProductMeasure, resize,
     isbasis, isframe, hastransform, dimensions, productmeasure
 import Base: getindex
 import BasisFunctions: elements, dictionary, element, measure, iscomposite

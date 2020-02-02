@@ -7,7 +7,7 @@ param_first(platform::Platform) = 1
     param_double(platform::Platform, param)
 """
 param_double(platform::Platform, param) =
-    extension_size(dictionary(platform, param))
+    extensionsize(dictionary(platform, param))
 """
     param_increment(platform::Platform, param)
 """

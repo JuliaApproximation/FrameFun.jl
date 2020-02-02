@@ -5,8 +5,7 @@ using BasisFunctions: ZeroOperator, Domain
 import ..Platforms: SolverStyle, dictionary, dualdictionary, measure, param_double,
     unsafe_dictionary, correctparamformat
 
-import BasisFunctions: elements, size, length, support,
-    grid_evaluation_operator
+import BasisFunctions: elements, size, length, support, evaluation
 
 export SumPlatform
 """
@@ -50,7 +49,7 @@ function dualdictionary(platform::SumPlatform, param, measure::Measure; options.
     multidict(dict1,dict2)
 end
 
-grid_evaluation_operator(dict::ZeroDict, gb::GridBasis, grid; T = op_eltype(dict, gb), options...) =
+evaluation(::Type{T}, dict::ZeroDict, gb::GridBasis, grid; options...) where {T} =
     ZeroOperator{T}(GridBasis(dict, grid), dict)
 
 measure(platform::SumPlatform) = measure(platform.platform1)

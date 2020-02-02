@@ -8,7 +8,7 @@ using BasisFunctions, DomainSets
 
 using BasisFunctions: PrettyPrintSymbol, default_in_support, unsafe_eval_element, default_dict_innerproduct, _default_unsafe_eval_element_in_grid
 
-import BasisFunctions: superdict, support, similar_dictionary, isbasis, isframe,
+import BasisFunctions: superdict, support, similardictionary, isbasis, isframe,
     isbiorthogonal, isorthogonal, isorthonormal, hasinterpolationgrid, hastransform,
     hasantiderivative, name, string, strings, dict_in_support, iscompatible, *,
     unsafe_eval_element1, interpolation_grid, measure, restrict, innerproduct,
@@ -55,7 +55,7 @@ basis(f::ExtensionFrame) = superdict(f)
 support(f::ExtensionFrame) = f.domain
 support(f::ExtensionFrame, i) = f.domain
 
-similar_dictionary(f::ExtensionFrame, dict::Dictionary) = ExtensionFrame(support(f), dict)
+similardictionary(f::ExtensionFrame, dict::Dictionary) = ExtensionFrame(support(f), dict)
 
 isbasis(f::ExtensionFrame) = false
 isframe(f::ExtensionFrame) = true
@@ -135,6 +135,9 @@ F   :   Fourier series
 """
 extensionframe(domain::Domain, basis::Dictionary) = ExtensionFrame(domain, basis)
 extensionframe(basis::Dictionary, domain::Domain) = extensionframe(domain, basis)
+
+import Base: |
+|(basis::Dictionary, domain::Domain) = extensionframe(basis, domain)
 
 function extensionframe(domain::ProductDomain, basis::TensorProductDict)
     ExtensionFrames = Dictionary[]

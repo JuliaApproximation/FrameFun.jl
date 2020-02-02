@@ -19,7 +19,7 @@ After choosing a suitable Basis and Domain, any function can be approximated in 
 
 
 ```julia
-B = Fourier(61, -1, 1)
+B = Fourier(61) ⇒ -1..1
 D = -0.5..0.5
 f = x->x
 F = Fun(f,B,D)
@@ -36,7 +36,7 @@ The bases support any AbstractFloat subtype, so high precision approximations ar
 
 
 ```julia
-B = Fourier(61, BigFloat(-1), BigFloat(1))
+B = Fourier(61) ⇒ big(-1)..big(1)
 F = Fun(f,B,D)
 
 P = plot(F,plot_ext=true,layout=2)
@@ -56,7 +56,7 @@ In higher dimensions, a basis can be any tensorproduct of (scaled) lower dimensi
 ```julia
 using StaticArrays
 C = disk(1.0)\disk(0.3,SVector(0.2, 0.5))
-B = Fourier(31,-1.3,1.3) ⊗ Fourier(31,-1.3,1.3)
+B = (Fourier(31) ⇒ -1.3..1.3)^2
 f = (x,y)->exp(x+y)
 F = Fun(f,B,C)
 
@@ -71,7 +71,7 @@ Even fractal domains are not a problem:
 
 
 ```julia
-B = Fourier(31,-1.0,0.35) ⊗ Fourier(31,-0.65,0.65)
+B = (Fourier(31) ⇒ -1.0..0.35) ⊗ (Fourier(31) ⇒ -0.65..0.65)
 f = (x,y)->cos(10*x*y)
 F = Fun(f, B, mandelbrot())
 
