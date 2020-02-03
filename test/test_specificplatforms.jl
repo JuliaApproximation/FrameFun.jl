@@ -13,8 +13,8 @@ using Test
     Z = SynthesisOperator(D, M)
     Zt = Z'
     G1 = Zt*A
-    G2 = BasisFunctions.default_mixedgramoperator(D, P, M;warnslow=false)
-    G3 = BasisFunctions.mixedgramoperator(D, P, M)
+    G2 = BasisFunctions.default_mixedgram(D, P, M;warnslow=false)
+    G3 = BasisFunctions.mixedgram(D, P, M)
     @test Matrix(G1) ≈ Matrix(G2)
     @test Matrix(G2) ≈ Matrix(G3)
 end
@@ -30,8 +30,8 @@ end
     @info "Two `Slow computation of Gram matrix entrywise.` warnings follow."
     Zt = Z'
     G1 = Zt*A
-    G2 = BasisFunctions.default_mixedgramoperator(D, P, M;warnslow=false)
-    G3 = BasisFunctions.mixedgramoperator(D, P, M)
+    G2 = BasisFunctions.default_mixedgram(D, P, M;warnslow=false)
+    G3 = BasisFunctions.mixedgram(D, P, M)
     @test Matrix(G1) ≈ Matrix(G2)
     @test Matrix(G2) ≈ Matrix(G3)
 

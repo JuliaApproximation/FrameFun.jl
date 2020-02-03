@@ -189,6 +189,12 @@ struct FECollocationOperator{T} <: DictionaryOperator{T}
   end
 end
 
+
+grid_multiplication_operator(a::Function, gb::GridBasis, T=BasisFunctions.operatoreltype(GB)) =
+	DiagonalOperator{T}(GB, GB, map(a,grid(GB)))
+grid_multiplication_opearator(a::Function, grid::AbstractGrid; options...) =
+	grid_multiplication_operator(a,GridBasis(grid); options...)
+
 ## Constructors
 # All input format checks are done in the first constructor
 FECollocationOperator(feframe::ExtensionFrame,pD::Vector,aX::Vector,sampler::DictionaryOperator) = FECollocationOperator{eltype(sampler)}(feframe,pD,aX,sampler)
