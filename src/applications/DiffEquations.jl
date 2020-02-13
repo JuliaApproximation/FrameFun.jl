@@ -206,11 +206,11 @@ function FECollocationOperator(feframe::ExtensionFrame,pd::Vector{S1},ax::Vector
     FECollocationOperator(feframe,pD,aX,sampler)
 end
 FECollocationOperator(feframe::ExtensionFrame,pd::Vector{S1},ax::Vector{S2}) where {S1<:Function,S2<:Function} = FECollocationOperator(feframe,pd,ax,2)
-FECollocationOperator(dom::Domain,ambientdom::Domain,n::Int,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real) where {S1<:Function,S2<:Function} = FECollocationOperator(ExtensionFrame(dom,Fourier(n) ⇒ ambientdom),pd,ax,samplingfactor)
+FECollocationOperator(dom::Domain,ambientdom::Domain,n::Int,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real) where {S1<:Function,S2<:Function} = FECollocationOperator(ExtensionFrame(dom,Fourier(n) → ambientdom),pd,ax,samplingfactor)
 FECollocationOperator(dom::Domain,ambientdom::Domain,n,pd::Vector{S1},ax::Vector{S2}) where {S1<:Function,S2<:Function} = FECollocationOperator(dom,ambientdom,n,pd,ax,2)
 
 # Constructors for higher dimensional domains:
-FECollocationOperator(dom::Domain,ambientdom::ProductDomain,nn::Tuple,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real) where {S1<:Function,S2<:Function} = FECollocationOperator(ExtensionFrame(dom,tensorproduct(map((x,y)->Fourier(x) ⇒ y,nn, elements(ambientdom)) )),pd,ax,samplingfactor)
+FECollocationOperator(dom::Domain,ambientdom::ProductDomain,nn::Tuple,pd::Vector{S1},ax::Vector{S2},samplingfactor::Real) where {S1<:Function,S2<:Function} = FECollocationOperator(ExtensionFrame(dom,tensorproduct(map((x,y)->Fourier(x) → y,nn, elements(ambientdom)) )),pd,ax,samplingfactor)
 FECollocationOperator(dom::Domain,ambientdom::ProductDomain,nn::Tuple,pd::Vector{S1},ax::Vector{S2}) where {S1<:Function,S2<:Function} = FECollocationOperator(dom,ambientdom,nn,pd,ax,2)
 
 src(L::FECollocationOperator) = L.feframe

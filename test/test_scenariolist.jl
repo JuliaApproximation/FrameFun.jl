@@ -1,6 +1,6 @@
 using BasisFunctions, LinearAlgebra, DomainSets, GridArrays, Test, StaticArrays, FrameFun
 @testset begin
-    B = (Fourier(11) ⇒ -1..1)^2
+    B = (Fourier(11) → -1..1)^2
     Dom = disk(0.8)
     @test support(dictionary(∂x(random_expansion(extensionframe(B, Dom)))))≈Dom
 

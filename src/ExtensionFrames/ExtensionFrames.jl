@@ -1,6 +1,9 @@
 
 module ExtensionFrames
 
+export ExtensionFrame,
+    extensionframe,
+    ⇐, →
 
 include("submeasure.jl")
 
@@ -136,8 +139,11 @@ F   :   Fourier series
 extensionframe(domain::Domain, basis::Dictionary) = ExtensionFrame(domain, basis)
 extensionframe(basis::Dictionary, domain::Domain) = extensionframe(domain, basis)
 
-import Base: |
-|(basis::Dictionary, domain::Domain) = extensionframe(basis, domain)
+"Make an extension frame (symbol ⇐ is \\Leftarrow)"
+⇐(basis::Dictionary, domain::Domain) = extensionframe(basis, domain)
+
+import BasisFunctions: →
+→(domain::Domain, basis::Dictionary) = extensionframe(basis, domain)
 
 function extensionframe(domain::ProductDomain, basis::TensorProductDict)
     ExtensionFrames = Dictionary[]

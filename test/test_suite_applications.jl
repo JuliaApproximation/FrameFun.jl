@@ -36,7 +36,7 @@ end
 
 function test_differential_equations_1d()
     @testset "diff 1D dirichlet" for solverstyle in (AZStyle(), DirectStyle())
-        B = Fourier(101) ⇒ -1..1
+        B = Fourier(101) → -1..1
         Dom = Interval(-0.5,0.5)
         # Set up Boundary conditions
         BC = DirichletBC(x->0)
@@ -53,7 +53,7 @@ function test_differential_equations_1d()
         @test (error < sqrt(eps(real(codomaintype(B))))*100)
     end
     @testset "diff 1D mixed" for solverstyle in (AZStyle(), DirectStyle())
-        B = Fourier(101) ⇒ -2..2
+        B = Fourier(101) → -2..2
         Dom = Interval(-1.0,1.0)
         # Set up Boundary conditions
         BC1 = DirichletBC(x->0, Interval(-2.0,0.0))
@@ -75,7 +75,7 @@ end
 function test_differential_equations_2d()
     # @testset "diff 2D dirichlet" for solverstyle in (AZStyle(), DirectStyle())
     @testset "diff 2D dirichlet" for solverstyle in (AZStyle(),)
-        B = (Fourier(11) ⇒ -1..1)^2
+        B = (Fourier(11) → -1..1)^2
         Dom = disk(0.8)
         # Set up Boundary conditions
         df = (x,y)->x-y
@@ -93,7 +93,7 @@ function test_differential_equations_2d()
     end
     # @testset "diff 2D Neumann" for solverstyle in (AZStyle(), DirectStyle())
     # @testset "diff 2D Neumann" for solverstyle in (AZStyle(),)
-    #     B = (Fourier(11) ⇒ -1..1)^2
+    #     B = (Fourier(11) → -1..1)^2
     #     Dom = disk(0.8)
     #     # Set up Boundary conditions
     #     df = (x,y)->x-y

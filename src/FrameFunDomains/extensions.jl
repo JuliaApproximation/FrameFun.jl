@@ -40,8 +40,8 @@ using DomainSets: inverse_map, forward_map
 # end
 #
 # function indomain_broadcast(grid, d::DifferenceDomain)
-#     z1 = indomain_broadcast(grid, d.d1)
-#     z2 = indomain_broadcast(grid, d.d2)
+#     z1 = indomain_broadcast(grid, d.domains[1])
+#     z2 = indomain_broadcast(grid, d.domains[2])
 #     z1 .& (.~z2)
 # end
 #
@@ -79,7 +79,7 @@ using DomainSets: inverse_map, forward_map
 #
 # boundingbox(d::DerivedDomain) = boundingbox(source(d))
 #
-# boundingbox(d::DifferenceDomain) = boundingbox(d.d1)
+# boundingbox(d::DifferenceDomain) = boundingbox(d.domains[1])
 #
 # # Extra functions
 #
@@ -192,9 +192,9 @@ distance(x,d::IntersectionDomain) = minimum(map(di->distance(x,di),elements(d)))
 
 normal(x,d::IntersectionDomain) = normal(x,elements(d)[findmin(map(di->distance(x,di),elements(d)))[2]])
 
-distance(x,d::DifferenceDomain) = indomain(x,d) ? min(abs(distance(x,d.d1)),abs(distance(x,d.d2))) : -1*min(abs(distance(x,d.d1)),abs(distance(x,d.d2)))
+distance(x,d::DifferenceDomain) = indomain(x,d) ? min(abs(distance(x,d.domains[1])),abs(distance(x,d.domains[2]))) : -1*min(abs(distance(x,d.domains[1])),abs(distance(x,d.domains[2])))
 
-normal(x,d::DifferenceDomain) = abs(distance(x,d.d1))<abs(distance(x,d.d2)) ? normal(x,d.d1) : -1*normal(x,d.d2)
+normal(x,d::DifferenceDomain) = abs(distance(x,d.domains[1]))<abs(distance(x,d.domains[2])) ? normal(x,d.domains[1]) : -1*normal(x,d.domains[2])
 
 distance(x, t::ProductDomain) = minimum(map(distance, x, elements(t)))
 
