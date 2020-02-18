@@ -253,7 +253,7 @@ end
 
 @testset begin "ParameterPath"
     p = IncrementalCartesianParameterPath{2}()
-    P = ExtensionFramePlatform(WeightedSumPlatform(platform(ChebyshevT(10,-1,1)^2), (x,y)->1.,
+    P = ExtensionFramePlatform(WeightedSumPlatform(platform(ChebyshevT(10)^2), (x,y)->1.,
                 (x,y)->sqrt(x^2+y^2)),.9*UnitDisk())
     path = HierarchyPath(p,ProductPath(p,p))
     paramP = parametrizedplatform(P, path)

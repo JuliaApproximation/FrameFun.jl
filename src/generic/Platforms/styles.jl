@@ -2,6 +2,7 @@
 #################
 # DictionaryStyle
 #################
+
 export DictionaryStyle, UnknownDictionaryStyle, BasisStyle, FrameStyle
 """
     abstract type DictionaryStyle end
@@ -103,21 +104,21 @@ abstract type ProjectionStyle <: SamplingStyle end
 """
     struct GramStyle <: ProjectionStyle end
 
-Use the inner product implied by measure obtained by invoking `measure` on the
+Use the inner product implied by the measure obtained by invoking `measure` on the
 dictionary or platform.
 """
 struct GramStyle <: ProjectionStyle end
 """
     struct DiscreteGramStyle <: ProjectionStyle end
 
-Use the inner product implied by measure obtained by invoking `discretemeasure` on the
+Use the inner product implied by the measure obtained by invoking `discretemeasure` on the
 dictionary or platform.
 """
 struct DiscreteGramStyle <: ProjectionStyle end
 """
     struct RectangularGramStyle <: ProjectionStyle end
 
-Not implemented (oversample with a projecting on a larger dual dictionary)
+Not implemented (oversample with a projection on a larger dual dictionary)
 """
 struct RectangularGramStyle <: ProjectionStyle end
 
@@ -179,7 +180,7 @@ struct InverseStyle <: SolverStyle end
 """
     struct DualStyle <: SolverStyle end
 
-Use projection on the dual dictioanry to solve the discretized approximation problem.
+Use projection on the dual dictionary to solve the discretized approximation problem.
 """
 struct DualStyle <: SolverStyle end
 """
@@ -205,7 +206,7 @@ struct AZStyle <: SolverStyle end
     struct AZSmoothStyle <: SolverStyle end
 
 Use the AZ algorithm to solve the discretized approximation problem,
-but tweak the coefficients such that a smooth extension if obtained.
+but tweak the coefficients such that a smooth extension is obtained.
 """
 struct AZSmoothStyle <: SolverStyle end
 
@@ -228,8 +229,9 @@ elements(style::ProductSolverStyle) = style.styles
 
 
 #################
-# SolverStyle
+# ProblemStyle
 #################
+
 export ProblemStyle, DictionaryOperatorStyle, GenericOperatorStyle
 """
     abstract type ProblemStyle end
@@ -255,19 +257,16 @@ struct GenericOperatorStyle <: ProblemStyle  end
 
 
 
-
-
-
-
-
 #################
 # Defaults
 #################
+
 # Defaults for platforms
 SamplingStyle(p::Platform) = SamplingStyle(DictionaryStyle(p), p)
 
 SamplingStyle(::BasisStyle, p::Platform) = InterpolationStyle()
 SamplingStyle(::FrameStyle, p::Platform) = OversamplingStyle()
+SamplingStyle(::UnknownDictionaryStyle, p::Platform) = OversamplingStyle()
 
 
 SolverStyle(p::Platform, samplingstyle) =

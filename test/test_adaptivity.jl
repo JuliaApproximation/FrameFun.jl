@@ -2,7 +2,7 @@ using FrameFun, DomainSets, Test
 
 
 @testset begin "Optimal adaptivity"
-    P = FrameFun.ExtensionFramePlatform(WeightedSumPlatform(platform(ChebyshevT(10,-1,1)^2), (x,y)->1.,
+    P = FrameFun.ExtensionFramePlatform(WeightedSumPlatform(platform(ChebyshevT(10)^2), (x,y)->1.,
             (x,y)->sqrt(x^2+y^2)),.9*UnitDisk())
     f = (x,y) -> cos(pi*(x+y)) + sqrt(x^2+y^2)*sin(1+pi*(x+y))
     p = IncrementalCartesianParameterPath{2}()
@@ -21,7 +21,7 @@ using FrameFun, DomainSets, Test
     @test norm(coefficients(F))<10*2.188
 
 
-    P = FrameFun.ExtensionFramePlatform(WeightedSumPlatform(parametrizedplatform(platform(ChebyshevT(10,-1,1)^2),CartesianParameterPath((1,1))), (x,y)->1.,
+    P = FrameFun.ExtensionFramePlatform(WeightedSumPlatform(parametrizedplatform(platform(ChebyshevT(10)^2),CartesianParameterPath((1,1))), (x,y)->1.,
             (x,y)->sqrt(x^2+y^2)),.9*UnitDisk())
     PP = parametrizedplatform(P)
     f = (x,y) -> cos(pi*(x+y)) + sqrt(x^2+y^2)*sin(1+pi*(x+y))
