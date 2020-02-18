@@ -10,7 +10,7 @@ end
 export characteristic
 characteristic(char::Function, dom)  = Characteristic(char,boundingbox(dom))
 
-Base.in(x, c::Characteristic) = c.char(x)
+DomainSets.indomain(x, c::Characteristic) = c.char(x)
 
 boundingbox(c::Characteristic) = c.box
 
