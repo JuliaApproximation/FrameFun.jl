@@ -182,7 +182,7 @@ approximationproblem(dict::Dictionary) =
 # dictionary will be promoted if necessary. This allows the `Fun` constructor to ensure
 # that the dictionary can handle complex coefficients, for example.
 # approximationproblem(::Type{T}, dict::Dictionary) where {T} =
-#     DictionaryApproximation(promote_coefficienttype(dict, T))
+#     DictionaryApproximation(ensure_coefficienttype(T, dict))
 
 
 

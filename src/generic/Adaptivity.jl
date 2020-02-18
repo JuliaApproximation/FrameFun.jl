@@ -160,13 +160,17 @@ end
 function adaptive_approximation(::GreedyStyle, f, platform;
             criterion = ErrorStyle(platform),
             p0 = param_first(platform), maxlength = 2^22, maxiterations = 100,
-            threshold = 1e-12, tol=100*threshold, verbose=false, options...)
+            threshold = 1e-12, tol=100*threshold, verbose=false, smoothing = false, options...)
 
     iterations = 0
     logbook = emptylogbook()
 
     n = p0
     F = DictFun(dictionary(platform, n))
+    if smoothing
+        dict = dictionary(F)
+        weights = ones(length(dict))
+    end
 
     converged = false
     while (!converged) && (length(F) <= maxlength) && (iterations <= maxiterations)
@@ -175,7 +179,12 @@ function adaptive_approximation(::GreedyStyle, f, platform;
         verbose_on_first_call && println("Adaptive: initial value of n is $n")
         # P, A, B, C, S, L = approximate(residual_f, platform, n; verbose=verbose_on_first_call, threshold=threshold, options...)
         # converged, error = errormeasure(criterion, platform, tol, residual_f, P, n, A, B, C, S, L; verbose=verbose, options...)
-        P, A, B, C, S, L = approximate(f, platform, n; verbose=verbose_on_first_call, threshold=threshold, options...)
+        if smoothing
+            W = DiagonalOperator(dictionary(platform, n), weights)
+            P, A, B, C, S, L = approximate(f, platform, n; verbose=verbose_on_first_call, threshold=threshold, D=W, options...)
+        else
+            P, A, B, C, S, L = approximate(f, platform, n; verbose=verbose_on_first_call, threshold=threshold, options...)
+        end
         converged, error = errormeasure(criterion, platform, tol, f, P, n, A, B, C, S, L; verbose=verbose, options...)
         addlogentry!(logbook, (n, error))
 
@@ -186,6 +195,9 @@ function adaptive_approximation(::GreedyStyle, f, platform;
 
         n += 1
         iterations += 1
+        if smoothing
+            weights = vcat(weights, 1/error)
+        end
     end
     return F, logbook, n, tol, error, iterations, converged
 end
@@ -194,26 +206,39 @@ end
 function adaptive_approximation(::SimpleStyle, f, platform;
             criterion = ErrorStyle(platform),
             p0 = param_first(platform), maxlength = 2^22, maxiterations = 10,
-            threshold = 1e-12, tol=100*threshold, verbose=false, options...)
+            threshold = 1e-12, tol=100*threshold, verbose=false, smoothing=false, options...)
 
     iterations = 0
     logbook = emptylogbook()
 
     n = p0
     F = DictFun(dictionary(platform, n))
+    if smoothing
+        dict = dictionary(F)
+        weights = ones(length(dict))
+    end
 
     converged = false
     while (!converged) && (length(F) <= maxlength) && (iterations <= maxiterations)
         iterations += 1
         verbose_on_first_call = verbose && (iterations==1)
         verbose_on_first_call && println("Adaptive: initial value of n is $n")
-        F, A, B, C, S, L = approximate(f, platform, n; threshold=threshold, verbose = verbose_on_first_call, options...)
+        if smoothing
+            W = DiagonalOperator(dictionary(platform, n), weights)
+            F, A, B, C, S, L = approximate(f, platform, n; threshold=threshold, verbose = verbose_on_first_call, D = W, options...)
+        else
+            F, A, B, C, S, L = approximate(f, platform, n; threshold=threshold, verbose = verbose_on_first_call, options...)
+        end
         converged, error = errormeasure(criterion, platform, tol, f, F, n, A, B, C, S, L; options...)
         addlogentry!(logbook, (n, error))
 
         verbose && @printf "Adaptive: N = %d, err = %1.3e, ||x|| = %1.3e\n" length(F) error norm(coefficients(F))
 
+        nprev = n
         n = param_double(platform, n)
+        if smoothing
+            weights = vcat(weights, 1/error*ones(n-nprev))
+        end
     end
 
     return F, logbook, n, tol, error, iterations, converged

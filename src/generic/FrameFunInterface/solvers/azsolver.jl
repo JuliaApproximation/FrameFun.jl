@@ -39,7 +39,20 @@ AZSolver(A::DictionaryOperator{T}, Zt::DictionaryOperator{T}, plunge_op::Diction
 
 operator(s::AZSolver) = s.A
 
-default_regularization(A; options...) = pQR_solver(A; options...)
+default_regularization(A; options...) = pSVD_solver(A; options...)
+
+function default_regularization(A::DictionaryOperator{BigFloat}; options...)
+    @warn "Our own implementation of a randomized SVD solver is used with `BigFloat`s.
+        This implementation is not as robust as the partial SVD solver in `LowRankApprox.jl`.
+        Concider using `DoubleFloats.jl` instead."
+    rSVD_solver(A; options...)
+end
+function default_regularization(A::DictionaryOperator{Complex{BigFloat}}; options...)
+    @warn "Our own implementation of a randomized SVD solver is used with `BigFloat`s.
+        This implementation is not as robust as the partial SVD solver in `LowRankApprox.jl`.
+        Concider using `DoubleFloats.jl` instead."
+    rSVD_solver(A; options...)
+end
 
 function AZSolver(A::DictionaryOperator, Zt::DictionaryOperator;
             REG = default_regularization,

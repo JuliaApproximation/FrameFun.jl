@@ -1,4 +1,4 @@
-# characteristic.jl
+
 export Characteristic
 """
 A domain that is described by its characteristic function.
@@ -10,7 +10,7 @@ end
 export characteristic
 characteristic(char::Function, dom)  = Characteristic(char,boundingbox(dom))
 
-indomain(x, c::Characteristic) = c.char(x)
+DomainSets.indomain(x, c::Characteristic) = c.char(x)
 
 boundingbox(c::Characteristic) = c.box
 

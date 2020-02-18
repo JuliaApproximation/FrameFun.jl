@@ -73,7 +73,7 @@ function test_1d_cases()
     n = 61
     T = 1.9
     domain = -1.0..1.0
-    basis = Fourier(n, -T, T)
+    basis = Fourier(n) → -T..T
 
     println()
     println("Testing \t solver = $solverstyle, \n\t\t Domain = $domain, \n\t\t Basis = Fourier,\n\t\t ELT = Float64 ")
@@ -100,7 +100,7 @@ function test_1d_cases()
             solverstyle in (AZStyle(), DirectStyle())
 
         println()
-        println("Testing \t solver = $solverstyle, \n\t\t Domain = $domain, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = $ELT ")
+        println("Testing \t solver = $solverstyle, \n\t\t Domain = $domain, \n\t\t Basis = $(name(Basis(10))),\n\t\t ELT = $ELT ")
         verbose && println("N\t T\t Complex?\t abserror\t time\t\t memory   ")
 
         for n in (61,)
@@ -109,7 +109,7 @@ function test_1d_cases()
             for T in (ELT(1.9),)
                 for func in (f,g)
 
-                    basis = Basis{ELT}(n, -T, T)
+                    basis = Basis{ELT}(n) → -T..T
                     F = @timed Fun(func, basis, domain; solverstyle=solverstyle)
                     error = abserror(func, F[1])
                     if verbose
@@ -131,11 +131,11 @@ function test_bigfloat()
     @testset "result" for Basis in (Fourier, ChebyshevT),
             domain in [Interval(big(-3.0)/2, big(7.0)/10)]
         println()
-        println("Testing \t solver = QR_solver\n\t\t Domain = $domain, \n\t\t Basis = $(name(instantiate(Basis,10))),\n\t\t ELT = BigFloat ")
+        println("Testing \t solver = QR_solver\n\t\t Domain = $domain, \n\t\t Basis = $(name(Basis(10))),\n\t\t ELT = BigFloat ")
         verbose && println("N\t T\t Complex?\t abserror\t time\t\t memory   ")
         for T in (big(17.0)/10,)
             for func in (f,g)
-                basis = Basis(91, -T, T)
+                basis = Basis(91) → -T..T
                 F = @timed Fun(func, basis, domain; solverstyle = DirectStyle(), directsolver=:qr)
                 error = abserror(func, F[1])
                 if verbose
@@ -160,12 +160,12 @@ function test_2d_cases()
             solverstyle in (AZStyle(), DirectStyle())
 
         println()
-        println("Testing \t solver = $solverstyle \n\t\t Domain = $domain, \n\t\t Basis = $(name(instantiate(Basis,10)⊗instantiate(Basis,10))),\n\t\t ELT = Float64 ")
+        println("Testing \t solver = $solverstyle \n\t\t Domain = $domain, \n\t\t Basis = $(name(Basis(10)⊗Basis(10))),\n\t\t ELT = Float64 ")
         verbose && println("N\t\t T\t\t Complex?\t abserror\t time\t\t memory   ")
 
         for n in ((11,11),)
             for T in ((1.7,2.3),)
-                basis = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2])
+                basis = (Basis(n[1]) → -T[1]..T[1]) ⊗ (Basis(n[2]) → -T[2]..T[2])
                 for func in (f,g)
                     F = @timed Fun(func, basis, domain; solverstyle=solverstyle)
                     error = abserror(func, F[1])
@@ -194,13 +194,13 @@ function test_3d_cases()
                 solverstyle in (AZStyle(), )
 
         println()
-        println("Testing \t solver = $solverstyle \n\t\t Domain = $domain, \n\t\t Basis = $(name(instantiate(Basis,10)⊗instantiate(Basis,10)⊗instantiate(Basis,10))),\n\t\t ELT = Float64 ")
+        println("Testing \t solver = $solverstyle \n\t\t Domain = $domain, \n\t\t Basis = $(name(Basis(10)⊗Basis(10)⊗Basis(10))),\n\t\t ELT = Float64 ")
         verbose && println("N\t\t T\t\t Complex?\t abserror\t time\t\t memory   ")
 
         n = (12,12,12)
 
         for T in ((1.7,1.2,1.3),)
-            basis = Basis(n[1],-T[1],T[1]) ⊗ Basis(n[2],-T[2],T[2]) ⊗ Basis(n[3],-T[3],T[3])
+            basis = (Basis(n[1]) → -T[1]..T[1]) ⊗ (Basis(n[2]) → -T[2]..T[2]) ⊗ (Basis(n[3]) → -T[3]..T[3])
             F = @timed Fun(f, basis, domain; solverstyle=solverstyle, threshold=10.0^(3/4*log10(eps(real(codomaintype(basis))))), oversamplingfactor=1.5)
             error = abs(f(0.4,0.4,0.4)-F[1](0.4,0.4,0.4))
             if verbose

@@ -260,3 +260,11 @@ function LowRankApprox.geqp3_adap_main!(
   end
   k
 end
+
+LowRankApprox.crandn(::Type{T}, dims::Integer...) where {T<:Complex} =
+  reshape(reinterpret(T, vec(LowRankApprox.crandn(real(T), 2*dims[1], dims[2:end]...))),
+          (dims...,))
+LowRankApprox.crandn(::Type{T}, dims::Integer...) where {T<:BigFloat} =
+    error("No `randn` sampling for BigFloat")
+LowRankApprox.crandn(::Type{T}, dims::Integer...) where {T<:Complex{BigFloat}} =
+    error("No `randn` sampling for BigFloat")

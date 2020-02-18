@@ -12,7 +12,7 @@ d1 = 0.0..0.5
     plat2 = platform(extensionframe(Fourier(10)^2,d2)), (10,10)
     d3 = disk(.45,SVector(.5,.5))
     plat3 = platform(extensionframe(Fourier(10)^2,d3)), (10,10)
-    plat4 = platform(extensionframe(Fourier(10,-1,1)^2,d3)), (10,10)
+    plat4 = platform(extensionframe((Fourier(10)→(-1.0..1.0))^2,d3)), (10,10)
 
     wplat1 = WeightedSumPlatform(platform(Fourier(10)), x->1., sqrt), (10,10)
     wplat2 = WeightedSumPlatform(platform(Fourier(10)^2), (x,y)->1., (x,y)->sqrt(x^2+y^2)), ((10,10),(10,10))
@@ -21,7 +21,7 @@ d1 = 0.0..0.5
     ap1 = approximationproblem(Fourier(10),d1)
     ap2 = approximationproblem(Fourier(10)^2,d2)
     ap3 = approximationproblem(Fourier(10)^2,d3)
-    ap4 = approximationproblem(Fourier(10,-1,1)^2,d3)
+    ap4 = approximationproblem((Fourier(10)→(-1.0..1.0))^2,d3)
     wap1 = approximationproblem(wplat1...)
     wap2 = approximationproblem(wplat2...)
 

@@ -7,15 +7,17 @@ using ..ApproximationProblems: setsamplingparam!
 using ..FrameFunInterface: deduce_oversampling_parameter, SamplingStrategy, DefaultSamplingStrategy
 
 approximationproblem(dict::Dictionary, domain::Domain) =
-    approximationproblem(promote_type(coefficienttype(dict),eltype(domain)), dict, domain)
+    approximationproblem(promote_type(coefficienttype(dict),prectype(eltype(domain))), dict, domain)
+
 approximationproblem(::Type{T}, dict::Dictionary) where {T} =
-    approximationproblem(promote_coefficienttype(dict, T))
+    approximationproblem(ensure_coefficienttype(T, dict))
+
 # If a dictionary and a domain is specified, we make an extension frame.
 function approximationproblem(::Type{T}, dict::Dictionary, domain::Domain) where {T}
     if domain == support(dict)
         approximationproblem(T, dict)
     else
-        approximationproblem(T, extensionframe(domain, promote_coefficienttype(dict, T)))
+        approximationproblem(T, extensionframe(domain, ensure_coefficienttype(T, dict)))
     end
 end
 

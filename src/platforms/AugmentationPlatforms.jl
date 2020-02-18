@@ -27,9 +27,14 @@ SolverStyle(platform::AugmentationPlatform, ::SamplingStyle) = AZStyle()
 
 unsafe_dictionary(platform::AugmentationPlatform, i::Int) =
     MultiDict([unsafe_dictionary(platform.basis, i), platform.functions])
-dualdictionary(platform::AugmentationPlatform, param, measure::Measure) =
-    error("`dualdictionary` of `AugmentationPlatform` Not implemented.")
-    # dualdictionary(platform.basis, param, measure)
+function dualdictionary(platform::AugmentationPlatform, param, measure::Measure; options...)
+#    error("`dualdictionary` of `AugmentationPlatform` Not implemented.")
+    # TODO: line below is a hack. Problem is you want to generate a dual of
+    # the same size as the dictionary itself, but we only know the dual of its
+    # basis component. We add the length of the extra functions and hope for the best.
+    @warn "Routine 'dualdictionary' invoked on AugmentationPlatform does not know how to generically produce a dual of the right length."
+    dualdictionary(platform.basis, param+length(platform.functions), measure)
+end
 
 measure(platform::AugmentationPlatform) = measure(platform.basis)
 
