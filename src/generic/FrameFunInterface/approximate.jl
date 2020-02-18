@@ -27,7 +27,7 @@ function directsolver(A; directsolver = :svd, verbose = false, options...)
         verbose && println("Using direct solver: regularized SVD")
         regularized_SVD_solver(A; verbose=verbose, options...)
     else
-        DS = directsolver(A; verbose=verbose)
+        DS = directsolver(A; verbose=verbose, options...)
         verbose && println("Using direct solver: $DS")
         DS
     end

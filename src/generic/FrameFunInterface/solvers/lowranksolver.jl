@@ -1,17 +1,21 @@
-using LowRankApprox: pqrfact, psvdfact
+using LowRankApprox
+using LowRankApprox: pqrfact, psvdfact, LRAOptions
 using LinearAlgebra
-
 export pQR_solver, pSVD_solver, rSVD_solver
 LinearAlgebra.ishermitian(::DictionaryOperator) = false
-function pQR_solver(A::DictionaryOperator; threshold=default_threshold(A), verbose=false, options...)
-    verbose && println("Calculating partial QR factorization (LowRankApprox.jl)")
-    pqr = pqrfact(A;verb=verbose,rtol=threshold)
+function pQR_solver(A::DictionaryOperator{T}; threshold=default_threshold(A), lraoptions::LRAOptions=LRAOptions(T), verbose=false, options...) where {T}
+    lraoptions.rtol = threshold
+    lraoptions.verb = verbose
+    verbose && println("Calculating partial QR factorization (LowRankApprox.jl) with `LRAOptions` $lraoptions")
+    pqr = pqrfact(A,lraoptions)
     verbose && println("\t Solver truncated at R = ", size(pqr.Q,2), " dof out of ",size(A,2))
     BasisFunctions.GenericSolverOperator(A, pqr)
 end
-function pSVD_solver(A::DictionaryOperator; threshold=default_threshold(A), verbose=false, options...)
-    verbose && println("Calculating partial SVD factorization (LowRankApprox.jl)")
-    psvd = psvdfact(A;verb=verbose,rtol=threshold)
+function pSVD_solver(A::DictionaryOperator{T}; threshold=default_threshold(A), lraoptions::LRAOptions=LRAOptions(T), verbose=false, options...) where {T}
+    lraoptions.rtol = threshold
+    lraoptions.verb = verbose
+    verbose && println("Calculating partial SVD factorization (LowRankApprox.jl) `LRAOptions` $lraoptions")
+    psvd = psvdfact(A,lraoptions)
     verbose && println("\t Solver truncated at R = ", size(psvd.U,2), " dof out of ",size(A,2))
     BasisFunctions.GenericSolverOperator(A, psvd)
 end
@@ -201,4 +205,58 @@ function truncatedsvd_solve(b::Vector, A::DictionaryOperator;
     y, rr = LAPACK.gelsy!(C,b[:],threshold)
     x1 = random_matrix*y;
     reshape(x1, size(src(A))...)
+end
+
+
+
+# Make pqrfact available for BigFloat
+function LowRankApprox.geqp3_adap_main!(
+    A::AbstractMatrix{T}, jpvt::Vector{Int}, tau::Vector{T},
+    opts::LRAOptions) where T
+  LowRankApprox.chkstride1(A)
+  lda = stride(A, 2)
+  n   = length(jpvt)
+  m   = size(A,1)
+  k   = length(tau)
+
+  maxnrm = norm(view(A,:,LinearAlgebra.indmaxcolumn(A)))
+
+  # set pivot threshold
+  ptol = max(opts.atol, opts.rtol*maxnrm)
+
+  # unblocked factorization
+  for j = 1:k
+
+    # Find column with maximum norm in trailing submatrix
+    jm = LinearAlgebra.indmaxcolumn(view(A, j:m, j:n)) + j - 1
+
+    if jm != j
+        # Flip elements in pivoting vector
+        tmpp = jpvt[jm]
+        jpvt[jm] = jpvt[j]
+        jpvt[j] = tmpp
+
+        # Update matrix with
+        for i = 1:m
+            tmp = A[i,jm]
+            A[i,jm] = A[i,j]
+            A[i,j] = tmp
+        end
+    end
+
+    # Compute reflector of columns j
+    x = view(A, j:m, j)
+    τj = LinearAlgebra.reflector!(x)
+    tau[j] = τj
+
+    # Update trailing submatrix with reflector
+    LinearAlgebra.reflectorApply!(x, τj, view(A, j:m, j+1:n))
+
+    # check for rank termination
+    if abs(A[j,j]) <= ptol
+        return j
+    end
+    j += 1
+  end
+  k
 end

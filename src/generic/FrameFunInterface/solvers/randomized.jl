@@ -4,7 +4,7 @@ apply_multiple(A::AbstractMatrix, B::AbstractMatrix) = A*B
 regularization_threshold(::Type{T}) where {T} = 10^(T(4)/5*log10(eps(T)))
 regularization_threshold(::Type{Complex{T}}) where {T} = regularization_threshold(T)
 
-function randomizedsvd(A; threshold = regularization_threshold(eltype(A)), verbose = false, rankestimate = 16, growth_factor = 2, maxiter = 8)
+function randomizedsvd(A; threshold = regularization_threshold(eltype(A)), verbose = false, rankestimate = 16, growth_factor = 2, maxiter = Inf)
     verbose && println("Computing randomized SVD of $(typeof(A))")
     T = eltype(A)
 

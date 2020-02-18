@@ -61,7 +61,8 @@ struct FourierExtensionPlatform <: FramePlatform
     domain          ::  Domain
 
     function FourierExtensionPlatform(basisplatform, domain::Domain{T}) where {T}
-        @assert issubset(domain, UnitInterval{T}())
+        # Only supported for intervals
+        # @assert issubset(domain, UnitInterval{T}())
         new(basisplatform, domain)
     end
 end
