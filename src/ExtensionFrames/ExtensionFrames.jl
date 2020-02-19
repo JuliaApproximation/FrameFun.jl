@@ -9,7 +9,8 @@ include("submeasure.jl")
 
 using BasisFunctions, DomainSets
 
-using BasisFunctions: PrettyPrintSymbol, default_in_support, unsafe_eval_element, default_dict_innerproduct, _default_unsafe_eval_element_in_grid
+using BasisFunctions: PrettyPrintSymbol, default_in_support, unsafe_eval_element,
+    default_dict_innerproduct, _default_unsafe_eval_element_in_grid, AbstractMeasure
 
 import BasisFunctions: superdict, support, similardictionary, isbasis, isframe,
     isbiorthogonal, isorthogonal, isorthonormal, hasinterpolationgrid, hastransform,
@@ -62,9 +63,9 @@ similardictionary(f::ExtensionFrame, dict::Dictionary) = ExtensionFrame(support(
 
 isbasis(f::ExtensionFrame) = false
 isframe(f::ExtensionFrame) = true
-isbiorthogonal(f::ExtensionFrame, measure::Measure) = false
-isorthogonal(f::ExtensionFrame, measure::Measure) = false
-isorthonormal(f::ExtensionFrame, measure::Measure) = false
+isbiorthogonal(f::ExtensionFrame, measure::AbstractMeasure) = false
+isorthogonal(f::ExtensionFrame, measure::AbstractMeasure) = false
+isorthonormal(f::ExtensionFrame, measure::AbstractMeasure) = false
 
 # The following properties do not hold for extension frames
 # - there is no interpolation grid
@@ -167,27 +168,27 @@ export ExtensionFrameTensor, ExtensionFrameSuper
 
 
 hasmeasure(::ExtensionFrame) = true
-measure(f::ExtensionFrame) = SubMeasure(measure(basis(f)), support(f))
+measure(f::ExtensionFrame) = submeasure(measure(basis(f)), support(f))
 
-innerproduct_native(f1::ExtensionFrame, i, f2::ExtensionFrame, j, measure::SubMeasure; options...) =
+innerproduct_native(f1::ExtensionFrame, i, f2::ExtensionFrame, j, measure; options...) =
     innerproduct(superdict(f1), i, superdict(f2), j, measure; options...)
 
 # This routine will be called if we have two mapped dictionaries, where the measure is a subset of a
 # mapped measure. We check for this case and undo the mapping.
-innerproduct_native(dict1::MappedDict, i, dict2::MappedDict, j, measure::SubMeasure; options...) =
+innerproduct_native(dict1::MappedDict, i, dict2::MappedDict, j, measure; options...) =
     _innerproduct_native(support(measure), supermeasure(measure), dict1, i, dict2, j, measure; options...)
 
-function _innerproduct_native(domain::AbstractInterval, superμ::MappedMeasure, dict1::MappedDict, i, dict2::MappedDict, j, measure::SubMeasure; options...)
+function _innerproduct_native(domain::AbstractInterval, superμ::MappedMeasure, dict1::MappedDict, i, dict2::MappedDict, j, measure; options...)
     if iscompatible(dict1, dict2) && iscompatible(mapping(dict1), mapping(superμ))
         supermap = mapping(superμ)
         newdomain = Interval(applymap(inv(supermap), infimum(domain)), applymap(inv(supermap), supremum(domain)))
-        innerproduct_native(superdict(dict1), i, superdict(dict2), j, SubMeasure(supermeasure(superμ), newdomain))
+        innerproduct_native(superdict(dict1), i, superdict(dict2), j, submeasure(supermeasure(superμ), newdomain))
     else
         dict_default_innerproduct(dict1, i, dict2, j, measure; options...)
     end
 end
 
-function _innerproduct_native(domain::UnionDomain, superμ::MappedMeasure, dict1::MappedDict, i, dict2::MappedDict, j, measure::SubMeasure; options...)
+function _innerproduct_native(domain::UnionDomain, superμ::MappedMeasure, dict1::MappedDict, i, dict2::MappedDict, j, measure; options...)
     z = zero(coefficienttype(dict1))
     for d in elements(domain)
         z += _innerproduct_native(d, superμ, dict1, i, dict2, j, measure; options...)
@@ -195,22 +196,22 @@ function _innerproduct_native(domain::UnionDomain, superμ::MappedMeasure, dict1
     z
 end
 
-_innerproduct_native(domain, superμ, dict1::MappedDict, i, dict2::MappedDict, j, measure::SubMeasure; options...) =
+_innerproduct_native(domain, superμ, dict1::MappedDict, i, dict2::MappedDict, j, measure; options...) =
     BasisFunctions.default_dict_innerproduct(dict1, i, dict2, j, measure; options...)
 
 export extensiondual
 """
-    extensiondual(dict::ExtensionFrame, measure::Measure; options...)
+    extensiondual(dict::ExtensionFrame, measure::AbstractMeasure; options...)
 
 Return a the extensframe of the dual of the dictionary on the boundingbox.
 """
-extensiondual(dict::ExtensionFrame, measure::Measure; options...) =
+extensiondual(dict::ExtensionFrame, measure::AbstractMeasure; options...) =
     extensionframe(support(dict), gramdual(superdict(dict), supermeasure(measure); options...),)
-extensiondual(dict::ExtensionFrameTensor, measure::Measure; options...) =
+extensiondual(dict::ExtensionFrameTensor, measure::AbstractMeasure; options...) =
     TensorProductDict(map((dicti,measurei)->extensionframe(support(dicti), gramdual(superdict(dicti), supermeasure(measurei); options...)),
         elements(dict), elements(measure))...)
 
-function gramdual(dict::ExtensionFrame, measure::Measure; options...)
+function gramdual(dict::ExtensionFrame, measure::AbstractMeasure; options...)
     @debug "Are you sure you want `dualtype=gramdual` and not `extensiondual`"
     default_gramdual(dict, measure; options...)
 end
