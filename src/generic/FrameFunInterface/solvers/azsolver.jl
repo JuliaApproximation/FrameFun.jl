@@ -58,10 +58,18 @@ function AZSolver(A::DictionaryOperator, Zt::DictionaryOperator;
             REG = default_regularization,
             rankestimate = 40,
             threshold = default_threshold(A),
+            verbose = false,
+            weightedAZ = false,
             options...)
 
     plunge_op = I-A*Zt
-    psolver = REG(plunge_op*A; threshold = threshold, rankestimate = rankestimate, options...)
+    if weightedAZ
+        verbose && @info "Weighted AZ"
+        AZ_Cweight = haskey(options,:AZ_Cweight) ? options[:AZ_Cweight] : error("No options `AZ_Cweight`")
+        psolver = AZ_Cweight*REG(plunge_op*A*AZ_Cweight; verbose=verbose, threshold = threshold, rankestimate = rankestimate, options...)
+    else
+        psolver = REG(plunge_op*A; verbose=verbose, threshold = threshold, rankestimate = rankestimate, options...)
+    end
     AZSolver(A, Zt, plunge_op, psolver)
 end
 
