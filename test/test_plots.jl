@@ -53,7 +53,7 @@ function test_plots()
     F = Fun(f, basis, domain)
     # Easily combine multiple plots
     plot(interpolation_grid(dictionary(F)),label="grid",markercolor=:white)
-    plot!(F,label="function", plot_ext=true)
+    plot!(F,label="function")
     plot!(F',title="Function and derivative",label="derivative",legend=true)
 
     plot(F,f,label="function")
@@ -71,7 +71,7 @@ function test_plots()
 
     contourf(F,colorbar=true)
 
-    plot(F,plot_ext=true)
+    plot(F)
 
     P = contour(F,f)
 end
