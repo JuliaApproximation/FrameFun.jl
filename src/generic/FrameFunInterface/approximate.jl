@@ -93,7 +93,7 @@ end
 
 function Fun(dict::Dictionary, coefficients::AbstractArray; verbose = false, options...)
 	verbose && println("Fun: coefficients are given, no approximation problem is solved")
-	DictFun(dict, coefficients)
+	Expansion(dict, coefficients)
 end
 
 
@@ -137,7 +137,7 @@ function approximate(::DictionaryOperatorStyle, samplingstyle::SamplingStyle, so
 	end
     A, B = normalized_discretization(fun, samplingstyle, ap, S; verbose=verbose, options...)
     C = solve(solverstyle, ap, A, B; S=S, verbose=verbose, samplingstyle=samplingstyle, options...)
-    F = DictFun(dictionary(ap), C)
+    F = Expansion(dictionary(ap), C)
     res = norm(A*C-B)
     verbose && println("Approximate: ended with residual $res\n")
     F, A, B, C, S, samplingparameter(samplingstyle, ap; verbose=verbose, options...)
@@ -163,7 +163,7 @@ function approximate(pstyle::GenericOperatorStyle, samplingstyle::SamplingStyle,
     A = AZ_A(pstyle, ap; samplingstyle=samplingstyle, options...)
     B = apply(S, fun; options...) # calculated just to keep the same interface.
     C = solve(solverstyle, ap, A, fun; verbose=verbose, problemstyle=pstyle, samplingstyle=samplingstyle, options...)
-    F = DictFun(dictionary(ap), C)
+    F = Expansion(dictionary(ap), C)
     res = norm(apply(S,A; options...)*C-B)
     verbose && println("Approximate: ended with residual $res\n")
     F, A, B, C, S, samplingparameter(samplingstyle, ap; verbose=verbose, options...)

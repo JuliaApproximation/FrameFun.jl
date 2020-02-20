@@ -1,5 +1,5 @@
 module Adaptivity
-using Printf, ..Platforms, BasisFunctions, ..ApproximationProblems, ..DictFuns
+using Printf, ..Platforms, BasisFunctions, ..ApproximationProblems
 
 import BasisFunctions: approximate
 
@@ -30,7 +30,7 @@ addlogentry!(log, entry) = push!(log, entry)
 
 # Verify the average pointwise error in a limited number of random points.
 function errormeasure(::RandomPoints, platform, tolerance, f, F, args...; numrandompts = 50, verbose=false, options...)
-    g = randomgrid(support(F.expansion.dictionary), numrandompts)
+    g = randomgrid(support(F), numrandompts)
     z = sample(g, f)
     max_error = norm(z-F.(g), Inf)
     converged = max_error < tolerance
@@ -166,7 +166,7 @@ function adaptive_approximation(::GreedyStyle, f, platform;
     logbook = emptylogbook()
 
     n = p0
-    F = DictFun(dictionary(platform, n))
+    F = Expansion(dictionary(platform, n))
     if smoothing
         dict = dictionary(F)
         weights = ones(length(dict))
@@ -212,7 +212,7 @@ function adaptive_approximation(::SimpleStyle, f, platform;
     logbook = emptylogbook()
 
     n = p0
-    F = DictFun(dictionary(platform, n))
+    F = Expansion(dictionary(platform, n))
     if smoothing
         dict = dictionary(F)
         weights = ones(length(dict))
@@ -254,7 +254,7 @@ function adaptive_approximation(::OptimalStyle, f, platform;
     logbook = emptylogbook()
 
     n = p0
-    F = DictFun(dictionary(platform, n))
+    F = Expansion(dictionary(platform, n))
 
     # First let the size grow until the tolerance is reached
     A=nothing;B=nothing;C=nothing;S=nothing;L=nothing;

@@ -1,6 +1,6 @@
 module DiffEquations
 using BasisFunctions, ..FrameFunInterface, GridArrays, DomainSets,
-    ..ApproximationProblems, ..Platforms, ..ExtensionFrames, LinearAlgebra, ..DictFuns,
+    ..ApproximationProblems, ..Platforms, ..ExtensionFrames, LinearAlgebra,
     ..FrameFunDomains
 
 import BasisFunctions: operator, coefficienttype, src, dest, apply!, grid
@@ -11,7 +11,7 @@ using BasisFunctions: evaluation
 """
 A DiffEquation describes a differential equation, with or without boundary conditions.
 Parameters:
-- Fun is the DictFun that will describe the result
+- Fun is the Expansion that will describe the result
 
 When the equation is solved the equations:
 -Diff(Fun) = DRhs on the domain
@@ -159,7 +159,7 @@ function solve(D::DiffEquation; solverstyle=AZStyle(), options...)
     OP = operator(D; options...)
     A = solver(solverstyle, PDEApproximation(D), OP; options...)
     coef  = A * b
-    DictFun(extensionframe(D.D, dest(A)), Adiff*coef)
+    Expansion(extensionframe(D.D, dest(A)), Adiff*coef)
 end
 
 

@@ -31,7 +31,7 @@ function approximate(pstyle::WeightedApproximationStyle, samplingstyle::Sampling
     W = DiagonalOperator(apply(S, pstyle.weight; options...))
 
     C = solve(solverstyle, ap, W*A, W*B; problemstyle=pstyle, S=S, verbose=verbose, samplingstyle=samplingstyle, options...)
-    F = DictFun(dictionary(ap), C)
+    F = Expansion(dictionary(ap), C)
     res = norm(W*(A*C-B))
     verbose && println("Approximate: ended with residual $res\n")
     F, A, B, C, S, L
