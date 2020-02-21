@@ -3,7 +3,8 @@ module ParameterPaths
 using ..Platforms, BasisFunctions
 import Base: getindex, unsafe_getindex, first
 import ..Platforms: unsafe_dictionary, correctparamformat, param_first, param_double,
-    param_inbetween, param_increment, dualdictionary, measure, SamplingStyle, SolverStyle, ProblemStyle
+    param_inbetween, hasparam_inbetween, param_increment, dualdictionary, measure,
+    SamplingStyle, SolverStyle, ProblemStyle
 using BasisFunctions: AbstractMeasure
 # For the moment only size is in parameter space. (no spline degree, extensionparameter T, ...)
 export ParameterPath
@@ -31,10 +32,13 @@ end
 
 export default_param_path
 default_param_path(platform::Platform) =
-    throw(ArgumentError("`default_param_path` not implemented for platform of type $(typeof(platform))"))
+    LinearParameterPath1D()
 
 first(path::ParameterPath) = unsafe_getindex(path,  param_first(path))
-
+function hasparam_inbetween(path::ParameterPath, param1, param2, stoptolerance::Real)
+    p = param_inbetween(path, param1, param2)
+    norm(param2 - p) >= stoptolerance && norm(param1 - p) >= stoptolerance
+end
 
 export LinearParameterPath1D
 """
@@ -51,6 +55,9 @@ param_double(path::LinearParameterPath1D, index::Real) =
     2index
 param_inbetween(path::LinearParameterPath1D, index1::Real, index2::Real) =
     (index1+index2)/2
+
+hasparam_inbetween(path::LinearParameterPath1D, index1::Real, index2::Real, stoptolerance::Real) =
+    index2 - index1 >= 2stoptolerance
 
 param_increment(path::LinearParameterPath1D, param::Real) =
     param + 1/path.constant
@@ -80,6 +87,10 @@ param_double(path::CartesianParameterPath, param::NTuple) =
     (2^(1/N)).*param
 param_inbetween(path::CartesianParameterPath{N}, param1::NTuple, param2::NTuple) where N =
     max.(param1, min.((param1 .+ param2)./2, (((((param2).^(1/N)).*path.constant.-1)./path.constant).^N)))
+function hasparam_inbetween(path::CartesianParameterPath{N}, param1::NTuple, param2::NTuple, stoptolerance::Real) where {N}
+    p = param_inbetween(path, param1, param2)
+    p != param1 && p != param2
+end
 param_increment(path::CartesianParameterPath{N}, param::Real) where N =
     minimum((round.(Int,((param).^(1/N)).*path.constant.+1)./path.constant).^N)
 param_increment(path::CartesianParameterPath{N}, param::NTuple{N}) where N =
@@ -115,7 +126,10 @@ param_inbetween(path::IncrementalCartesianParameterPath{N}, param1::Real, param2
     max(param1, min((param1+param2)/2, param2-1))
 param_increment(path::IncrementalCartesianParameterPath{N}, param::Real) where N =
     param + 1
-
+function hasparam_inbetween(path::IncrementalCartesianParameterPath{N}, param1::NTuple, param2::NTuple, stoptolerance::Real) where {N}
+    p = param_inbetween(path, param1, param2)
+    p != param1 && p != param2
+end
 
 function unsafe_getindex(path::IncrementalCartesianParameterPath{N}, index::Real) where N
     q, r = divrem(round(Int, index-1), N)
@@ -167,6 +181,9 @@ param_double(path::HierarchyPath, param) =
 param_inbetween(path::HierarchyPath, param1, param2) =
     param_inbetween(path.pathfirst, param1, param2)
 
+hasparam_inbetween(path::HierarchyPath, param1, param2, stoptolerance::Real) =
+    hasparam_inbetween(path.pathfirst, param1, param2, stoptolerance)
+
 param_increment(path::HierarchyPath, param1) =
     param_increment(path.pathfirst, param1)
 
@@ -195,6 +212,9 @@ param_double(path::ProductPath, param) =
 param_inbetween(path::ProductPath, param1, param2) =
     map(param_inbetween, path.paths, param1, param2)
 
+hasparam_inbetween(path::ProductPath, param1, param2, stoptolerance::Real) =
+    any(map(hasparam_inbetween, path.paths, param1, param2, Ref(stoptolerance))...)
+
 default_param_path(platform::ProductPlatform) where N =
     ProductPath(map(default_param_path, elements(platform))...)
 
@@ -215,6 +235,9 @@ export parametrizedplatform
 parametrizedplatform(platform::Platform) =
     parametrizedplatform(platform, default_param_path(platform))
 
+parametrizedplatform(platform::ParametrizedPlatform) =
+    platform
+
 parametrizedplatform(platform::Platform, path::ParameterPath) =
     ParametrizedPlatform(platform, path)
 
@@ -234,6 +257,9 @@ param_double(platform::ParametrizedPlatform, param) =
 
 param_inbetween(platform::ParametrizedPlatform, param1, param2) =
     param_inbetween(platform.path, param1, param2)
+
+hasparam_inbetween(platform::ParametrizedPlatform, param1, param2, stoptolerance::Real) =
+    hasparam_inbetween(platform.path, param1, param2, stoptolerance)
 
 param_increment(platform::ParametrizedPlatform, param1) =
     param_increment(platform.path, param1)
