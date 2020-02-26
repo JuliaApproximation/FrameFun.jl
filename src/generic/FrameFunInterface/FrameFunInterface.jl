@@ -1,6 +1,6 @@
 module FrameFunInterface
 
-using ..Platforms, ..ApproximationProblems, BasisFunctions, ..DictFuns
+using ..Platforms, ..ApproximationProblems, BasisFunctions
 using ..ParameterPaths: ParametrizedPlatform
 import BasisFunctions: discretemeasure, measure, interpolation_grid, elements
 

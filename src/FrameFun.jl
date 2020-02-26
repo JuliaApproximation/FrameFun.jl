@@ -17,9 +17,6 @@ include("ExtensionFrames/ExtensionFrames.jl")
 include("generic/ApproximationProblems.jl")
 using .ApproximationProblems
 
-include("fun/DictFuns.jl")
-@reexport using .DictFuns
-
 include("generic/FrameFunInterface/FrameFunInterface.jl")
 @reexport using .FrameFunInterface
 
@@ -49,6 +46,5 @@ include("generic/Adaptivity.jl")
 @reexport using .Adaptivity
 
 include("recipes.jl")
-include("pgfplots.jl")
 
 end # module

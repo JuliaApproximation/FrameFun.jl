@@ -2,7 +2,6 @@ include("solvers/azsolver.jl")
 include("solvers/generic_azsolver.jl")
 include("solvers/lowranksolver.jl")
 include("solvers/randomized.jl")
-include("solvers/smoothsolver.jl")
 
 # solver needs also a problemstyle and a solverstyle
 solver(ap::ApproximationProblem;
@@ -66,9 +65,6 @@ function solver(::AZStyle, ap::ApproximationProblem, A::AbstractOperator, Zt::Ab
     end
 end
 
-solver(style::AZSmoothStyle, ap::ApproximationProblem, A::AbstractOperator; options...) = solver(style, ap, A, AZ_Zt(ap; options...); options...)
-solver(::AZSmoothStyle, ap::ApproximationProblem, A::AbstractOperator, Zt; options...) = AZSolver_with_smoothing(A, Zt; options...)
-
 solver(::DualStyle, ap::ApproximationProblem, A::AbstractOperator; options...) = dualdiscretization(ap; options...)'
 
 solver(solverstyle::ProductSolverStyle, ap::ApproximationProblem, A::AbstractOperator; samplingstyle=SamplingStyle(ap), options...) =
@@ -80,3 +76,9 @@ function solver(solverstyle::ProductSolverStyle, samplingstyle::ProductSamplingS
 		map( (solversi, ssi, api, Ai, Si)->solver(solversi, api, Ai; S=Si, samplingstyle=ssi, options...), solvere, sse, ape, Ae, Se)...
 	)
 end
+
+
+solver(style::AZSmoothStyle, ap::ApproximationProblem, A::AbstractOperator; options...) = solver(style, ap, A, AZ_Zt(ap; options...); options...)
+include("solvers/smoothsolver.jl")
+solver(::AZSmoothStyle, ap::ApproximationProblem, A::AbstractOperator, Zt; options...) =
+    solver(AZStyle(), ap, A, Zt; options..., weightedAZ=true, AZ_Cweight=sobolevAZweight(A; options...))

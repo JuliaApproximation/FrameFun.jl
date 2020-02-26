@@ -51,8 +51,8 @@ struct RandomizedSvdSolver{T} <: DictionarySolverOperator{T}
     function RandomizedSvdSolver{T}(A::DictionaryOperator;
                 threshold = default_threshold(A), rankestimate = 5, verbose = false, smallcoefficients = false,
                 smallcoefficients_atol = NaN, smallcoefficients_rtol = NaN, options...) where {T}
+        
         W, U, S, Vt = randomizedsvd(A, threshold = threshold, rankestimate = rankestimate, verbose = verbose)
-
         # Small coefficients #
         # One of the tolerances can not be NaN
         # If we know the norm of the function, we can wet the atol as rtol*\|f\| and rtol to NaN to simulate a relative tolerance using an absolute tolerace.

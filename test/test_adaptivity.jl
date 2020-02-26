@@ -1,3 +1,4 @@
+module TestAdaptivity
 using FrameFun, DomainSets, Test
 
 
@@ -8,16 +9,16 @@ using FrameFun, DomainSets, Test
     p = IncrementalCartesianParameterPath{2}()
     PP = parametrizedplatform(P, HierarchyPath(p,ProductPath(p,p)))
 
-    F1, logbook1, _ = FrameFun.Adaptivity.adaptive_approximation(OptimalStyle(), f, PP; criterion = FNAStyle(),FNAerr=1e-2,FNAcoef=Inf)
+    F1, logbook1, _ = FrameFun.Adaptivity.adaptive_approximation(OptimalStyle(), f, PP; criterion = FNAStyle(),δ=1e-2)
     @test size(F1)==(45,)
     @test length(logbook1) == 8
-    @test last(logbook1)[2] < .1
+    @test last(logbook1)[3] < .1
     @test norm(coefficients(F1))>10*2.188
 
-    F, logbook, _ = FrameFun.Adaptivity.adaptive_approximation(OptimalStyle(), f, PP; criterion = FNAStyle(),FNAerr=1e-2,FNAcoef=10)
+    F, logbook, _ = FrameFun.Adaptivity.adaptive_approximation(OptimalStyle(), f, PP; criterion = FNAStyle(),δ=1e-2,FNAη=10)
     @test size(F)==(190,)
     @test length(logbook) == 12
-    @test last(logbook1)[2] < .1
+    @test last(logbook1)[3] < .1
     @test norm(coefficients(F))<10*2.188
 
 
@@ -27,8 +28,9 @@ using FrameFun, DomainSets, Test
     f = (x,y) -> cos(pi*(x+y)) + sqrt(x^2+y^2)*sin(1+pi*(x+y))
 
 
-    F1 = Fun(f, PP; adaptivestyle = OptimalStyle(), criterion = FNAStyle(),FNAerr=1e-2,FNAcoef=Inf)
+    F1 = Fun(f, PP; adaptivestyle = OptimalStyle(), criterion = FNAStyle(),δ=1e-2,FNAη=Inf)
     @test size(F1)==(50,)
-    F1 = Fun(f, PP; adaptivestyle = OptimalStyle(), criterion = FNAStyle(),FNAerr=1e-2,FNAcoef=10)
+    F1 = Fun(f, PP; adaptivestyle = OptimalStyle(), criterion = FNAStyle(),δ=1e-2,FNAη=10)
     @test size(F1)==(200,)
+end
 end

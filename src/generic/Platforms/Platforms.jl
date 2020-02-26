@@ -4,7 +4,7 @@ using BasisFunctions: Dictionary, TensorProductDict, Dictionary1d, tensorproduct
     extensionsize, gramdual, Measure, ProductMeasure, DiscreteProductMeasure, resize,
     isbasis, isframe, hastransform, dimensions, productmeasure
 import Base: getindex
-import BasisFunctions: elements, dictionary, element, measure, iscomposite
+import BasisFunctions: elements, dictionary, element, measure, iscomposite, AbstractMeasure
 
 #################
 # Platform
@@ -34,11 +34,11 @@ end
 export dictionary, dualdictionary
 
 """
-    dualdictionary(platform::Platform, param, measure::Measure; options...)
+    dualdictionary(platform::Platform, param, measure::AbstractMeasure; options...)
 
 Return the dual dictionary of the platform.
 """
-dualdictionary(platform::Platform, param, measure::Measure; dict=dictionary(platform, param), options...) =
+dualdictionary(platform::Platform, param, measure::AbstractMeasure; dict=dictionary(platform, param), options...) =
     gramdual(dict, measure; options...)
 
 include("platformadaptivity.jl")
@@ -129,7 +129,7 @@ DictionaryStyle(p::ProductPlatform) = (dict=TensorProductDict(map(x->dictionary(
                                             isframe(dict) ? FrameStyle() :
                                             UnknownDictionaryStyle())
 ProductPlatform(platform::Platform, n::Int) = ProductPlatform(ntuple(x->platform, n)...)
-dualdictionary(platform::ProductPlatform, param, measure::Measure; options...) =
+dualdictionary(platform::ProductPlatform, param, measure::AbstractMeasure; options...) =
     (@assert length(param)==length(elements(platform));
     TensorProductDict(map((plati, parami, mi)->dualdictionary(plati, parami, mi; options...), elements(platform), param, elements(measure))...))
 iscomposite(p::ProductPlatform) = true

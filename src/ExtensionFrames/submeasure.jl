@@ -1,6 +1,7 @@
 
 using BasisFunctions, GridArrays, DomainSets
-using BasisFunctions: FFreq, DiscreteMeasure, DiscreteProductMeasure, innerproduct_fourier_part, default_dict_innerproduct
+using BasisFunctions: FFreq, DiscreteMeasure, DiscreteProductMeasure,
+    innerproduct_fourier_part, default_dict_innerproduct, AbstractMeasure
 import BasisFunctions: gaussweights, stencilarray, name, element, elements,
     iscomposite, weights, grid, subindices, isprobabilitymeasure, supermeasure,
     support, unsafe_weight, strings, innerproduct_native, restrict, discretemeasure
@@ -11,13 +12,16 @@ export submeasure, DiscreteTensorSubMeasure, SubMeasure, DiscreteSubMeasure
 
 Submeasure of a Measure.
 """
-struct SubMeasure{M,D,T} <: Measure{T}
+struct SubMeasure{M<:Measure,D<:Domain,T} <: Measure{T}
     measure     ::  M
     domain      ::  D
+
+    function SubMeasure(measure::Measure, domain::Domain)
+        @assert eltype(domain) == eltype(support(measure))
+        new{typeof(measure), typeof(domain), eltype(domain)}(measure, domain)
+    end
 end
 
-SubMeasure(measure::Measure{T}, domain::Domain) where {T} =
-    SubMeasure{typeof(measure),typeof(domain),T}(measure,domain)
 """
     submeasure(measure::Measure, domain::Domain)
 
@@ -33,9 +37,9 @@ unsafe_weight(m::SubMeasure, x) = unsafe_weight(supermeasure(m), x)
 
 Restrict a measure to a subset of its support
 """
-restrict(measure::Measure, domain::Domain) = SubMeasure(measure, domain)
+restrict(measure::Measure, domain::Domain) = submeasure(measure, domain)
 strings(m::SubMeasure) = (name(m), (string(support(m)),), strings(supermeasure(m)))
-submeasure(measure::ProductMeasure, domain::ProductDomain) = ProductMeasure(map(SubMeasure, elements(measure), elements(domain))...)
+submeasure(measure::ProductMeasure, domain::ProductDomain) = ProductMeasure(map(submeasure, elements(measure), elements(domain))...)
 
 
 gaussweights(grid::AbstractSubGrid, measure::SubMeasure) =

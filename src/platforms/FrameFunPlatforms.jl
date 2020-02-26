@@ -6,6 +6,7 @@ import ..Platforms: dictionary, SolverStyle, measure, dualdictionary,
 using ..FrameFunInterface
 import ..FrameFunInterface: discrete_gram_measure
 using BasisFunctions, ..ExtensionFrames, DomainSets
+using BasisFunctions: AbstractMeasure
 
 export FourierPlatform
 """
@@ -78,7 +79,7 @@ end
 unsafe_dictionary(p::FourierExtensionPlatform, n) =
     extensionframe(p.domain, unsafe_dictionary(p.basisplatform, n))
 
-dualdictionary(platform::FourierExtensionPlatform, param, measure::Measure; options...) =
+dualdictionary(platform::FourierExtensionPlatform, param, measure::AbstractMeasure; options...) =
    extensionframe(dualdictionary(platform.basisplatform, param, supermeasure(measure); options...), platform.domain)
 
 measure(platform::FourierExtensionPlatform) = measure(dictionary(platform, 1))
@@ -112,7 +113,7 @@ unsafe_dictionary(p::OPSExtensionFramePlatform, n) =
 
 measure(platform::OPSExtensionFramePlatform) = restrict(measure(platform.basisplatform), platform.domain)
 
-dualdictionary(platform::OPSExtensionFramePlatform, param, measure::Measure; options...) =
+dualdictionary(platform::OPSExtensionFramePlatform, param, measure::AbstractMeasure; options...) =
    extensionframe(dualdictionary(platform.basisplatform, param, supermeasure(measure); options...), platform.domain)
 
 discretemeasure(::DiscreteStyle, p::OPSExtensionFramePlatform, n, L;

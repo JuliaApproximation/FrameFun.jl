@@ -24,8 +24,8 @@ D = -0.5..0.5
 f = x->x
 F = Fun(f,B,D)
 
-P = plot(F,plot_ext=true, layout = 2)
-plot!(F,f,plot_ext=true, subplot=2)
+P = plot(F,layout = 2)
+plot!(F,f,subplot=2)
 Plots.savefig(P,"images/lowprecision.png")
 ```
 
@@ -39,8 +39,8 @@ The bases support any AbstractFloat subtype, so high precision approximations ar
 B = Fourier(61) → big(-1)..big(1)
 F = Fun(f,B,D)
 
-P = plot(F,plot_ext=true,layout=2)
-plot!(F,f,plot_ext=true,subplot=2)
+P = plot(F,layout=2)
+plot!(F,f,subplot=2)
 Plots.savefig(P,"images/highprecision.png")
 ```
 
@@ -60,8 +60,8 @@ B = (Fourier(31) → -1.3..1.3)^2
 f = (x,y)->exp(x+y)
 F = Fun(f,B,C)
 
-P = heatmap(F,plot_ext=true,layout=2,aspect_ratio=1)
-plot!(F,f,plot_ext=true,subplot=2,aspect_ratio=1)
+P = heatmap(F,layout=2,aspect_ratio=1)
+plot!(F,f,subplot=2,aspect_ratio=1)
 Plots.savefig(P,"images/deathstar.png")
 ```
 
@@ -75,8 +75,8 @@ B = (Fourier(31) → -1.0..0.35) ⊗ (Fourier(31) → -0.65..0.65)
 f = (x,y)->cos(10*x*y)
 F = Fun(f, B, mandelbrot())
 
-P = heatmap(F,plot_ext=true,layout=2,aspect_ratio=1)
-plot!(F,f,plot_ext=true,aspect_ratio=1,subplot=2)
+P = heatmap(F,layout=2,aspect_ratio=1)
+plot!(F,f,aspect_ratio=1,subplot=2)
 Plots.savefig(P,"images/mandelbrot")
 ```
 
