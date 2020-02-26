@@ -35,7 +35,7 @@ function errormeasure(::RandomPoints, platform, tolerance, f, F, args...; numran
     z = sample(g, f)
     max_error = norm(z-F(g), Inf)
     converged = max_error < tolerance
-    verbose && @info "Errormeasure: Maximum error in $numrandompts random points did $(converged ? "" : "not ")converge "*@sprintf("%1.3e (%1.3e)",max_error,tolerance)
+    verbose && println("Errormeasure: Maximum error in $numrandompts random points did $(converged ? "" : "not ")converge "*@sprintf("%1.3e (%1.3e)",max_error,tolerance))
     converged, max_error
 end
 
@@ -57,8 +57,8 @@ end
 # Measure the error FNA style:
 # - the residual has to meet a threshold
 # - the norm of the coefficients has to be smaller than a value times the estimated norm of the right hand side
-function errormeasure(::FNAStyle{CREL,EREL}, platform, tolerance, f, F, n, A, B, C, S, L; optimizefase=false,
-        numrandompts = 2, FNAcoef = 5.0, FNAerr = 5.0, verbose=false, Sbest=nothing, Bbest=nothing,options...) where {CREL, EREL}
+function errormeasure(::FNAStyle{CREL,EREL}, platform, δ, f, F, n, A, B, C, S, L; optimizefase=false,
+        numrandompts = 3, FNAη = Inf, FNAδ = δ, verbose=false, Sbest=nothing, Bbest=nothing,options...) where {CREL, EREL}
     residual = norm(A*C-B)
 
     # Note: we pass on options, because it may contain a measure
@@ -72,13 +72,13 @@ function errormeasure(::FNAStyle{CREL,EREL}, platform, tolerance, f, F, n, A, B,
     end
     normErr = residual
     normCoef = norm(C)
-    verbose && @info @sprintf("Errormeasure: approximate ||f|| %1.3e\n",normF)
+    verbose && println( @sprintf("Errormeasure: approximate ||f|| %1.3e",normF))
 
-    errConverged = EREL ? (normErr < FNAerr*normF) : (normErr < FNAerr)
-    coefConverged = CREL ? (normCoef < FNAcoef*normF) : (normErr < FNAcoef)
+    errConverged = EREL ? (normErr < FNAδ*normF) : (normErr < FNAδ)
+    coefConverged = CREL ? (normCoef < FNAη*normF) : (normErr < FNAη)
 
-    verbose && @info "Errormeasure: error did $(errConverged ? "" : "not ")converge: " * @sprintf("error=%1.3e, ||f||=%1.3e, c=%1.3e\n",normErr,normF,FNAerr)
-    verbose && @info "Errormeasure: coefficients did $(coefConverged ? "" : "not ")converge: " * @sprintf("||c||=%1.3e, ||f||=%1.3e, c=%1.3e\n",normCoef,normF,FNAcoef)
+    verbose && println( "Errormeasure: error did $(errConverged ? "" : "not ")converge: " * @sprintf("error=%1.3e, ||f||=%1.3e, δ=%1.3e",normErr,normF,FNAδ))
+    verbose && println( "Errormeasure: coefficients did $(coefConverged ? "" : "not ")converge: " * @sprintf("||c||=%1.3e, ||f||=%1.3e, η=%1.3e",normCoef,normF,FNAη))
 
     converged = errConverged && coefConverged
     if converged
@@ -86,8 +86,8 @@ function errormeasure(::FNAStyle{CREL,EREL}, platform, tolerance, f, F, n, A, B,
             converged, residual
         else
             # If N is too small the norm of `f` might not be good enough. User random points for robustness.
-            verbose && @info "Errormeasure: Check random points for FNA robustness. "
-            converged, _ = errormeasure(RandomPoints(), platform, normF*FNAerr, f, F; numrandompts = numrandompts, verbose=verbose, options...)
+            verbose && println( "Errormeasure: Check random points for FNA robustness. ")
+            converged, _ = errormeasure(RandomPoints(), platform, normF*FNAδ, f, F; numrandompts = numrandompts, verbose=verbose, options...)
             converged, residual
         end
     else
@@ -102,10 +102,11 @@ ErrorStyle(platform, ::FrameStyle) = ResidualStyle()
 ErrorStyle(platform, ::UnknownDictionaryStyle) = RandomPoints()
 
 
-function adaptive_approximate_step!(logbook, f, platform, n, δ; criterion = ErrorStyle(platform), options...)
-    F, A, B, C, S, L = approximate(f, platform, n; options...)
-    converged, error = errormeasure(criterion, platform, δ, f, F, n, A, B, C, S, L; options...)
-    addlogentry!(logbook, (n, error))
+function adaptive_approximate_step!(logbook, f, platform, n, δ; criterion = ErrorStyle(platform), verbose=false, options...)
+    fullverbose = (length(logbook) == 0) && verbose
+    F, A, B, C, S, L = approximate(f, platform, n; verbose=fullverbose, options...)
+    converged, error = errormeasure(criterion, platform, δ, f, F, n, A, B, C, S, L; verbose=verbose,options...)
+    addlogentry!(logbook, (length(F), n, error,))
     F, A, B, C, S, L, converged, error
 end
 
@@ -193,7 +194,7 @@ for (STYLE,nextparam,ret) in zip((:GreedyStyle,:SimpleStyle,:OptimalStyleFirstFa
         verbose && println("Adaptive: initial value of n is $n")
         iterations += 1
         F, A, B, C, S, L, converged, error = adaptive_approximate_step!(logbook, f, platform, n, δ; threshold=threshold, verbose=verbose, options...)
-        verbose && @printf "Adaptive: N = %d, err = %1.3e, ||x|| = %1.3e\n" length(F) error norm(coefficients(F))
+        verbose && @printf "Adaptive: N = %d, err = %1.3e, ||x|| = %1.3e\n\n" length(F) error norm(coefficients(F))
         converged && (return $ret)
 
         # Preparation for next step
@@ -210,15 +211,15 @@ for (STYLE,nextparam,ret) in zip((:GreedyStyle,:SimpleStyle,:OptimalStyleFirstFa
             # If weightedAZ add the weight
             if weightedAZ
                 F, A, B, C, S, L, converged, error = adaptive_approximate_step!(logbook, f, platform, n, δ;
-                    threshold=threshold, verbose=false,
+                    threshold=threshold, verbose=verbose,
                     weightedAZ = true, AZ_Cweight = W,
                     options...)
             else
                 F, A, B, C, S, L, converged, error = adaptive_approximate_step!(logbook, f, platform, n, δ;
-                    threshold=threshold, verbose=false,
+                    threshold=threshold, verbose=verbose,
                     options...)
             end
-            verbose && @printf "Adaptive: N = %d, err = %1.3e, ||x|| = %1.3e\n" length(F) error norm(coefficients(F))
+            verbose && @printf "Adaptive: N = %d, err = %1.3e, ||x|| = %1.3e\n\n" length(F) error norm(coefficients(F))
             converged && (return $ret)
 
             # Preparation for next step
@@ -228,7 +229,8 @@ for (STYLE,nextparam,ret) in zip((:GreedyStyle,:SimpleStyle,:OptimalStyleFirstFa
                 W = next_weight(platform, W, nprev, n, error)
             end
         end
-
+        
+        @warn "Adaptive: No convergence with $n dofs and $iterations iterations"
         return $ret
     end
 end
@@ -262,18 +264,18 @@ function adaptive_approximation(::OptimalStyle, f, platform;
 
 
     # Next, bisect until minimal n is found that achieves the tolerance
-    while hasparam_inbetween(platform, lower_n, upper_n, stoptolerance)
+    while hasparam_inbetween(platform, lower_n, upper_n, stoptolerance) && (iterations <= maxiterations)
         n = param_inbetween(platform, lower_n, upper_n)
 
         if weightedAZ
             F, A, B, C, S, L, converged, error = adaptive_approximate_step!(logbook, f, platform, n, δ;
-                threshold=threshold, verbose=false,
+                threshold=threshold, verbose=verbose,
                 weightedAZ = true, AZ_Cweight = restrict_weight(platform, W, nbest, n),
                 optimizefase=true,Sbest=Sbest,Bbest=Bbest,
                 options...)
         else
             F, A, B, C, S, L, converged, error = adaptive_approximate_step!(logbook, f, platform, n, δ;
-                threshold=threshold, verbose=false,
+                threshold=threshold, verbose=verbose,
                 optimizefase=true,Sbest=Sbest,Bbest=Bbest,
                 options...)
         end
@@ -289,7 +291,7 @@ function adaptive_approximation(::OptimalStyle, f, platform;
             upper_n = n
         end
         verbose && @printf "Adaptive (phase 2): N = %d, err = %1.3e, ||x|| = %1.3e.\n" length(F) error norm(coefficients(F))
-        verbose && println("Optimal param in [$(lower_n),$(upper_n)].")
+        verbose && println("Optimal param in [$(lower_n),$(upper_n)].\n")
         iterations += 1
     end
     if n != lower_n
@@ -297,19 +299,23 @@ function adaptive_approximation(::OptimalStyle, f, platform;
         n = upper_n
         if weightedAZ
             F, A, B, C, S, L, converged, error = adaptive_approximate_step!(logbook, f, platform, n, δ;
-                threshold=threshold, verbose=false,
+                threshold=threshold, verbose=verbose,
                 weightedAZ = true, AZ_Cweight = restrict_weight(platform, W, nbest, n),
                 optimizefase=true,Sbest=Sbest,Bbest=Bbest,
                 options...)
         else
             F, A, B, C, S, L, converged, error = adaptive_approximate_step!(logbook, f, platform, n, δ;
-                threshold=threshold, verbose=false,
+                threshold=threshold, verbose=verbose,
                 optimizefase=true,Sbest=Sbest,Bbest=Bbest,
                 options...)
         end
 
     end
-    verbose && println("Adaptive: Optimal n is $(n)!")
+    if !converged
+        @warn "Adaptive: No convergence with $n dofs and $iterations iterations"
+    else
+        verbose && println("Adaptive: Optimal n is $(n)!")
+    end
 
     return F, logbook, n, δ, error, iterations, converged
 end

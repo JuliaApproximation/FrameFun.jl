@@ -2,7 +2,7 @@
 using FrameFun.Platforms, FrameFun.FrameFunInterface, FrameFun.ExtensionFramePlatforms,
     FrameFun.FrameFunInterface, FrameFun.ExtensionFramePlatforms, FrameFun.ExtensionFrames,
     FrameFun.WeightedSumPlatforms, FrameFun.AugmentationPlatforms, FrameFun.FrameFunInterfaceExtension,
-    BasisFunctions, FrameFun.ApproximationProblems,
+    BasisFunctions, FrameFun.ApproximationProblems, FrameFun.FrameFunPlatforms,
     DomainSets, StaticArrays, Test, LinearAlgebra
 
 # TODO add AugmentationPlatforms tests
@@ -280,91 +280,128 @@ end
 
 @testset "solvers" begin
     for dict in (dict1,)
+
         op1 = solver(dict;solverstyle=DirectStyle())
         r = rand(src(op1))
+        # @show "11"
         op2 = solver(dict;solverstyle=IterativeStyle())
         @test norm(op1*r-op2*r) < 1e-4
+        # @show "12"
         op3 = solver(dict;solverstyle=AZStyle())
         @test norm(op1*r-op3*r) < 1e-4
+        # @show "13"
         op4 = solver(dict;solverstyle=AZSmoothStyle())
         @test norm(op1*r-op4*r) < 1e-4
+        # @show "14"
         op4 = solver(dict;solverstyle=TridiagonalProlateStyle())
     end
 
     for dict in (dict1,dict3,dict4)
         op1 = solver(dict;solverstyle=DirectStyle())
         r = rand(src(op1))
+        # @show "21"
         op2 = solver(dict;solverstyle=AZStyle())
         @test  norm(op1*r-op2*r) < 1e-1
+        # @show "22"
     end
 
     P = FourierExtensionPlatform(0.0..0.5)
     f = exp
     A,b = discretization(f, P, 100)
     M = plungeoperator(P,100)*A
+    # @show "31"
     S = rSVD_solver(M;threshold=1e-4)
     x1 = S*plungeoperator(P,100)*b
+    # @show "32"
     x2 = AZ_Zt(P,100)*(b-A*x1)
+    # @show "33"
     @test norm(A*(x1+x2)-b) <  1e-3
 end
-
+# @show "AZ_A, AZ_Z, AZ_Zt, plungeoperator, firstAZstepoperator, plungerank"
 @testset "AZ_A, AZ_Z, AZ_Zt, plungeoperator, firstAZstepoperator, plungerank" begin
 
     for (ap, plat) in ((ap1,plat1),(ap2,plat2),(ap3,plat3),(ap4,plat4),(wap1,wplat1),(wap2,wplat2))
         @test AZ_A(ap) ≈ AZ_A(plat...)
+        # @show "41"
         @test AZ_Zt(ap) ≈ AZ_Zt(plat...)
+        # @show "42"
         @test plungeoperator(ap) ≈ plungeoperator(plat...)
+        # @show "43"
         @test firstAZstepoperator(ap) ≈ firstAZstepoperator(plat...)
+        # @show "44"
         @test abs(plungerank(ap) - plungerank(plat...)) < 3
+        # @show "45"
     end
 
     for (ap, dict) in ((ap1,dict1),(ap2,dict2),(ap3,dict3),(ap4,dict4),)
         @test AZ_A(ap) ≈ AZ_A(dict)
+        # @show "45"
         @test AZ_Zt(ap) ≈ AZ_Zt(dict)
+        # @show "47"
         @test plungeoperator(ap) ≈ plungeoperator(dict)
+        # @show "48"
         @test firstAZstepoperator(ap) ≈ firstAZstepoperator(dict)
+        # @show "49"
         @test abs(plungerank(ap) - plungerank(dict)) < 3
+        # @show "410"
     end
 
     for ap in (ap1,ap2,ap3,ap4,wap1,wap2)
         @test norm(plungeoperator(ap) - (I -AZ_A(ap)*AZ_Zt(ap))) < 1e-12
+        # @show "51"
         @test norm(firstAZstepoperator(ap) - (AZ_A(ap) -AZ_A(ap)*AZ_Zt(ap)*AZ_A(ap) )) < 1e-12
+        # @show "52"
     end
 
-    @test plungerank(plat1[1],(100);threshold=1e-6) <= 30
-    @test plungerank(plat2[1],(30,30);threshold=1e-6) <= 700
-    @test plungerank(plat3[1],(30,30);threshold=1e-6) <= 600
-    @test plungerank(plat4[1],(30,30);threshold=1e-6) <= 600
-    @test plungerank(wplat1[1],(100,100);threshold=1e-6) <= 30
-    @test plungerank(wplat2[1],((15,15),(15,15));threshold=1e-6)  <= 400
+    @test plungerank(plat1[1],(100);threshold=1e-6,verbose=false) <= 30
+    # @show "61"
+    @test plungerank(plat2[1],(30,30);threshold=1e-6,verbose=false) <= 700
+    # @show "62"
+    @test plungerank(plat3[1],(30,30);threshold=1e-6,verbose=false) <= 600
+    # @show "63"
+    @test plungerank(plat4[1],(30,30);threshold=1e-6,verbose=false) <= 600
+    # @show "64"
+    @test plungerank(wplat1[1],(100,100);threshold=1e-6,verbose=false) <= 30
+    # @show "65"
+    @test plungerank(wplat2[1],((15,15),(15,15));threshold=1e-6,verbose=false)  <= 400
+    # @show "66"
 
 end
-
+# @show  "approximate"
 @testset "approximate" begin
     P = FourierExtensionPlatform(0.0..0.5)
     f = exp
     A,b = discretization(f, P, 100)
+    # @show "71"
     M = plungeoperator(P,100)*A
+    # @show "72"
     S = rSVD_solver(M;threshold=1e-4)
     x1 = S*plungeoperator(P,100)*b
+    # @show "73"
     x2 = AZ_Zt(P,100)*(b-A*x1)
+    # @show "74"
     @test norm(A*(x1+x2)-b) <  1e-3
 
     F = approximate(f, P, 100;REG=rSVD_solver)[1]
+    # @show "75"
     x = .2; @test abs(F(x)-f(x)) < 1e-3
-
+# @show "8"
     P = FourierExtensionPlatform(0.0..0.5)
     f = exp
     A,b = discretization(f, P, 100)
+    # @show "81"
     M = plungeoperator(P,100)*A
+    # @show "82"
     S = pQR_solver(M;threshold=1e-4)
     x1 = S*plungeoperator(P,100)*b
+    # @show "82"
     x2 = AZ_Zt(P,100)*(b-A*x1)
+    # @show "83"
     @test norm(A*(x1+x2)-b) < 1e-3
-
+# @show "9"
     F = approximate(f, P, 100;REG=pQR_solver)[1]
     x = .2; @test abs(F(x)-f(x)) < 1e-3
-
+# @show "10"
     P = FourierExtensionPlatform(0.0..0.5)
     f = exp
     A,b = discretization(f, P, 100)
