@@ -5,7 +5,6 @@ export ExtensionFrame,
     extensionframe,
     ⇐, →
 
-include("submeasure.jl")
 
 using BasisFunctions, DomainSets
 
@@ -16,7 +15,10 @@ import BasisFunctions: superdict, support, similardictionary, isbasis, isframe,
     isbiorthogonal, isorthogonal, isorthonormal, hasinterpolationgrid, hastransform,
     hasantiderivative, name, string, strings, dict_in_support, iscompatible, *,
     unsafe_eval_element1, interpolation_grid, measure, restrict, innerproduct,
-    innerproduct_native, gramdual, modifiersymbol, GridSampling, in_support
+    innerproduct_native, gramdual, modifiersymbol, GridSampling, in_support,
+    points, support
+
+include("submeasure.jl")
 
 export ExtensionFrame
 """

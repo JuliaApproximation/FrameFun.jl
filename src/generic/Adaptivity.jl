@@ -64,10 +64,10 @@ function errormeasure(::FNAStyle{CREL,EREL}, platform, δ, f, F, n, A, B, C, S, 
     # Note: we pass on options, because it may contain a measure
     # Q = discrete_normalization(platform, n, L; S=S, options...)
     if optimizefase
-        w = BasisFunctions.gaussweights(grid(dest(Sbest)), measure(platform))
+        w = BasisFunctions.quadweights(grid(dest(Sbest)), measure(platform))
         normF = abs(sqrt(sum(w .* Bbest.^2)))
     else
-        w = BasisFunctions.gaussweights(grid(dest(S)), measure(platform))
+        w = BasisFunctions.quadweights(grid(dest(S)), measure(platform))
         normF = abs(sqrt(sum(w .* B.^2)))
     end
     normErr = residual
