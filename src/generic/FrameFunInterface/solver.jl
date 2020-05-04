@@ -50,7 +50,7 @@ solver(pstyle::DictionaryOperatorStyle, style::AZStyle, ap::ApproximationProblem
 function solver(::AZStyle, ap::ApproximationProblem, A::AbstractOperator, Zt::AbstractOperator;
             B=nothing, smallcoefficients=false, smallcoefficients_atol=NaN, smallcoefficients_rtol=NaN, verbose=false, options...)
     if smallcoefficients
-        w = BasisFunctions.gaussweights(sampling_grid(ap; options...), measure(ap; options...))
+        w = BasisFunctions.quadweights(sampling_grid(ap; options...), measure(ap; options...))
         normF = abs(sqrt(sum(w .* B.^2)))
         if !isnan(smallcoefficients_rtol)
             verbose && println("Change smallcoefficients relative tolerance to absolute tolerance rtol*||f||")

@@ -31,7 +31,7 @@ end
     @test μ isa DiscreteSubMeasure
     generic_test_discrete_measure(μ)
     @test supermeasure(μ) == discretemeasure(g)
-    @test !(isprobabilitymeasure(μ))
+    @test !(isnormalized(μ))
     @test restrict(supermeasure(μ),d)≈μ
 
     g = PeriodicEquispacedGrid(3,-1,1)×PeriodicEquispacedGrid(4,-1,1)

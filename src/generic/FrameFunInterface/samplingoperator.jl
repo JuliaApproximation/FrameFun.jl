@@ -1,7 +1,7 @@
 function samplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationProblem;
             T = coefficienttype(ap), options...)
     dmeasure = discretemeasure(samplingstyle, ap; options...)
-    g  = grid(dmeasure)
+    g  = points(dmeasure)
     w = BasisFunctions.weights(dmeasure)
     GS = GridSampling(g, T)
     D = DiagonalOperator(dest(GS), dest(GS), sqrt.(w))

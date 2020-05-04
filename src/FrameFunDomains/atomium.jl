@@ -1,4 +1,4 @@
-# atomium.jl
+
 export atomium
 ###
 # The atomium: a famous building in Belgium
