@@ -47,18 +47,17 @@ distance(x,d::IntersectionDomain) = minimum(map(di->distance(x,di),elements(d)))
 
 normal(x,d::IntersectionDomain) = normal(x,elements(d)[findmin(map(di->distance(x,di),elements(d)))[2]])
 
-# TODO: in the future, d.d1 -> d.domains[1], and d.d2 -> d.domains[2]
-distance(x,d::DifferenceDomain) = indomain(x,d) ? min(abs(distance(x,d.d1)),abs(distance(x,d.d2))) : -1*min(abs(distance(x,d.d1)),abs(distance(x,d.d2)))
+distance(x,d::DifferenceDomain) = indomain(x,d) ? min(abs(distance(x,d.domains[1])),abs(distance(x,d.domains[2]))) : -1*min(abs(distance(x,d.domains[1])),abs(distance(x,d.domains[2])))
 
-normal(x,d::DifferenceDomain) = abs(distance(x,d.d1))<abs(distance(x,d.d2)) ? normal(x,d.d1) : -1*normal(x,d.d2)
+normal(x,d::DifferenceDomain) = abs(distance(x,d.domains[1]))<abs(distance(x,d.domains[2])) ? normal(x,d.domains[1]) : -1*normal(x,d.domains[2])
 
 distance(x, t::ProductDomain) = minimum(map(distance, x, elements(t)))
 
-distance(x, d::DomainSets.MappedDomain) = distance(inverse_map(d)*x,source(d))
+distance(x, d::DomainSets.MappedDomain) = distance(inverse_map(d)(x),superdomain(d))
 
 function normal(x, d::DomainSets.MappedDomain)
-    x = applymap(inverse_map(d),normal(inverse_map(d)*x,source(d)))
-    x0 = apply_inverse(inverse_map(d),zeros(size(x)))
+    x = applymap(inverse_map(d),normal(inverse_map(d)(x),superdomain(d)))
+    x0 = inv(inverse_map(d))(zeros(size(x)))
    (x-x0)/norm(x-x0)
 end
 function normal(x, t::ProductDomain)
@@ -74,7 +73,3 @@ end
 volume(d::Domain) = missing
 
 volume(d::AbstractInterval) = abs(rightendpoint(d)-leftendpoint(d))
-
-
-# TODO: remove this again in the future
-DomainSets.approx_indomain(x, d::DifferenceDomain, tolerance) = in(x, d)

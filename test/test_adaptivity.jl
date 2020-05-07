@@ -1,10 +1,10 @@
 module TestAdaptivity
-using FrameFun, DomainSets, Test
 
+using FrameFun, DomainSets, Test
 
 @testset begin "Optimal adaptivity"
     P = FrameFun.ExtensionFramePlatform(WeightedSumPlatform(platform(ChebyshevT(10)^2), (x,y)->1.,
-            (x,y)->sqrt(x^2+y^2)),.9*UnitDisk())
+            (x,y)->sqrt(x^2+y^2)), .9 .* UnitDisk())
     f = (x,y) -> cos(pi*(x+y)) + sqrt(x^2+y^2)*sin(1+pi*(x+y))
     p = IncrementalCartesianParameterPath{2}()
     PP = parametrizedplatform(P, HierarchyPath(p,ProductPath(p,p)))
@@ -23,7 +23,7 @@ using FrameFun, DomainSets, Test
 
 
     P = FrameFun.ExtensionFramePlatform(WeightedSumPlatform(parametrizedplatform(platform(ChebyshevT(10)^2),CartesianParameterPath((1,1))), (x,y)->1.,
-            (x,y)->sqrt(x^2+y^2)),.9*UnitDisk())
+            (x,y)->sqrt(x^2+y^2)), .9 .* UnitDisk())
     PP = parametrizedplatform(P)
     f = (x,y) -> cos(pi*(x+y)) + sqrt(x^2+y^2)*sin(1+pi*(x+y))
 
@@ -33,4 +33,5 @@ using FrameFun, DomainSets, Test
     F1 = Fun(f, PP; adaptivestyle = OptimalStyle(), criterion = FNAStyle(),δ=1e-2,FNAη=10)
     @test size(F1)==(200,)
 end
+
 end

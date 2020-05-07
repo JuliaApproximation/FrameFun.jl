@@ -1,5 +1,6 @@
-# fourierdomains.jl
+
 using BasisFunctions
+
 export FourierDomain
 """
 A FourierDomain is a domain that is implicitly defined by a Fourier series.
