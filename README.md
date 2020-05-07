@@ -1,5 +1,5 @@
 
-[![Build Status](https://travis-ci.org/JuliaApproximation/FrameFun.jl.svg?branch=master)](https://travis-ci.org/JuliaApproximation/BasisFunctions.jl.svg?branch=master)
+[![Build Status](https://travis-ci.org/JuliaApproximation/FrameFun.jl.svg?branch=master)](https://travis-ci.org/JuliaApproximation/FrameFun.jl)
 [![Coverage Status](https://coveralls.io/repos/github/JuliaApproximation/FrameFun.jl/badge.svg)](https://coveralls.io/github/JuliaApproximation/FrameFun.jl)
 
 FrameFun

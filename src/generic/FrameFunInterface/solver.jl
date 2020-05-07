@@ -29,9 +29,30 @@ function solver(pstyle::DictionaryOperatorStyle, solverstyle::ProductSolverStyle
     solver(solverstyle, ap, A; S = S, options...)
 end
 
-solver(::InverseStyle, ap::ApproximationProblem, A::AbstractOperator; options...) = inv(A)
-solver(::DirectStyle, ap::ApproximationProblem, A::AbstractOperator; options...) = directsolver(A; options...)
-solver(::IterativeStyle, ap::ApproximationProblem, A::AbstractOperator; options...) = iterativesolver(A; options...)
+function solver(::InverseStyle, ap::ApproximationProblem, A::AbstractOperator; weightedAZ=false, options...)
+    if weightedAZ
+        AZ_Cweight = haskey(options,:AZ_Cweight) ? options[:AZ_Cweight] : error("No options `AZ_Cweight`")
+        AZ_Cweight*inv(A*AZ_Cweight) 
+    else
+        inv(A)
+    end
+end
+function solver(::DirectStyle, ap::ApproximationProblem, A::AbstractOperator; weightedAZ=false, options...)
+    if weightedAZ
+        AZ_Cweight = haskey(options,:AZ_Cweight) ? options[:AZ_Cweight] : error("No options `AZ_Cweight`")
+        AZ_Cweight*directsolver(A*AZ_Cweight; options...) 
+    else
+        directsolver(A; options...)
+    end
+end
+function solver(::IterativeStyle, ap::ApproximationProblem, A::AbstractOperator; weightedAZ=false, options...)
+    if weightedAZ
+        AZ_Cweight = haskey(options,:AZ_Cweight) ? options[:AZ_Cweight] : error("No options `AZ_Cweight`")
+        AZ_Cweight*iterativesolver(A*AZ_Cweight; options...) 
+    else
+        iterativesolver(A; options...)
+    end
+end
 
 
 
