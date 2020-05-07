@@ -47,10 +47,9 @@ distance(x,d::IntersectionDomain) = minimum(map(di->distance(x,di),elements(d)))
 
 normal(x,d::IntersectionDomain) = normal(x,elements(d)[findmin(map(di->distance(x,di),elements(d)))[2]])
 
-# TODO: in the future, d.d1 -> d.domains[1], and d.d2 -> d.domains[2]
-distance(x,d::DifferenceDomain) = indomain(x,d) ? min(abs(distance(x,d.d1)),abs(distance(x,d.d2))) : -1*min(abs(distance(x,d.d1)),abs(distance(x,d.d2)))
+distance(x,d::DifferenceDomain) = indomain(x,d) ? min(abs(distance(x,d.domains[1])),abs(distance(x,d.domains[2]))) : -1*min(abs(distance(x,d.domains[1])),abs(distance(x,d.domains[2])))
 
-normal(x,d::DifferenceDomain) = abs(distance(x,d.d1))<abs(distance(x,d.d2)) ? normal(x,d.d1) : -1*normal(x,d.d2)
+normal(x,d::DifferenceDomain) = abs(distance(x,d.domains[1]))<abs(distance(x,d.domains[2])) ? normal(x,d.domains[1]) : -1*normal(x,d.domains[2])
 
 distance(x, t::ProductDomain) = minimum(map(distance, x, elements(t)))
 
