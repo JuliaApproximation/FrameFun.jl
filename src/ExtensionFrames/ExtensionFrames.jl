@@ -11,7 +11,7 @@ using BasisFunctions, DomainSets
 using BasisFunctions: PrettyPrintSymbol, default_in_support, unsafe_eval_element,
     default_dict_innerproduct, _default_unsafe_eval_element_in_grid, AbstractMeasure
 
-import BasisFunctions: superdict, support, similardictionary, isbasis, isframe,
+import BasisFunctions: superdict, support, similardictionary, isbasis,
     isbiorthogonal, isorthogonal, isorthonormal, hasinterpolationgrid, hastransform,
     hasantiderivative, name, string, strings, dict_in_support, iscompatible, *,
     unsafe_eval_element1, interpolation_grid, measure, restrict, innerproduct,
@@ -64,7 +64,6 @@ support(f::ExtensionFrame, i) = f.domain
 similardictionary(f::ExtensionFrame, dict::Dictionary) = ExtensionFrame(support(f), dict)
 
 isbasis(f::ExtensionFrame) = false
-isframe(f::ExtensionFrame) = true
 isbiorthogonal(f::ExtensionFrame, measure::AbstractMeasure) = false
 isorthogonal(f::ExtensionFrame, measure::AbstractMeasure) = false
 isorthonormal(f::ExtensionFrame, measure::AbstractMeasure) = false

@@ -7,6 +7,10 @@ determine_return_type(fun, S) = Base.promote_op(fun, S)
 determine_return_type(fun, S::Type{Tuple{A}}) where {A} = Base.promote_op(fun, A)
 determine_return_type(fun, S::Type{Tuple{A,B}}) where {A,B} = Base.promote_op(fun, A, B)
 determine_return_type(fun, S::Type{Tuple{A,B,C}}) where {A,B,C} = Base.promote_op(fun, A, B, C)
+determine_return_type(fun, S::Type{SVector{1,A}}) where {A} = Base.promote_op(fun, A)
+determine_return_type(fun, S::Type{SVector{2,A}}) where {A} = Base.promote_op(fun, A, A)
+determine_return_type(fun, S::Type{SVector{3,A}}) where {A} = Base.promote_op(fun, A, A, A)
+determine_return_type(fun, S::Type{SVector{4,A}}) where {A} = Base.promote_op(fun, A, A, A, A)
 
 
 promote_dictionary(dict, fun) = _promote_dictionary(dict, fun, determine_return_type(fun, domaintype(dict)))
