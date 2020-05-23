@@ -1,7 +1,8 @@
 
 using BasisFunctions, GridArrays, DomainSets
 using BasisFunctions: FFreq, DiscreteMeasure, DiscreteProductMeasure,
-    innerproduct_fourier_part, default_dict_innerproduct, AbstractMeasure
+    innerproduct_fourier_part, default_dict_innerproduct, AbstractMeasure,
+	OuterProductArray
 import BasisFunctions: quadweights, stencilarray, name, element, elements,
     iscomposite, weights, grid, subindices, isnormalized, supermeasure,
     support, unsafe_weight, strings, innerproduct_native, restrict, discretemeasure
