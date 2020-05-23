@@ -2,7 +2,7 @@ module Platforms
 
 using BasisFunctions: Dictionary, TensorProductDict, Dictionary1d, tensorproduct,
     extensionsize, gramdual, Measure, ProductMeasure, DiscreteProductMeasure, resize,
-    isbasis, isframe, hastransform, dimensions, productmeasure
+    isbasis, hastransform, dimensions, productmeasure
 import Base: getindex
 import BasisFunctions: elements, dictionary, element, measure, iscomposite, AbstractMeasure
 
@@ -124,10 +124,10 @@ ProductPlatform(platforms::Platform...) = ProductPlatform(platforms)
 
 param_first(platform::ProductPlatform) = map(param_first, elements(platform))
 
-DictionaryStyle(p::ProductPlatform) = (dict=TensorProductDict(map(x->dictionary(x,1), elements(p))...);
-                                            isbasis(dict) ? BasisStyle() :
-                                            isframe(dict) ? FrameStyle() :
-                                            UnknownDictionaryStyle())
+function DictionaryStyle(p::ProductPlatform)
+    dict = TensorProductDict(map(x->dictionary(x,1), elements(p))...)
+    isbasis(dict) ? BasisStyle() : FrameStyle()
+end
 ProductPlatform(platform::Platform, n::Int) = ProductPlatform(ntuple(x->platform, n)...)
 dualdictionary(platform::ProductPlatform, param, measure::AbstractMeasure; options...) =
     (@assert length(param)==length(elements(platform));

@@ -4,7 +4,7 @@ using RecipesBase, FillArrays, Reexport
 using DomainSets, GridArrays
 @reexport using BasisFunctions
 # Submodules
-include("FrameFunDomains//FrameFunDomains.jl")
+include("FrameFunDomains/FrameFunDomains.jl")
 @reexport using .FrameFunDomains
 include("generic/Platforms/Platforms.jl")
 @reexport using .Platforms
