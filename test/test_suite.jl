@@ -26,8 +26,6 @@ const include_bigfloat_tests = true
 # Auxiliary functions
 ########
 
-const v = DomainSets.TypeFactory{SVector}()
-
 function delimit(s::AbstractString)
     println()
     println("############")
@@ -156,7 +154,7 @@ function test_2d_cases()
     f(x,y) = cos(0.5*x)+2*sin(0.2*y)-1.0*x*y
     g(x,y) = 1im*cos(0.5*x)+2*sin(0.2*y)-1.0im*x*y
     @testset "result" for Basis in (Fourier, ChebyshevT),
-            domain in [disk(1.2,v[-0.1,-0.2]), cube((-1.0,-1.5),(0.5,0.7))],
+            domain in [disk(1.2,SA[-0.1,-0.2]), cube((-1.0,-1.5),(0.5,0.7))],
             solverstyle in (AZStyle(), DirectStyle())
 
         println()
@@ -190,7 +188,7 @@ function test_3d_cases()
     # @testset "result" for Basis in (Fourier, ChebyshevT), D in (Cube((-1.2,-1.0,-0.9),(1.0,0.9,1.2)),FrameFun.tensorproduct(Interval(-1.0,1.0),Disk(1.05)), FrameFun.Ball(1.2,[-0.3,0.25,0.1])), solver in (AZSolver, )
     #             show(solver); println()
     @testset "result" for Basis in (Fourier, ChebyshevT),
-                domain in (cube((-1.2,-1.0,-0.9),(1.0,0.9,1.2)), ball(1.2,v[-0.3,0.25,0.1])),
+                domain in (cube((-1.2,-1.0,-0.9),(1.0,0.9,1.2)), ball(1.2,SA[-0.3,0.25,0.1])),
                 solverstyle in (AZStyle(), )
 
         println()

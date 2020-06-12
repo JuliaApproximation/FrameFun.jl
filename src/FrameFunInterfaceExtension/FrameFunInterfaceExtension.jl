@@ -10,14 +10,14 @@ approximationproblem(dict::Dictionary, domain::Domain) =
     approximationproblem(promote_type(coefficienttype(dict),prectype(eltype(domain))), dict, domain)
 
 approximationproblem(::Type{T}, dict::Dictionary) where {T} =
-    approximationproblem(ensure_coefficienttype(T, dict))
+    approximationproblem(BasisFunctions.ensure_coefficienttype(T, dict))
 
 # If a dictionary and a domain is specified, we make an extension frame.
 function approximationproblem(::Type{T}, dict::Dictionary, domain::Domain) where {T}
     if domain == support(dict)
         approximationproblem(T, dict)
     else
-        approximationproblem(T, extensionframe(domain, ensure_coefficienttype(T, dict)))
+        approximationproblem(T, extensionframe(domain, BasisFunctions.ensure_coefficienttype(T, dict)))
     end
 end
 

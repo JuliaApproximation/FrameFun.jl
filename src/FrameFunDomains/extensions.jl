@@ -29,7 +29,7 @@ end
 
 normal(x, d::UnitHyperBall) = x/norm(x)
 
-distance(x, d::AbstractInterval) = min(maximum(d)-x,x-minimum(d))
+distance(x, d::AbstractInterval) = min(abs(maximum(d)-x),abs(x-minimum(d)))
 
 normal(x, d::AbstractInterval) = (abs(minimum(d)-x) < abs(maximum(d)-x)) ? -1 : 1
 
