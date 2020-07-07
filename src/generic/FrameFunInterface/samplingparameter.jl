@@ -2,6 +2,8 @@
 samplingparameter(samplingstyle::SamplingStyle, ap::ApproximationProblem; samplingstrategy=DefaultSamplingStrategy(), options...)=
     samplingparameter(samplingstyle, samplingstrategy, ap; options...)
 
+samplingparameter(samplingstyle::GenericSamplingStyle, ap::ApproximationProblem; options...) = -1
+
 function samplingparameter(samplingstyle::SamplingStyle, samplingstrategy::SamplingStrategy, ap::ApproximationProblem;
         verbose=false, forget=false, options...)
     if haskey(options, :L)
