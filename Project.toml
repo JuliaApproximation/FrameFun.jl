@@ -43,6 +43,7 @@ GR = "28b8d3ca-fb5f-59d9-8090-bfdbd6d07a71"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+FastTransforms = "057dd010-8810-581a-b7be-e3fc3b93f78c"
 
 [targets]
-test = ["Calculus", "Conda", "GR", "Plots", "Random", "Test"]
+test = ["Calculus", "Conda", "GR", "Plots", "Random", "Test", "FastTransforms"]
