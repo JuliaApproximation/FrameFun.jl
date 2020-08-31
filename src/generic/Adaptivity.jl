@@ -183,7 +183,7 @@ for (STYLE,nextparam,ret) in zip((:GreedyStyle,:SimpleStyle,:OptimalStyleFirstFa
         Meta.parse("F, logbook, n, δ, error, iterations, converged"),
         Meta.parse("F, A, B, C, S, L, logbook, n, nprev, δ, error, iterations, converged, (weightedAZ ? (W) : ())...")) )
     @eval function adaptive_approximation(::$STYLE, f, platform;
-                p0 = param_first(platform), maxlength = 2^22, maxiterations = 10,
+                p0 = param_first(platform), maxlength = 2^12, maxiterations = 10,
                 threshold = 1e-12, δ=100*threshold, verbose=false, weightedAZ=false, options...)
 
         iterations = 0

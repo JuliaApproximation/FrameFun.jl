@@ -33,7 +33,7 @@ include("test_suite_applications.jl")
 include("test_specificplatforms.jl")
 include("test_plots.jl")
 
-include("test_notebooks.jl")
+# include("test_notebooks.jl")
 # include("create_readme.jl")
 
 

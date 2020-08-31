@@ -1,13 +1,10 @@
 ## Series
 import BasisFunctions: plotgrid, postprocess
+using GridArrays: MaskedGrid
 # Postprocessing when the set is a frame: set values outside the domain to NaN
 function postprocess(D::Domain, grid, vals, value=NaN)
-    mgrid = subgrid(grid, D)
-    for i in eachindex(grid)
-        if ~issubindex(i, mgrid)
-            vals[i] = value
-        end
-    end
+    mgrid = MaskedGrid(grid, D)
+    vals[.!(mask(mgrid))] .= value
     vals
 end
 postprocess(B::ExtensionFrame, args...) = postprocess(support(B), args...)
