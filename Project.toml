@@ -1,7 +1,7 @@
 name = "FrameFun"
 uuid = "bbafa164-4497-5d18-87cf-33e911f89480"
 authors = ["daanhb, roelmatthysen,marcusdavidwebb,vincentcp"]
-version = "0.3"
+version = "0.3.0"
 
 [deps]
 BasisFunctions = "4343a256-5453-507d-8aad-01a9d7189916"
@@ -39,11 +39,11 @@ julia = "1.5"
 [extras]
 Calculus = "49dc2e85-a5d0-5ad3-a950-438e2897f1b9"
 Conda = "8f4d0f93-b110-5947-807f-2305c1781a2d"
+FastTransforms = "057dd010-8810-581a-b7be-e3fc3b93f78c"
 GR = "28b8d3ca-fb5f-59d9-8090-bfdbd6d07a71"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-FastTransforms = "057dd010-8810-581a-b7be-e3fc3b93f78c"
 
 [targets]
 test = ["Calculus", "Conda", "GR", "Plots", "Random", "Test", "FastTransforms"]

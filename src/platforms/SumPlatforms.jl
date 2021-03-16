@@ -5,7 +5,7 @@ using BasisFunctions: ZeroOperator, Domain
 import ..Platforms: SolverStyle, dictionary, dualdictionary, measure, param_double,
     unsafe_dictionary, correctparamformat
 
-import BasisFunctions: elements, size, length, support, evaluation, AbstractMeasure
+import BasisFunctions: elements, size, length, support, evaluation, Measure
 
 export SumPlatform
 """
@@ -40,7 +40,7 @@ correctparamformat(platform::SumPlatform, param) =
 unsafe_dictionary(platform::SumPlatform, param) =
     MultiDict([map(dictionary, elements(platform), platform.param(param))...])
 
-function dualdictionary(platform::SumPlatform, param, measure::AbstractMeasure; options...)
+function dualdictionary(platform::SumPlatform, param, measure::Measure; options...)
     param1, param2 = platform.param(param)
     dict1 = dualdictionary(platform.platform1, param1, measure)
     dict2 = dualdictionary(platform.platform2, param2, measure)

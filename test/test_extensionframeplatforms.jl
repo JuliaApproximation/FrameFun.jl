@@ -38,7 +38,7 @@ using BasisFunctions, FrameFun.ExtensionFrames, FrameFun.ExtensionFramePlatforms
 
     ddict1 = dualdictionary(plat1...,measure(plat1[1]))
     @test ddict1 isa ExtensionFrame
-    @test operator(basis(ddict1)) ≈ operator(dual(Fourier(10),FourierMeasure()))
+    @test operator(basis(ddict1)) ≈ operator(dual(Fourier(10),FourierWeight()))
     ddict2 = dualdictionary(plat2...,measure(plat2[1]))
     @test ddict2 isa ExtensionFrameTensor
     ddict3 = dualdictionary(plat3...,measure(plat3[1]))

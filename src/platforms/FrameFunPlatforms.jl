@@ -6,7 +6,7 @@ import ..Platforms: dictionary, SolverStyle, measure, dualdictionary,
 using ..FrameFunInterface
 import ..FrameFunInterface: discrete_gram_measure
 using BasisFunctions, ..ExtensionFrames, DomainSets
-using BasisFunctions: AbstractMeasure
+using BasisFunctions: Measure
 
 export FourierPlatform
 """
@@ -26,7 +26,7 @@ unsafe_dictionary(p::FourierPlatform{T}, n) where {T} = Fourier{T}(n)
 
 SolverStyle(p::FourierPlatform, ::OversamplingStyle) = DualStyle()
 
-measure(p::FourierPlatform{T}) where {T} = FourierMeasure{T}()
+measure(p::FourierPlatform{T}) where {T} = FourierWeight{T}()
 
 discrete_gram_measure(p::FourierPlatform, n, L;
             dict = dictionary(p, n), normalizedsampling = false, options...) =
@@ -49,7 +49,7 @@ ChebyshevPlatform() = ChebyshevPlatform{Float64}()
 
 unsafe_dictionary(p::ChebyshevPlatform{T}, n) where {T} = ChebyshevT{T}(n)
 
-measure(platform::ChebyshevPlatform{T}) where {T} = ChebyshevMeasure{T}()
+measure(platform::ChebyshevPlatform{T}) where {T} = ChebyshevWeight{T}()
 
 export FourierExtensionPlatform
 """
@@ -79,7 +79,7 @@ end
 unsafe_dictionary(p::FourierExtensionPlatform, n) =
     extensionframe(p.domain, unsafe_dictionary(p.basisplatform, n))
 
-dualdictionary(platform::FourierExtensionPlatform, param, measure::AbstractMeasure; options...) =
+dualdictionary(platform::FourierExtensionPlatform, param, measure::Measure; options...) =
    extensionframe(dualdictionary(platform.basisplatform, param, supermeasure(measure); options...), platform.domain)
 
 measure(platform::FourierExtensionPlatform) = measure(dictionary(platform, 1))
@@ -113,7 +113,7 @@ unsafe_dictionary(p::OPSExtensionFramePlatform, n) =
 
 measure(platform::OPSExtensionFramePlatform) = restrict(measure(platform.basisplatform), platform.domain)
 
-dualdictionary(platform::OPSExtensionFramePlatform, param, measure::AbstractMeasure; options...) =
+dualdictionary(platform::OPSExtensionFramePlatform, param, measure::Measure; options...) =
    extensionframe(dualdictionary(platform.basisplatform, param, supermeasure(measure); options...), platform.domain)
 
 discretemeasure(::DiscreteStyle, p::OPSExtensionFramePlatform, n, L;

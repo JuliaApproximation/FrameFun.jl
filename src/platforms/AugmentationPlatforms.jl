@@ -1,6 +1,6 @@
 module AugmentationPlatforms
 using ..Platforms
-using  BasisFunctions: Dictionary, AbstractMeasure, MultiDict
+using  BasisFunctions: Dictionary, Measure, MultiDict
 import ..Platforms: SolverStyle, dictionary, dualdictionary, measure, param_double,
     correctparamformat, unsafe_dictionary
 
@@ -27,7 +27,7 @@ SolverStyle(platform::AugmentationPlatform, ::SamplingStyle) = AZStyle()
 
 unsafe_dictionary(platform::AugmentationPlatform, i::Int) =
     MultiDict([unsafe_dictionary(platform.basis, i), platform.functions])
-function dualdictionary(platform::AugmentationPlatform, param, measure::AbstractMeasure; options...)
+function dualdictionary(platform::AugmentationPlatform, param, measure::Measure; options...)
 #    error("`dualdictionary` of `AugmentationPlatform` Not implemented.")
     # TODO: line below is a hack. Problem is you want to generate a dual of
     # the same size as the dictionary itself, but we only know the dual of its

@@ -5,7 +5,7 @@ import ..Platforms: platform, SolverStyle, SamplingStyle, measure, dictionary,
 using ..ExtensionFrames
 import ..ExtensionFrames: support
 using DomainSets, BasisFunctions
-using BasisFunctions: AbstractMeasure
+using BasisFunctions: Measure
 
 platform(dict::ExtensionFrame) = ExtensionFramePlatform(platform(basis(dict)), support(dict))
 
@@ -34,7 +34,7 @@ unsafe_dictionary(p::ExtensionFramePlatform, n) =
 
 measure(platform::ExtensionFramePlatform) = restrict(measure(platform.basisplatform), platform.domain)
 
-dualdictionary(platform::ExtensionFramePlatform, param, measure::AbstractMeasure; options...) =
+dualdictionary(platform::ExtensionFramePlatform, param, measure::Measure; options...) =
    extensionframe(dualdictionary(platform.basisplatform, param, supermeasure(measure); options...), platform.domain)
 
 

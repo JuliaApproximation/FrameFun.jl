@@ -9,7 +9,7 @@ export ExtensionFrame,
 using BasisFunctions, DomainSets
 
 using BasisFunctions: PrettyPrintSymbol, default_in_support, unsafe_eval_element,
-    default_dict_innerproduct, _default_unsafe_eval_element_in_grid, AbstractMeasure
+    default_dict_innerproduct, _default_unsafe_eval_element_in_grid, Measure
 
 import BasisFunctions: superdict, support, similardictionary, isbasis,
     isbiorthogonal, isorthogonal, isorthonormal, hasinterpolationgrid, hastransform,
@@ -64,9 +64,9 @@ support(f::ExtensionFrame, i) = f.domain
 similardictionary(f::ExtensionFrame, dict::Dictionary) = ExtensionFrame(support(f), dict)
 
 isbasis(f::ExtensionFrame) = false
-isbiorthogonal(f::ExtensionFrame, measure::AbstractMeasure) = false
-isorthogonal(f::ExtensionFrame, measure::AbstractMeasure) = false
-isorthonormal(f::ExtensionFrame, measure::AbstractMeasure) = false
+isbiorthogonal(f::ExtensionFrame, measure::Measure) = false
+isorthogonal(f::ExtensionFrame, measure::Measure) = false
+isorthonormal(f::ExtensionFrame, measure::Measure) = false
 
 # The following properties do not hold for extension frames
 # - there is no interpolation grid
@@ -179,8 +179,8 @@ innerproduct_native(f1::ExtensionFrame, i, f2::ExtensionFrame, j, measure; optio
 innerproduct_native(dict1::MappedDict, i, dict2::MappedDict, j, measure; options...) =
     _innerproduct_native(support(measure), supermeasure(measure), dict1, i, dict2, j, measure; options...)
 
-function _innerproduct_native(domain::AbstractInterval, superμ::MappedMeasure, dict1::MappedDict, i, dict2::MappedDict, j, measure; options...)
-    if iscompatible(dict1, dict2) && iscompatible(mapping(dict1), mapping(superμ))
+function _innerproduct_native(domain::AbstractInterval, superμ, dict1::MappedDict, i, dict2::MappedDict, j, measure; options...)
+    if BasisFunctions.ismappedmeasure(superμ) && iscompatible(dict1, dict2) && iscompatible(mapping(dict1), mapping(superμ))
         supermap = mapping(superμ)
         newdomain = Interval(applymap(inv(supermap), infimum(domain)), applymap(inv(supermap), supremum(domain)))
         innerproduct_native(superdict(dict1), i, superdict(dict2), j, submeasure(supermeasure(superμ), newdomain))
@@ -189,7 +189,7 @@ function _innerproduct_native(domain::AbstractInterval, superμ::MappedMeasure, 
     end
 end
 
-function _innerproduct_native(domain::UnionDomain, superμ::MappedMeasure, dict1::MappedDict, i, dict2::MappedDict, j, measure; options...)
+function _innerproduct_native(domain::UnionDomain, superμ, dict1::MappedDict, i, dict2::MappedDict, j, measure; options...)
     z = zero(coefficienttype(dict1))
     for d in elements(domain)
         z += _innerproduct_native(d, superμ, dict1, i, dict2, j, measure; options...)
@@ -202,17 +202,17 @@ _innerproduct_native(domain, superμ, dict1::MappedDict, i, dict2::MappedDict, j
 
 export extensiondual
 """
-    extensiondual(dict::ExtensionFrame, measure::AbstractMeasure; options...)
+    extensiondual(dict::ExtensionFrame, measure::Measure; options...)
 
 Return a the extensframe of the dual of the dictionary on the boundingbox.
 """
-extensiondual(dict::ExtensionFrame, measure::AbstractMeasure; options...) =
+extensiondual(dict::ExtensionFrame, measure::Measure; options...) =
     extensionframe(support(dict), gramdual(superdict(dict), supermeasure(measure); options...),)
-extensiondual(dict::ExtensionFrameTensor, measure::AbstractMeasure; options...) =
+extensiondual(dict::ExtensionFrameTensor, measure::Measure; options...) =
     TensorProductDict(map((dicti,measurei)->extensionframe(support(dicti), gramdual(superdict(dicti), supermeasure(measurei); options...)),
         elements(dict), elements(measure))...)
 
-function gramdual(dict::ExtensionFrame, measure::AbstractMeasure; options...)
+function gramdual(dict::ExtensionFrame, measure::Measure; options...)
     @debug "Are you sure you want `dualtype=gramdual` and not `extensiondual`"
     default_gramdual(dict, measure; options...)
 end

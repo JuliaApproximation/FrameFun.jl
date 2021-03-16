@@ -1,10 +1,10 @@
 module Platforms
 
 using BasisFunctions: Dictionary, TensorProductDict, Dictionary1d, tensorproduct,
-    extensionsize, gramdual, Measure, ProductMeasure, DiscreteProductMeasure, resize,
+    extensionsize, gramdual, Weight, ProductWeight, DiscreteProductWeight, resize,
     isbasis, hastransform, dimensions, productmeasure
 import Base: getindex
-import BasisFunctions: elements, dictionary, element, measure, iscomposite, AbstractMeasure
+import BasisFunctions: elements, dictionary, element, measure, iscomposite, Measure
 
 #################
 # Platform
@@ -34,11 +34,11 @@ end
 export dictionary, dualdictionary
 
 """
-    dualdictionary(platform::Platform, param, measure::AbstractMeasure; options...)
+    dualdictionary(platform::Platform, param, measure::Measure; options...)
 
 Return the dual dictionary of the platform.
 """
-dualdictionary(platform::Platform, param, measure::AbstractMeasure; dict=dictionary(platform, param), options...) =
+dualdictionary(platform::Platform, param, measure::Measure; dict=dictionary(platform, param), options...) =
     gramdual(dict, measure; options...)
 
 include("platformadaptivity.jl")
@@ -129,7 +129,7 @@ function DictionaryStyle(p::ProductPlatform)
     isbasis(dict) ? BasisStyle() : FrameStyle()
 end
 ProductPlatform(platform::Platform, n::Int) = ProductPlatform(ntuple(x->platform, n)...)
-dualdictionary(platform::ProductPlatform, param, measure::AbstractMeasure; options...) =
+dualdictionary(platform::ProductPlatform, param, measure::Measure; options...) =
     (@assert length(param)==length(elements(platform));
     TensorProductDict(map((plati, parami, mi)->dualdictionary(plati, parami, mi; options...), elements(platform), param, elements(measure))...))
 iscomposite(p::ProductPlatform) = true
@@ -154,7 +154,7 @@ dictionary(p::ProductPlatform, n::Int) = dictionary(p, productparameter(p, n))
 
 unsafe_dictionary(p::ProductPlatform, n) = tensorproduct(map(dictionary, elements(p), n)...)
 
-dualdictionary(platform::ProductPlatform, param, measure::Union{ProductMeasure,DiscreteProductMeasure}; options...) =
+dualdictionary(platform::ProductPlatform, param, measure::Union{ProductWeight,DiscreteProductWeight}; options...) =
     tensorproduct(map((platformi, parami, mi)->dualdictionary(platformi, parami, mi; options...),
         elements(platform), param, elements(measure))...)
 

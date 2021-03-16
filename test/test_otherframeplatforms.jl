@@ -17,10 +17,10 @@ using BasisFunctions, FrameFun.AugmentationPlatforms, FrameFun.WeightedSumPlatfo
     end
 
     for plat in (plat1,plat2,plat6)
-        @test measure(plat) == FourierMeasure()
+        @test measure(plat) == FourierWeight()
     end
     for plat in (plat3,plat4,plat5)
-        @test measure(plat) == ChebyshevMeasure()
+        @test measure(plat) == ChebyshevWeight()
     end
 
     dict1 = dictionary(plat1,20)
@@ -51,11 +51,11 @@ end
     @test SamplingStyle(plat) == OversamplingStyle()
     @test DictionaryStyle(plat) == FrameStyle()
     @test SolverStyle(plat,OversamplingStyle()) == AZStyle()
-    @test measure(plat) == FourierMeasure()
+    @test measure(plat) == FourierWeight()
     dict = dictionary(plat,(10,10))
     @test dict isa MultiDict
     @test dimensions(dict) == [10,10]
-    ddict =  dualdictionary(plat,(10,10),FourierMeasure())
+    ddict =  dualdictionary(plat,(10,10),FourierWeight())
     @test ddict isa MultiDict
     @test dimensions(ddict) == [10,10]
     @test param_first(plat) == (10,10)

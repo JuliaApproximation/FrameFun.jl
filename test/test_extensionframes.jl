@@ -18,17 +18,17 @@ point_outside_domain(::ExtensionFrame) = 1.
     @test basis(d2) == Fourier(10)^2
     @test support(d1) == 0.0..0.5
     @test support(d2) == (0.0..0.5)^2
-    @test measure(d1) isa SubMeasure
-    @test measure(d2) isa ProductMeasure
+    @test measure(d1) isa SubWeight
+    @test measure(d2) isa ProductWeight
     @test iscompatible(extensiondual(d1, measure(d1)),element(extensiondual(d2, measure(d2)), 1))
 end
 
-@testset "SubMeasure" begin
+@testset "SubWeight" begin
     g = PeriodicEquispacedGrid(3,-1,1)^2
     d = UnitDisk()
     sg = subgrid(g,d)
     μ = discretemeasure(sg)
-    @test μ isa DiscreteSubMeasure
+    @test μ isa DiscreteSubWeight
     generic_test_discrete_measure(μ)
     @test supermeasure(μ) == discretemeasure(g)
     @test !(isnormalized(μ))
@@ -40,13 +40,13 @@ end
     sg = subgrid(g,d)
     μ = discretemeasure(sg)
     generic_test_discrete_measure(μ )
-    @test μ isa DiscreteTensorSubMeasure
+    @test μ isa DiscreteTensorSubWeight
     @test supermeasure(μ) ≈ discretemeasure(g)
     @test elements(μ) == (element(μ,1),element(μ,2))
     @test element(μ,1) == restrict(element(supermeasure(μ),1),UnitInterval())
 
 
-    m = JacobiMeasure(rand(),rand())
+    m = JacobiWeight(rand(),rand())
     μ = restrict(m, UnitInterval())
     generic_test_measure(μ)
     @test supermeasure(μ) == m

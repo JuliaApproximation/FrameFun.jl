@@ -2,7 +2,7 @@ module WeightedSumPlatforms
 using ..Platforms, ..ParameterPaths
 import ..Platforms: SolverStyle, dictionary, measure, dualdictionary, param_first,
     param_double, correctparamformat, unsafe_dictionary, param_inbetween
-using BasisFunctions: Dictionary, AbstractMeasure, MultiDict
+using BasisFunctions: Dictionary, Measure, MultiDict
 
 export WeightedSumPlatform
 """
@@ -31,7 +31,7 @@ weight(platform::WeightedSumPlatform, i) = platform.weights[i]
 
 
 
-function dualdictionary(platform::WeightedSumPlatform, param::NTuple, measure::AbstractMeasure; options...)
+function dualdictionary(platform::WeightedSumPlatform, param::NTuple, measure::Measure; options...)
     denom = (x...)->sum(map(w->abs(w(x...))^2, platform.weights))
     # TODO: discuss, what is the relation between param, L of a platform and platform.P
     MultiDict([((x...)->(platform.weights[j](x...)/denom(x...))) * dualdictionary(platform.P, param[j], measure; options...) for j=1:length(platform.weights)])

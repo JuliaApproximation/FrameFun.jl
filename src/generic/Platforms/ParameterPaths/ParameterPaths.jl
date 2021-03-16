@@ -5,7 +5,7 @@ import Base: getindex, unsafe_getindex, first
 import ..Platforms: unsafe_dictionary, correctparamformat, param_first, param_double,
     param_inbetween, hasparam_inbetween, param_increment, dualdictionary, measure,
     SamplingStyle, SolverStyle, ProblemStyle
-using BasisFunctions: AbstractMeasure
+using BasisFunctions: Measure
 # For the moment only size is in parameter space. (no spline degree, extensionparameter T, ...)
 export ParameterPath
 """
@@ -264,7 +264,7 @@ hasparam_inbetween(platform::ParametrizedPlatform, param1, param2, stoptolerance
 param_increment(platform::ParametrizedPlatform, param1) =
     param_increment(platform.path, param1)
 
-dualdictionary(platform::ParametrizedPlatform, param, measure::AbstractMeasure; options...) =
+dualdictionary(platform::ParametrizedPlatform, param, measure::Measure; options...) =
     dualdictionary(platform.platform, param, measure; options...)
 
 measure(platform::ParametrizedPlatform) =
