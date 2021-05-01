@@ -48,15 +48,15 @@ end
     op5 = samplingoperator(ap1)
     op6 = samplingoperator(ap2)
 
-    op1a, op1b = elements(op1)
+    op1a, op1b = components(op1)
     @test grid(op1a) == FourierGrid(10)
     @test op1b ≈ IdentityOperator(dict1)
 
-    op2a, op2b = elements(op3)
+    op2a, op2b = components(op3)
     @test grid(op2a) == FourierGrid(10)
     @test op2b ≈ IdentityOperator(dict1)
 
-    op3a, op3b = elements(op5)
+    op3a, op3b = components(op5)
     @test grid(op3a) == FourierGrid(10)
     @test op3b ≈ IdentityOperator(dict1)
     f2 = (x,y)->exp(x*y)
@@ -112,21 +112,21 @@ end
     @test operator(azdual_dict(dict1))≈operator(azdual_dict(ap1))≈operator(azdual_dict(plat1...))
     op = azdual_dict(dict2)
     @test op isa TensorProductDict
-    @test ≈(operator.(elements(op))...)
+    @test ≈(operator.(components(op))...)
     op = azdual_dict(plat2...)
     @test op isa TensorProductDict
-    @test ≈(operator.(elements(op))...)
+    @test ≈(operator.(components(op))...)
     op = azdual_dict(ap2)
     @test op isa TensorProductDict
-    @test ≈(operator.(elements(op))...)
-    @test operator(element(azdual_dict(dict2),1))≈operator(azdual_dict(dict1))
+    @test ≈(operator.(components(op))...)
+    @test operator(component(azdual_dict(dict2),1))≈operator(azdual_dict(dict1))
 
     @test operator(azdual_dict(dict1;samplingstyle=GramStyle()))≈
-        operator(element(azdual_dict(ap2;samplingstyle=ProductSamplingStyle(GramStyle(),GramStyle())),1))
+        operator(component(azdual_dict(ap2;samplingstyle=ProductSamplingStyle(GramStyle(),GramStyle())),1))
     @test operator(azdual_dict(dict1;samplingstyle=GramStyle()))≈
-        operator(element(azdual_dict(plat2...;samplingstyle=ProductSamplingStyle(GramStyle(),GramStyle())),1))
+        operator(component(azdual_dict(plat2...;samplingstyle=ProductSamplingStyle(GramStyle(),GramStyle())),1))
     @test operator(azdual_dict(dict1;samplingstyle=GramStyle()))≈
-        operator(element(azdual_dict(dict2;samplingstyle=ProductSamplingStyle(GramStyle(),GramStyle())),1))
+        operator(component(azdual_dict(dict2;samplingstyle=ProductSamplingStyle(GramStyle(),GramStyle())),1))
 end
 
 @testset "discretization" begin
@@ -197,7 +197,7 @@ end
     @test op1 ≈ op3 ≈ op5
     @test op2 ≈ op4 ≈ op6
 
-    @test element(op2,1) ≈ op1 ≈ element(op2,2)
+    @test component(op2,1) ≈ op1 ≈ component(op2,2)
 
 
     for STYLE in (InverseStyle, DirectStyle, DualStyle, IterativeStyle,AZStyle,AZSmoothStyle)
@@ -218,7 +218,7 @@ end
         @test op1 ≈ op3 ≈ op5
         @test op2 ≈ op4 ≈ op6
 
-        @test element(op2,1) ≈ op1 ≈ element(op2,2)
+        @test component(op2,1) ≈ op1 ≈ component(op2,2)
     end
 end
 

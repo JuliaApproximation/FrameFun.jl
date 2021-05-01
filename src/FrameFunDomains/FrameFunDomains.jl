@@ -4,7 +4,7 @@ using DomainSets, GridArrays, StaticArrays
 
 import Base: show, isapprox, in, <, <=, >, >=
 import DomainSets: indomain
-import GridArrays: boundingbox, indomain_broadcast
+import GridArrays: boundingbox
 include("extensions.jl")
 include("fourierdomains.jl")
 include("fractals.jl")

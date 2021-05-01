@@ -1,7 +1,7 @@
 for f in (:sampling_grid, :interpolation_grid, :platform_grid)
     @eval begin
         $f(ss::ProductSamplingStyle, ap::ApproximationProblem; options...) =
-            ProductGrid(elements($f, ss, ap; options...)...)
+            ProductGrid(components($f, ss, ap; options...)...)
     end
 end
 

@@ -1,7 +1,7 @@
 module test_suite_applications
 
 using DomainSets, BasisFunctions, FrameFun
-using Test
+using Test, StaticArrays
 
 FE = FrameFun
 BA = BasisFunctions
@@ -79,7 +79,7 @@ function test_differential_equations_2d()
         Dom = disk(0.8)
         # Set up Boundary conditions
         df = (x,y)->x-y
-        BC = DirichletBC(df,DomainSets.euclideanspace(Val{2}()))
+        BC = DirichletBC(df,DomainSets.FullSpace{SVector{2,Float64}}())
         # Set up Differential equation
         f(x,y) = 0
         Diff = differentiation(B,(2,0))+differentiation(B,(0,2))
@@ -97,7 +97,7 @@ function test_differential_equations_2d()
     #     Dom = disk(0.8)
     #     # Set up Boundary conditions
     #     df = (x,y)->x-y
-    #     BC = NeumannBC(df,DomainSets.euclideanspace(Val{2}()))
+    #     BC = NeumannBC(df,DomainSets.euclideanspace(Val(2))
     #     # Set up Differential equation
     #     f(x,y) = 0
     #     Diff = differentiation(B,(2,0))+differentiation(B,(0,2))
@@ -105,7 +105,7 @@ function test_differential_equations_2d()
     #     # Actually solve the differential equation
     #     F = solve(DE, solverstyle=solverstyle, directsolver=:qr)
     #     # We should find a way to check the boundary condition more easily
-    #     berror = sum(abs.(element(operator(DE),2,1)*coefficients(Diff*F)-element(FrameFun.rhs(DE),2)))/length(element(FrameFun.rhs(DE),2))
+    #     berror = sum(abs.(component(operator(DE),2,1)*coefficients(Diff*F)-component(FrameFun.rhs(DE),2)))/length(component(FrameFun.rhs(DE),2))
     #     @test berror < 0.6
     #     error = abserror(f,∂x(∂x(F))+∂y(∂y(F)))
     #     @test (error < 0.3)

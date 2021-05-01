@@ -91,7 +91,7 @@ solver(::DualStyle, ap::ApproximationProblem, A::AbstractOperator; options...) =
 solver(solverstyle::ProductSolverStyle, ap::ApproximationProblem, A::AbstractOperator; samplingstyle=SamplingStyle(ap), options...) =
     solver(solverstyle, samplingstyle, ap, A; options...)
 function solver(solverstyle::ProductSolverStyle, samplingstyle::ProductSamplingStyle, ap::ApproximationProblem, A::AbstractOperator; S, options...)
-    solvere, sse, ape, Ae, Se = elements(solverstyle), elements(samplingstyle), elements(ap), elements(A), BasisFunctions.productelements(S)
+    solvere, sse, ape, Ae, Se = components(solverstyle), components(samplingstyle), components(ap), components(A), BasisFunctions.productcomponents(S)
     @assert length(solvere) == length(sse) == length(ape) == length(Ae) == length(Se)
     TensorProductOperator(
 		map( (solversi, ssi, api, Ai, Si)->solver(solversi, api, Ai; S=Si, samplingstyle=ssi, options...), solvere, sse, ape, Ae, Se)...

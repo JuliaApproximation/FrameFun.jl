@@ -29,7 +29,7 @@ deduce_samplingparameter(ss::SamplingStyle, samplingstrategy::SamplingStrategy, 
     deduce_samplingparameter(ss, samplingstrategy, platform(ap), parameter(ap); options...)
 
 deduce_samplingparameter(ss::ProductSamplingStyle, samplingstrategy::SamplingStrategy, ap::ProductPlatformApproximation; options...) =
-    map((x,style)->samplingparameter(style, samplingstrategy, x; options...), ApproximationProblems.unsafe_elements(ap), ss.styles)
+    map((x,style)->samplingparameter(style, samplingstrategy, x; options...), ApproximationProblems.unsafe_components(ap), ss.styles)
 
 function deduce_samplingparameter(ss::ProductSamplingStyle{NTuple{N,OversamplingStyle}}, samplingstrategy::SamplingStrategy, ap::ProductPlatformApproximation;
         dict=dictionary(ap), oversamplingfactor=2, verbose=false, options...) where N
@@ -43,7 +43,7 @@ function deduce_samplingparameter(ss::ProductSamplingStyle{NTuple{N,Oversampling
         M = oversamplingM(samplingstrategy, oversamplingfactor, dict)
     end
     L = tuple(map((api, Mi)->deduce_samplingparameter(OversamplingStyle(), samplingstrategy, api;
-        oversamplingfactor=oversamplingfactor, M=Mi, verbose=verbose, options...), ApproximationProblems.unsafe_elements(ap), M)...)
+        oversamplingfactor=oversamplingfactor, M=Mi, verbose=verbose, options...), ApproximationProblems.unsafe_components(ap), M)...)
     verbose && println("Sampling parameter: best match for M = $M is L = $L")
     L
 end

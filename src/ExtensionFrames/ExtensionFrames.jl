@@ -150,10 +150,10 @@ import BasisFunctions: →
 function extensionframe(domain::ProductDomain, basis::TensorProductDict)
     ExtensionFrames = Dictionary[]
     dc = 1
-    for i = 1:numelements(domain)
-        el = element(domain, i)
+    for i = 1:ncomponents(domain)
+        el = component(domain, i)
         range = dc:dc+dimension(el)-1
-        push!(ExtensionFrames, ExtensionFrame(el, element(basis, range)))
+        push!(ExtensionFrames, ExtensionFrame(el, component(basis, range)))
         dc += dimension(el)
     end
     tensorproduct(ExtensionFrames...)
@@ -180,8 +180,8 @@ innerproduct_native(dict1::MappedDict, i, dict2::MappedDict, j, measure; options
     _innerproduct_native(support(measure), supermeasure(measure), dict1, i, dict2, j, measure; options...)
 
 function _innerproduct_native(domain::AbstractInterval, superμ, dict1::MappedDict, i, dict2::MappedDict, j, measure; options...)
-    if BasisFunctions.ismappedmeasure(superμ) && iscompatible(dict1, dict2) && iscompatible(mapping(dict1), mapping(superμ))
-        supermap = mapping(superμ)
+    if BasisFunctions.ismappedmeasure(superμ) && iscompatible(dict1, dict2) && iscompatible(forward_map(dict1), forward_map(superμ))
+        supermap = forward_map(superμ)
         newdomain = Interval(applymap(inv(supermap), infimum(domain)), applymap(inv(supermap), supremum(domain)))
         innerproduct_native(superdict(dict1), i, superdict(dict2), j, submeasure(supermeasure(superμ), newdomain))
     else
@@ -191,7 +191,7 @@ end
 
 function _innerproduct_native(domain::UnionDomain, superμ, dict1::MappedDict, i, dict2::MappedDict, j, measure; options...)
     z = zero(coefficienttype(dict1))
-    for d in elements(domain)
+    for d in components(domain)
         z += _innerproduct_native(d, superμ, dict1, i, dict2, j, measure; options...)
     end
     z
@@ -210,16 +210,16 @@ extensiondual(dict::ExtensionFrame, measure::Measure; options...) =
     extensionframe(support(dict), gramdual(superdict(dict), supermeasure(measure); options...),)
 extensiondual(dict::ExtensionFrameTensor, measure::Measure; options...) =
     TensorProductDict(map((dicti,measurei)->extensionframe(support(dicti), gramdual(superdict(dicti), supermeasure(measurei); options...)),
-        elements(dict), elements(measure))...)
+        components(dict), components(measure))...)
 
 function gramdual(dict::ExtensionFrame, measure::Measure; options...)
     @debug "Are you sure you want `dualtype=gramdual` and not `extensiondual`"
     default_gramdual(dict, measure; options...)
 end
 
-superdict(dict::ExtensionFrameTensor) = TensorProductDict(map(superdict, elements(dict))...)
-basis(dict::ExtensionFrameTensor) = TensorProductDict(map(basis, elements(dict))...)
-support(dict::ExtensionFrameTensor) = ProductDomain((map(support, elements(dict)))...)
+superdict(dict::ExtensionFrameTensor) = TensorProductDict(map(superdict, components(dict))...)
+basis(dict::ExtensionFrameTensor) = TensorProductDict(map(basis, components(dict))...)
+support(dict::ExtensionFrameTensor) = ProductDomain((map(support, components(dict)))...)
 
 ## Printing
 

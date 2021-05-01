@@ -216,7 +216,7 @@ hasparam_inbetween(path::ProductPath, param1, param2, stoptolerance::Real) =
     any(map(hasparam_inbetween, path.paths, param1, param2, Ref(stoptolerance))...)
 
 default_param_path(platform::ProductPlatform) where N =
-    ProductPath(map(default_param_path, elements(platform))...)
+    ProductPath(map(default_param_path, components(platform))...)
 
 export ParametrizedPlatform
 struct ParametrizedPlatform{PLATFORM<:Platform, PATH<:ParameterPath} <: Platform

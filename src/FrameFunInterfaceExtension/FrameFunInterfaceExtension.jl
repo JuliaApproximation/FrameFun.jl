@@ -73,7 +73,7 @@ azdual_dict(sstyle::SamplingStyle, dict::ExtensionFrame, L, measure::Measure; op
 
 function azdual_dict(dict::MultiDict, measure::Measure; options...)
     dictionary = dict.dicts[1].superdict
-    weights = map(weightfunction, elements(dict))
+    weights = map(weightfunction, components(dict))
     denom = (x...)->sum(map(w->abs(w(x...))^2, weights))
     MultiDict([((x...)->(weights[j](x...)/denom(x...))) * azdual_dict(dictionary, measure; options...) for j=1:length(weights)])
 end

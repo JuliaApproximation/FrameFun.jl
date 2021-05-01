@@ -1,11 +1,10 @@
-# fractals.jl
 
 ###############################################################################
 ## The Mandelbrot set
 ###############################################################################
 export Mandelbrot,mandelbrot
 # TODO: fractals should be subsets of the complex plane
-struct Mandelbrot{T} <: EuclideanDomain{2,T}
+struct Mandelbrot{T} <: Domain{SVector{2,T}}
     maxiter     ::  Int
     threshold   ::  T
     maskcache   ::  Dict
@@ -48,6 +47,7 @@ function computemandelbrotgrid(grid, maxiter, threshold)
     mask
 end
 
+# TODO: reconsider broadcast
 function indomain_broadcast(grid::ProductGrid, m::Mandelbrot)
     if (infimum(support(grid)) ≈ minimum(boundingbox(m))) && (supremum(support(grid)) ≈ maximum(boundingbox(m)))
         if haskey(m.maskcache, size(grid,1))
@@ -79,7 +79,7 @@ show(io::IO, m::Mandelbrot) = print(io, "The Mandelbrot set")
 ## Julia sets
 ################
 export JuliaSet, juliaset
-struct JuliaSet{T} <: EuclideanDomain{2,T}
+struct JuliaSet{T} <: Domain{SVector{2,T}}
     c           ::  Complex{T}
     maxiter     ::  Int
     maskcache   ::  Dict
@@ -120,8 +120,9 @@ function computejuliasetgrid(grid, c, maxiter)
     mask
 end
 
+# TODO: reconsider broacast
 function indomain_broadcast(grid, js::JuliaSet)
-    if (map(x->infimum(support(x)), elements(grid)) ≈ infimum(boundingbox(js))) && (map(x->supremum(support(x)),elements(grid)) ≈ supremum(boundingbox(js)))
+    if (map(x->infimum(support(x)), components(grid)) ≈ infimum(boundingbox(js))) && (map(x->supremum(support(x)),components(grid)) ≈ supremum(boundingbox(js)))
         if haskey(js.maskcache, size(grid,1))
             mask = js.maskcache[size(grid,1)]
         else # compute mask and cache it

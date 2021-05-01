@@ -7,7 +7,7 @@ using FrameFun.ApproximationProblems, FrameFun.ExtensionFrames, Test, BasisFunct
     ap3 = approximationproblem(platform(Fourier(10)),10)
     ap4 = approximationproblem(Fourier(10), 0.0..0.5)
 
-    @test length(elements(ap2))==2
+    @test length(components(ap2))==2
 
     for ap in (ap1, ap2, ap3, ap4)
         @test samplingparam(ap) == nothing

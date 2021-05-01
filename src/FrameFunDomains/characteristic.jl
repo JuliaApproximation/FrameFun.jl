@@ -3,10 +3,11 @@ export Characteristic
 """
 A domain that is described by its characteristic function.
 """
-struct Characteristic{N,T} <: EuclideanDomain{N,T}
+struct Characteristic{N,T} <: Domain{SVector{N,T}}
     char    ::  Function
-    box     ::  EuclideanDomain{N,T}
+    box     ::  Domain{SVector{N,T}}
 end
+
 export characteristic
 characteristic(char::Function, dom)  = Characteristic(char,boundingbox(dom))
 

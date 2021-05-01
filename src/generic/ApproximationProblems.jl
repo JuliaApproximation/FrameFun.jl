@@ -4,7 +4,7 @@
 module ApproximationProblems
 using ..Platforms
 import ..Platforms: SamplingStyle, SolverStyle, dictionary, platform
-import BasisFunctions: coefficienttype, element, elements
+import BasisFunctions: coefficienttype, component, components
 using BasisFunctions: Dictionary, TensorProductDict
 using ..ExtensionFrames
 using DomainSets: Domain
@@ -138,14 +138,14 @@ approximationproblem(platform::ProductPlatform{N}, param) where {N} =
 SamplingStyle(ap::ProductPlatformApproximation) = SamplingStyle(ap.platform)
 SolverStyle(samplingstyle::SamplingStyle, ap::ProductPlatformApproximation) = SolverStyle(ap.platform, samplingstyle)
 
-elements(ap::ProductPlatformApproximation) = nothing == samplingparam(ap) ?
-    error("Not possible to get elements of `ProductPlatformApproximation` without `samplingparam`") :
+components(ap::ProductPlatformApproximation) = nothing == samplingparam(ap) ?
+    error("Not possible to get components of `ProductPlatformApproximation` without `samplingparam`") :
     length(samplingparam(ap))==length(ap.productparam) ?
-    map(approximationproblem, elements(ap.platform), ap.productparam, samplingparam(ap)) :
+    map(approximationproblem, components(ap.platform), ap.productparam, samplingparam(ap)) :
     error("sampling parameter should contain $(length(ap.productparam)) elements")
 
 
-unsafe_elements(ap::ProductPlatformApproximation) = map(approximationproblem, elements(ap.platform), ap.productparam)
+unsafe_components(ap::ProductPlatformApproximation) = map(approximationproblem, components(ap.platform), ap.productparam)
 
 dictionary(ap::ProductPlatformApproximation) = ap.dict
 

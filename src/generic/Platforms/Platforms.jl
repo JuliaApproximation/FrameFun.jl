@@ -4,7 +4,7 @@ using BasisFunctions: Dictionary, TensorProductDict, Dictionary1d, tensorproduct
     extensionsize, gramdual, Weight, ProductWeight, DiscreteProductWeight, resize,
     isbasis, hastransform, dimensions, productmeasure
 import Base: getindex
-import BasisFunctions: elements, dictionary, element, measure, iscomposite, Measure
+import BasisFunctions: components, dictionary, component, measure, iscomposite, Measure
 
 #################
 # Platform
@@ -97,8 +97,8 @@ correctparamformat(p::ModelPlatform, param)  =
 
 export measure
 measure(platform::ModelPlatform) = measure(model(platform))
-elements(platform::ModelPlatform) = map(ModelPlatform, elements(model(platform)))
-element(platform::ModelPlatform, i) = ModelPlatform(element(model(platform), i))
+components(platform::ModelPlatform) = map(ModelPlatform, components(model(platform)))
+component(platform::ModelPlatform, i) = ModelPlatform(component(model(platform), i))
 
 
 
@@ -122,20 +122,20 @@ end
 
 ProductPlatform(platforms::Platform...) = ProductPlatform(platforms)
 
-param_first(platform::ProductPlatform) = map(param_first, elements(platform))
+param_first(platform::ProductPlatform) = map(param_first, components(platform))
 
 function DictionaryStyle(p::ProductPlatform)
-    dict = TensorProductDict(map(x->dictionary(x,1), elements(p))...)
+    dict = TensorProductDict(map(x->dictionary(x,1), components(p))...)
     isbasis(dict) ? BasisStyle() : FrameStyle()
 end
 ProductPlatform(platform::Platform, n::Int) = ProductPlatform(ntuple(x->platform, n)...)
 dualdictionary(platform::ProductPlatform, param, measure::Measure; options...) =
-    (@assert length(param)==length(elements(platform));
-    TensorProductDict(map((plati, parami, mi)->dualdictionary(plati, parami, mi; options...), elements(platform), param, elements(measure))...))
+    (@assert length(param)==length(components(platform));
+    TensorProductDict(map((plati, parami, mi)->dualdictionary(plati, parami, mi; options...), components(platform), param, components(measure))...))
 iscomposite(p::ProductPlatform) = true
-elements(p::ProductPlatform) = p.platforms
+components(p::ProductPlatform) = p.platforms
 
-element(p::ProductPlatform, i) = p.platforms[i]
+component(p::ProductPlatform, i) = p.platforms[i]
 
 export productparameter
 """
@@ -146,19 +146,19 @@ Transform the parameter to a parameter accepted by a ProductPlatform
 productparameter(p::ProductPlatform{N}, n::Int) where {N} = ntuple(x->n, Val(N))
 productparameter(p::ProductPlatform{N}, n::NTuple{N,Any}) where {N} = n
 
-SamplingStyle(platform::ProductPlatform) = ProductSamplingStyle(map(SamplingStyle, elements(platform)))
+SamplingStyle(platform::ProductPlatform) = ProductSamplingStyle(map(SamplingStyle, components(platform)))
 SolverStyle(p::ProductPlatform, samplingstyle) =
-    ProductSolverStyle(map(SolverStyle, elements(p), elements(samplingstyle)))
+    ProductSolverStyle(map(SolverStyle, components(p), components(samplingstyle)))
 
 dictionary(p::ProductPlatform, n::Int) = dictionary(p, productparameter(p, n))
 
-unsafe_dictionary(p::ProductPlatform, n) = tensorproduct(map(dictionary, elements(p), n)...)
+unsafe_dictionary(p::ProductPlatform, n) = tensorproduct(map(dictionary, components(p), n)...)
 
 dualdictionary(platform::ProductPlatform, param, measure::Union{ProductWeight,DiscreteProductWeight}; options...) =
     tensorproduct(map((platformi, parami, mi)->dualdictionary(platformi, parami, mi; options...),
-        elements(platform), param, elements(measure))...)
+        components(platform), param, components(measure))...)
 
-measure(platform::ProductPlatform) = productmeasure(map(measure, elements(platform))...)
+measure(platform::ProductPlatform) = productmeasure(map(measure, components(platform))...)
 
 correctparamformat(p::ProductPlatform{N}, param::NTuple{N,Int}) where N =
     all(map(correctparamformat, p.platforms, param))
@@ -179,5 +179,5 @@ param(dict::Dictionary) = dimensions(dict)
 Return a platform that generates dictionaries of the type of dict.
 """
 platform(dict::Dictionary1d) = ModelPlatform(dict)
-platform(dict::TensorProductDict) = ProductPlatform(map(platform, elements(dict))...)
+platform(dict::TensorProductDict) = ProductPlatform(map(platform, components(dict))...)
 end

@@ -2,13 +2,13 @@ using DomainSets
 import BasisFunctions: resize
 ## Functions to provide oversampled grids for FrameFun approximations.
 
-resize(grid::ProductGrid, n) = ProductGrid(map(resize, elements(grid), n)...)
+resize(grid::ProductGrid, n) = ProductGrid(map(resize, components(grid), n)...)
 
 equispacedgrid(domain::AbstractInterval, L::Int) =
     EquispacedGrid(L, infimum(domain), supremum(domain))
 
 equispacedgrid(domain::ProductDomain, L::Tuple) =
-    cartesianproduct(map(equispacedgrid, elements(domain), L))
+    cartesianproduct(map(equispacedgrid, components(domain), L))
 
 equispacedgrid(domain::Domain, L::Tuple) = subgrid(equispacedgrid(boundingbox(domain), L), domain)
 
@@ -27,15 +27,15 @@ function oversampling_grid(dict::Dictionary, L)
 end
 
 
-oversampling_grid(dict::TensorProductDict, L) = ProductGrid(map(oversampling_grid, elements(dict), L)...)
+oversampling_grid(dict::TensorProductDict, L) = ProductGrid(map(oversampling_grid, components(dict), L)...)
 oversampling_grid(dict::TensorProductDict, L::CartesianIndex) = oversampling_grid(dict, L.I)
 oversampling_grid(dict::TensorProductDict, L::Int) = error("Expects a tuple or a CartesianIndex")
 
-oversampling_grid(dict::BasisFunctions.CompositeDict, L) = oversampling_grid(element(dict,1), L)
+oversampling_grid(dict::BasisFunctions.CompositeDict, L) = oversampling_grid(component(dict,1), L)
 
 oversampling_grid(dict::WeightedDict, L) = oversampling_grid(superdict(dict), L)
 
-oversampling_grid(dict::MappedDict, L) = apply_map(oversampling_grid(superdict(dict), L), mapping(dict))
+oversampling_grid(dict::MappedDict, L) = apply_map(oversampling_grid(superdict(dict), L), forward_map(dict))
 
 oversampling_grid(dict::OperatedDict, L) = oversampling_grid(superdict(dict), L)
 
@@ -44,8 +44,8 @@ oversampling_grid(dict::OperatedDict, L) = oversampling_grid(superdict(dict), L)
 # of its support.
 initialguess(ap, M) = initialguess(dictionary(ap), M)
 initialguess(dict::Dictionary1d, M::Int) = M
-initialguess(dict::BasisFunctions.CompositeDict, M) = initialguess(element(dict,1), M)
-initialguess(dict::BasisFunctions.CompositeDict, M::Int) = initialguess(element(dict,1), M)
+initialguess(dict::BasisFunctions.CompositeDict, M) = initialguess(component(dict,1), M)
+initialguess(dict::BasisFunctions.CompositeDict, M::Int) = initialguess(component(dict,1), M)
 initialguess(dict::Dictionary, M) = _initialguess(dict, M, support(dict), size(dict))
 _initialguess(dict::Dictionary, M, domain::Domain, size) = size
 _initialguess(dict::Dictionary, M, domain::Domain1d, size::Tuple{Int}) = M
@@ -77,7 +77,7 @@ end
 correct_sampling_parameter(dict::Dictionary, L_trial; options...) = L_trial
 correct_sampling_parameter(strategy::SamplingStrategy, platform::Platform, param, L_trial; options...) = L_trial
 correct_sampling_parameter(strategy::SamplingStrategy, p::ProductPlatform, param, L; options...) =
-    tuple(map(x->correct_sampling_parameter(strategy, x...; options...), zip(elements(p), param, L))...)
+    tuple(map(x->correct_sampling_parameter(strategy, x...; options...), zip(components(p), param, L))...)
 
 function match_sampling_parameter(samplingobject::Dictionary, M, L_init)
     objective(L) = length(oversampling_grid(samplingobject, L))-M

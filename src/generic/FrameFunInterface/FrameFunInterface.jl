@@ -4,7 +4,7 @@ using StaticArrays
 
 using ..Platforms, ..ApproximationProblems, BasisFunctions
 using ..ParameterPaths: ParametrizedPlatform
-import BasisFunctions: discretemeasure, measure, interpolation_grid, elements
+import BasisFunctions: discretemeasure, measure, interpolation_grid, components
 
 export SamplingStrategy
 abstract type SamplingStrategy end
@@ -34,16 +34,16 @@ end
 
 # Utility functions to create tensor FrameFunInterface functions
 
-function elements(fun, ss::ProductSamplingStyle, ap::ProductPlatformApproximation, args...; options...)
+function components(fun, ss::ProductSamplingStyle, ap::ProductPlatformApproximation, args...; options...)
     samplingparameter(ss, ap; options...)
-    @assert length(elements(ss))==length(elements(ap))
-    map((ssi, api, argi)->fun(ssi, api, argi...; options...), elements(ss), elements(ap), zip(args...))
+    @assert length(components(ss))==length(components(ap))
+    map((ssi, api, argi)->fun(ssi, api, argi...; options...), components(ss), components(ap), zip(args...))
 end
 
-function elements(fun, ss::ProductSamplingStyle, ap::ProductPlatformApproximation; options...)
+function components(fun, ss::ProductSamplingStyle, ap::ProductPlatformApproximation; options...)
     samplingparameter(ss, ap; options...)
-    @assert length(elements(ss))==length(elements(ap))
-    map((ssi, api)->fun(ssi, api; options...), elements(ss), elements(ap))
+    @assert length(components(ss))==length(components(ap))
+    map((ssi, api)->fun(ssi, api; options...), components(ss), components(ap))
 end
 
 
@@ -195,7 +195,7 @@ default_platform_grid(ss::SamplingStyle, dict::Dictionary, args...; grid, option
 export discretemeasure
 @trial discretemeasure
 discretemeasure(ss::ProductSamplingStyle, ap::ApproximationProblem; options...) =
-    productmeasure(elements(discretemeasure, ss, ap; options...)...)
+    productmeasure(components(discretemeasure, ss, ap; options...)...)
 discretemeasure(ss::SamplingStyle, ap::ApproximationProblem; options...) =
     discretemeasure(ss, platform(ap), parameter(ap), ap; options...)
 discretemeasure(ss::SamplingStyle, platform::Platform, param, ap; options...) =

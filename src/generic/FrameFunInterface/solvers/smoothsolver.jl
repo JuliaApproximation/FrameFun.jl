@@ -18,4 +18,4 @@ function default_scaling_function(dict::Dictionary1d, idx)
     1 + f
 end
 default_scaling_function(dict::TensorProductDict, I) =
-    default_scaling_function(element(dict, 1), I[1]) + default_scaling_function(element(dict, 2), I[2])
+    default_scaling_function(component(dict, 1), I[1]) + default_scaling_function(component(dict, 2), I[2])

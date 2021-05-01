@@ -3,9 +3,9 @@
 ### A polar domain described by a single variable function
 ################################################################################
 export PolarDomain
-struct PolarDomain{T} <: EuclideanDomain{2,T}
+struct PolarDomain{T} <: Domain{SVector{2,T}}
     charFun
-    box     ::  EuclideanDomain{2,T}
+    box     ::  Domain{SVector{2,T}}
 end
 export polardomain
 function polardomain(char, domain)

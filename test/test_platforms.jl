@@ -15,8 +15,8 @@ using Test, FrameFun.Platforms, BasisFunctions
     @test correctparamformat(P,10)
     @test !correctparamformat(P,(10,))
 
-    @test elements(platform(Fourier(10)^2)) == (P,P)
-    @test element(platform(Fourier(10)^2),1) == P
+    @test components(platform(Fourier(10)^2)) == (P,P)
+    @test component(platform(Fourier(10)^2),1) == P
 
     P = platform(Fourier(10)^2)
     @test correctparamformat(P,(10,10))
@@ -27,8 +27,8 @@ using Test, FrameFun.Platforms, BasisFunctions
     @test param_increment(P,(10,11)) == (11,12)
     @test param_inbetween(P,(10,10),(20,10)) == (15,10)
     @test ProductPlatform(platform(Fourier(10)),2) == P
-    @test element(P,1) == platform(Fourier(10))
-    length(elements(P))==2
+    @test component(P,1) == platform(Fourier(10))
+    length(components(P))==2
     @test dictionary(P,10) == Fourier(10)^2
     @test dictionary(P,param(Fourier(10)^2)) == Fourier(10)^2
     @test P[10] == Fourier(10)^2
@@ -55,7 +55,7 @@ end
 
     @test DictionaryStyle(platform(Fourier(10))) == BasisStyle()
     @test DictionaryStyle(platform(MultiDict((Fourier(10),Fourier(10))))) == UnknownDictionaryStyle()
-    @test elements(SolverStyle(platform(Fourier(10)^2), SamplingStyle(platform(Fourier(10)^2)))) == (InverseStyle(), InverseStyle())
+    @test components(SolverStyle(platform(Fourier(10)^2), SamplingStyle(platform(Fourier(10)^2)))) == (InverseStyle(), InverseStyle())
     @test ProblemStyle(platform(Fourier(10)))  == DictionaryOperatorStyle()
 
 end

@@ -27,42 +27,42 @@ function normal(x, ::UnitSimplex)
     return z/norm(z)
 end
 
-normal(x, d::UnitHyperBall) = x/norm(x)
+normal(x, d::UnitBall) = x/norm(x)
 
 distance(x, d::AbstractInterval) = min(abs(maximum(d)-x),abs(x-minimum(d)))
 
 normal(x, d::AbstractInterval) = (abs(minimum(d)-x) < abs(maximum(d)-x)) ? -1 : 1
 
-distance(x, d::UnitHyperBall) = 1-norm(x)
+distance(x, d::UnitBall) = 1-norm(x)
 
-normal(x, d::UnitHyperSphere) = x/norm(x)
+normal(x, d::UnitSphere) = x/norm(x)
 
-distance(x, d::UnitHyperSphere) = 1-norm(x)
+distance(x, d::UnitSphere) = 1-norm(x)
 
-distance(x,d::UnionDomain) = indomain(x,d) ? sum(map(di->max(0,distance(x,di)),elements(d))) : maximum(map(di->distance(x,di),elements(d)))
+distance(x,d::UnionDomain) = indomain(x,d) ? sum(map(di->max(0,distance(x,di)),components(d))) : maximum(map(di->distance(x,di),components(d)))
 
-normal(x,d::UnionDomain) = normal(x,elements(d)[findmin(map(di->abs(distance(x,di)),elements(d)))[2]])
+normal(x,d::UnionDomain) = normal(x,components(d)[findmin(map(di->abs(distance(x,di)),components(d)))[2]])
 
-distance(x,d::IntersectionDomain) = minimum(map(di->distance(x,di),elements(d)))
+distance(x,d::IntersectDomain) = minimum(map(di->distance(x,di),components(d)))
 
-normal(x,d::IntersectionDomain) = normal(x,elements(d)[findmin(map(di->distance(x,di),elements(d)))[2]])
+normal(x,d::IntersectDomain) = normal(x,components(d)[findmin(map(di->distance(x,di),components(d)))[2]])
 
-distance(x,d::DifferenceDomain) = indomain(x,d) ? min(abs(distance(x,d.domains[1])),abs(distance(x,d.domains[2]))) : -1*min(abs(distance(x,d.domains[1])),abs(distance(x,d.domains[2])))
+distance(x,d::SetdiffDomain) = indomain(x,d) ? min(abs(distance(x,d.domains[1])),abs(distance(x,d.domains[2]))) : -1*min(abs(distance(x,d.domains[1])),abs(distance(x,d.domains[2])))
 
-normal(x,d::DifferenceDomain) = abs(distance(x,d.domains[1]))<abs(distance(x,d.domains[2])) ? normal(x,d.domains[1]) : -1*normal(x,d.domains[2])
+normal(x,d::SetdiffDomain) = abs(distance(x,d.domains[1]))<abs(distance(x,d.domains[2])) ? normal(x,d.domains[1]) : -1*normal(x,d.domains[2])
 
-distance(x, t::ProductDomain) = minimum(map(distance, x, elements(t)))
+distance(x, t::ProductDomain) = minimum(map(distance, x, components(t)))
 
 distance(x, d::DomainSets.MappedDomain) = distance(inverse_map(d)(x),superdomain(d))
 
 function normal(x, d::DomainSets.MappedDomain)
     x = applymap(forward_map(d),normal(inverse_map(d)(x),superdomain(d)))
-    x0 = inv(inverse_map(d))(zeros(size(x)))
+    x0 = inverse(inverse_map(d))(zeros(size(x)))
    (x-x0)/norm(x-x0)
 end
 function normal(x, t::ProductDomain)
-    index = findmin(map(distance, x, elements(t)))[2]
-    [(i==index)*normal(x[i],element(t,i)) for i =1:length(elements(t))]
+    index = findmin(map(distance, x, components(t)))[2]
+    [(i==index)*normal(x[i],component(t,i)) for i =1:length(components(t))]
 end
 
 

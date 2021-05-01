@@ -139,7 +139,7 @@ struct ProductSamplingStyle{STYLES} <: SamplingStyle
     styles  :: STYLES
 end
 ProductSamplingStyle(styles::SamplingStyle...) = ProductSamplingStyle(styles)
-elements(style::ProductSamplingStyle) = style.styles
+components(style::ProductSamplingStyle) = style.styles
 
 export SamplingStyleSuper
 const SamplingStyleSuper{TYPE} = Union{<:TYPE,ProductSamplingStyle{NTuple{N,<:TYPE}} where N} where {TYPE<:SamplingStyle}
@@ -219,7 +219,7 @@ struct ProductSolverStyle <: SolverStyle
     styles
 end
 ProductSolverStyle(styles::SolverStyle...) = ProductSolverStyle(styles)
-elements(style::ProductSolverStyle) = style.styles
+components(style::ProductSolverStyle) = style.styles
 
 
 
@@ -282,11 +282,11 @@ SolverStyle(::UnknownDictionaryStyle, p::Platform, ::SamplingStyle) = DirectStyl
 
 # Defaults for dictionaries
 SamplingStyle(dict::Dictionary) = (@warn "Platform styles for dictionaries will disapear";isbasis(dict) ? InterpolationStyle() : OversamplingStyle())
-SamplingStyle(dict::TensorProductDict) = (@warn "Platform styles for dictionaries will disapear";ProductSamplingStyle(map(SamplingStyle, elements(dict))))
+SamplingStyle(dict::TensorProductDict) = (@warn "Platform styles for dictionaries will disapear";ProductSamplingStyle(map(SamplingStyle, components(dict))))
 SolverStyle(dict::Dictionary, dstyle::SamplingStyle) = (@warn "Platform styles for dictionaries will disapear";DirectStyle())
 SolverStyle(dict::Dictionary, dstyle::InterpolationStyle) = (@warn "Platform styles for dictionaries will disapear";hastransform(dict) ? InverseStyle() : DirectStyle())
 SolverStyle(dict::TensorProductDict, dstyle::ProductSamplingStyle) =
-    (@warn "Platform styles for dictionaries will disapear";ProductSolverStyle(map(SolverStyle, elements(dict), dstyle.styles)))
+    (@warn "Platform styles for dictionaries will disapear";ProductSolverStyle(map(SolverStyle, components(dict), dstyle.styles)))
 
 
 ProblemStyle(a) = DictionaryOperatorStyle()
