@@ -1,11 +1,12 @@
 name = "FrameFun"
 uuid = "bbafa164-4497-5d18-87cf-33e911f89480"
 authors = ["daanhb,roelmatthysen,marcusdavidwebb,vincentcp"]
-version = "0.3.1"
+version = "0.3.2"
 
 [deps]
 BasisFunctions = "4343a256-5453-507d-8aad-01a9d7189916"
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
+CompositeTypes = "b152e2b5-7a66-4b01-a709-34e65c35f657"
 DomainSets = "5b8099bc-c8ec-5219-889f-1d9e522a28bf"
 FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
 GenericLinearAlgebra = "14197337-ba66-59df-a3e3-ca00e7dcff7a"
@@ -22,12 +23,12 @@ Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
-BasisFunctions = "0.3.1"
+BasisFunctions = "0.3.2"
 Compat = "3.10"
-DomainSets = "0.5"
+DomainSets = "0.5.2"
 FillArrays = "0.10,0.11"
 GenericLinearAlgebra = "0.2"
-GridArrays = "0.1.9"
+GridArrays = "0.1.10"
 LowRankApprox = "0.4"
 PGFPlotsX = "1.2"
 QuadGK = "2.4"

@@ -153,16 +153,18 @@ function extensionframe(domain::ProductDomain, basis::TensorProductDict)
     for i = 1:ncomponents(domain)
         el = component(domain, i)
         range = dc:dc+dimension(el)-1
-        push!(ExtensionFrames, ExtensionFrame(el, component(basis, range)))
+        push!(ExtensionFrames, ExtensionFrame(el, tensorproduct(component(basis, j) for j in range)...))
         dc += dimension(el)
     end
     tensorproduct(ExtensionFrames...)
 end
 
-const ExtensionFrameTensor = Union{TensorProductDict{D,NTuple{D,DICT}} where D where {DICT<:ExtensionFrame},
-    TensorProductDict{2,Tuple{DICT1,DICT2}} where {DICT1<:ExtensionFrame,DICT2<:ExtensionFrame},
-    TensorProductDict{3,Tuple{DICT1,DICT2,DICT3}} where {DICT1<:ExtensionFrame,DICT2<:ExtensionFrame,DICT3<:ExtensionFrame},
-    TensorProductDict{4,Tuple{DICT1,DICT2,DICT3,DICT4}} where {DICT1<:ExtensionFrame,DICT2<:ExtensionFrame,DICT3<:ExtensionFrame,DICT4<:ExtensionFrame}}
+using BasisFunctions: TupleProductDict
+
+const ExtensionFrameTensor = Union{TupleProductDict{D,NTuple{D,DICT}} where D where {DICT<:ExtensionFrame},
+    TupleProductDict{2,Tuple{DICT1,DICT2}} where {DICT1<:ExtensionFrame,DICT2<:ExtensionFrame},
+    TupleProductDict{3,Tuple{DICT1,DICT2,DICT3}} where {DICT1<:ExtensionFrame,DICT2<:ExtensionFrame,DICT3<:ExtensionFrame},
+    TupleProductDict{4,Tuple{DICT1,DICT2,DICT3,DICT4}} where {DICT1<:ExtensionFrame,DICT2<:ExtensionFrame,DICT3<:ExtensionFrame,DICT4<:ExtensionFrame}}
 const ExtensionFrameSuper = Union{<:ExtensionFrame,<:ExtensionFrameTensor}
 export ExtensionFrameTensor, ExtensionFrameSuper
 

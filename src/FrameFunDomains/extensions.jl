@@ -1,6 +1,6 @@
 # A collection of extensions to the DomainSets package.
 
-using DomainSets: inverse_map, forward_map
+using DomainSets: inverse_map, forward_map, MappedDomain
 
 
 ##########################################################################
@@ -9,10 +9,22 @@ using DomainSets: inverse_map, forward_map
 export normal, distance, volume
 # Function that returns the normal vector when evaluated at the domain boundary
 # This vector is of unit length and points to the OUTSIDE.
-normal(x, d::Domain) = error("Normal not available for this domain type")
+function normal(x, d::Domain)
+    if hascanonicaldomain(d)
+        normal(x, convert(MappedDomain, d))
+    else
+        error("Normal not available for this domain type")
+    end
+end
 
 # Auxiliary function that returns distance from the boundary in some metric
-distance(x, d::Domain) = error("Domain distance not available for this domain type")
+function distance(x, d::Domain)
+    if hascanonicaldomain(d)
+        distance(x, convert(MappedDomain, d))
+    else
+        error("Domain distance not available for this domain type")
+    end
+end
 
 distance(x, ::UnitSimplex) = min(minimum(x),1-sum(x))
 
@@ -53,9 +65,9 @@ normal(x,d::SetdiffDomain) = abs(distance(x,d.domains[1]))<abs(distance(x,d.doma
 
 distance(x, t::ProductDomain) = minimum(map(distance, x, components(t)))
 
-distance(x, d::DomainSets.MappedDomain) = distance(inverse_map(d)(x),superdomain(d))
+distance(x, d::MappedDomain) = distance(inverse_map(d)(x),superdomain(d))
 
-function normal(x, d::DomainSets.MappedDomain)
+function normal(x, d::MappedDomain)
     x = applymap(forward_map(d),normal(inverse_map(d)(x),superdomain(d)))
     x0 = inverse(inverse_map(d))(zeros(size(x)))
    (x-x0)/norm(x-x0)
