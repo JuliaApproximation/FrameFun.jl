@@ -1,11 +1,6 @@
 ## Platforms for certain bases and frames
-module FrameFunPlatforms
-using ..Platforms
-import ..Platforms: dictionary, SolverStyle, measure, dualdictionary,
-    correctparamformat, unsafe_dictionary
-using ..FrameFunInterface
-import ..FrameFunInterface: discrete_gram_measure
-using BasisFunctions, ..ExtensionFrames, DomainSets
+
+using BasisFunctions, DomainSets
 using BasisFunctions: Measure
 
 export FourierPlatform
@@ -121,4 +116,3 @@ discretemeasure(::DiscreteStyle, p::OPSExtensionFramePlatform, n, L;
     _opsnodesmeasure(resize(dict,L))
 _opsnodesmeasure(frame::ExtensionFrame) = restrict(gauss_rule(basis(frame)), support(frame))
 _opsnodesmeasure(ops::BasisFunctions.OrthogonalPolynomials) = gauss_rule(ops)
-end

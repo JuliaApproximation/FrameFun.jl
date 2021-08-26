@@ -1,10 +1,10 @@
 module DiffEquations
-using BasisFunctions, ..FrameFunInterface, GridArrays, DomainSets,
-    ..ApproximationProblems, ..Platforms, ..ExtensionFrames, LinearAlgebra,
-    ..FrameFunDomains
+
+using BasisFunctions, GridArrays, DomainSets, LinearAlgebra
+using FrameFun
+import FrameFun: AZ_A, AZ_Zt
 
 import BasisFunctions: operator, coefficienttype, src, dest, apply!, grid
-import ..FrameFunInterface: AZ_A, AZ_Zt
 
 using BasisFunctions: evaluation
 
@@ -54,8 +54,8 @@ function operator(BC :: NeumannBC, S::Dictionary2d, G::AbstractGrid, D::Domain2d
     dx = Float64[]
     dy = Float64[]
     for i=1:length(G)
-        push!(dx, normal(G[i],D)[1])
-        push!(dy, normal(G[i],D)[2])
+        push!(dx, normal(D,G[i])[1])
+        push!(dy, normal(D,G[i])[2])
     end
     X = DiagonalOperator(dest(GE), dx)*GE*differentiation(S,(1,0))
     Y = DiagonalOperator(dest(GE), dy)*GE*differentiation(S,(0,1))
@@ -67,7 +67,7 @@ function operator(BC :: NeumannBC, S::Dictionary1d, G::AbstractGrid1d, D::Domain
     GE = evaluation(coefficienttype(S), S, G)
     dx = Float64[]
     for i=1:length(G)
-        push!(dx, normal(G[i],D)[1])
+        push!(dx, normal(D,G[i])[1])
     end
     DiagonalOperator(dest(GE), dx)*GE*differentiation(S,1)
 end
@@ -152,7 +152,7 @@ function AZ_Zt(pstyle::ProblemStyle, ap::PDEApproximation; options...)
     Zt
 end
 
-export solve
+import FrameFun: solve
 function solve(D::DiffEquation; solverstyle=AZStyle(), options...)
     Adiff = pinv(D.Diff)
     b = rhs(D; options...)
@@ -226,4 +226,5 @@ end
 
 sampler(L) = L.sampler
 grid(L::FECollocationOperator) = grid(sampler(L))
-end
+
+end # module

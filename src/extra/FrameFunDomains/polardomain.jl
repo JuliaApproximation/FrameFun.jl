@@ -23,7 +23,7 @@ show(io::IO, c::PolarDomain) = print(io, "a domain in polar coordinates")
 
 distance(x, c::PolarDomain) = real(c.charFun(atan(x[2],x[1])))-norm(x)
 
-function normal(x, c::PolarDomain)
+function normal(c::PolarDomain, x)
     phi = atan(x[2], x[1])
     y=c.charFun'(phi)*sin(phi)+c.charFun(phi)*cos(phi)
     x=c.charFun'(phi)*cos(phi)-c.charFun(phi)*sin(phi)

@@ -1,9 +1,7 @@
-module FrameFunInterface
 
 using StaticArrays
 
-using ..Platforms, ..ApproximationProblems, BasisFunctions
-using ..ParameterPaths: ParametrizedPlatform
+using BasisFunctions
 import BasisFunctions: discretemeasure, measure, interpolation_grid, components
 
 export SamplingStrategy
@@ -122,7 +120,7 @@ macro platformtoap(ex)
     esc(ret)
 end
 
-macro addsamplinparameter(ex)
+macro addsamplingparameter(ex)
     intermediate = Meta.parse("_"*string(ex))
     ret = quote
         $(ex)(ss::SamplingStyle, ap::ApproximationProblem, args...; options...) =
@@ -308,6 +306,3 @@ end
 import BasisFunctions: approximate
 export Fun
 include("approximate.jl")
-
-
-end

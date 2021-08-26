@@ -1,11 +1,8 @@
-module ParameterPaths
 
-using ..Platforms, BasisFunctions
+using BasisFunctions
 import Base: getindex, unsafe_getindex, first
-import ..Platforms: unsafe_dictionary, correctparamformat, param_first, param_double,
-    param_inbetween, hasparam_inbetween, param_increment, dualdictionary, measure,
-    SamplingStyle, SolverStyle, ProblemStyle
 using BasisFunctions: Measure
+
 # For the moment only size is in parameter space. (no spline degree, extensionparameter T, ...)
 export ParameterPath
 """
@@ -278,5 +275,3 @@ SolverStyle(platform::ParametrizedPlatform, ss::SamplingStyle) =
 
 ProblemStyle(platform::ParametrizedPlatform) =
     ProblemStyle(platform.platform)
-
-end # module

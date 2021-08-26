@@ -1,4 +1,4 @@
-using Test, FrameFun.Platforms, BasisFunctions
+using Test, FrameFun, BasisFunctions
 
 @testset "Generic Platforms" begin
     P = platform(Fourier(10))

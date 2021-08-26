@@ -2,39 +2,31 @@ module FrameFun
 
 using RecipesBase, FillArrays, Reexport
 using DomainSets, GridArrays
+
 @reexport using BasisFunctions
-# Submodules
-include("FrameFunDomains/FrameFunDomains.jl")
+
+include("extra/FrameFunDomains/FrameFunDomains.jl")
 @reexport using .FrameFunDomains
-include("generic/Platforms/Platforms.jl")
-@reexport using .Platforms
-include("generic/Platforms/ParameterPaths/ParameterPaths.jl")
-@reexport using .ParameterPaths
 
-include("ExtensionFrames/ExtensionFrames.jl")
-@reexport using .ExtensionFrames
+include("platforms/generic/platforms.jl")
+include("platforms/generic/parameterpaths.jl")
 
-include("generic/ApproximationProblems.jl")
-using .ApproximationProblems
+include("frames/extensionframes.jl")
 
-include("generic/FrameFunInterface/FrameFunInterface.jl")
-@reexport using .FrameFunInterface
-
+include("generic/approximationproblems.jl")
+include("generic/interface/FrameFunInterface.jl")
 
 # Other platforms
-include("platforms/AugmentationPlatforms.jl")
-include("platforms/ExtensionFramePlatforms.jl")
-include("platforms/WeightedSumPlatforms.jl")
-include("platforms/SumPlatforms.jl")
-include("platforms/FrameFunPlatforms.jl")
-@reexport using .AugmentationPlatforms, .ExtensionFramePlatforms,
-    .WeightedSumPlatforms, .SumPlatforms, .FrameFunPlatforms
+include("platforms/augmentation.jl")
+include("platforms/extensionplatform.jl")
+include("platforms/weightedsumplatform.jl")
+include("platforms/sumplatform.jl")
+include("platforms/basesandframes.jl")
 
-include("FrameFunInterfaceExtension/FrameFunInterfaceExtension.jl")
-using .FrameFunInterfaceExtension
+include("generic/interface/interface_extension.jl")
 
 export residual, abserror, maxerror, L2error
-include("fun/error.jl")
+include("generic/error.jl")
 
 include("applications/DiffEquations.jl")
 @reexport using .DiffEquations
@@ -42,8 +34,7 @@ include("applications/WeightedApproximation.jl")
 @reexport using .WeightedApproximation
 include("applications/high_dimensional.jl")
 
-include("generic/Adaptivity.jl")
-@reexport using .Adaptivity
+include("generic/adaptivity.jl")
 
 include("recipes.jl")
 

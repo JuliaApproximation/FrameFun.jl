@@ -1,4 +1,4 @@
-using FrameFun.ExtensionFrames
+using FrameFun
 using BasisFunctions, Test, DomainSets
 using BasisFunctions.Test: test_generic_dict_interface
 

@@ -1,4 +1,6 @@
-using FrameFun.ApproximationProblems, FrameFun.ExtensionFrames, Test, BasisFunctions, FrameFun.Platforms, DomainSets
+
+using DomainSets, BasisFunctions, FrameFun
+using Test
 
 
 @testset "ApproximationProblems" begin

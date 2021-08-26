@@ -1,9 +1,5 @@
 
-using FrameFun.Platforms, FrameFun.FrameFunInterface, FrameFun.ExtensionFramePlatforms,
-    FrameFun.FrameFunInterface, FrameFun.ExtensionFramePlatforms, FrameFun.ExtensionFrames,
-    FrameFun.WeightedSumPlatforms, FrameFun.AugmentationPlatforms, FrameFun.FrameFunInterfaceExtension,
-    BasisFunctions, FrameFun.ApproximationProblems, FrameFun.FrameFunPlatforms,
-    DomainSets, StaticArrays, Test, LinearAlgebra
+using BasisFunctions, DomainSets, StaticArrays, Test, LinearAlgebra, FrameFun
 
 # TODO add AugmentationPlatforms tests
 d1 = 0.0..0.5

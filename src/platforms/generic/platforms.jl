@@ -1,4 +1,3 @@
-module Platforms
 
 using BasisFunctions: Dictionary, TensorProductDict, Dictionary1d, tensorproduct,
     extensionsize, gramdual, Weight, ProductWeight, DiscreteProductWeight, resize,
@@ -180,4 +179,3 @@ Return a platform that generates dictionaries of the type of dict.
 """
 platform(dict::Dictionary1d) = ModelPlatform(dict)
 platform(dict::TensorProductDict) = ProductPlatform(map(platform, components(dict))...)
-end

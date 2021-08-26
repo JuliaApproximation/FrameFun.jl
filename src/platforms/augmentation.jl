@@ -1,8 +1,5 @@
-module AugmentationPlatforms
-using ..Platforms
+
 using  BasisFunctions: Dictionary, Measure, MultiDict
-import ..Platforms: SolverStyle, dictionary, dualdictionary, measure, param_double,
-    correctparamformat, unsafe_dictionary
 
 export AugmentationPlatform
 """
@@ -43,4 +40,3 @@ param_double(p::AugmentationPlatform, n::Int) = 2n
 export ONB_plus_K
 ONB_plus_K(basis::Platform, weightfunction, K) =
     AugmentationPlatform(basis, weightfunction * dictionary(basis, K))
-end

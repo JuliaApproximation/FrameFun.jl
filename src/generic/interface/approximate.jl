@@ -173,7 +173,7 @@ function approximate(pstyle::GenericOperatorStyle, samplingstyle::SamplingStyle,
     F, A, B, C, S, samplingparameter(samplingstyle, ap; verbose=verbose, options...)
 end
 
-
+export solve
 solve(style::SolverStyle, ap, A::DictionaryOperator, B; options...) =
     solver(style, ap, A; B=B, options...) * B
 solve(style::SolverStyle, ap, A::AbstractOperator, fun; options...) =

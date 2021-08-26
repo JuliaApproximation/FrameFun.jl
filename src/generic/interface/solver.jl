@@ -1,7 +1,8 @@
-include("solvers/azsolver.jl")
-include("solvers/generic_azsolver.jl")
-include("solvers/lowranksolver.jl")
-include("solvers/randomized.jl")
+include("../solvers/azsolver.jl")
+include("../solvers/generic_azsolver.jl")
+include("../solvers/lowranksolver.jl")
+include("../solvers/randomized.jl")
+include("../solvers/smoothsolver.jl")
 
 # solver needs also a problemstyle and a solverstyle
 solver(ap::ApproximationProblem;
@@ -32,7 +33,7 @@ end
 function solver(::InverseStyle, ap::ApproximationProblem, A::AbstractOperator; weightedAZ=false, options...)
     if weightedAZ
         AZ_Cweight = haskey(options,:AZ_Cweight) ? options[:AZ_Cweight] : error("No options `AZ_Cweight`")
-        AZ_Cweight*inv(A*AZ_Cweight) 
+        AZ_Cweight*inv(A*AZ_Cweight)
     else
         inv(A)
     end
@@ -40,7 +41,7 @@ end
 function solver(::DirectStyle, ap::ApproximationProblem, A::AbstractOperator; weightedAZ=false, options...)
     if weightedAZ
         AZ_Cweight = haskey(options,:AZ_Cweight) ? options[:AZ_Cweight] : error("No options `AZ_Cweight`")
-        AZ_Cweight*directsolver(A*AZ_Cweight; options...) 
+        AZ_Cweight*directsolver(A*AZ_Cweight; options...)
     else
         directsolver(A; options...)
     end
@@ -48,7 +49,7 @@ end
 function solver(::IterativeStyle, ap::ApproximationProblem, A::AbstractOperator; weightedAZ=false, options...)
     if weightedAZ
         AZ_Cweight = haskey(options,:AZ_Cweight) ? options[:AZ_Cweight] : error("No options `AZ_Cweight`")
-        AZ_Cweight*iterativesolver(A*AZ_Cweight; options...) 
+        AZ_Cweight*iterativesolver(A*AZ_Cweight; options...)
     else
         iterativesolver(A; options...)
     end
@@ -100,6 +101,5 @@ end
 
 
 solver(style::AZSmoothStyle, ap::ApproximationProblem, A::AbstractOperator; options...) = solver(style, ap, A, AZ_Zt(ap; options...); options...)
-include("solvers/smoothsolver.jl")
 solver(::AZSmoothStyle, ap::ApproximationProblem, A::AbstractOperator, Zt; options...) =
     solver(AZStyle(), ap, A, Zt; options..., weightedAZ=true, AZ_Cweight=sobolevAZweight(A; options...))

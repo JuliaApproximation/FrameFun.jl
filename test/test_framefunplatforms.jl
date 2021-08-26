@@ -1,4 +1,4 @@
-using Test, FrameFun.Platforms, FrameFun.FrameFunPlatforms, DomainSets, FrameFun.ExtensionFrames, BasisFunctions
+using Test, FrameFun, DomainSets, BasisFunctions
 
 @testset "FrameFunPlatforms" begin
     plat1 = FourierPlatform()

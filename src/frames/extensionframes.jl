@@ -1,6 +1,4 @@
 
-module ExtensionFrames
-
 export ExtensionFrame,
     extensionframe,
     ⇐, →
@@ -235,5 +233,3 @@ _string(s::PrettyPrintSymbol{:𝔼}, dict::ExtensionFrame) =
 
 GridSampling(dgs::GridBasis, grid::AbstractGrid, domain::Domain, scaling) =
     GridSampling(GridBasis{coefficienttype(dgs)}(subgrid(grid, domain)), scaling=scaling)
-
-end

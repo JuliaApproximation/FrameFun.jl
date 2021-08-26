@@ -1,11 +1,7 @@
-module FrameFunInterfaceExtension
 
-using ..FrameFunInterface, ..Platforms, BasisFunctions, DomainSets, ..ExtensionFrames
-import ..FrameFunInterface: oversampling_grid, azdual_dict, correct_sampling_parameter,
-    approximationproblem, deduce_samplingparameter, solver, discretemeasure
-using ..ApproximationProblems: setsamplingparam!
-using ..FrameFunInterface: deduce_oversampling_parameter, SamplingStrategy, DefaultSamplingStrategy
+using BasisFunctions, DomainSets
 using BasisFunctions: Measure
+
 approximationproblem(dict::Dictionary, domain::Domain) =
     approximationproblem(promote_type(coefficienttype(dict),prectype(eltype(domain))), dict, domain)
 
@@ -22,7 +18,7 @@ function approximationproblem(::Type{T}, dict::Dictionary, domain::Domain) where
 end
 
 
-include("tridiagonalsolver.jl")
+include("../solvers/tridiagonalsolver.jl")
 solver(::TridiagonalProlateStyle, ap, A; scaling = Zt_scaling_factor(dictionary(ap), A)
     , options...) =
     FE_TridiagonalSolver(A, scaling; options...)
@@ -34,7 +30,6 @@ Zt_scaling_factor(S::ChebyshevT, A) = length(supergrid(grid(dest(A))))/2
 
 
 
-using ..ExtensionFrames, ..ExtensionFramePlatforms
 oversampling_grid(dict::ExtensionFrame, L) = subgrid(oversampling_grid(superdict(dict),L), support(dict))
 
 discretemeasure(ss::SamplingStyle, platform::ExtensionFramePlatform, param, ap_old; options...) =
@@ -48,7 +43,6 @@ azdual_dict(sstyle::SamplingStyle, platform::ExtensionFramePlatform, param, L, m
 correct_sampling_parameter(samplingstrategy::SamplingStrategy, platform::ExtensionFramePlatform, param, L_trial; options...) =
    correct_sampling_parameter(samplingstrategy, platform.basisplatform, param, L_trial; options...)
 
-using ..AugmentationPlatforms
 azdual_dict(sstyle::SamplingStyle, platform::AugmentationPlatform, param, L, measure::Measure; options...) =
    MultiDict([azdual_dict(sstyle, platform.basis, param, L, measure; options...), platform.functions])
 
@@ -58,7 +52,6 @@ oversampling_grid(samplingstyle::SamplingStyle, platform::AugmentationPlatform, 
 correct_sampling_parameter(strategy::SamplingStrategy, platform::AugmentationPlatform, param, L; options...) =
     correct_sampling_parameter(strategy, platform.basis, param, L; options...)
 
-using ..WeightedSumPlatforms
 function azdual_dict(sstyle::SamplingStyle, platform::WeightedSumPlatform, param, L, measure::Measure; options...)
     denom = (x...)->sum(map(w->abs(w(x...))^2, platform.weights))
     # TODO: discuss, what is the relation between param, L of a platform and platform.P
@@ -79,7 +72,7 @@ function azdual_dict(dict::MultiDict, measure::Measure; options...)
 end
 
 function deduce_samplingparameter(ss::OversamplingStyle, strategy::SamplingStrategy, platform::WeightedSumPlatform, param::NTuple; options...)
-    mix_samplingparameters(strategy, platform, map(parami->FrameFunInterface.deduce_oversampling_parameter(ss, strategy, platform.P, parami; options...), param))
+    mix_samplingparameters(strategy, platform, map(parami->FrameFun.deduce_oversampling_parameter(ss, strategy, platform.P, parami; options...), param))
 end
 
 mix_samplingparameters(::DefaultSamplingStrategy, platform::WeightedSumPlatform, Ls::NTuple) =
@@ -88,6 +81,3 @@ mix_samplingparameters(::DefaultSamplingStrategy, platform::WeightedSumPlatform,
 
 correct_sampling_parameter(s::SamplingStrategy, platform::WeightedSumPlatform, param, L; options...) =
     correct_sampling_parameter(s, platform.P, param, L; options...)
-
-
-end

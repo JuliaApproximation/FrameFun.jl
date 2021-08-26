@@ -1,5 +1,6 @@
-using BasisFunctions, FrameFun.ExtensionFrames, FrameFun.ExtensionFramePlatforms,
-    DomainSets, Test, StaticArrays, FrameFun.Platforms, FrameFun.FrameFunInterface
+
+using DomainSets, StaticArrays, BasisFunctions, FrameFun
+using Test
 
 
 @testset "ExtensionFramePlatforms" begin

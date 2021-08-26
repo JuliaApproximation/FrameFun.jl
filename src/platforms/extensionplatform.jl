@@ -1,9 +1,4 @@
-module ExtensionFramePlatforms
-using ..Platforms
-import ..Platforms: platform, SolverStyle, SamplingStyle, measure, dictionary,
-    dualdictionary, correctparamformat, unsafe_dictionary
-using ..ExtensionFrames
-import ..ExtensionFrames: support
+
 using DomainSets, BasisFunctions
 using BasisFunctions: Measure
 
@@ -38,10 +33,5 @@ dualdictionary(platform::ExtensionFramePlatform, param, measure::Measure; option
    extensionframe(dualdictionary(platform.basisplatform, param, supermeasure(measure); options...), platform.domain)
 
 
-import ..ParameterPaths: default_param_path
-
 default_param_path(platform::ExtensionFramePlatform) =
    default_param_path(platform.basisplatform)
-
-
-end

@@ -1,9 +1,5 @@
-module SumPlatforms
-using ..Platforms
 using  BasisFunctions
 using BasisFunctions: ZeroOperator, Domain
-import ..Platforms: SolverStyle, dictionary, dualdictionary, measure, param_double,
-    unsafe_dictionary, correctparamformat
 
 import BasisFunctions: components, size, length, support, evaluation, Measure
 
@@ -53,5 +49,3 @@ evaluation(::Type{T}, dict::ZeroDict, gb::GridBasis, grid; options...) where {T}
     ZeroOperator{T}(GridBasis(dict, grid), dict)
 
 measure(platform::SumPlatform) = measure(platform.platform1)
-
-end

@@ -29,7 +29,7 @@ function test_extended_domains_2d()
     # @test in([0.79;0],D6)
 end
 
-domn(point,domain::Domain,normalvector; tol=1e-14) = norm(normal(point,domain)-normalvector)<tol
+domn(point,domain::Domain,normalvector; tol=1e-14) = norm(normal(domain,point)-normalvector)<tol
 domb(point,domain::Domain; tol=1e-14) = abs(distance(point,domain))<tol
 
 function test_distances_and_normals()
@@ -53,7 +53,7 @@ function test_distances_and_normals()
 
     D3 = -1..1.0
     @test isapprox(distance(0.5,D3),0.5)
-    @test isapprox(normal(1.0,D3),1)
+    @test isapprox(normal(D3,1.0),1)
 
     D5 = cube(Val(2))
     @test domb([0.4,0.0],D5)

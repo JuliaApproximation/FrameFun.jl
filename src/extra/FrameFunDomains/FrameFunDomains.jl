@@ -3,8 +3,9 @@ module FrameFunDomains
 using DomainSets, GridArrays, StaticArrays
 
 import Base: show, isapprox, in, <, <=, >, >=
-import DomainSets: indomain
+import DomainSets: indomain, normal
 import GridArrays: boundingbox
+
 include("extensions.jl")
 include("fourierdomains.jl")
 include("fractals.jl")

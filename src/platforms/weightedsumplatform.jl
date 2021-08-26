@@ -1,7 +1,4 @@
-module WeightedSumPlatforms
-using ..Platforms, ..ParameterPaths
-import ..Platforms: SolverStyle, dictionary, measure, dualdictionary, param_first,
-    param_double, correctparamformat, unsafe_dictionary, param_inbetween
+
 using BasisFunctions: Dictionary, Measure, MultiDict
 
 export WeightedSumPlatform
@@ -45,13 +42,8 @@ param_double(platform::WeightedSumPlatform, param::NTuple) =
 param_inbetween(platform::WeightedSumPlatform, param1::NTuple, param2::NTuple) =
     ntuple(k->param_inbetween(platform.P, param1[k], param2[k]), Val(length(platform.weights)))
 
-using ..ParameterPaths:  default_param_path, NTupleParameterPath, HierarchyPath
-import ..ParameterPaths: default_param_path
-
 function default_param_path(platform::WeightedSumPlatform)
     firstpath = default_param_path(platform.P)
     secondpath = NTupleParameterPath{length(platform.weights)}(first(firstpath))
     HierarchyPath(firstpath, secondpath)
-end
-
 end

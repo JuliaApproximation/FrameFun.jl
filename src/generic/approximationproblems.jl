@@ -1,12 +1,9 @@
 ##########################
 # Approximation problems
 ##########################
-module ApproximationProblems
-using ..Platforms
-import ..Platforms: SamplingStyle, SolverStyle, dictionary, platform
+
 import BasisFunctions: coefficienttype, component, components
 using BasisFunctions: Dictionary, TensorProductDict
-using ..ExtensionFrames
 using DomainSets: Domain
 
 export ApproximationProblem
@@ -197,4 +194,3 @@ approximationproblem(platform::Platform) = AdaptiveApproximation(platform)
 # approximation by specifying a parameter value.
 approximationproblem(ap::AdaptiveApproximation, param) = approximationproblem(ap.platform, param)
 approximationproblem(ap::AdaptiveApproximation, param, L) = approximationproblem(ap.platform, param, L)
-end

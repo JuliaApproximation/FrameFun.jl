@@ -1,9 +1,8 @@
 module WeightedApproximation
 
-using ..Platforms, ..FrameFunInterface, ..ApproximationProblems, BasisFunctions,
-    LinearAlgebra
+using BasisFunctions, LinearAlgebra
+using FrameFun
 
-import ..FrameFunInterface: AZ_A, AZ_Z, solver
 import BasisFunctions: approximate
 
 struct WeightedApproximationStyle <: ProblemStyle

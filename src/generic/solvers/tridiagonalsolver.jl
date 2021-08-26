@@ -1,5 +1,5 @@
 using BasisFunctions: DictionarySolverOperator
-using BasisFunctions, DomainSets, ..ExtensionFrames, LinearAlgebra
+using BasisFunctions, DomainSets, LinearAlgebra
 import BasisFunctions: operator, apply!
 
 """

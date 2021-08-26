@@ -9,13 +9,13 @@ using FrameFun, DomainSets, Test
     p = IncrementalCartesianParameterPath{2}()
     PP = parametrizedplatform(P, HierarchyPath(p,ProductPath(p,p)))
 
-    F1, logbook1, _ = FrameFun.Adaptivity.adaptive_approximation(OptimalStyle(), f, PP; criterion = FNAStyle(),δ=1e-2)
+    F1, logbook1, _ = FrameFun.adaptive_approximation(OptimalStyle(), f, PP; criterion = FNAStyle(),δ=1e-2)
     @test size(F1)==(45,)
     @test length(logbook1) == 8
     @test last(logbook1)[3] < .1
     @test norm(coefficients(F1))>10*2.188
 
-    F, logbook, _ = FrameFun.Adaptivity.adaptive_approximation(OptimalStyle(), f, PP; criterion = FNAStyle(),δ=1e-2,FNAη=10)
+    F, logbook, _ = FrameFun.adaptive_approximation(OptimalStyle(), f, PP; criterion = FNAStyle(),δ=1e-2,FNAη=10)
     @test size(F)==(190,)
     @test length(logbook) == 12
     @test last(logbook1)[3] < .1

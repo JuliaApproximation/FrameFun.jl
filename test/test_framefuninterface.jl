@@ -1,6 +1,4 @@
-using FrameFun.FrameFunInterface, FrameFun.Platforms, FrameFun.ApproximationProblems,
-    Test, LinearAlgebra, BasisFunctions, FrameFun.ParameterPaths, FrameFun.WeightedSumPlatforms,
-    FrameFun.ExtensionFramePlatforms
+using Test, LinearAlgebra, BasisFunctions, FrameFun
 
 
 ap1 = approximationproblem(platform(Fourier(10)),10)

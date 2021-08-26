@@ -1,5 +1,5 @@
-module Adaptivity
-using Printf, FrameFun.Platforms, BasisFunctions, FrameFun.ApproximationProblems, LinearAlgebra
+
+using Printf, BasisFunctions, LinearAlgebra
 
 import BasisFunctions: approximate
 
@@ -317,7 +317,4 @@ function adaptive_approximation(::OptimalStyle, f, platform;
     end
 
     return F, logbook, n, δ, error, iterations, converged
-end
-
-
 end

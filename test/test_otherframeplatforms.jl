@@ -1,5 +1,5 @@
 
-using BasisFunctions, FrameFun.AugmentationPlatforms, FrameFun.WeightedSumPlatforms, Test, FrameFun.Platforms
+using BasisFunctions, FrameFun, Test
 
 
 @testset  "AugmentationPlatform" begin
