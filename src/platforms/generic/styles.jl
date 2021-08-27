@@ -148,11 +148,10 @@ const SamplingStyleSuper{TYPE} = Union{<:TYPE,ProductSamplingStyle{NTuple{N,<:TY
 
 
 
-
-
 #################
 # SolverStyle
 #################
+
 export SolverStyle, DirectStyle, InverseStyle, DualStyle, IterativeStyle,
     TridiagonalProlateStyle, AZStyle, AZSmoothStyle, ProductSolverStyle
 """

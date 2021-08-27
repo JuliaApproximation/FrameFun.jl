@@ -1,16 +1,6 @@
 
 import BasisFunctions: discretemeasure, measure, interpolation_grid, components
 
-export SamplingStrategy
-abstract type SamplingStrategy end
-
-export DefaultSamplingStrategy
-"""
-The default strategy tries to keep the oversamplingfactor correct by distributing equally over all degrees of freedom.
-
-"""
-struct DefaultSamplingStrategy <: SamplingStrategy end
-
 default_aznormalization(a...) = false
 
 export smoothingoperator
