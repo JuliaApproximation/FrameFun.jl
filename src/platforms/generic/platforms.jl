@@ -5,9 +5,11 @@ using BasisFunctions: Dictionary, TensorProductDict, Dictionary1d, tensorproduct
 import Base: getindex
 import BasisFunctions: components, dictionary, component, measure, iscomposite, Measure
 
+
 #################
 # Platform
 #################
+
 export Platform, BasisPlatform, FramePlatform
 """
     abstract type Platform end
@@ -21,8 +23,11 @@ or dual dictionary (depending on the chosen measure).
 See also [`BasisPlatform`](@ref), `FramePlatform`](@ref)
 """
 abstract type Platform end
+
 getindex(platform::Platform, param) = dictionary(platform, param)
+
 correctparamformat(platform::Platform, _) = false
+
 function dictionary(platform::Platform, param)
     if !correctparamformat(platform, param)
         throw(ArgumentError("Parameter $param not suited for platform $platform. "))
@@ -63,11 +68,10 @@ include("styles.jl")
 
 
 
-
-
 #################
 # ModelPlatform
 #################
+
 """
     struct ModelPlatform <: Platform
 
@@ -101,13 +105,10 @@ component(platform::ModelPlatform, i) = ModelPlatform(component(model(platform),
 
 
 
-
-
-
-
 #################
 # ProductPlatform
 #################
+
 export ProductPlatform
 """
     struct ProductPlatform{N} <: Platform
@@ -164,13 +165,17 @@ correctparamformat(p::ProductPlatform{N}, param::NTuple{N,Int}) where N =
 
 correctparamformat(::ProductPlatform, param) = false
 
-export param, platform
+
+## Default platforms
+
+export platform_parameter, platform
 """
-    param(dict::Dictionary) = dimensions(dict)
+    platform_parameter(dict::Dictionary) = dimensions(dict)
 
 Return the parameter that is given to a platform to obtain again the dictionary.
 """
-param(dict::Dictionary) = dimensions(dict)
+platform_parameter(dict::Dictionary) = dimensions(dict)
+@deprecate param(dict::Dictionary) platform_parameter(dict)
 
 """
     platform(dict::Dictionary)

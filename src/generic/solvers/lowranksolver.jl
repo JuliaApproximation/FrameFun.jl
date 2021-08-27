@@ -1,6 +1,6 @@
-using LowRankApprox
+
 using LowRankApprox: pqrfact, psvdfact, LRAOptions
-using LinearAlgebra
+
 export pQR_solver, pSVD_solver, rSVD_solver
 LinearAlgebra.ishermitian(::DictionaryOperator) = false
 function pQR_solver(A::DictionaryOperator{T}; threshold=default_threshold(A), lraoptions::LRAOptions=LRAOptions(T), verbose=false, options...) where {T}
@@ -51,7 +51,7 @@ struct RandomizedSvdSolver{T} <: DictionarySolverOperator{T}
     function RandomizedSvdSolver{T}(A::DictionaryOperator;
                 threshold = default_threshold(A), rankestimate = 5, verbose = false, smallcoefficients = false,
                 smallcoefficients_atol = NaN, smallcoefficients_rtol = NaN, options...) where {T}
-        
+
         W, U, S, Vt = randomizedsvd(A, threshold = threshold, rankestimate = rankestimate, verbose = verbose)
         # Small coefficients #
         # One of the tolerances can not be NaN

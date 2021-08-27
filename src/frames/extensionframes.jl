@@ -4,8 +4,6 @@ export ExtensionFrame,
     ⇐, →
 
 
-using BasisFunctions, DomainSets
-
 using BasisFunctions: PrettyPrintSymbol, default_in_support, unsafe_eval_element,
     default_dict_innerproduct, _default_unsafe_eval_element_in_grid, Measure
 

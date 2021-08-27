@@ -1,7 +1,4 @@
 
-using DomainSets, BasisFunctions
-using BasisFunctions: Measure
-
 platform(dict::ExtensionFrame) = ExtensionFramePlatform(platform(basis(dict)), support(dict))
 
 export ExtensionFramePlatform

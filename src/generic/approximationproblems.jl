@@ -103,10 +103,6 @@ end
 
 dictionary(ap::AdaptiveApproximation, param) = ap.platform[param]
 
-export DictionaryApproximation
-mutable struct DictionaryApproximation <: ApproximationProblem
-end
-
 
 export ProductPlatformApproximation
 """
@@ -135,11 +131,16 @@ approximationproblem(platform::ProductPlatform{N}, param) where {N} =
 SamplingStyle(ap::ProductPlatformApproximation) = SamplingStyle(ap.platform)
 SolverStyle(samplingstyle::SamplingStyle, ap::ProductPlatformApproximation) = SolverStyle(ap.platform, samplingstyle)
 
-components(ap::ProductPlatformApproximation) = nothing == samplingparam(ap) ?
-    error("Not possible to get components of `ProductPlatformApproximation` without `samplingparam`") :
-    length(samplingparam(ap))==length(ap.productparam) ?
-    map(approximationproblem, components(ap.platform), ap.productparam, samplingparam(ap)) :
-    error("sampling parameter should contain $(length(ap.productparam)) elements")
+function components(ap::ProductPlatformApproximation)
+    if samplingparam(ap) == nothing
+        error("Not possible to get components of `ProductPlatformApproximation` without `samplingparam`")
+    end
+    if length(samplingparam(ap))==length(ap.productparam)
+        map(approximationproblem, components(ap.platform), ap.productparam, samplingparam(ap))
+    else
+        error("sampling parameter should contain $(length(ap.productparam)) elements")
+    end
+end
 
 
 unsafe_components(ap::ProductPlatformApproximation) = map(approximationproblem, components(ap.platform), ap.productparam)
@@ -153,39 +154,52 @@ export approximationproblem
 
 # examples
 
-## Create an approxmationproblem from a dictionary
+## Create an approximationproblem from a dictionary
 ```jldocs
 julia> approximationproblem(Fourier(10))
 ```
 
-## Create an approxmationproblem from a dictionary and a domain (extensionframe)
+## Create an approximationproblem from a dictionary and a domain (extensionframe)
 ```jldocs
 julia> approximationproblem(Fourier(10),0.0..0.5)
 ```
 
-## Create an approxmationproblem from a platform
+## Create an approximationproblem from a platform
 ```jldocs
 julia> approximationproblem(FourierPlatform())
 ```
 
-## Create an approxmationproblem from a platform and a platform parameter
+## Create an approximationproblem from a platform and a platform parameter
 ```jldocs
 julia> approximationproblem(FourierPlatform(), 10)
 ```
 """
 approximationproblem(dict::Dictionary) =
-    approximationproblem(platform(dict), param(dict))
-# This two-argument routine allows to specify a coefficient type, in which case the
-# dictionary will be promoted if necessary. This allows the `Fun` constructor to ensure
-# that the dictionary can handle complex coefficients, for example.
-# approximationproblem(::Type{T}, dict::Dictionary) where {T} =
-#     DictionaryApproximation(ensure_coefficienttype(T, dict))
+    approximationproblem(platform(dict), platform_parameter(dict))
+approximationproblem(dict::Dictionary, param) =
+    approximationproblem(platform(dict), param)
+approximationproblem(dict::Dictionary, param, L) =
+    approximationproblem(platform(dict), param, L)
 
+# If a dictionary and a domain is specified, we make an extension frame.
+function approximationproblem(dict::Dictionary, domain::Domain, args...)
+    if domain == support(dict)
+        approximationproblem(dict, args...)
+    else
+        approximationproblem(extensionframe(domain, dict), args...)
+    end
+end
 
 
 # 2. An approximation problem from a platform and a concrete parameter value
-approximationproblem(platform::Platform, param) = (@assert correctparamformat(platform, param);PlatformApproximation(platform, param))
-approximationproblem(platform::Platform, param, L) = (@assert correctparamformat(platform, param);PlatformApproximation(platform, param, L))
+function approximationproblem(platform::Platform, param)
+    @assert correctparamformat(platform, param)
+    PlatformApproximation(platform, param)
+end
+function approximationproblem(platform::Platform, param, L)
+    @assert correctparamformat(platform, param)
+    PlatformApproximation(platform, param, L)
+end
 
 # 3. An adaptive approximation problem from a platform
 approximationproblem(platform::Platform) = AdaptiveApproximation(platform)

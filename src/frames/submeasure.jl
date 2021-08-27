@@ -1,5 +1,4 @@
 
-using BasisFunctions, GridArrays, DomainSets
 using BasisFunctions: FFreq, DiscreteWeight, DiscreteProductWeight,
     innerproduct_fourier_part, default_dict_innerproduct, Measure, Weight,
 	OuterProductArray

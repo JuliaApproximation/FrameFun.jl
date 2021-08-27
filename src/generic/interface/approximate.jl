@@ -60,17 +60,18 @@ end
 # The Fun interface
 ####################
 
-# The `Fun` interface first turns the approximation problem into a subtype of
-# `ApproximationProblem`. Next, it calls `approximate`. Finally, it discards all
-# the operators that were computed and simply returns the function.
-# Users wanting to access the operators can call `approximate` directly.
 
 guess_coefficienttype(dict, fun) = promote_type(codomaintype(dict), determine_return_type(fun, domaintype(dict)))
 
+"""
+`Fun` is used to approximate functions like the `approximate` function and it
+has the same interface. It discards all outputs of `approximate` and only
+returns the function approximation.
+"""
 function Fun(fun, dict::Dictionary, args...;
         coefficienttype = guess_coefficienttype(dict, fun),
         options...)
-    ap = approximationproblem(coefficienttype, dict, args...)
+    ap = approximationproblem(BasisFunctions.ensure_coefficienttype(coefficienttype, dict), args...)
     Fun(fun, ap; options...)
 end
 

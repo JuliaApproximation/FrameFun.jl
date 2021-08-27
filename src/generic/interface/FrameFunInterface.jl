@@ -1,7 +1,4 @@
 
-using StaticArrays
-
-using BasisFunctions
 import BasisFunctions: discretemeasure, measure, interpolation_grid, components
 
 export SamplingStrategy
@@ -60,41 +57,28 @@ INTERFACEFUNCTIONS = (:samplingoperator, :dualsamplingoperator, :samplingparamet
 # N: (length(dict))
 
 """
-    @aptoplatform `function`
+    @approximation_interface `function`
 
-Implement the function at the level of the dictionary.
+Generate an interface for the given function in terms of an approximation
+problem and a sampling style. These are generated from the arguments of the
+function.
 """
-macro aptoplatform(ex)
-    def = Meta.parse("default_"*string(ex))
-    intermediate = Meta.parse("_"*string(ex))
-    ret = quote
-        $(ex)(ap::ApproximationProblem, args...; samplingstyle=SamplingStyle(ap),options...) =
-            $(intermediate)(samplingstyle, ap, samplingparameter(samplingstyle, ap; options...), args...; options...)
-        $(ex)(ss::SamplingStyle, ap::ApproximationProblem, args...; options...) =
-            $(intermediate)(ss, ap, samplingparameter(ss, ap; options...), args...; options...)
-        $(intermediate)(ss::SamplingStyle, ap::ApproximationProblem, L, args...; options...) =
-            $(ex)(ss, platform(ap), parameter(ap), L, args...; options...)
-        $(ex)(ss::SamplingStyle, platform::Platform, param, L, args...; dict = dictionary(platform, param), options...) =
-            $(ex)(ss, dict, L, args...)
-        $(ex)(ss::SamplingStyle, platform::ParametrizedPlatform, param, L, args...; options...) =
-            $(ex)(ss, platform.platform, platform.path[param], L, args...; options...)
-        $(ex)(ss::SamplingStyle, dict::Dictionary, L, args...; options...) =
-            $(def)(ss, dict, L, args...)
-    end
-    esc(ret)
-end
-
-macro trial(ex)
+macro approximation_interface(ex)
     def = Meta.parse("default_"*string(ex))
     ret = quote
+        # generate an approximation problem
         $(ex)(dict::Dictionary, args...; options...) = $(ex)(approximationproblem(dict, args...); options...)
         $(ex)(platform::Platform, args...; options...) = $(ex)(approximationproblem(platform, args...); options...)
 
-        function $(ex)(ap::ApproximationProblem, args...; samplingstyle=SamplingStyle(ap),options...)
+        # add a sampling style
+        function $(ex)(ap::ApproximationProblem, args...; samplingstyle=SamplingStyle(ap), options...)
+            # compute the sampling parameter to make sure it is cached
             samplingparameter(samplingstyle, ap; options...)
             $(ex)(samplingstyle, ap, args...; options...)
         end
 
+        # translate the approximation problem to a dictionary via a platform
+        # these calls can be intercepted by the platform to generate custom behaviour
         $(ex)(ss::SamplingStyle, ap::ApproximationProblem, args...; options...) =
             $(ex)(ss, platform(ap), parameter(ap), args...; options...)
         $(ex)(ss::SamplingStyle, platform::Platform, param, args...; dict = dictionary(platform, param), options...) =
@@ -107,12 +91,21 @@ macro trial(ex)
     esc(ret)
 end
 
-macro platformtoap(ex)
+"""
+    @basic_interface `function`
+
+Generate an interface for the given function in terms of an approximation
+problem. The approximation problem is constructed from the arguments of the
+function.
+"""
+macro basic_interface(ex)
     ret = quote
+        # generate an approximation problem
         $(ex)(dict::Dictionary, args...; options...) = $(ex)(approximationproblem(dict, args...); options...)
         $(ex)(platform::Platform, args...; options...) = $(ex)(approximationproblem(platform, args...); options...)
 
         function $(ex)(ap::ApproximationProblem, args...; samplingstyle=SamplingStyle(ap),options...)
+            # compute the sampling parameter once to make sure it is cached
             samplingparameter(samplingstyle, ap; options...)
             $(ex)(samplingstyle, ap, args...; options...)
         end
@@ -120,7 +113,7 @@ macro platformtoap(ex)
     esc(ret)
 end
 
-macro addsamplingparameter(ex)
+macro add_samplingparameter_interface(ex)
     intermediate = Meta.parse("_"*string(ex))
     ret = quote
         $(ex)(ss::SamplingStyle, ap::ApproximationProblem, args...; options...) =
@@ -131,7 +124,7 @@ macro addsamplingparameter(ex)
     esc(ret)
 end
 
-macro addsamplingstyle(ex)
+macro add_samplingstyle_interface(ex)
     ret = quote
         $(ex)(ap::ApproximationProblem; samplingstyle = SamplingStyle(ap), options...) =
             $(ex)(samplingstyle, ap; options...)
@@ -153,45 +146,48 @@ end
 # to a value of the platform parameter param.
 # Platforms may choose to override these to enable different behaviour.
 export interpolation_grid
-@trial interpolation_grid
+@approximation_interface interpolation_grid
+default_interpolation_grid(ss::InterpolationStyle, dict::Dictionary; options...) =
+    interpolation_grid(dict)
 function default_interpolation_grid(ss::SamplingStyle, dict::Dictionary; oversamplingfactor=1, options...)
-    oversamplingfactor != 1 && @warn "InterpolationStyle does not support option `oversamplingfactor=$oversamplingfactor`, use `OversamplingStyle()` instead."
+    oversamplingfactor != 1 && @warn "interpolation does not support option `oversamplingfactor=$oversamplingfactor`, use `OversamplingStyle()` instead."
     interpolation_grid(dict)
 end
 
 
 export oversampling_grid
-@trial oversampling_grid
+@approximation_interface oversampling_grid
+# add a sampling parameter to the arguments
 oversampling_grid(ss::SamplingStyle, ap::ApproximationProblem; options...) =
     oversampling_grid(ss, platform(ap), parameter(ap), samplingparameter(ss, ap; options...); options...)
-oversampling_grid(samplingstyle::SamplingStyle, platform::Platform, param, L; dict = dictionary(platform, param), options...) =
+oversampling_grid(ss::SamplingStyle, platform::Platform, param, L; dict = dictionary(platform, param), options...) =
     oversampling_grid(dict, L)
 include("oversampling_grid.jl")
 
 
 export samplingparameter
-@platformtoap samplingparameter
-@addsamplingstyle samplingparameter
+@basic_interface samplingparameter
+@add_samplingstyle_interface samplingparameter
 include("samplingparameter.jl")
 
 
 export samplingoperator, dualsamplingoperator
-@platformtoap samplingoperator
-@platformtoap dualsamplingoperator
+@basic_interface samplingoperator
+@basic_interface dualsamplingoperator
 include("samplingoperator.jl")
 
 
 
 export sampling_grid, platform_grid
-@platformtoap sampling_grid
-@trial platform_grid
+@basic_interface sampling_grid
+@approximation_interface platform_grid
 include("grids.jl")
 default_sampling_grid(ss::SamplingStyle, dict::Dictionary, L; options...) = oversampling_grid(dict, L)
 default_platform_grid(ss::SamplingStyle, dict::Dictionary, args...; grid, options...) = grid
 
 
 export discretemeasure
-@trial discretemeasure
+@approximation_interface discretemeasure
 discretemeasure(ss::ProductSamplingStyle, ap::ApproximationProblem; options...) =
     productmeasure(components(discretemeasure, ss, ap; options...)...)
 discretemeasure(ss::SamplingStyle, ap::ApproximationProblem; options...) =
@@ -200,12 +196,12 @@ discretemeasure(ss::SamplingStyle, platform::Platform, param, ap; options...) =
     discretemeasure(sampling_grid(ss, ap; options...))
 
 export measure
-@trial measure
+@approximation_interface measure
 default_measure(::SamplingStyle, dict::Dictionary; options...) =
     measure(dict)
 measure(ss::DiscreteGramStyle, ap::ApproximationProblem; options...) =
     discrete_gram_measure(ss, ap; options...)
-@trial discrete_gram_measure
+@approximation_interface discrete_gram_measure
 discrete_gram_measure(ss::SamplingStyleSuper{DiscreteGramStyle}, ap::ApproximationProblem; options...) =
     discretemeasure(ss, ap; options...)
 discrete_gram_measure(ss::SamplingStyle, ap::ApproximationProblem; options...) =
@@ -213,30 +209,30 @@ discrete_gram_measure(ss::SamplingStyle, ap::ApproximationProblem; options...) =
 
 
 export azdual_dict
-@trial azdual_dict
+@approximation_interface azdual_dict
 include("azdual_dict.jl")
 
 
 export discretization, dualdiscretization
-@trial discretization
-@trial dualdiscretization
+@approximation_interface discretization
+@approximation_interface dualdiscretization
 include("discretization.jl")
 
 
 export normalized_discretization, normalized_dualdiscretization
-@trial normalized_discretization
-@trial normalized_dualdiscretization
+@approximation_interface normalized_discretization
+@approximation_interface normalized_dualdiscretization
 include("normalized_discretization.jl")
 
 
 export solver
-@platformtoap solver
+@basic_interface solver
 include("solver.jl")
 
 
 ## The AZ algorithm
 export AZ_A
-@platformtoap AZ_A
+@basic_interface AZ_A
 @addproblemstyle AZ_A
 AZ_A(pstyle::ProblemStyle, ap::ApproximationProblem; options...) =
     normalized_discretization(ap; options...)
@@ -247,7 +243,7 @@ AZ_A(::GenericOperatorStyle, ap::ApproximationProblem; options...) =
 
 
 export AZ_Z
-@platformtoap AZ_Z
+@basic_interface AZ_Z
 @addproblemstyle AZ_Z
 AZ_Z(pstyle::ProblemStyle, ap::ApproximationProblem; options...) =
     normalized_dualdiscretization(ap; options...)
@@ -256,7 +252,7 @@ AZ_Z(::GenericOperatorStyle, ap::ApproximationProblem; options...) =
 
 
 export AZ_Zt
-@platformtoap AZ_Zt
+@basic_interface AZ_Zt
 @addproblemstyle AZ_Zt
 AZ_Zt(pstyle::ProblemStyle, ap::ApproximationProblem; options...) = AZ_Z(pstyle, ap; options...)'
 samplingoperator(pstyle::GenericOperatorStyle, ap; options...) = AZ_Zt(pstyle, ap; options...)
@@ -264,7 +260,7 @@ samplingoperator(pstyle::DictionaryOperatorStyle, ap; options...) = samplingoper
 
 
 export plungeoperator
-@platformtoap plungeoperator
+@basic_interface plungeoperator
 @addproblemstyle plungeoperator
 function plungeoperator(problemstyle::ProblemStyle, ap::ApproximationProblem; options...)
     A = AZ_A(problemstyle, ap; options...)
@@ -274,7 +270,7 @@ end
 
 
 export plungematrix, firstAZstepoperator
-@platformtoap plungematrix
+@basic_interface plungematrix
 @addproblemstyle plungematrix
 function plungematrix(pstyle::ProblemStyle, ap::ApproximationProblem; options...)
     A = AZ_A(pstyle, ap; options...)
@@ -293,7 +289,7 @@ const firstAZstepoperator = plungematrix
 
 
 export plungerank
-@platformtoap plungerank
+@basic_interface plungerank
 function plungerank(ap::ApproximationProblem;
             rankestimate = 40,
             options...)

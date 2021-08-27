@@ -1,6 +1,4 @@
 
-using Printf, BasisFunctions, LinearAlgebra
-
 import BasisFunctions: approximate
 
 export ErrorStyle

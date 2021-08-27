@@ -1,4 +1,4 @@
-using  BasisFunctions
+
 using BasisFunctions: ZeroOperator, Domain
 
 import BasisFunctions: components, size, length, support, evaluation, Measure

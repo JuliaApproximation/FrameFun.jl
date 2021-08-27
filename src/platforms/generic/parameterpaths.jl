@@ -1,7 +1,5 @@
 
-using BasisFunctions
 import Base: getindex, unsafe_getindex, first
-using BasisFunctions: Measure
 
 # For the moment only size is in parameter space. (no spline degree, extensionparameter T, ...)
 export ParameterPath

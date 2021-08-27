@@ -19,7 +19,7 @@ total_mv_time = 0.0
 
 const include_1d_tests = true
 const include_2d_tests = true
-const include_3d_tests = true
+const include_3d_tests = false #true
 const include_bigfloat_tests = true
 
 ########

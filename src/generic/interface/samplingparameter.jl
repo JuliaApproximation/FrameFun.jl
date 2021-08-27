@@ -78,4 +78,4 @@ deduce_samplingparameter(::GramStyle, samplingstrategy::SamplingStrategy, dict::
 
 deduce_samplingparameter(::RectangularGramStyle, samplingstrategy::SamplingStrategy, dict::Dictionary; projectiondict, options...) = length(projectiondict)
 
-deduce_samplingparameter(::GridStyle, samplingstrategy::SamplingStrategy, dict::Dictionary; options...) = param(dict)
+deduce_samplingparameter(::GridStyle, samplingstrategy::SamplingStrategy, dict::Dictionary; options...) = platform_parameter(dict)

@@ -1,8 +1,5 @@
 ## Platforms for certain bases and frames
 
-using BasisFunctions, DomainSets
-using BasisFunctions: Measure
-
 export FourierPlatform
 """
     struct FourierPlatform{T} <: BasisPlatform

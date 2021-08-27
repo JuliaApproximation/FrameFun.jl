@@ -1,7 +1,10 @@
 module FrameFun
 
-using RecipesBase, FillArrays, Reexport
-using DomainSets, GridArrays
+using FillArrays, GridArrays, StaticArrays
+using LinearAlgebra, LowRankApprox
+using Printf, RecipesBase, Reexport
+using DomainSets
+using QuadGK
 
 @reexport using BasisFunctions
 

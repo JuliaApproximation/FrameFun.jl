@@ -48,9 +48,10 @@ DictionaryStyle(platform::FramePlatform) = FrameStyle()
 #################
 # SamplingStyle
 #################
-export SamplingStyle, DiscreteStyle, ProjectionStyle, InterpolationStyle, OversamplingStyle, GridStyle,
-    GramStyle, DiscreteGramStyle, RectangularGramStyle, GenericSamplingStyle,
-    ProductSamplingStyle
+
+export SamplingStyle, DiscreteStyle, ProjectionStyle, InterpolationStyle,
+    OversamplingStyle, GridStyle, GramStyle, DiscreteGramStyle,
+    RectangularGramStyle, GenericSamplingStyle, ProductSamplingStyle
 """
     abstract type SamplingStyle end
 

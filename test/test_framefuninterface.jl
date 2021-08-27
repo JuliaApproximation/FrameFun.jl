@@ -1,12 +1,12 @@
 using Test, LinearAlgebra, BasisFunctions, FrameFun
 
 
-ap1 = approximationproblem(platform(Fourier(10)),10)
-ap2 = approximationproblem(platform(Fourier(10)^2),(10,10))
 dict1 = Fourier(10)
 dict2 = Fourier(10)^2
-plat1 = (platform(Fourier(10)),10)
-plat2 = (platform(Fourier(10)^2),(10,10))
+ap1 = approximationproblem(platform(dict1),10)
+ap2 = approximationproblem(platform(dict2),(10,10))
+plat1 = (platform(dict1),10)
+plat2 = (platform(dict2),(10,10))
 
 aps = (ap1,ap2,)
 alls = (dict1, dict2, aps...,)

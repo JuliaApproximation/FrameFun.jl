@@ -1,4 +1,4 @@
-using DomainSets
+
 import BasisFunctions: resize
 ## Functions to provide oversampled grids for FrameFun approximations.
 

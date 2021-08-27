@@ -1,3 +1,5 @@
+
+# For product sampling we make a product grid
 for f in (:sampling_grid, :interpolation_grid, :platform_grid)
     @eval begin
         $f(ss::ProductSamplingStyle, ap::ApproximationProblem; options...) =
