@@ -378,7 +378,7 @@ end
     # @show "74"
     @test norm(A*(x1+x2)-b) <  1e-3
 
-    F = approximate(f, P, 100;REG=rSVD_solver)[1]
+    F = approximate(f, P, 100; REG=rSVD_solver)[1]
     # @show "75"
     x = .2; @test abs(F(x)-f(x)) < 1e-3
 # @show "8"

@@ -2,8 +2,8 @@
 using BasisFunctions: FFreq, DiscreteWeight, DiscreteProductWeight,
     innerproduct_fourier_part, default_dict_innerproduct, Measure, Weight,
 	OuterProductArray
-import BasisFunctions: quadweights, stencilarray, name, component, components,
-    iscomposite, weights, grid, subindices, isnormalized, supermeasure,
+import BasisFunctions: quadweights, stencilarray, name, weights,
+	grid, subindices, isnormalized, supermeasure,
     support, unsafe_weightfun, strings, innerproduct_native, restrict, discretemeasure
 export submeasure, DiscreteTensorSubWeight, SubWeight, DiscreteSubWeight
 
@@ -88,7 +88,6 @@ const DiscreteTensorSubWeight{T,G,W} = DiscreteSubWeight{T,M,G} where {T,M<:Disc
 name(m::DiscreteTensorSubWeight) = "Tensor of submeasures (supermeasure:"*name(supermeasure(m))
 components(m::DiscreteTensorSubWeight) = map(_discretesubmeasure,components(points(m)),components(weights(supermeasure(m))))
 component(m::DiscreteTensorSubWeight, i) = _discretesubmeasure(component(points(m),i),component(weights(supermeasure(m)),i))
-iscomposite(m::DiscreteTensorSubWeight) = true
 weights(m::DiscreteTensorSubWeight) = OuterProductArray(map(weights, components(m))...)
 
 

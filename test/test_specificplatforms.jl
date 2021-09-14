@@ -45,21 +45,6 @@ end
     @test sum(.0001 .< svdvals(MG) .< .9999) == 9
 end
 
-@testset "FourierExtensionPlatform: GenericOperatorStyle" begin
-    F = FourierExtensionPlatform(0.0..0.5)
-    opts = (samplingstyle=FrameFun.GramStyle(),
-            problemstyle=FrameFun.GenericOperatorStyle(), atol=1e-4,rtol=1e-4,warnslow=false)
-    n = 11
-    f = Fun(exp, F, n; opts...)
-    x = .1923
-    @test abs(f(x) - exp(x)) < 1e-3
-
-    opts = (samplingstyle=FrameFun.DiscreteGramStyle(),
-            problemstyle=FrameFun.GenericOperatorStyle(), atol=1e-4,rtol=1e-4,warnslow=false)
-    f = Fun(exp, F, n; opts...)
-    @test abs(f(x) - exp(x)) < 1e-3
-end
-
 @testset "WeightedSumPlatform" begin
     # Simple platform construction test
     n = 12

@@ -2,6 +2,7 @@
 using DomainSets, BasisFunctions, FrameFun
 using Test
 
+using FrameFun: _samplingparameter!
 
 @testset "ApproximationProblems" begin
     ap1 = approximationproblem(Fourier(10))
@@ -12,14 +13,14 @@ using Test
     @test length(components(ap2))==2
 
     for ap in (ap1, ap2, ap3, ap4)
-        @test samplingparam(ap) == nothing
+        @test FrameFun._samplingparameter(ap) == nothing
     end
 
     for ap in (ap1, ap2, ap3, ap4)
         if ap isa ProductPlatformApproximation
-            setsamplingparam!(ap, (10,10))
+            _samplingparameter!(ap, (10,10))
         else
-            setsamplingparam!(ap, 10)
+            _samplingparameter!(ap, 10)
         end
     end
 
@@ -34,7 +35,7 @@ using Test
     @test SolverStyle(SamplingStyle(ap4),ap4) == DirectStyle()
 
     for ap in (ap1, ap2, ap3, ap4)
-        @test samplingparam(ap) != nothing
+        @test FrameFun._samplingparameter(ap) != nothing
     end
 
     @test dictionary(ap1) == Fourier(10)

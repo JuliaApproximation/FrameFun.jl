@@ -5,6 +5,9 @@ using LinearAlgebra, LowRankApprox
 using Printf, RecipesBase, Reexport
 using DomainSets
 using QuadGK
+using CompositeTypes
+
+import CompositeTypes: components, component
 
 @reexport using BasisFunctions
 
@@ -33,8 +36,8 @@ include("generic/error.jl")
 
 include("applications/DiffEquations.jl")
 @reexport using .DiffEquations
-include("applications/WeightedApproximation.jl")
-@reexport using .WeightedApproximation
+# include("applications/WeightedApproximation.jl")
+# @reexport using .WeightedApproximation
 include("applications/high_dimensional.jl")
 
 include("generic/adaptivity.jl")

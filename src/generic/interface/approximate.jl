@@ -1,4 +1,7 @@
 
+import BasisFunctions: approximate
+export Fun
+
 ###################
 # Helper functions
 ###################
@@ -64,8 +67,8 @@ end
 guess_coefficienttype(dict, fun) = promote_type(codomaintype(dict), determine_return_type(fun, domaintype(dict)))
 
 """
-`Fun` is used to approximate functions like the `approximate` function and it
-has the same interface. It discards all outputs of `approximate` and only
+`Fun` is used to approximate functions in the same way as `approximate` with
+the same interface. It discards all outputs of `approximate` and only
 returns the function approximation.
 """
 function Fun(fun, dict::Dictionary, args...;
@@ -114,9 +117,8 @@ approximate(fun, platform::Platform, args...; options...) =
 
 approximate(fun, ap::ApproximationProblem;
             samplingstyle = SamplingStyle(ap),
-            solverstyle = SolverStyle(samplingstyle, ap),
-            problemstyle = ProblemStyle(ap), options...) =
-    approximate(problemstyle, promote(samplingstyle, solverstyle)..., fun, ap; options...)
+            solverstyle = SolverStyle(samplingstyle, ap), options...) =
+    approximate(promote(samplingstyle, solverstyle)..., fun, ap; options...)
 
 # If the sampling has product structure and a single solverstyle is specified,
 # we turn the solverstyle into a product style as well.
@@ -126,7 +128,7 @@ promote(samplingstyle::ProductSamplingStyle, solverstyle::SolverStyle) =
 	(samplingstyle,ProductSolverStyle(map(x->solverstyle, samplingstyle.styles)))
 
 # Construct the approximation problem and solve it
-function approximate(::DictionaryOperatorStyle, samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun, ap::ApproximationProblem;
+function approximate(samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun, ap::ApproximationProblem;
             verbose = false, options...)
     dict = dictionary(ap)
 
@@ -148,31 +150,6 @@ function approximate(::DictionaryOperatorStyle, samplingstyle::SamplingStyle, so
     F, A, B, C, S, samplingparameter(samplingstyle, ap; verbose=verbose, options...)
 end
 
-# Construct the approximation problem and solve it
-function approximate(pstyle::GenericOperatorStyle, samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun, ap;
-            verbose = false, options...)
-    dict = dictionary(ap)
-
-    verbose && println("Approximate: using problemstyle style $pstyle")
-    verbose && println("Approximate: using sampling style $samplingstyle")
-	verbose && println("Approximate: using solver style $solverstyle")
-
-    S = samplingoperator(pstyle, ap; samplingstyle=samplingstyle, verbose=verbose, options...)
-	if verbose
-		println()
-		println("Approximate: sampling operator with size $(size(S)) is")
-		println(S)
-		println()
-	end
-
-    A = AZ_A(pstyle, ap; samplingstyle=samplingstyle, options...)
-    B = apply(S, fun; options...) # calculated just to keep the same interface.
-    C = solve(solverstyle, ap, A, fun; verbose=verbose, problemstyle=pstyle, samplingstyle=samplingstyle, options...)
-    F = Expansion(dictionary(ap), C)
-    res = norm(apply(S,A; options...)*C-B)
-    verbose && println("Approximate: ended with residual $res\n")
-    F, A, B, C, S, samplingparameter(samplingstyle, ap; verbose=verbose, options...)
-end
 
 export solve
 solve(style::SolverStyle, ap, A::DictionaryOperator, B; options...) =

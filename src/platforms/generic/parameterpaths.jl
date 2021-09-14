@@ -270,6 +270,3 @@ SamplingStyle(platform::ParametrizedPlatform) =
 
 SolverStyle(platform::ParametrizedPlatform, ss::SamplingStyle) =
     SolverStyle(platform.platform, ss)
-
-ProblemStyle(platform::ParametrizedPlatform) =
-    ProblemStyle(platform.platform)

@@ -1,21 +1,18 @@
 include("../solvers/azsolver.jl")
-include("../solvers/generic_azsolver.jl")
 include("../solvers/lowranksolver.jl")
 include("../solvers/randomized.jl")
 include("../solvers/smoothsolver.jl")
 
-# solver needs also a problemstyle and a solverstyle
 solver(ap::ApproximationProblem;
-            problemstyle = ProblemStyle(ap),
             samplingstyle = SamplingStyle(ap),
             solverstyle = SolverStyle(samplingstyle, ap), options...) =
-        solver(problemstyle, solverstyle, ap; samplingstyle=samplingstyle, options...)
+        solver(solverstyle, ap; samplingstyle=samplingstyle, options...)
 
 
 
 
 # solver needs a solverstyle ap and operator
-function solver(pstyle::DictionaryOperatorStyle, solverstyle::SolverStyle, ap::ApproximationProblem;
+function solver(solverstyle::SolverStyle, ap::ApproximationProblem;
             samplingstyle = SamplingStyle(ap), options...)
     S = samplingoperator(samplingstyle, ap; options...)
     A = discretization(samplingstyle, ap, S; options...)
@@ -23,7 +20,7 @@ function solver(pstyle::DictionaryOperatorStyle, solverstyle::SolverStyle, ap::A
 end
 
 # samplingoperator is no TensorProductOperator
-function solver(pstyle::DictionaryOperatorStyle, solverstyle::ProductSolverStyle, ap::ApproximationProblem;
+function solver(solverstyle::ProductSolverStyle, ap::ApproximationProblem;
             samplingstyle = SamplingStyle(ap), options...)
     S = samplingoperator(samplingstyle, ap; options...)
     A = discretization(samplingstyle, ap; options...)
@@ -60,12 +57,8 @@ end
 
 
 
-solver(style::AZStyle, ap::ApproximationProblem, A::AbstractOperator; problemstyle=ProblemStyle(ap), options...) =
-    solver(problemstyle, style, ap, A; options...)
-solver(pstyle::GenericOperatorStyle, solverstyle::AZStyle, ap::ApproximationProblem, A; options...) =
-    GenericAZSolver(ap, A; options...)
-solver(pstyle::DictionaryOperatorStyle, style::AZStyle, ap::ApproximationProblem, A::AbstractOperator; options...) =
-    solver(style, ap, A, AZ_Zt(pstyle, ap; (options)...); options...)
+solver(style::AZStyle, ap::ApproximationProblem, A::AbstractOperator; options...) =
+    solver(style, ap, A, AZ_Zt(ap; options...); options...)
 
 
 

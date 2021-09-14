@@ -2,7 +2,7 @@ using Test, FrameFun, BasisFunctions
 
 @testset "Generic Platforms" begin
     P = platform(Fourier(10))
-    @test dictionary(P,platform_parameter(Fourier(10))) == Fourier(10)
+    @test dictionary(P,platformparameter(Fourier(10))) == Fourier(10)
     @test P[10] == Fourier(10)
     @test operator(dualdictionary(P,10,measure(P))) ≈ operator(dual(Fourier(10)))
     @test DictionaryStyle(P)==BasisStyle()
@@ -30,7 +30,7 @@ using Test, FrameFun, BasisFunctions
     @test component(P,1) == platform(Fourier(10))
     length(components(P))==2
     @test dictionary(P,10) == Fourier(10)^2
-    @test dictionary(P,platform_parameter(Fourier(10)^2)) == Fourier(10)^2
+    @test dictionary(P,platformparameter(Fourier(10)^2)) == Fourier(10)^2
     @test P[10] == Fourier(10)^2
     @test dictionary(P,(11,12)) == Fourier(11)⊗Fourier(12)
     @test dualdictionary(P,(10,10), measure(Fourier(10)^2)) isa TensorProductDict
@@ -56,6 +56,4 @@ end
     @test DictionaryStyle(platform(Fourier(10))) == BasisStyle()
     @test DictionaryStyle(platform(MultiDict((Fourier(10),Fourier(10))))) == UnknownDictionaryStyle()
     @test components(SolverStyle(platform(Fourier(10)^2), SamplingStyle(platform(Fourier(10)^2)))) == (InverseStyle(), InverseStyle())
-    @test ProblemStyle(platform(Fourier(10)))  == DictionaryOperatorStyle()
-
 end

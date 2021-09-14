@@ -1,3 +1,4 @@
+
 normalized_discretization(ss::SamplingStyle, ap::ApproximationProblem; options...) =
     normalized_discretization(ss, ap, haskey(options,:S) ? options[:S] : samplingoperator(ss, ap; options...); options...)
 normalized_discretization(f, ss::SamplingStyle, ap::ApproximationProblem; options...) =

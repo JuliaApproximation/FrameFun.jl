@@ -10,7 +10,7 @@ function samplingoperator(samplingstyle::DiscreteStyle, ap::ApproximationProblem
 end
 
 samplingoperator(samplingstyle::ProductSamplingStyle, ap::ApproximationProblem; options...) =
-    tensorproduct( components(samplingoperator, samplingstyle, ap; options...)... )
+    tensorproduct( ap_components(samplingoperator, samplingstyle, ap; options...)... )
 
 samplingoperator(samplingstyle::DiscreteGramStyle, ap::ApproximationProblem; options...) =
     ProjectionSampling(dictionary(ap), measure(samplingstyle, ap; options...))

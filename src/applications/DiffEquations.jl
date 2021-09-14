@@ -136,15 +136,15 @@ function rhs(D::DiffEquation; incboundary = false, options...)
     BlockVector(rhs...)
 end
 
-struct PDEApproximation <: ApproximationProblem
+struct PDEApproximation <: FrameFun.ApproximationProblem
     D   ::  DiffEquation
 end
 coefficienttype(ap::PDEApproximation) = coefficienttype(ap.D.S)
 
-AZ_A(pstyle::ProblemStyle, ap::PDEApproximation; options...) =
-        _AZ_A(pstyle, ap; options...)
+AZ_A(ap::PDEApproximation; options...) =
+        _AZ_A(ap; options...)
 
-function AZ_Zt(pstyle::ProblemStyle, ap::PDEApproximation; options...)
+function AZ_Zt(ap::PDEApproximation; options...)
     D = ap.D
     G = grid(dest(D.SMP))
     OP = operator(D; options...)

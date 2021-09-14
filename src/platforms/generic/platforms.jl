@@ -132,10 +132,7 @@ ProductPlatform(platform::Platform, n::Int) = ProductPlatform(ntuple(x->platform
 dualdictionary(platform::ProductPlatform, param, measure::Measure; options...) =
     (@assert length(param)==length(components(platform));
     TensorProductDict(map((plati, parami, mi)->dualdictionary(plati, parami, mi; options...), components(platform), param, components(measure))...))
-iscomposite(p::ProductPlatform) = true
 components(p::ProductPlatform) = p.platforms
-
-component(p::ProductPlatform, i) = p.platforms[i]
 
 export productparameter
 """
@@ -168,19 +165,18 @@ correctparamformat(::ProductPlatform, param) = false
 
 ## Default platforms
 
-export platform_parameter, platform
+export platformparameter, platform
 """
-    platform_parameter(dict::Dictionary) = dimensions(dict)
+    platformparameter(dict::Dictionary) = dimensions(dict)
 
-Return the parameter that is given to a platform to obtain again the dictionary.
+Return the parameter that is given to a model-based platform to obtain this dictionary.
 """
-platform_parameter(dict::Dictionary) = dimensions(dict)
-@deprecate param(dict::Dictionary) platform_parameter(dict)
+platformparameter(dict::Dictionary) = dimensions(dict)
 
 """
     platform(dict::Dictionary)
 
 Return a platform that generates dictionaries of the type of dict.
 """
-platform(dict::Dictionary1d) = ModelPlatform(dict)
+platform(dict::Dictionary) = ModelPlatform(dict)
 platform(dict::TensorProductDict) = ProductPlatform(map(platform, components(dict))...)

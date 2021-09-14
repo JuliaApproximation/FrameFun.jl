@@ -17,7 +17,7 @@ oversampling_grid(dict::ExtensionFrame, L) = subgrid(oversampling_grid(superdict
 
 discretemeasure(ss::SamplingStyle, platform::ExtensionFramePlatform, param, ap_old; options...) =
     restrict(discretemeasure(ss, platform.basisplatform, param,
-        (ap=approximationproblem(platform.basisplatform, param);setsamplingparam!(ap,samplingparameter(ap_old));ap)
+        (ap=approximationproblem(platform.basisplatform, param);_samplingparameter!(ap,samplingparameter(ap_old));ap)
             ; options...), platform.domain)
 
 azdual_dict(sstyle::SamplingStyle, platform::ExtensionFramePlatform, param, L, measure::Measure; options...) =

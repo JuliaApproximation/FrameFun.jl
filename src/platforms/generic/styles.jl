@@ -224,39 +224,6 @@ components(style::ProductSolverStyle) = style.styles
 
 
 
-
-
-
-
-#################
-# ProblemStyle
-#################
-
-export ProblemStyle, DictionaryOperatorStyle, GenericOperatorStyle
-"""
-    abstract type ProblemStyle end
-
-A problem style trait for platforms.
-
-See also [`DictionaryOperatorStyle`](@ref), [`DictionaryOperatorStyle`](@ref),
-"""
-abstract type ProblemStyle end
-"""
-    struct Style <: ProblemStyle end
-
-Treat all operators as DictionaryOperators (finite dimensions).
-"""
-struct DictionaryOperatorStyle <: ProblemStyle  end
-"""
-    struct Style <: ProblemStyle end
-
-Treat all operators as GenericOperators.
-"""
-struct GenericOperatorStyle <: ProblemStyle  end
-
-
-
-
 #################
 # Defaults
 #################
@@ -278,15 +245,3 @@ SolverStyle(::BasisStyle, p::Platform, ::GridStyle) = DirectStyle()
 SolverStyle(::BasisStyle, p::Platform, ::SamplingStyle) = DirectStyle()
 SolverStyle(::FrameStyle, p::Platform, ::SamplingStyle) = AZStyle()
 SolverStyle(::UnknownDictionaryStyle, p::Platform, ::SamplingStyle) = DirectStyle()
-
-
-# Defaults for dictionaries
-SamplingStyle(dict::Dictionary) = (@warn "Platform styles for dictionaries will disapear";isbasis(dict) ? InterpolationStyle() : OversamplingStyle())
-SamplingStyle(dict::TensorProductDict) = (@warn "Platform styles for dictionaries will disapear";ProductSamplingStyle(map(SamplingStyle, components(dict))))
-SolverStyle(dict::Dictionary, dstyle::SamplingStyle) = (@warn "Platform styles for dictionaries will disapear";DirectStyle())
-SolverStyle(dict::Dictionary, dstyle::InterpolationStyle) = (@warn "Platform styles for dictionaries will disapear";hastransform(dict) ? InverseStyle() : DirectStyle())
-SolverStyle(dict::TensorProductDict, dstyle::ProductSamplingStyle) =
-    (@warn "Platform styles for dictionaries will disapear";ProductSolverStyle(map(SolverStyle, components(dict), dstyle.styles)))
-
-
-ProblemStyle(a) = DictionaryOperatorStyle()

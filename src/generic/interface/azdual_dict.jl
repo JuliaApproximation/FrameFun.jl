@@ -11,7 +11,7 @@ azdual_dict(samplingstyle::SamplingStyle, ap::ApproximationProblem; options...) 
     azdual_dict(samplingstyle, ap, measure(samplingstyle, ap; options...); options...)
 
 azdual_dict(ss::ProductSamplingStyle, ap::ApproximationProblem; options...) =
-    TensorProductDict( components(azdual_dict, ss, ap; options...)... )
+    TensorProductDict( ap_components(azdual_dict, ss, ap; options...)... )
 
 azdual_dict(samplingstyle::SamplingStyle, ap::Platform, param, measure; options...) =
     dualdictionary(ap, param, measure; samplingstyle=samplingstyle, options...)
