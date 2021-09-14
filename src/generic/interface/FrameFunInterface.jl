@@ -23,7 +23,7 @@ macro approximation_interface(ex)
 
         # add a sampling style
         function $(ex)(ap::ApproximationProblem; samplingstyle=SamplingStyle(ap), options...)
-            # compute the sampling parameter to make sure it is cached
+            # compute the sampling parameter with the given options to make sure it is cached
             samplingparameter(samplingstyle, ap; options...)
             $(ex)(samplingstyle, ap; options...)
         end
@@ -81,16 +81,16 @@ end
 
 # Utility functions to create tensor FrameFunInterface functions
 
-function ap_components(fun, ss::ProductSamplingStyle, ap::ProductPlatformApproximation, args...; options...)
+function ap_components(fun, ss::ProductSamplingStyle, ap::ApproximationProblem, args...; options...)
     samplingparameter(ss, ap; options...)
-    @assert length(components(ss))==length(components(ap))
-    map((ssi, api, argi)->fun(ssi, api, argi...; options...), components(ss), components(ap), zip(args...))
+    @assert length(components(ss))==length(productcomponents(ap))
+    map((ssi, api, argi)->fun(ssi, api, argi...; options...), components(ss), productcomponents(ap), zip(args...))
 end
 
-function ap_components(fun, ss::ProductSamplingStyle, ap::ProductPlatformApproximation; options...)
+function ap_components(fun, ss::ProductSamplingStyle, ap::ApproximationProblem; options...)
     samplingparameter(ss, ap; options...)
-    @assert length(components(ss))==length(components(ap))
-    map((ssi, api)->fun(ssi, api; options...), components(ss), components(ap))
+    @assert length(components(ss))==length(productcomponents(ap))
+    map((ssi, api)->fun(ssi, api; options...), components(ss), productcomponents(ap))
 end
 
 

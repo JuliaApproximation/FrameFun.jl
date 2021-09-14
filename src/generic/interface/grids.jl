@@ -11,7 +11,7 @@ sampling_grid(ss::SamplingStyle, ap::ApproximationProblem; options...) =
     sampling_grid(ss, platform(ap), platformparameter(ap), samplingparameter(ss, ap; options...); options...)
 
 sampling_grid(ss::InterpolationStyle, ap::ApproximationProblem; options...) =
-    interpolation_grid(ss, platform(ap), platformparameter(ap); dict = ap.dict, options...)
+    interpolation_grid(ss, platform(ap), platformparameter(ap); dict = dictionary(ap), options...)
 
 # - generic grid: we invoke platform_grid on the platform
 sampling_grid(samplingstyle::GridStyle, ap::ApproximationProblem; options...) =

@@ -18,54 +18,90 @@ All functionality is eventually delegated back to the underlying dictionary or
 platform. Thus, an approximation problem is nothing but an empty intermediate
 layer that passes on the questions to the right object regardless of how the
 question was asked.
+
+Some of the properties of an approximation problem may be cached in order to
+improve efficiency.
 """
 abstract type ApproximationProblem end
+
 
 "Return the sampling parameter if it was set, otherwise return `nothing`."
 _samplingparameter(ap::ApproximationProblem) = ap.smpl_par
 
 "Set the sampling parameter in the approximation problem."
-_samplingparameter!(ap::ApproximationProblem, smpl_par) = (ap.smpl_par = smpl_par)
+function _samplingparameter!(ap::ApproximationProblem, smpl_par)
+    if platform(ap) isa ProductPlatform
+        @assert length(productparameter(ap))==length(smpl_par)
+    end
+    (ap.smpl_par = smpl_par)
+end
 
 
-"Supertype of approximation problems based on a `platform`."
-abstract type PlatformApproximationProblem <: ApproximationProblem end
+SamplingStyle(ap::ApproximationProblem) = SamplingStyle(platform(ap))
+SolverStyle(samplingstyle::SamplingStyle, ap::ApproximationProblem) =
+    SolverStyle(platform(ap), samplingstyle)
 
-platform(ap::PlatformApproximationProblem) = ap.platform
 
-export platformparameter
-"Return the platform parameter of the approximation problem."
-platformparameter(ap::PlatformApproximationProblem) = ap.plt_par
+# Caching of properties
+cache(ap::ApproximationProblem) = ap.cache
+cache(ap::ApproximationProblem, property) = ap.cache[property]
+cache!(ap::ApproximationProblem, property, value) = ap.cache[property] = value
 
-coefficienttype(ap::PlatformApproximationProblem) = coefficienttype(dictionary(ap))
+ap_hasproperty(ap::ApproximationProblem, property) = haskey(cache(ap), property)
 
-"""
-    mutable struct PlatformApproximation <: PlatformApproximationProblem
+ap_fun(ap::ApproximationProblem) = cache(ap, ap_fun)
+ap_fun!(ap::ApproximationProblem, f) = cache!(ap, ap_fun, f)
 
-A `PlatformApproximation` stores a platform and a platform parameter. This
-corresponds to a specific dictionary (which is also stored). All queries are
-delegated to the platform, and thus the answers may differ from the defaults.
 
-As with dictionary approximations, the settings can be overruled by explicitly
-specifying optional arguments to `Fun`.
-"""
-mutable struct PlatformApproximation <: PlatformApproximationProblem
+
+"A `PlatformApproximation` stores a platform and a platform parameter."
+mutable struct PlatformApproximation <: ApproximationProblem
     platform    ::  Platform
-    dict        ::  Dictionary
-    plt_par
-    smpl_par
+    plt_par         # platform parameter
+    smpl_par        # sampling parameter
     cache
 
     PlatformApproximation(platform, plt_par, smpl_par = nothing) =
-        new(platform, dictionary(platform, plt_par), plt_par, smpl_par)
+        new(platform, plt_par, smpl_par, Dict{Any,Any}())
 end
 
-dictionary(ap::PlatformApproximation) = ap.dict
+platform(ap::PlatformApproximation) = ap.platform
+
+export platformparameter
+"Return the platform parameter of the approximation problem."
+platformparameter(ap::PlatformApproximation) = ap.plt_par
+
+function dictionary(ap::PlatformApproximation)
+    if ap_hasproperty(ap, dictionary)
+        cache(ap, dictionary)
+    else
+        Φ = dictionary(platform(ap), platformparameter(ap))
+        cache!(ap, dictionary, Φ)
+    end
+end
 
 
-SamplingStyle(ap::PlatformApproximation) = SamplingStyle(ap.platform)
-SolverStyle(samplingstyle::SamplingStyle, ap::PlatformApproximation) =
-    SolverStyle(ap.platform, samplingstyle)
+coefficienttype(ap::PlatformApproximation) = coefficienttype(dictionary(ap))
+
+# specialized functions for when the platform is a product platform
+
+productparameter(ap::PlatformApproximation) = productparameter(platform(ap), platformparameter(ap))
+
+function productcomponents(ap::PlatformApproximation)
+    smpl_par = _samplingparameter(ap)
+    if smpl_par == nothing
+        error("Not possible to get product components of approximation problem without known sampling parameter")
+    end
+    if length(smpl_par)==length(productparameter(ap))
+        map(approximationproblem, components(ap.platform), productparameter(ap), smpl_par)
+    else
+        error("sampling parameter should contain $(length(productparameter(ap))) elements")
+    end
+end
+
+unsafe_productcomponents(ap::PlatformApproximation) =
+    map(approximationproblem, components(platform(ap)), productparameter(ap))
+
 
 
 """
@@ -77,66 +113,21 @@ approximations. It has no single platform parameter.
 struct AdaptiveApproximation <: ApproximationProblem
     platform    ::  Platform
     cache
+    AdaptiveApproximation(platform::Platform) = new(platform, Dict{Any,Any}())
 end
 
 platform(ap::AdaptiveApproximation) = ap.platform
 
+dictionary(ap::AdaptiveApproximation) =
+    error("An adaptive approximation problem does not have a single dictionary.")
 dictionary(ap::AdaptiveApproximation, plt_par) = dictionary(platform(ap), plt_par)
 
 platformparameter(ap::AdaptiveApproximation) =
     error("An adaptive approximation problem does not contain a platform parameter.")
 
 
-"""
-    mutable struct ProductPlatformApproximation{N} <: ApproximationProblem
 
-A `ProductPlatformApproximation` corresponds to a product platform.
-"""
-mutable struct ProductPlatformApproximation{N} <: PlatformApproximationProblem
-    platform        ::  ProductPlatform{N}
-    plt_par
-    productparam    ::  NTuple{N,Any}
-    dict            ::  TensorProductDict
-    smpl_par
-    cache
-
-
-    function ProductPlatformApproximation{N}(platform::ProductPlatform, plt_par, smpl_par=nothing) where {N}
-        new(platform, plt_par, productparameter(platform, plt_par), dictionary(platform, plt_par), smpl_par)
-    end
-end
-
-function _samplingparameter!(ap::ProductPlatformApproximation, smpl_par)
-    @assert length(ap.productparam)==length(smpl_par)
-    ap.smpl_par = smpl_par
-end
-
-approximationproblem(platform::ProductPlatform{N}, plt_par) where {N} =
-    ProductPlatformApproximation{N}(platform, plt_par)
-
-SamplingStyle(ap::ProductPlatformApproximation) = SamplingStyle(ap.platform)
-SolverStyle(samplingstyle::SamplingStyle, ap::ProductPlatformApproximation) =
-    SolverStyle(ap.platform, samplingstyle)
-
-function components(ap::ProductPlatformApproximation)
-    smpl_par = _samplingparameter(ap)
-    if smpl_par == nothing
-        error("Not possible to get components of `ProductPlatformApproximation` without `samplingparam`")
-    end
-    if length(smpl_par)==length(ap.productparam)
-        map(approximationproblem, components(ap.platform), ap.productparam, smpl_par)
-    else
-        error("sampling parameter should contain $(length(ap.productparam)) elements")
-    end
-end
-
-
-unsafe_components(ap::ProductPlatformApproximation) =
-    map(approximationproblem, components(ap.platform), ap.productparam)
-
-dictionary(ap::ProductPlatformApproximation) = ap.dict
-
-
+## Now on to the actual interface:
 
 to_platform(dict::Dictionary) = (platform(dict), platformparameter(dict))
 function to_platform(dict::Dictionary, plt_par)
@@ -204,6 +195,16 @@ approximationproblem(platform::Platform) = AdaptiveApproximation(platform)
 # From the adaptive approximation problem we can create a concrete platform
 # approximation by specifying a parameter value.
 approximationproblem(ap::AdaptiveApproximation, plt_par) =
-    approximationproblem(ap.platform, plt_par)
+    approximationproblem(platform(ap), plt_par)
 approximationproblem(ap::AdaptiveApproximation, plt_par, smpl_par) =
-    approximationproblem(ap.platform, plt_par, smpl_par)
+    approximationproblem(platform(ap), plt_par, smpl_par)
+
+
+# Allow a function to be specified as first argument
+approximationproblem(fun, dict::Dictionary, args...) =
+    approximationproblem(fun, to_platform(dict, args...)...)
+function approximationproblem(fun, platform::Platform, args...)
+    ap = approximationproblem(platform, args...)
+    ap_fun!(ap, fun)
+    ap
+end

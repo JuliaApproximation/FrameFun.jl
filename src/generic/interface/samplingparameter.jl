@@ -29,8 +29,8 @@ samplingparameter(samplingstyle::DiscreteGramStyle, ap::ApproximationProblem; op
 deduce_samplingparameter(ss::SamplingStyle, ap::ApproximationProblem; options...) =
     deduce_samplingparameter(ss, platform(ap), platformparameter(ap); options...)
 
-deduce_samplingparameter(ss::ProductSamplingStyle, ap::ProductPlatformApproximation; options...) =
-    map((x,style)->samplingparameter(style, x; options...), FrameFun.unsafe_components(ap), ss.styles)
+deduce_samplingparameter(ss::ProductSamplingStyle, ap::ApproximationProblem; options...) =
+    map((x,style)->samplingparameter(style, x; options...), FrameFun.unsafe_productcomponents(ap), ss.styles)
 
 function deduce_oversampling_parameter(ss::OversamplingStyle, args...; dict=dictionary(args...), verbose = false, oversamplingfactor = 2, options...)
     # In the absence of smpl_par, we deduce M and then find the best matching smpl_par
@@ -67,7 +67,7 @@ oversamplingM(oversamplingfactor::Real, dict::TensorProductDict) =
 oversamplingfactor_float2tuple(oversamplingfactor::Real, dict::TensorProductDict) =
     oversamplingfactor^(1/dimension(dict))
 
-function deduce_samplingparameter(ss::ProductSamplingStyle{NTuple{N,OversamplingStyle}}, ap::ProductPlatformApproximation;
+function deduce_samplingparameter(ss::ProductSamplingStyle{NTuple{N,OversamplingStyle}}, ap::ApproximationProblem;
         dict=dictionary(ap), oversamplingfactor=2, verbose=false, options...) where N
     oversamplingfactor = oversamplingfactor_float2tuple(oversamplingfactor, dict)
     if haskey(options, :M)
@@ -79,7 +79,7 @@ function deduce_samplingparameter(ss::ProductSamplingStyle{NTuple{N,Oversampling
         M = oversamplingM(oversamplingfactor, dict)
     end
     smpl_par = tuple(map((api, Mi)->deduce_samplingparameter(OversamplingStyle(), api;
-        oversamplingfactor=oversamplingfactor, M=Mi, verbose=verbose, options...), FrameFun.unsafe_components(ap), M)...)
+        oversamplingfactor=oversamplingfactor, M=Mi, verbose=verbose, options...), FrameFun.unsafe_productcomponents(ap), M)...)
     verbose && println("Sampling parameter: best match for M = $M is smpl_par = $smpl_par")
     smpl_par
 end

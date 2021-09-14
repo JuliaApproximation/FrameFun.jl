@@ -17,7 +17,7 @@ using FrameFun: _samplingparameter!
     end
 
     for ap in (ap1, ap2, ap3, ap4)
-        if ap isa ProductPlatformApproximation
+        if platform(ap) isa ProductPlatform
             _samplingparameter!(ap, (10,10))
         else
             _samplingparameter!(ap, 10)

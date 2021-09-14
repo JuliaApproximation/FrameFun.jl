@@ -18,7 +18,7 @@ samplingoperator(samplingstyle::DiscreteGramStyle, ap::ApproximationProblem; opt
 genericsamplingoperator(args...; options...) = error("Implement genericsamplingoperator.")
 
 samplingoperator(::GenericSamplingStyle, ap::PlatformApproximation; options...) =
-    genericsamplingoperator(ap.platform, ap.param; dict = ap.dict, options...)
+    genericsamplingoperator(ap.platform, ap.param; dict = dictionary(ap), options...)
 
 samplingoperator(samplingstyle::GramStyle, ap::ApproximationProblem; options...) =
     ProjectionSampling(dictionary(ap), measure(samplingstyle, ap; options...))
