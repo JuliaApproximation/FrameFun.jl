@@ -36,7 +36,7 @@ end
 
     g = PeriodicEquispacedGrid(3,-1,1)×PeriodicEquispacedGrid(4,-1,1)
     d = UnitInterval()^2
-    @assert subgrid(g,d) isa TensorSubGrid
+    @assert subgrid(g,d) isa ProductSubGrid
     sg = subgrid(g,d)
     μ = discretemeasure(sg)
     generic_test_discrete_measure(μ )

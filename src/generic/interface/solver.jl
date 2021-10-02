@@ -3,29 +3,22 @@ include("../solvers/lowranksolver.jl")
 include("../solvers/randomized.jl")
 include("../solvers/smoothsolver.jl")
 
-solver(ap::ApproximationProblem;
-            samplingstyle = SamplingStyle(ap),
-            solverstyle = SolverStyle(samplingstyle, ap), options...) =
-        solver(solverstyle, ap; samplingstyle=samplingstyle, options...)
+# Dispatch on solver style
+solver(ap::ApproximationProblem; options...) = solver(SolverStyle(ap), ap; options...)
 
-
-
-
-# solver needs a solverstyle ap and operator
-function solver(solverstyle::SolverStyle, ap::ApproximationProblem;
-            samplingstyle = SamplingStyle(ap), options...)
-    S = samplingoperator(samplingstyle, ap; options...)
-    A = discretization(samplingstyle, ap, S; options...)
-    solver(solverstyle, ap, A; S = S, options...)
+# add the linear system as a third argument
+function solver(solverstyle::SolverStyle, ap::ApproximationProblem; options...)
+    A = discretization(ap; options...)
+    solver(solverstyle, ap, A; options...)
 end
 
-# samplingoperator is no TensorProductOperator
-function solver(solverstyle::ProductSolverStyle, ap::ApproximationProblem;
-            samplingstyle = SamplingStyle(ap), options...)
-    S = samplingoperator(samplingstyle, ap; options...)
-    A = discretization(samplingstyle, ap; options...)
-    solver(solverstyle, ap, A; S = S, options...)
-end
+# # sampling_operator is no TensorProductOperator
+# function solver(solverstyle::ProductSolverStyle, ap::ApproximationProblem;
+#             samplingstyle = SamplingStyle(ap), options...)
+#     S = sampling_operator(samplingstyle, ap; options...)
+#     A = discretization(samplingstyle, ap; options...)
+#     solver(solverstyle, ap, A; S = S, options...)
+# end
 
 function solver(::InverseStyle, ap::ApproximationProblem, A::AbstractOperator; weightedAZ=false, options...)
     if weightedAZ
@@ -54,13 +47,8 @@ end
 
 
 
-
-
-
 solver(style::AZStyle, ap::ApproximationProblem, A::AbstractOperator; options...) =
     solver(style, ap, A, AZ_Zt(ap; options...); options...)
-
-
 
 function solver(::AZStyle, ap::ApproximationProblem, A::AbstractOperator, Zt::AbstractOperator;
             B=nothing, smallcoefficients=false, smallcoefficients_atol=NaN, smallcoefficients_rtol=NaN, verbose=false, options...)
@@ -84,8 +72,9 @@ solver(::DualStyle, ap::ApproximationProblem, A::AbstractOperator; options...) =
 
 solver(solverstyle::ProductSolverStyle, ap::ApproximationProblem, A::AbstractOperator; samplingstyle=SamplingStyle(ap), options...) =
     solver(solverstyle, samplingstyle, ap, A; options...)
-function solver(solverstyle::ProductSolverStyle, samplingstyle::ProductSamplingStyle, ap::ApproximationProblem, A::AbstractOperator; S, options...)
-    solvere, sse, ape, Ae, Se = components(solverstyle), components(samplingstyle), productcomponents(ap), components(A), BasisFunctions.productcomponents(S)
+function solver(solverstyle::ProductSolverStyle, samplingstyle::ProductSamplingStyle, ap::ApproximationProblem, A::AbstractOperator; options...)
+	S = sampling_operator(ap)
+    solvere, sse, ape, Ae, Se = components(solverstyle), components(samplingstyle), factors(ap), components(A), factors(S)
     @assert length(solvere) == length(sse) == length(ape) == length(Ae) == length(Se)
     TensorProductOperator(
 		map( (solversi, ssi, api, Ai, Si)->solver(solversi, api, Ai; S=Si, samplingstyle=ssi, options...), solvere, sse, ape, Ae, Se)...

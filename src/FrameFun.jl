@@ -8,8 +8,10 @@ using QuadGK
 using CompositeTypes
 
 import CompositeTypes: components, component
+import DomainSets: factors, nfactors, factor
 
 @reexport using BasisFunctions
+import BasisFunctions: coefficienttype, dual
 
 include("extra/FrameFunDomains/FrameFunDomains.jl")
 @reexport using .FrameFunDomains
@@ -20,7 +22,7 @@ include("platforms/generic/parameterpaths.jl")
 include("frames/extensionframes.jl")
 
 include("generic/approximationproblems.jl")
-include("generic/interface/FrameFunInterface.jl")
+include("generic/interface/interface.jl")
 
 # Other platforms
 include("platforms/augmentation.jl")

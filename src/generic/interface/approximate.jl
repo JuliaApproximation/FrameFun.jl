@@ -74,28 +74,31 @@ returns the function approximation.
 function Fun(fun, dict::Dictionary, args...;
         coefficienttype = guess_coefficienttype(dict, fun),
         options...)
-    ap = approximationproblem(BasisFunctions.ensure_coefficienttype(coefficienttype, dict), args...)
-    Fun(fun, ap; options...)
+	dict2 = BasisFunctions.ensure_coefficienttype(coefficienttype, dict)
+    ap = approximationproblem(fun, dict2, args...; options...)
+    Fun(ap; options...)
 end
 
 function Fun(fun, platform::Platform, args...; options...)
-    ap = approximationproblem(platform, args...)
-    Fun(fun, ap; options...)
+    ap = approximationproblem(fun, platform, args...)
+    Fun(ap; options...)
 end
 
-function Fun(fun, ap::ApproximationProblem; verbose = false, options...)
+Fun(fun, ap::ApproximationProblem; options...) = Fun(_ap(fun, ap); options...)
+
+function Fun(ap::ApproximationProblem; verbose = false, options...)
     if verbose
         println("Fun: using the following dictionary:")
         show(dictionary(ap))
 		println()
     end
-    F, A, B, C, S = approximate(fun, ap; verbose=verbose, options...)
+    F, A, B, C, S = approximate(ap; verbose=verbose, options...)
     F
 end
 
-function Fun(fun, ap::AdaptiveApproximation; verbose = false, options...)
-    verbose && println("Fun: adaptive approximation using platform $(ap.platform)")
-    approximate(fun, ap; verbose=verbose, options...)
+function Fun(ap::AdaptiveApproximation; verbose = false, options...)
+    verbose && println("Fun: adaptive approximation using platform $(platform(ap))")
+    approximate(ap; verbose=verbose, options...)
 end
 
 
@@ -111,14 +114,14 @@ end
 
 
 approximate(fun, dict::Dictionary, args...; options...) =
-    approximate(fun, approximationproblem(dict, args...); options...)
+    approximate(_ap(fun, dict, args...); options...)
 approximate(fun, platform::Platform, args...; options...) =
-    approximate(fun, approximationproblem(platform, args...); options...)
+    approximate(_ap(fun, platform, args...); options...)
 
-approximate(fun, ap::ApproximationProblem;
+approximate(ap::ApproximationProblem;
             samplingstyle = SamplingStyle(ap),
-            solverstyle = SolverStyle(samplingstyle, ap), options...) =
-    approximate(promote(samplingstyle, solverstyle)..., fun, ap; options...)
+            solverstyle = SolverStyle(ap), options...) =
+    approximate(promote(samplingstyle, solverstyle)..., ap; options...)
 
 # If the sampling has product structure and a single solverstyle is specified,
 # we turn the solverstyle into a product style as well.
@@ -128,28 +131,28 @@ promote(samplingstyle::ProductSamplingStyle, solverstyle::SolverStyle) =
 	(samplingstyle,ProductSolverStyle(map(x->solverstyle, samplingstyle.styles)))
 
 # Construct the approximation problem and solve it
-function approximate(samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun, ap::ApproximationProblem;
+function approximate(samplingstyle::SamplingStyle, solverstyle::SolverStyle, ap::ApproximationProblem;
             verbose = false, options...)
     dict = dictionary(ap)
 
     verbose && println("Approximate: using sampling style $samplingstyle")
 	verbose && println("Approximate: using solver style $solverstyle")
 
-    S = samplingoperator(samplingstyle, ap; verbose=verbose, options...)
+    S = sampling_operator(samplingstyle, ap; verbose=verbose, options...)
 	if verbose
 		println()
 		println("Approximate: sampling operator with size $(size(S)) is")
 		println(S)
 		println()
 	end
-    A, B = normalized_discretization(fun, samplingstyle, ap, S; verbose=verbose, options...)
-    C = solve(solverstyle, ap, A, B; S=S, verbose=verbose, samplingstyle=samplingstyle, options...)
-    F = Expansion(dictionary(ap), C)
-    res = norm(A*C-B)
+	A = discretization(ap; options...)
+	b = sample_data(ap; options...)
+    coef = solve(solverstyle, ap, A, b; S=S, verbose=verbose, samplingstyle=samplingstyle, options...)
+    F = Expansion(dictionary(ap), coef)
+    res = norm(A*coef-b)
     verbose && println("Approximate: ended with residual $res\n")
-    F, A, B, C, S, samplingparameter(samplingstyle, ap; verbose=verbose, options...)
+    F, A, b, coef, S, samplingparameter(ap)
 end
-
 
 export solve
 solve(style::SolverStyle, ap, A::DictionaryOperator, B; options...) =

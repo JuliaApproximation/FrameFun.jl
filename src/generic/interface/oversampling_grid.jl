@@ -1,46 +1,43 @@
 
-import BasisFunctions: resize
 ## Functions to provide oversampled grids for FrameFun approximations.
 
-resize(grid::ProductGrid, n) = ProductGrid(map(resize, components(grid), n)...)
+equispacedgrid(domain::AbstractInterval, smpl_par::Int) =
+    EquispacedGrid(smpl_par, infimum(domain), supremum(domain))
 
-equispacedgrid(domain::AbstractInterval, L::Int) =
-    EquispacedGrid(L, infimum(domain), supremum(domain))
+equispacedgrid(domain::ProductDomain, smpl_par::Tuple) =
+    cartesianproduct(map(equispacedgrid, components(domain), smpl_par))
 
-equispacedgrid(domain::ProductDomain, L::Tuple) =
-    cartesianproduct(map(equispacedgrid, components(domain), L))
+equispacedgrid(domain::Domain, smpl_par::Tuple) = subgrid(equispacedgrid(boundingbox(domain), smpl_par), domain)
 
-equispacedgrid(domain::Domain, L::Tuple) = subgrid(equispacedgrid(boundingbox(domain), L), domain)
-
-function oversampling_grid(dict::Dictionary, L)
+function oversampling_grid(dict::Dictionary, smpl_par)
     if hasinterpolationgrid(dict)
         try
-            return resize(interpolation_grid(dict), L)
+            return resize(interpolation_grid(dict), smpl_par)
         catch
-            return interpolation_grid(resize(dict, L))
+            return interpolation_grid(resize(dict, smpl_par))
         end
     else
         # If the dictionary does not have an associated grid, we compute an
         # equispaced grid on its support.
-        equispacedgrid(support(dict), L)
+        equispacedgrid(support(dict), smpl_par)
     end
 end
 
 
-oversampling_grid(dict::TensorProductDict, L) = ProductGrid(map(oversampling_grid, components(dict), L)...)
-oversampling_grid(dict::TensorProductDict, L::CartesianIndex) = oversampling_grid(dict, L.I)
-oversampling_grid(dict::TensorProductDict, L::Int) = error("Expects a tuple or a CartesianIndex")
+oversampling_grid(dict::TensorProductDict, smpl_par) = ProductGrid(map(oversampling_grid, components(dict), smpl_par)...)
+oversampling_grid(dict::TensorProductDict, smpl_par::CartesianIndex) = oversampling_grid(dict, smpl_par.I)
+oversampling_grid(dict::TensorProductDict, smpl_par::Int) = error("Expects a tuple or a CartesianIndex")
 
-oversampling_grid(dict::BasisFunctions.CompositeDict, L) = oversampling_grid(component(dict,1), L)
+oversampling_grid(dict::BasisFunctions.CompositeDict, smpl_par) = oversampling_grid(component(dict,1), smpl_par)
 
-oversampling_grid(dict::WeightedDict, L) = oversampling_grid(superdict(dict), L)
+oversampling_grid(dict::WeightedDict, smpl_par) = oversampling_grid(superdict(dict), smpl_par)
 
-oversampling_grid(dict::MappedDict, L) = apply_map(oversampling_grid(superdict(dict), L), forward_map(dict))
+oversampling_grid(dict::MappedDict, smpl_par) = apply_map(oversampling_grid(superdict(dict), smpl_par), forward_map(dict))
 
-oversampling_grid(dict::OperatedDict, L) = oversampling_grid(superdict(dict), L)
+oversampling_grid(dict::OperatedDict, smpl_par) = oversampling_grid(superdict(dict), smpl_par)
 
-# Make an initial guess for the sampling parameter L. The problem is that we have to
-# determine the type of L. We try to infer this from the dimension of the dictionary and/or
+# Make an initial guess for the sampling parameter smpl_par. The problem is that we have to
+# determine the type of smpl_par. We try to infer this from the dimension of the dictionary and/or
 # of its support.
 initialguess(ap, M) = initialguess(dictionary(ap), M)
 initialguess(dict::Dictionary1d, M::Int) = M
@@ -54,34 +51,33 @@ function _initialguess(dict::Dictionary, M, domain::Domain2d, size::Tuple{Int})
     (n,n)
 end
 
-# TODO Should everything be implemented for Dictionaries and Platforms or do we shift to platforms only
-match_and_correct_sampling_parameter(platform::Platform, param, M; dict=dictionary(platform, param), options...) =
-    match_and_correct_sampling_parameter(platform, param, M, initialguess(dict, M); dict=dict, options...)
+match_and_correct_sampling_parameter(platform::Platform, plt_par, M; dict=dictionary(platform, plt_par), options...) =
+    match_and_correct_sampling_parameter(platform, plt_par, M, initialguess(dict, M); dict=dict, options...)
 match_and_correct_sampling_parameter(dict::Dictionary, M; options...) =
     match_and_correct_sampling_parameter(dict, M, initialguess(dict, M); options...)
 
-function match_and_correct_sampling_parameter(platform::Platform, param, M, L_init; dict=dictionary(platform, param), options...)
-    L_trial = match_sampling_parameter(dict, M, L_init)
-    # The above does not always return a suitable L since it does not account for the platform/Dictionary
+function match_and_correct_sampling_parameter(platform::Platform, plt_par, M, smpl_par_init; dict=dictionary(platform, plt_par), options...)
+    smpl_par_trial = match_sampling_parameter(dict, M, smpl_par_init)
+    # The above does not always return a suitable smpl_par since it does not account for the platform/Dictionary
     # correct the result to a suitable one if necesarry
-    correct_sampling_parameter(platform, param, L_trial; dict=dict, options...)
+    correct_sampling_parameter(platform, plt_par, smpl_par_trial; dict=dict, options...)
 end
 
-function match_and_correct_sampling_parameter(dict::Dictionary, M, L_init; options...)
-    L_trial = match_sampling_parameter(dict, M, L_init)
-    # The above does not always return a suitable L since it does not account for the platform/Dictionary
+function match_and_correct_sampling_parameter(dict::Dictionary, M, smpl_par_init; options...)
+    smpl_par_trial = match_sampling_parameter(dict, M, smpl_par_init)
+    # The above does not always return a suitable smpl_par since it does not account for the platform/Dictionary
     # correct the result to a suitable one if necesarry
-    correct_sampling_parameter(dict, L_trial; options...)
+    correct_sampling_parameter(dict, smpl_par_trial; options...)
 end
 
-correct_sampling_parameter(dict::Dictionary, L_trial; options...) = L_trial
-correct_sampling_parameter(platform::Platform, param, L_trial; options...) = L_trial
-correct_sampling_parameter(p::ProductPlatform, param, L; options...) =
-    tuple(map(x->correct_sampling_parameter(x...; options...), zip(components(p), param, L))...)
+correct_sampling_parameter(dict::Dictionary, smpl_par_trial; options...) = smpl_par_trial
+correct_sampling_parameter(platform::Platform, plt_par, smpl_par_trial; options...) = smpl_par_trial
+correct_sampling_parameter(p::ProductPlatform, plt_par, smpl_par; options...) =
+    tuple(map(x->correct_sampling_parameter(x...; options...), zip(components(p), plt_par, smpl_par))...)
 
-function match_sampling_parameter(samplingobject::Dictionary, M, L_init)
-    objective(L) = length(oversampling_grid(samplingobject, L))-M
-    monotonic_bisect(objective, L_init)
+function match_sampling_parameter(samplingobject::Dictionary, M, smpl_par_init)
+    objective(smpl_par) = length(oversampling_grid(samplingobject, smpl_par))-M
+    monotonic_bisect(objective, smpl_par_init)
 end
 
 struct BisectionType end

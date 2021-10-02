@@ -18,7 +18,7 @@ function approximate(pstyle::WeightedApproximationStyle, samplingstyle::Sampling
 	verbose && println("Approximate: using solver style $solverstyle")
     # Trigger computation of sampling parameter L first
     L = samplingparameter(samplingstyle, ap; verbose=verbose, options...)
-    S = samplingoperator(samplingstyle, ap; verbose=verbose, options...)
+    S = sampling_operator(samplingstyle, ap; verbose=verbose, options...)
 	if verbose
 		println()
 		println("Approximate: sampling operator with size $(size(S)) is")
@@ -56,6 +56,6 @@ AZ_Z(pstyle::WeightedApproximationStyle, ap; weight_epsilon=1e-12, options...) =
     pinv(WAZ_W(pstyle, ap; options...), weight_epsilon)*AZ_Z(DictionaryOperatorStyle(), ap; options...)
 
 WAZ_W(pstyle, ap::ApproximationProblem; samplingstyle=SamplingStyle(ap), options...) =
-    DiagonalOperator(apply(samplingoperator(samplingstyle, ap; options...), pstyle.weight; options...))
+    DiagonalOperator(apply(sampling_operator(samplingstyle, ap; options...), pstyle.weight; options...))
 
 end

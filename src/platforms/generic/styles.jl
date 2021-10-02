@@ -73,25 +73,35 @@ specified by the listed styles here:
 """
 abstract type DiscreteStyle <: SamplingStyle end
 
-"""
-    struct InterpolationStyle <: DiscreteStyle end
+"Discrete sampling without associated weights."
+abstract type UnweightedDiscreteStyle <: DiscreteStyle end
+"Discrete sampling with associated weights."
+abstract type WeightedDiscreteStyle <: DiscreteStyle end
 
-The sampling grid is determined by invoking `interpolation_grid` on the dictionary or platform.
+"The sampling grid is determined by invoking `interpolation_grid` on the dictionary or platform."
+struct InterpolationStyle <: UnweightedDiscreteStyle end
+"The sampling grid is determined by invoking `oversampling_grid` on the dictionary or platform."
+struct OversamplingStyle <: UnweightedDiscreteStyle end
 """
-struct InterpolationStyle <: DiscreteStyle end
+The sampling grid is determined by invoking `platform_grid` on the platform,
+or by providing a `grid=...` argument to the Fun constructor.
 """
-    struct OversamplingStyle <: DiscreteStyle end
+struct GridStyle <: UnweightedDiscreteStyle end
 
-The sampling grid is determined by invoking `oversampling_grid` on the dictionary or platform.
-"""
-struct OversamplingStyle <: DiscreteStyle end
-"""
-    struct GridStyle <: DiscreteStyle end
+"Discrete sampling followed by weighting the samples."
+struct WeightedSampling <: WeightedDiscreteStyle
+    style       # the discrete sampling style
+end
+unweighted(st::WeightedSampling) = st.style
 
-The sampling grid is determined by invoking `platform_grid` on the platform, or
-by providing a `grid=...` argument to the Fun constructor.
-"""
-struct GridStyle <: DiscreteStyle end
+"Discrete sampling followed by normalizing the samples."
+struct NormalizedSampling <: WeightedDiscreteStyle
+    style       # the discrete sampling style
+end
+unweighted(st::NormalizedSampling) = st.style
+
+NormalizedSampling(style::NormalizedSampling) = style
+
 
 """
     abstract type ProjectionStyle <: SamplingStyle end
@@ -106,14 +116,14 @@ abstract type ProjectionStyle <: SamplingStyle end
     struct GramStyle <: ProjectionStyle end
 
 Use the inner product implied by the measure obtained by invoking `measure` on the
-dictionary or platform.
+dictionary or platform. This results in a Gram matrix.
 """
 struct GramStyle <: ProjectionStyle end
 """
     struct DiscreteGramStyle <: ProjectionStyle end
 
 Use the inner product implied by the measure obtained by invoking `discretemeasure` on the
-dictionary or platform.
+dictionary or platform. This results in a discrete Gram matrix.
 """
 struct DiscreteGramStyle <: ProjectionStyle end
 """
@@ -126,7 +136,7 @@ struct RectangularGramStyle <: ProjectionStyle end
 """
     struct GenericSamplingStyle <: SamplingStyle end
 
-Write your own samplingoperator. The sampling operator corresponds the one implemented
+Write your own sampling_operator. The sampling operator corresponds the one implemented
 by the user.
 """
 struct GenericSamplingStyle <: SamplingStyle end
@@ -141,7 +151,9 @@ struct ProductSamplingStyle{STYLES} <: SamplingStyle
 end
 ProductSamplingStyle(styles::SamplingStyle...) = ProductSamplingStyle(styles)
 components(style::ProductSamplingStyle) = style.styles
+factors(style::ProductSamplingStyle) = components(style)
 
+# TODO: remove this definition
 export SamplingStyleSuper
 const SamplingStyleSuper{TYPE} = Union{<:TYPE,ProductSamplingStyle{NTuple{N,<:TYPE}} where N} where {TYPE<:SamplingStyle}
 
@@ -220,7 +232,7 @@ struct ProductSolverStyle <: SolverStyle
 end
 ProductSolverStyle(styles::SolverStyle...) = ProductSolverStyle(styles)
 components(style::ProductSolverStyle) = style.styles
-
+factors(style::ProductSolverStyle) = components(style)
 
 
 

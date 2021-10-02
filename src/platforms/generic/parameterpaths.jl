@@ -260,7 +260,7 @@ param_increment(platform::ParametrizedPlatform, param1) =
     param_increment(platform.path, param1)
 
 dualdictionary(platform::ParametrizedPlatform, param, measure::Measure; options...) =
-    dualdictionary(platform.platform, param, measure; options...)
+    dualdictionary(platform.platform, platform.path[param], measure; options...)
 
 measure(platform::ParametrizedPlatform) =
     measure(platform.platform)

@@ -14,20 +14,21 @@ Zt_scaling_factor(S::ChebyshevT, A) = length(supergrid(grid(dest(A))))/2
 
 
 oversampling_grid(dict::ExtensionFrame, L) = subgrid(oversampling_grid(superdict(dict),L), support(dict))
+# BasisFunctions.uniformweights(grid::SubGrid) =
 
 discretemeasure(ss::SamplingStyle, platform::ExtensionFramePlatform, param, ap_old; options...) =
     restrict(discretemeasure(ss, platform.basisplatform, param,
-        (ap=approximationproblem(platform.basisplatform, param);_samplingparameter!(ap,samplingparameter(ap_old));ap)
+        (ap=approximationproblem(platform.basisplatform, param); cache!(ap,samplingparameter, samplingparameter(ap_old));ap)
             ; options...), platform.domain)
 
-azdual_dict(sstyle::SamplingStyle, platform::ExtensionFramePlatform, param, L, measure::Measure; options...) =
-   extensionframe(azdual_dict(sstyle, platform.basisplatform, param, L, supermeasure(measure); options...), platform.domain)
+azdual(sstyle::SamplingStyle, platform::ExtensionFramePlatform, param, L, measure::Measure; options...) =
+   extensionframe(azdual(sstyle, platform.basisplatform, param, L, supermeasure(measure); options...), platform.domain)
 
 correct_sampling_parameter(platform::ExtensionFramePlatform, param, L_trial; options...) =
    correct_sampling_parameter(platform.basisplatform, param, L_trial; options...)
 
-azdual_dict(sstyle::SamplingStyle, platform::AugmentationPlatform, param, L, measure::Measure; options...) =
-   MultiDict([azdual_dict(sstyle, platform.basis, param, L, measure; options...), platform.functions])
+azdual(sstyle::SamplingStyle, platform::AugmentationPlatform, param, L, measure::Measure; options...) =
+   MultiDict([azdual(sstyle, platform.basis, param, L, measure; options...), platform.functions])
 
 oversampling_grid(samplingstyle::SamplingStyle, platform::AugmentationPlatform, param, L; options...) =
    oversampling_grid(samplingstyle, platform.basis, param, L; options...)
@@ -35,28 +36,27 @@ oversampling_grid(samplingstyle::SamplingStyle, platform::AugmentationPlatform, 
 correct_sampling_parameter(platform::AugmentationPlatform, param, L; options...) =
     correct_sampling_parameter(platform.basis, param, L; options...)
 
-function azdual_dict(sstyle::SamplingStyle, platform::WeightedSumPlatform, param, L, measure::Measure; options...)
+function azdual(sstyle::SamplingStyle, platform::WeightedSumPlatform, param, L, measure::Measure; options...)
     denom = (x...)->sum(map(w->abs(w(x...))^2, platform.weights))
     # TODO: discuss, what is the relation between param, L of a platform and platform.P
-    MultiDict([((x...)->(platform.weights[j](x...)/denom(x...))) * azdual_dict(sstyle, platform.P, param, L, measure; options...) for j=1:length(platform.weights)])
+    MultiDict([((x...)->(platform.weights[j](x...)/denom(x...))) * azdual(sstyle, platform.P, param, L, measure; options...) for j=1:length(platform.weights)])
 end
 
 oversampling_grid(samplingstyle::SamplingStyle, platform::WeightedSumPlatform, param::NTuple, L; options...) =
   oversampling_grid(samplingstyle, platform.P, param[1], L; options...)
 
-azdual_dict(sstyle::SamplingStyle, dict::ExtensionFrame, L, measure::Measure; options...) =
-   extensionframe(support(dict), azdual_dict(sstyle, superdict(dict), L, supermeasure(measure); options...),)
+azdual(sstyle::SamplingStyle, dict::ExtensionFrame, L, measure::Measure; options...) =
+   extensionframe(support(dict), azdual(sstyle, superdict(dict), L, supermeasure(measure); options...),)
 
-function azdual_dict(dict::MultiDict, measure::Measure; options...)
+function azdual(dict::MultiDict, measure::Measure; options...)
     dictionary = dict.dicts[1].superdict
     weights = map(weightfunction, components(dict))
     denom = (x...)->sum(map(w->abs(w(x...))^2, weights))
-    MultiDict([((x...)->(weights[j](x...)/denom(x...))) * azdual_dict(dictionary, measure; options...) for j=1:length(weights)])
+    MultiDict([((x...)->(weights[j](x...)/denom(x...))) * azdual(dictionary, measure; options...) for j=1:length(weights)])
 end
 
-function deduce_samplingparameter(ss::OversamplingStyle, platform::WeightedSumPlatform, param::NTuple; options...)
-    mix_samplingparameters(platform, map(parami->FrameFun.deduce_oversampling_parameter(ss, platform.P, parami; options...), param))
-end
+deduce_samplingparameter(ss::OversamplingStyle, platform::WeightedSumPlatform, param::NTuple; options...) =
+    mix_samplingparameters(platform, map(parami->deduce_oversampling_parameter(ss, platform.P[parami]; options...), param))
 
 mix_samplingparameters(platform::WeightedSumPlatform, Ls::NTuple) =
     round.(Int,(sum(prod.(Ls))/prod(Ls[1]))^(1/length(Ls[1]))     .*Ls[1])

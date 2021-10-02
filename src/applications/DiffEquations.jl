@@ -82,7 +82,7 @@ struct DiffEquation
     SMP     ::  AbstractOperator
     oversamplingfactor
     function DiffEquation(S::Dictionary, D::Domain,Diff::DictionaryOperator, DRhs:: Function, BCs::Tuple, oversamplingfactor=2)
-        SMP = samplingoperator(S, D, oversamplingfactor=oversamplingfactor)
+        SMP = sampling_operator(S, D, oversamplingfactor=oversamplingfactor)
         new(S, D, Diff, DRhs, BCs, SMP, oversamplingfactor)
     end
 end

@@ -20,10 +20,6 @@ SolverStyle(p::FourierPlatform, ::OversamplingStyle) = DualStyle()
 
 measure(p::FourierPlatform{T}) where {T} = FourierWeight{T}()
 
-discrete_gram_measure(p::FourierPlatform, n, L;
-            dict = dictionary(p, n), normalizedsampling = false, options...) =
-    normalizedsampling ? BasisFunctions.NormalizedDiracComb(oversampling_grid(dict, L)) :
-                        discretemeasure(oversampling_grid(dict, L))
 
 export ChebyshevPlatform
 """
@@ -76,11 +72,11 @@ dualdictionary(platform::FourierExtensionPlatform, param, measure::Measure; opti
 
 measure(platform::FourierExtensionPlatform) = measure(dictionary(platform, 1))
 
-discrete_gram_measure(p::FourierExtensionPlatform, n, L;
-            dict = dictionary(p, n), normalizedsampling = false, options...) =
-    normalizedsampling ?
-    restrict(BasisFunctions.NormalizedDiracComb(oversampling_grid(dictionary(p.basisplatform, n), L)), p.domain) :
-    restrict(discretemeasure(oversampling_grid(dictionary(p.basisplatform, n), L)), p.domain)
+# discrete_gram_measure(p::FourierExtensionPlatform, n, L;
+#             dict = dictionary(p, n), normalizedsampling = false, options...) =
+#     normalizedsampling ?
+#     restrict(BasisFunctions.NormalizedDiracComb(oversampling_grid(dictionary(p.basisplatform, n), L)), p.domain) :
+#     restrict(discretemeasure(oversampling_grid(dictionary(p.basisplatform, n), L)), p.domain)
 
 export OPSExtensionFramePlatform
 """

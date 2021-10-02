@@ -70,8 +70,8 @@ end
 submeasure(measure::DiscreteWeight, domain::Domain) = _discretesubmeasure(subgrid(points(measure), domain), weights(measure))
 subindices(measure::DiscreteSubWeight) = subindices(measure.subgrid)
 supermeasure(measure::DiscreteSubWeight) = measure.supermeasure
-discretemeasure(grid::Union{SubGrid,TensorSubGrid}) = DiscreteSubWeight(discretemeasure(supergrid(grid)), grid)
-_discretesubmeasure(grid::Union{SubGrid,TensorSubGrid},weights) = DiscreteSubWeight(discretemeasure(supergrid(grid),weights), grid)
+discretemeasure(grid::Union{SubGrid,ProductSubGrid}) = DiscreteSubWeight(discretemeasure(supergrid(grid)), grid)
+_discretesubmeasure(grid::Union{SubGrid,ProductSubGrid},weights) = DiscreteSubWeight(discretemeasure(supergrid(grid),weights), grid)
 restrict(measure::DiscreteWeight, domain::Domain) = DiscreteSubWeight(measure, subgrid(points(measure), domain))
 weights(measure::DiscreteSubWeight) = subweights(measure, subindices(measure), weights(supermeasure(measure)))
 subweights(_, subindices, w) = w[subindices]
@@ -79,12 +79,17 @@ points(measure::DiscreteSubWeight) = measure.subgrid
 isnormalized(::DiscreteSubWeight) = false
 name(m::DiscreteSubWeight) = "Restriction of a "*name(supermeasure(m))
 
+function discretemeasure(grid::Union{SubGrid,ProductSubGrid}, weights::Ones)
+    @assert size(grid) == size(weights)
+    DiscreteSubWeight(discretemeasure(supergrid(grid)), grid)
+end
+
 """
-    const DiscreteTensorSubWeight{T,G,W} = DiscreteSubWeight{T,M,G} where {T,M<:DiscreteProductWeight,G<:TensorSubGrid}
+    const DiscreteTensorSubWeight{T,G,W} = DiscreteSubWeight{T,M,G} where {T,M<:DiscreteProductWeight,G<:ProductSubGrid}
 
 A tensor product of discrete submeasures.
 """
-const DiscreteTensorSubWeight{T,G,W} = DiscreteSubWeight{T,M,G} where {T,M<:DiscreteProductWeight,G<:TensorSubGrid}
+const DiscreteTensorSubWeight{T,G,W} = DiscreteSubWeight{T,M,G} where {T,M<:DiscreteProductWeight,G<:ProductSubGrid}
 name(m::DiscreteTensorSubWeight) = "Tensor of submeasures (supermeasure:"*name(supermeasure(m))
 components(m::DiscreteTensorSubWeight) = map(_discretesubmeasure,components(points(m)),components(weights(supermeasure(m))))
 component(m::DiscreteTensorSubWeight, i) = _discretesubmeasure(component(points(m),i),component(weights(supermeasure(m)),i))

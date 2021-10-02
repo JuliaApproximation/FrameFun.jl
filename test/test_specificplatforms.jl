@@ -7,8 +7,8 @@ using Test
     F = FourierExtensionPlatform(0.0..0.5)
     opts = (samplingstyle=FrameFun.DiscreteGramStyle(),)
     P = dictionary(F, 4)
-    D = azdual_dict(F,4;opts...)
-    M = measure(F,4;opts...)
+    D = azdual(F,4;opts...)
+    M = measure(F)
     A = SynthesisOperator(P, M)
     Z = SynthesisOperator(D, M)
     Zt = Z'
@@ -23,8 +23,8 @@ end
     F = FourierExtensionPlatform(0.0..0.5)
     opts = (samplingstyle=FrameFun.GramStyle(),)
     P = dictionary(F, 4)
-    D = azdual_dict(F,4;opts...)
-    M = measure(F,4;opts...)
+    D = azdual(F,4;opts...)
+    M = measure(F)
     A = SynthesisOperator(P, M)
     Z = SynthesisOperator(D, M)
     @info "Two `Slow computation of Gram matrix entrywise.` warnings follow."

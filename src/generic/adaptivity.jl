@@ -134,8 +134,8 @@ function next_weight(platform, W, nprev, n, error)
 end
 
 # Dispatch on the style of the adaptive algorithm
-function approximate(fun, ap::AdaptiveApproximation;
-            adaptivestyle = OptimalStyle(), criterion = ErrorStyle(ap.platform),
+function approximate(ap::AdaptiveApproximation;
+            adaptivestyle = OptimalStyle(), criterion = ErrorStyle(platform(ap)),
             verbose = false, options...)
 
     # Inform the user that an adaptive computation is starting
@@ -143,7 +143,7 @@ function approximate(fun, ap::AdaptiveApproximation;
     verbose && println("Error Criterium: $criterion")
 
     # Do the actual computation
-    F, logbook, n, tol, error, iterations, converged = adaptive_approximation(adaptivestyle, fun, ap.platform; criterion=criterion, verbose=verbose, options...)
+    F, logbook, n, tol, error, iterations, converged = adaptive_approximation(adaptivestyle, ap_fun(ap), platform(ap); criterion=criterion, verbose=verbose, options...)
 
     # Report on the final convergence
     if !converged

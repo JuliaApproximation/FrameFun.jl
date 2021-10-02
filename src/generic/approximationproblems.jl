@@ -2,7 +2,6 @@
 # Approximation problems
 ##########################
 
-import BasisFunctions: coefficienttype
 using BasisFunctions: Dictionary, TensorProductDict
 using DomainSets: Domain
 
@@ -25,23 +24,6 @@ improve efficiency.
 abstract type ApproximationProblem end
 
 
-"Return the sampling parameter if it was set, otherwise return `nothing`."
-_samplingparameter(ap::ApproximationProblem) = ap.smpl_par
-
-"Set the sampling parameter in the approximation problem."
-function _samplingparameter!(ap::ApproximationProblem, smpl_par)
-    if platform(ap) isa ProductPlatform
-        @assert length(productparameter(ap))==length(smpl_par)
-    end
-    (ap.smpl_par = smpl_par)
-end
-
-
-SamplingStyle(ap::ApproximationProblem) = SamplingStyle(platform(ap))
-SolverStyle(samplingstyle::SamplingStyle, ap::ApproximationProblem) =
-    SolverStyle(platform(ap), samplingstyle)
-
-
 # Caching of properties
 cache(ap::ApproximationProblem) = ap.cache
 cache(ap::ApproximationProblem, property) = ap.cache[property]
@@ -52,17 +34,29 @@ ap_hasproperty(ap::ApproximationProblem, property) = haskey(cache(ap), property)
 ap_fun(ap::ApproximationProblem) = cache(ap, ap_fun)
 ap_fun!(ap::ApproximationProblem, f) = cache!(ap, ap_fun, f)
 
+# For convenience
+measure(ap::ApproximationProblem) = measure(platform(ap))
+coefficienttype(ap::ApproximationProblem) = coefficienttype(platform(ap))
+
+approximation_measure(ap::ApproximationProblem) = approximation_measure(SamplingStyle(ap), ap)
+approximation_measure(ss::DiscreteStyle, ap::ApproximationProblem) = discretemeasure(ap)
+approximation_measure(ss::ProjectionStyle, ap::ApproximationProblem) = measure(ap)
+approximation_measure(ss::ProductSamplingStyle, ap::ApproximationProblem) = approximation_measure(factor(ss,1),ap)
+
 
 
 "A `PlatformApproximation` stores a platform and a platform parameter."
 mutable struct PlatformApproximation <: ApproximationProblem
     platform    ::  Platform
     plt_par         # platform parameter
-    smpl_par        # sampling parameter
     cache
 
-    PlatformApproximation(platform, plt_par, smpl_par = nothing) =
-        new(platform, plt_par, smpl_par, Dict{Any,Any}())
+    PlatformApproximation(platform, plt_par) = new(platform, plt_par, Dict{Any,Any}())
+    function PlatformApproximation(platform, plt_par, smpl_par)
+        cache = Dict{Any,Any}()
+        cache[samplingparameter] = smpl_par
+        new(platform, plt_par, cache)
+    end
 end
 
 platform(ap::PlatformApproximation) = ap.platform
@@ -80,28 +74,39 @@ function dictionary(ap::PlatformApproximation)
     end
 end
 
+function dualdictionary(ap::PlatformApproximation)
+    if ap_hasproperty(ap, dualdictionary)
+        cache(ap, dualdictionary)
+    else
+        Φ = dualdictionary(platform(ap), platformparameter(ap), approximation_measure(ap))
+        cache!(ap, dualdictionary, Φ)
+    end
+end
 
 coefficienttype(ap::PlatformApproximation) = coefficienttype(dictionary(ap))
+
 
 # specialized functions for when the platform is a product platform
 
 productparameter(ap::PlatformApproximation) = productparameter(platform(ap), platformparameter(ap))
 
-function productcomponents(ap::PlatformApproximation)
-    smpl_par = _samplingparameter(ap)
-    if smpl_par == nothing
-        error("Not possible to get product components of approximation problem without known sampling parameter")
-    end
-    if length(smpl_par)==length(productparameter(ap))
-        map(approximationproblem, components(ap.platform), productparameter(ap), smpl_par)
+function factors(ap::PlatformApproximation)
+    if ap_hasproperty(ap, samplingparameter)
+        smpl_par = samplingparameter(ap)
+        if length(smpl_par)==length(productparameter(ap))
+            map(approximationproblem, factors(platform(ap)), productparameter(ap), smpl_par)
+        else
+            error("sampling parameter should contain $(length(productparameter(ap))) elements")
+        end
     else
-        error("sampling parameter should contain $(length(productparameter(ap))) elements")
+        map(approximationproblem, components(platform(ap)), productparameter(ap))
     end
 end
 
-unsafe_productcomponents(ap::PlatformApproximation) =
+unsafe_factors(ap::PlatformApproximation) =
     map(approximationproblem, components(platform(ap)), productparameter(ap))
 
+components(ap::PlatformApproximation) = factors(ap)
 
 
 """
@@ -130,16 +135,8 @@ platformparameter(ap::AdaptiveApproximation) =
 ## Now on to the actual interface:
 
 to_platform(dict::Dictionary) = (platform(dict), platformparameter(dict))
-function to_platform(dict::Dictionary, plt_par)
-    plt = platform(dict)
-    @assert correctparamformat(plt, plt_par)
-    plt, plt_par
-end
-function to_platform(dict::Dictionary, plt_par, smpl_par)
-    plt = platform(dict)
-    @assert correctparamformat(plt, plt_par)
-    plt, plt_par, smpl_par
-end
+to_platform(dict::Dictionary, smpl_par) =
+    (platform(dict), platformparameter(dict), smpl_par)
 function to_platform(dict::Dictionary, domain::Domain, args...)
     if domain == support(dict)
         to_platform(dict, args...)
@@ -192,19 +189,42 @@ end
 # 3. An adaptive approximation problem from a platform
 approximationproblem(platform::Platform) = AdaptiveApproximation(platform)
 
+function copy_cache(src, dest)
+    for k in keys(cache(src))
+        cache!(dest, k, cache(src, k))
+    end
+end
+
 # From the adaptive approximation problem we can create a concrete platform
 # approximation by specifying a parameter value.
-approximationproblem(ap::AdaptiveApproximation, plt_par) =
-    approximationproblem(platform(ap), plt_par)
-approximationproblem(ap::AdaptiveApproximation, plt_par, smpl_par) =
-    approximationproblem(platform(ap), plt_par, smpl_par)
+function approximationproblem(ap::AdaptiveApproximation, plt_par)
+    ap2 = approximationproblem(platform(ap), plt_par)
+    copy_cache(ap, ap2)
+    ap2
+end
+function approximationproblem(ap::AdaptiveApproximation, plt_par, smpl_par)
+    ap2 = approximationproblem(platform(ap), plt_par, smpl_par)
+    copy_cache(ap, ap2)
+    ap2
+end
 
 
-# Allow a function to be specified as first argument
+# 4. Enable options
+function approximationproblem(args...; options...)
+    ap = approximationproblem(args...)
+    ap_process_options(ap; options...)
+    ap
+end
+
+# 5. Allow a function to be specified as first argument
 approximationproblem(fun, dict::Dictionary, args...) =
-    approximationproblem(fun, to_platform(dict, args...)...)
-function approximationproblem(fun, platform::Platform, args...)
-    ap = approximationproblem(platform, args...)
+    approximationproblem(fun, approximationproblem(dict, args...))
+approximationproblem(fun, platform::Platform, args...) =
+    approximationproblem(fun, approximationproblem(platform, args...))
+function approximationproblem(fun, ap::ApproximationProblem)
     ap_fun!(ap, fun)
     ap
 end
+
+export _ap
+const _ap = approximationproblem

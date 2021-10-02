@@ -26,8 +26,8 @@ unsafe_dictionary(p::ExtensionFramePlatform, n) =
 
 measure(platform::ExtensionFramePlatform) = restrict(measure(platform.basisplatform), platform.domain)
 
-dualdictionary(platform::ExtensionFramePlatform, param, measure::Measure; options...) =
-   extensionframe(dualdictionary(platform.basisplatform, param, supermeasure(measure); options...), platform.domain)
+dualdictionary(platform::ExtensionFramePlatform, plt_par, measure::Measure; options...) =
+   extensionframe(dualdictionary(platform.basisplatform, plt_par, supermeasure(measure); options...), platform.domain)
 
 
 default_param_path(platform::ExtensionFramePlatform) =

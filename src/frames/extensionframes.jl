@@ -43,8 +43,9 @@ end
 
 ExtensionFrame(domain::Domain, basis::Dictionary{S,T}) where {S,T} =
     ExtensionFrame{S,T,typeof(basis),typeof(domain)}(domain, basis)
+ExtensionFrame(basis::Dictionary, domain::Domain) =
+    ExtensionFrame(domain, basis)
 
-# superdict is the function for DerivedDict's to obtain the underlying set
 superdict(f::ExtensionFrame) = f.basis
 
 export basis
@@ -202,7 +203,7 @@ export extensiondual
 """
     extensiondual(dict::ExtensionFrame, measure::Measure; options...)
 
-Return a the extensframe of the dual of the dictionary on the boundingbox.
+Return the extension frame of the dual of the dictionary on the boundingbox.
 """
 extensiondual(dict::ExtensionFrame, measure::Measure; options...) =
     extensionframe(support(dict), gramdual(superdict(dict), supermeasure(measure); options...),)

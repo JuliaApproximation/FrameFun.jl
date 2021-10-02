@@ -3,8 +3,7 @@ using BasisFunctions: Dictionary, TensorProductDict, Dictionary1d, tensorproduct
     extensionsize, gramdual, Weight, ProductWeight, DiscreteProductWeight, resize,
     isbasis, hastransform, dimensions, productmeasure
 import Base: getindex
-import BasisFunctions: components, dictionary, component, measure, iscomposite, Measure
-
+import BasisFunctions: components, factors, dictionary, measure, Measure
 
 #################
 # Platform
@@ -100,9 +99,10 @@ correctparamformat(p::ModelPlatform, param)  =
 
 export measure
 measure(platform::ModelPlatform) = measure(model(platform))
+coefficienttype(platform::ModelPlatform) = coefficienttype(model(platform))
+
 components(platform::ModelPlatform) = map(ModelPlatform, components(model(platform)))
 component(platform::ModelPlatform, i) = ModelPlatform(component(model(platform), i))
-
 
 
 #################
@@ -129,10 +129,12 @@ function DictionaryStyle(p::ProductPlatform)
     isbasis(dict) ? BasisStyle() : FrameStyle()
 end
 ProductPlatform(platform::Platform, n::Int) = ProductPlatform(ntuple(x->platform, n)...)
-dualdictionary(platform::ProductPlatform, param, measure::Measure; options...) =
-    (@assert length(param)==length(components(platform));
-    TensorProductDict(map((plati, parami, mi)->dualdictionary(plati, parami, mi; options...), components(platform), param, components(measure))...))
+function dualdictionary(platform::ProductPlatform, param, measure::Measure; options...)
+    @assert length(param)==length(components(platform))
+    TensorProductDict(map((plati, parami, mi)->dualdictionary(plati, parami, mi; options...), components(platform), param, components(measure))...)
+end
 components(p::ProductPlatform) = p.platforms
+factors(p::ProductPlatform) = components(p)
 
 export productparameter
 """
@@ -144,8 +146,10 @@ productparameter(p::ProductPlatform{N}, n::Int) where {N} = ntuple(x->n, Val(N))
 productparameter(p::ProductPlatform{N}, n::NTuple{N,Any}) where {N} = n
 
 SamplingStyle(platform::ProductPlatform) = ProductSamplingStyle(map(SamplingStyle, components(platform)))
-SolverStyle(p::ProductPlatform, samplingstyle) =
-    ProductSolverStyle(map(SolverStyle, components(p), components(samplingstyle)))
+function SolverStyle(p::ProductPlatform, samplingstyle::ProductSamplingStyle)
+    @assert nfactors(p) == ncomponents(samplingstyle)
+    ProductSolverStyle(map(SolverStyle, factors(p), factors(samplingstyle)))
+end
 
 dictionary(p::ProductPlatform, n::Int) = dictionary(p, productparameter(p, n))
 
@@ -179,4 +183,4 @@ platformparameter(dict::Dictionary) = dimensions(dict)
 Return a platform that generates dictionaries of the type of dict.
 """
 platform(dict::Dictionary) = ModelPlatform(dict)
-platform(dict::TensorProductDict) = ProductPlatform(map(platform, components(dict))...)
+platform(dict::TensorProductDict) = ProductPlatform(map(platform, factors(dict))...)
