@@ -24,7 +24,7 @@ function L2error(f::Function, F::Expansion{S,T}; rtol = eps(real(T)), atol = eps
 end
 
 function residual(f::Function, F::Expansion; residualtype = :l2, options...)
-    A, B = discretization(f, dictionary(F); options...)
+    A, B = full_discretization(f, dictionary(F); options...)
     R = A*coefficients(F)-B
     if residualtype == :l2
         norm(R)

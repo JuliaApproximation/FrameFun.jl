@@ -47,7 +47,7 @@ end
 function errormeasure(::OversampledResidual, platform, tolerance, f, F, args...; residualoversampling=2, M = nothing, L = nothing, options...)
     # Note that we leave out any M or L parameter that the user may have passed,
     # so that we can specify an oversampling factor to the discretization routine.
-    A, B = discretization(f, platform, length(F), samplingstyle=OversamplingStyle(), oversamplingfactor=residualoversampling)
+    A, B = full_discretization(f, platform, length(F), samplingstyle=OversamplingStyle(), oversamplingfactor=residualoversampling)
     residual = norm(A*coefficients(F)-B)
     residual <= error, residual
 end

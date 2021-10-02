@@ -11,6 +11,8 @@ struct Mandelbrot{T} <: Domain{SVector{2,T}}
     box         ::  Domain
 end
 
+Base.isempty(::Mandelbrot) = false
+
 function mandelbrot(maxiter = 1000, threshold = 1000.0)
     box = rectangle(-1.0, 0.35, -0.65, 0.65)
     M1 = 136
@@ -85,6 +87,8 @@ struct JuliaSet{T} <: Domain{SVector{2,T}}
     maskcache   ::  Dict
     box         ::  Domain
 end
+
+Base.isempty(::JuliaSet) = false
 
 function juliaset(c = -0.122565+0.744866im, maxiter = 1000)
     box = rectangle(-0.2, 1.2, -0.4, 0.4)

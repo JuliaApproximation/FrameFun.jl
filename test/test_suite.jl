@@ -40,7 +40,7 @@ end
 show_mv_timings(basis, domain, fun; options...) = show_mv_times && show_mv_timings(ExtensionFrame(domain, basis), fun; options...)
 
 function show_mv_timings(dict::Dictionary, fun; options...)
-    A, B = FrameFun.discretization(FrameFun.promote_dictionary(dict, fun), fun; options...)
+    A, B = full_discretization(FrameFun.promote_dictionary(dict, fun), fun; options...)
     op = A
     c1 = zeros(eltype(op), size(src(op)))
     c2 = zeros(eltype(op), size(dest(op)))

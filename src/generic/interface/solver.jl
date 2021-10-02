@@ -12,37 +12,23 @@ function solver(solverstyle::SolverStyle, ap::ApproximationProblem; options...)
     solver(solverstyle, ap, A; options...)
 end
 
-# # sampling_operator is no TensorProductOperator
-# function solver(solverstyle::ProductSolverStyle, ap::ApproximationProblem;
-#             samplingstyle = SamplingStyle(ap), options...)
-#     S = sampling_operator(samplingstyle, ap; options...)
-#     A = discretization(samplingstyle, ap; options...)
-#     solver(solverstyle, ap, A; S = S, options...)
-# end
+solver(::InverseStyle, ap::ApproximationProblem, A::AbstractOperator; options...) = inv(A)
+solver(::DirectStyle, ap::ApproximationProblem, A::AbstractOperator; options...) =
+	directsolver(A; options...)
+solver(::IterativeStyle, ap::ApproximationProblem, A::AbstractOperator; options...) =
+    iterativesolver(A; options...)
+solver(::DualStyle, ap::ApproximationProblem, A::AbstractOperator; options...) =
+	dualdiscretization(ap; options...)'
 
-function solver(::InverseStyle, ap::ApproximationProblem, A::AbstractOperator; weightedAZ=false, options...)
-    if weightedAZ
-        AZ_Cweight = haskey(options,:AZ_Cweight) ? options[:AZ_Cweight] : error("No options `AZ_Cweight`")
-        AZ_Cweight*inv(A*AZ_Cweight)
-    else
-        inv(A)
-    end
-end
-function solver(::DirectStyle, ap::ApproximationProblem, A::AbstractOperator; weightedAZ=false, options...)
-    if weightedAZ
-        AZ_Cweight = haskey(options,:AZ_Cweight) ? options[:AZ_Cweight] : error("No options `AZ_Cweight`")
-        AZ_Cweight*directsolver(A*AZ_Cweight; options...)
-    else
-        directsolver(A; options...)
-    end
-end
-function solver(::IterativeStyle, ap::ApproximationProblem, A::AbstractOperator; weightedAZ=false, options...)
-    if weightedAZ
-        AZ_Cweight = haskey(options,:AZ_Cweight) ? options[:AZ_Cweight] : error("No options `AZ_Cweight`")
-        AZ_Cweight*iterativesolver(A*AZ_Cweight; options...)
-    else
-        iterativesolver(A; options...)
-    end
+solver(solverstyle::ProductSolverStyle, ap::ApproximationProblem, A::AbstractOperator; samplingstyle=SamplingStyle(ap), options...) =
+    solver(solverstyle, samplingstyle, ap, A; options...)
+function solver(solverstyle::ProductSolverStyle, samplingstyle::ProductSamplingStyle, ap::ApproximationProblem, A::AbstractOperator; options...)
+	S = sampling_operator(ap)
+    solvere, sse, ape, Ae, Se = components(solverstyle), components(samplingstyle), factors(ap), components(A), factors(S)
+    @assert length(solvere) == length(sse) == length(ape) == length(Ae) == length(Se)
+    TensorProductOperator(
+		map( (solversi, ssi, api, Ai, Si)->solver(solversi, api, Ai; S=Si, samplingstyle=ssi, options...), solvere, sse, ape, Ae, Se)...
+	)
 end
 
 
@@ -53,7 +39,7 @@ solver(style::AZStyle, ap::ApproximationProblem, A::AbstractOperator; options...
 function solver(::AZStyle, ap::ApproximationProblem, A::AbstractOperator, Zt::AbstractOperator;
             B=nothing, smallcoefficients=false, smallcoefficients_atol=NaN, smallcoefficients_rtol=NaN, verbose=false, options...)
     if smallcoefficients
-        w = BasisFunctions.quadweights(sampling_grid(ap; options...), measure(ap; options...))
+        w = BasisFunctions.quadweights(sampling_grid(ap; options...), measure(ap))
         normF = abs(sqrt(sum(w .* B.^2)))
         if !isnan(smallcoefficients_rtol)
             verbose && println("Change smallcoefficients relative tolerance to absolute tolerance rtol*||f||")
@@ -66,19 +52,6 @@ function solver(::AZStyle, ap::ApproximationProblem, A::AbstractOperator, Zt::Ab
     else
         AZSolver(A, Zt; B=B, verbose=verbose, options...)
     end
-end
-
-solver(::DualStyle, ap::ApproximationProblem, A::AbstractOperator; options...) = dualdiscretization(ap; options...)'
-
-solver(solverstyle::ProductSolverStyle, ap::ApproximationProblem, A::AbstractOperator; samplingstyle=SamplingStyle(ap), options...) =
-    solver(solverstyle, samplingstyle, ap, A; options...)
-function solver(solverstyle::ProductSolverStyle, samplingstyle::ProductSamplingStyle, ap::ApproximationProblem, A::AbstractOperator; options...)
-	S = sampling_operator(ap)
-    solvere, sse, ape, Ae, Se = components(solverstyle), components(samplingstyle), factors(ap), components(A), factors(S)
-    @assert length(solvere) == length(sse) == length(ape) == length(Ae) == length(Se)
-    TensorProductOperator(
-		map( (solversi, ssi, api, Ai, Si)->solver(solversi, api, Ai; S=Si, samplingstyle=ssi, options...), solvere, sse, ape, Ae, Se)...
-	)
 end
 
 
