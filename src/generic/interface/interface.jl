@@ -61,8 +61,6 @@ macro ap_interface(ex)
     esc(ret)
 end
 
-
-
 "Compute a property and store it in the ap cache."
 macro ap_property(property, default)
     ret = quote
@@ -146,9 +144,7 @@ include("samplingoperator.jl")
 
 export discretemeasure
 @ap_interface discretemeasure
-discretemeasure(ap; options...) = discretemeasure(sampling_grid(ap; options...), sampling_weights(ap; options...))
-
-
+@ap_property discretemeasure discretemeasure(sampling_grid(ap; options...), sampling_weights(ap; options...))
 
 export discretization, dualdiscretization
 @ap_interface discretization
@@ -164,7 +160,6 @@ export sample_data
 export full_discretization
 @ap_interface full_discretization
 @ap_property full_discretization (discretization(ap; options...), sample_data(ap; options...))
-
 
 
 export solver

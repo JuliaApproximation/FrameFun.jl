@@ -64,6 +64,7 @@ platform(ap::PlatformApproximation) = ap.platform
 export platformparameter
 "Return the platform parameter of the approximation problem."
 platformparameter(ap::PlatformApproximation) = ap.plt_par
+@deprecate parameter(ap::ApproximationProblem) platformparameter(ap)
 
 function dictionary(ap::PlatformApproximation)
     if ap_hasproperty(ap, dictionary)

@@ -27,6 +27,8 @@ export sampling_operator, dual_sampling_operator
 sampling_operator(ss::UnweightedDiscreteStyle, ap::ApproximationProblem; options...) =
     GridSampling(sampling_grid(ss, ap; options...), coefficienttype(ap))
 
+@deprecate samplingoperator(args...; options...) sampling_operator(args...; options...)
+@deprecate dualsamplingoperator(args...; options...) dual_sampling_operator(args...; options...)
 
 function sampling_operator(ss::WeightedDiscreteStyle, ap::ApproximationProblem; options...)
     grid = sampling_grid(ss, ap; options...)

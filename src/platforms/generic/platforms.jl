@@ -161,10 +161,14 @@ dualdictionary(platform::ProductPlatform, param, measure::Union{ProductWeight,Di
 
 measure(platform::ProductPlatform) = productmeasure(map(measure, components(platform))...)
 
-correctparamformat(p::ProductPlatform{N}, param::NTuple{N,Int}) where N =
-    all(map(correctparamformat, p.platforms, param))
+correctparamformat(p::ProductPlatform{N}, plt_par::NTuple{N,Int}) where N =
+    all(map(correctparamformat, p.platforms, plt_par))
 
-correctparamformat(::ProductPlatform, param) = false
+# we allow an integer platform parameter for convenience, but in that case
+# the `productparameter` function gives the correct tuple
+correctparamformat(p::ProductPlatform, plt_par::Int) = true
+
+correctparamformat(::ProductPlatform, plt_par) = false
 
 
 ## Default platforms

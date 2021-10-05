@@ -4,8 +4,10 @@
 function samplingparameter(ss::SamplingStyle, platform::Platform, plt_par;
         verbose=false, L = -1, smpl_par = -1, options...)
     # Was the parameter specified as an option?
-    if (L > 0) || (smpl_par > 0)
-        smpl_par = max(L, smpl_par)
+    if L != -1
+        smpl_par = L
+    elseif smpl_par != -1
+        smpl_par
     else
         # It wasn't. Try to deduce its value from the options given.
         smpl_par = deduce_samplingparameter(ss, platform, plt_par; verbose=verbose, options...)
@@ -25,18 +27,33 @@ samplingparameter(ss::DiscreteGramStyle, platform::Platform, plt_par; options...
 deduce_samplingparameter(ss::SamplingStyle, platform::Platform, plt_par; options...) =
     deduce_samplingparameter(ss, dictionary(platform, plt_par); options...)
 
-function deduce_oversampling_parameter(ss::OversamplingStyle, dict; verbose = false, oversamplingfactor = 2, options...)
+deduce_samplingparameter(ss::OversamplingStyle, platform::Platform, plt_par; options...) =
+    deduce_oversampling_parameter(ss, platform, plt_par; options...)
+
+function deduce_oversampling_parameter(ss::OversamplingStyle, dict::Dictionary;
+        verbose = false, oversamplingfactor = 2, M = -1, options...)
     # In the absence of smpl_par, we deduce M and then find the best matching smpl_par
     # M is either supplied, or we compute it based on the (default) oversamplingfactor
-    M = haskey(options, :M) ? options[:M] : round(Int, oversamplingfactor * length(dict))
+    if M == -1
+        M = round(Int, oversamplingfactor * length(dict))
+    end
     verbose && println("Sampling parameter: oversamplingfactor=$oversamplingfactor, length=$(length(dict)), M=$M")
     smpl_par = match_and_correct_sampling_parameter(dict, M; samplingstyle=ss, options...)
     verbose && println("Sampling parameter: best match for M = $M is smpl_par = $smpl_par")
     smpl_par
 end
 
-deduce_samplingparameter(ss::OversamplingStyle, dict::Dictionary; options...) =
-    deduce_oversampling_parameter(ss, dict; options...)
+function deduce_oversampling_parameter(ss::OversamplingStyle, platform::Platform, plt_par;
+        verbose = false, oversamplingfactor = 2, M = -1, options...)
+    dict = dictionary(platform, plt_par)
+    if M == -1
+        M = round(Int, oversamplingfactor * length(dict))
+    end
+    verbose && println("Sampling parameter: oversamplingfactor=$oversamplingfactor, length=$(length(dict)), M=$M")
+    smpl_par = match_and_correct_sampling_parameter(platform, plt_par, M; samplingstyle=ss, options...)
+    verbose && println("Sampling parameter: best match for M = $M is smpl_par = $smpl_par")
+    smpl_par
+end
 
 deduce_samplingparameter(ss::InterpolationStyle, dict::Dictionary; options...) =
     match_and_correct_sampling_parameter(dict, length(dict); samplingstyle=ss, options...)
