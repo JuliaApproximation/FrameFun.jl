@@ -25,6 +25,7 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 [compat]
 BasisFunctions = "0.4.1"
 Compat = "3.10"
+CompositeTypes = "0.1"
 DomainSets = "0.5.7"
 FillArrays = "0.10,0.11"
 GenericLinearAlgebra = "0.2"
