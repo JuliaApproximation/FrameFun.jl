@@ -4,7 +4,7 @@ export ExtensionFrame,
     ⇐, →
 
 
-using BasisFunctions: PrettyPrintSymbol, default_in_support, unsafe_eval_element,
+using BasisFunctions: default_in_support, unsafe_eval_element,
     default_dict_innerproduct, _default_unsafe_eval_element_in_grid, Measure
 
 import BasisFunctions: superdict, support, similardictionary, isbasis,
@@ -73,8 +73,6 @@ hastransform(f::ExtensionFrame) = false
 hastransform(f::ExtensionFrame, dgs) = false
 # - there is no antiderivative (in general)
 hasantiderivative(f::ExtensionFrame) = false
-
-name(f::ExtensionFrame) = "Extension frame"
 
 iscompatible(d1::ExtensionFrame, d2::ExtensionFrame) = iscompatible(basis(d1),basis(d2))
 
@@ -222,13 +220,10 @@ support(dict::ExtensionFrameTensor) = ProductDomain((map(support, components(dic
 
 ## Printing
 
-string(f::ExtensionFrame) = name(f) * " of " * name(f.basis)
-
-modifiersymbol(dict::ExtensionFrame) = PrettyPrintSymbol{:𝔼}(dict)
-
-string(s::PrettyPrintSymbol{:𝔼}) = _string(s, s.object)
-_string(s::PrettyPrintSymbol{:𝔼}, dict::ExtensionFrame) =
-    "Extension frame, from $(support(dict)) to $(support(superdict(dict)))"
+Display.object_parentheses(d::ExtensionFrame) = true
+Display.stencil_parentheses(d::ExtensionFrame) = true
+Display.displaystencil(d::ExtensionFrame) = _stencil(d, superdict(d), support(d))
+_stencil(d::ExtensionFrame, dict, domain) = [domain, " → ", dict]
 
 GridSampling(dgs::GridBasis, grid::AbstractGrid, domain::Domain, scaling) =
     GridSampling(GridBasis{coefficienttype(dgs)}(subgrid(grid, domain)), scaling=scaling)

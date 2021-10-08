@@ -21,7 +21,7 @@ using Test, FrameFun, BasisFunctions
     P = platform(Fourier(10)^2)
     @test correctparamformat(P,(10,10))
     @test !correctparamformat(P,(10,))
-    @test !correctparamformat(P,10)
+    @test correctparamformat(P,10)
     @test param_first(P) == (10,10)
     @test param_double(P,(10,20)) == (20,40)
     @test param_increment(P,(10,11)) == (11,12)

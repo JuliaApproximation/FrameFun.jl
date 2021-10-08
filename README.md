@@ -1,6 +1,7 @@
 
-[![Build Status](https://travis-ci.org/JuliaApproximation/FrameFun.jl.svg?branch=master)](https://travis-ci.org/JuliaApproximation/FrameFun.jl)
-[![Coverage Status](https://coveralls.io/repos/github/JuliaApproximation/FrameFun.jl/badge.svg)](https://coveralls.io/github/JuliaApproximation/FrameFun.jl)
+| **Build Status** | **Coverage** |
+|------------------|--------------|
+| [![Build Status](https://github.com/JuliaApproximation/FrameFun.jl/workflows/CI/badge.svg?branch=master)](https://github.com/JuliaApproximation/FrameFun.jl/actions/workflows/CI.yml) | [![Coverage](https://codecov.io/gh/JuliaApproximation/FrameFun.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaApproximation/FrameFun.jl)
 
 FrameFun
 ========
@@ -26,7 +27,6 @@ F = Fun(f,B,D)
 
 P = plot(F,layout = 2)
 plot!(F,f,subplot=2)
-Plots.savefig(P,"images/lowprecision.png")
 ```
 
 ![](images/lowprecision.png)
@@ -41,7 +41,6 @@ F = Fun(f,B,D)
 
 P = plot(F,layout=2)
 plot!(F,f,subplot=2)
-Plots.savefig(P,"images/highprecision.png")
 ```
 
 ![](images/highprecision.png)
@@ -62,7 +61,6 @@ F = Fun(f,B,C)
 
 P = heatmap(F,layout=2,aspect_ratio=1)
 plot!(F,f,subplot=2,aspect_ratio=1)
-Plots.savefig(P,"images/deathstar.png")
 ```
 
 ![](images/deathstar.png)
@@ -77,34 +75,15 @@ F = Fun(f, B, mandelbrot())
 
 P = heatmap(F,layout=2,aspect_ratio=1)
 plot!(F,f,aspect_ratio=1,subplot=2)
-Plots.savefig(P,"images/mandelbrot")
 ```
-
-    GKS: Rectangle definition is invalid in routine SET_WINDOW
-    GKS: Rectangle definition is invalid in routine CELLARRAY
-    origin outside current window
-
 
 ![](images/mandelbrot.png)
 
 
 ## Installation
 
-FrameFun.jl is not added to the Julia General registry and depends on the unregistered packages GridArrays.jl and BasisFunctions.jl
-
-### Recommended
-For Julia 1.1 or higher, you can add the FrameFun registry.
 From the Julia REPL, type `]` to enter Pkg mode and run
 
 ```julia
-pkg> registry add https://github.com/FramefunVC/FrameFunRegistry
-pkg> add FrameFun
-```
-
-### Legacy
-In Julia 1.0, the packages can be installed by cloning their git repository. From the Julia REPL, type `]` to enter Pkg mode and run
-
-```julia
-pkg> add https://github.com/JuliaApproximation/BasisFunctions.jl
-pkg> add https://github.com/JuliaApproximation/FrameFun.jl
+pkg> add DomainSets, BasisFunctions, FrameFun
 ```

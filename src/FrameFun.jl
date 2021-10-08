@@ -5,9 +5,9 @@ using LinearAlgebra, LowRankApprox
 using Printf, RecipesBase, Reexport
 using DomainSets
 using QuadGK
-using CompositeTypes
+using CompositeTypes, CompositeTypes.Display
 
-import CompositeTypes: components, component
+import CompositeTypes: components, component, ncomponents
 import DomainSets: factors, nfactors, factor
 
 @reexport using BasisFunctions

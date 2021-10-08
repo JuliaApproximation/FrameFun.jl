@@ -102,7 +102,7 @@ function test_1d_cases()
             solverstyle in (AZStyle(), DirectStyle())
 
         println()
-        println("Testing \t solver = $solverstyle, \n\t\t Domain = $domain, \n\t\t Basis = $(name(Basis(10))),\n\t\t ELT = $ELT ")
+        println("Testing \t solver = $solverstyle, \n\t\t Domain = $domain, \n\t\t Basis = $(repr(Basis(10))),\n\t\t ELT = $ELT ")
         verbose && println("N\t T\t Complex?\t abserror\t time\t\t memory   ")
 
         for n in (61,)
@@ -133,7 +133,7 @@ function test_bigfloat()
     @testset "result" for Basis in (Fourier, ChebyshevT),
             domain in [Interval(big(-3.0)/2, big(7.0)/10)]
         println()
-        println("Testing \t solver = QR_solver\n\t\t Domain = $domain, \n\t\t Basis = $(name(Basis(10))),\n\t\t ELT = BigFloat ")
+        println("Testing \t solver = QR_solver\n\t\t Domain = $domain, \n\t\t Basis = $(repr(Basis(10))),\n\t\t ELT = BigFloat ")
         verbose && println("N\t T\t Complex?\t abserror\t time\t\t memory   ")
         for T in (big(17.0)/10,)
             for func in (f,g)
@@ -162,7 +162,7 @@ function test_2d_cases()
             solverstyle in (AZStyle(), DirectStyle())
 
         println()
-        println("Testing \t solver = $solverstyle \n\t\t Domain = $domain, \n\t\t Basis = $(name(Basis(10)⊗Basis(10))),\n\t\t ELT = Float64 ")
+        println("Testing \t solver = $solverstyle \n\t\t Domain = $domain, \n\t\t Basis = $(repr(Basis(10)⊗Basis(10))),\n\t\t ELT = Float64 ")
         verbose && println("N\t\t T\t\t Complex?\t abserror\t time\t\t memory   ")
 
         for n in ((11,11),)
@@ -196,7 +196,7 @@ function test_3d_cases()
                 solverstyle in (AZStyle(), )
 
         println()
-        println("Testing \t solver = $solverstyle \n\t\t Domain = $domain, \n\t\t Basis = $(name(Basis(10)⊗Basis(10)⊗Basis(10))),\n\t\t ELT = Float64 ")
+        println("Testing \t solver = $solverstyle \n\t\t Domain = $domain, \n\t\t Basis = $(repr(Basis(10)⊗Basis(10)⊗Basis(10))),\n\t\t ELT = Float64 ")
         verbose && println("N\t\t T\t\t Complex?\t abserror\t time\t\t memory   ")
 
         n = (12,12,12)
