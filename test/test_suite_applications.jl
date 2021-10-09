@@ -76,7 +76,7 @@ function test_differential_equations_2d()
     # @testset "diff 2D dirichlet" for solverstyle in (AZStyle(), DirectStyle())
     @testset "diff 2D dirichlet" for solverstyle in (AZStyle(),)
         B = (Fourier(11) → -1..1)^2
-        Dom = disk(0.8)
+        Dom = Disk(0.8)
         # Set up Boundary conditions
         df = (x,y)->x-y
         BC = DirichletBC(df,DomainSets.FullSpace{SVector{2,Float64}}())
@@ -94,7 +94,7 @@ function test_differential_equations_2d()
     # @testset "diff 2D Neumann" for solverstyle in (AZStyle(), DirectStyle())
     # @testset "diff 2D Neumann" for solverstyle in (AZStyle(),)
     #     B = (Fourier(11) → -1..1)^2
-    #     Dom = disk(0.8)
+    #     Dom = Disk(0.8)
     #     # Set up Boundary conditions
     #     df = (x,y)->x-y
     #     BC = NeumannBC(df,DomainSets.euclideanspace(Val(2))
@@ -127,7 +127,7 @@ end
 function test_smoothing_2d()
     @testset "Smoothing $(repr(Basis(10)))" for Basis in (ChebyshevT,)
         basis = (Basis(20)→(-1.0..1.0))⊗(Basis(20)→(-1.0..1.0))
-        dom = disk(0.5)
+        dom = Disk(0.5)
         f = (x,y) -> exp(x*y)
         fscale(dict, I) = 10.0^-4+100*(I[1]^2+I[2]^2)
         F = Fun(f, basis, dom; solverstyle = AZSmoothStyle(), scaling=fscale)

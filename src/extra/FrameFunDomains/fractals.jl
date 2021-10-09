@@ -14,7 +14,7 @@ end
 Base.isempty(::Mandelbrot) = false
 
 function mandelbrot(maxiter = 1000, threshold = 1000.0)
-    box = rectangle(-1.0, 0.35, -0.65, 0.65)
+    box = (-1.0..0.35) × (-0.65..0.65)
     M1 = 136
     M2 = 200
     mask1 = computemandelbrotgrid(EquispacedGrid(M1,-1.0, 0.3)× EquispacedGrid(M2,-0.65, 0.65), maxiter, threshold)
@@ -91,7 +91,7 @@ end
 Base.isempty(::JuliaSet) = false
 
 function juliaset(c = -0.122565+0.744866im, maxiter = 1000)
-    box = rectangle(-0.2, 1.2, -0.4, 0.4)
+    box = (-0.2..1.2) × (-0.4..0.4)
 
     mask1 = computejuliasetgrid(EquispacedGrid(200,-0.2, 1.2)× EquispacedGrid(200,-0.4, 0.4), c, maxiter)
     mask2 = computejuliasetgrid(EquispacedGrid(200,-0.2, 1.2)× EquispacedGrid(200,-0.4, 0.4), c, maxiter)

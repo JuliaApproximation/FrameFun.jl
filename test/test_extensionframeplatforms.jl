@@ -6,7 +6,7 @@ using Test
 @testset "ExtensionFramePlatforms" begin
     d1 = 0.0..0.5
     d2 = (0.0..0.5)^2
-    d3 = disk(.4,SVector(.5,.5))
+    d3 = Disk(.4,SVector(.5,.5))
     dict1 = extensionframe(Fourier(10),d1)
     dict2 = extensionframe(Fourier(10)^2,d2)
     dict3 = extensionframe(Fourier(10)^2,d3)

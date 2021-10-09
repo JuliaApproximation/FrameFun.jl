@@ -112,7 +112,7 @@ in a suitable way.
 For example: an interval ⊗ a disk (= a cylinder) combined with a 3D Fourier series, leads to a
 tensor product of a Fourier series on the interval ⊗ a 2D Fourier series on the disk.
 ```jldocs
-julia> extensionframe(Fourier(10)^2,disk(.4, SVector(0.5,0.5)))
+julia> extensionframe(Fourier(10)^2,Disk(.4, SVector(0.5,0.5)))
 Dictionary 𝔼(F ⊗ F)
 
 𝔼   :   Extension frame, from A mapped domain based on the 2-dimensional unit ball to 0.0..1.0 (Unit) x 0.0..1.0 (Unit)

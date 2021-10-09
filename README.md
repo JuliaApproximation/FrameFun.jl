@@ -54,7 +54,7 @@ In higher dimensions, a basis can be any tensorproduct of (scaled) lower dimensi
 
 ```julia
 using StaticArrays
-C = disk(1.0)\disk(0.3,SVector(0.2, 0.5))
+C = Disk(1.0)\Disk(0.3,SVector(0.2, 0.5))
 B = (Fourier(31) → -1.3..1.3)^2
 f = (x,y)->exp(x+y)
 F = Fun(f,B,C)

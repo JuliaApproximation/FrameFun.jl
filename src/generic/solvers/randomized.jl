@@ -50,7 +50,11 @@ function randomizedqr(A; threshold = regularization_threshold(eltype(A)), verbos
     R = min(rankestimate, size(A,2))
     W = rand(T, size(A,2), R)
     C = apply_multiple(A, W)
-    QR = qr(C, Val(true))
+    if VERSION ≥ v"1.7-"
+        QR = qr(C, ColumnNorm())
+    else
+        QR = qr(C, Val(true))
+    end
     sigma = QR.R[end,end]
 
     iter = 0

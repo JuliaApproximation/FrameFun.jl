@@ -6,7 +6,7 @@ d1 = 0.0..0.5
 plat1 = platform(extensionframe(Fourier(10),0.0..0.5)), 10
 d2 = (0.0..0.5)^2
 plat2 = platform(extensionframe(Fourier(10)^2,d2)), (10,10)
-d3 = disk(.45,SVector(.5,.5))
+d3 = Disk(.45,SVector(.5,.5))
 plat3 = platform(extensionframe(Fourier(10)^2,d3)), (10,10)
 plat4 = platform(extensionframe((Fourier(10)→(-1.0..1.0))^2,d3)), (10,10)
 

@@ -1,6 +1,6 @@
 module test_suite_applications
 
-using DomainSets, BasisFunctions, FrameFun, Plots
+using DomainSets, BasisFunctions, FrameFun, Plots, StaticArrays
 # Plots loads the default backend (PyPlot unless otherwise specified)
 
 using Test
@@ -42,9 +42,9 @@ function test_plots()
     plot(G)
 
     B = (Fourier(21) → -1..1)^3
-    D = ball()\FrameFun.cube(-0.5,0.5,-0.5,0.5,-2.,2.)
+    D = Ball()\Rectangle(SA[-0.5,-0.5,-2], SA[0.5,0.5,2])
     Df = ExtensionFrame(D,B)
-    G = interpolation_grid(Df)
+    G = sampling_grid(Df)
     plot(G,size=(400,400))
 
     basis = Fourier(51) → -2.0..(-0.5)
@@ -52,7 +52,7 @@ function test_plots()
     f(x) = cos(3*x.^2)
     F = Fun(f, basis, domain)
     # Easily combine multiple plots
-    plot(interpolation_grid(dictionary(F)),label="grid",markercolor=:white)
+    plot(sampling_grid(dictionary(F)),label="grid",markercolor=:white)
     plot!(F,label="function")
     plot!(F',title="Function and derivative",label="derivative",legend=true)
 
@@ -61,7 +61,7 @@ function test_plots()
     plot!(F',df,label="derivative",legend=true)
 
     basis = (Fourier(21) → -1..1)^2
-    domain = intersect(disk(0.8),disk(0.4))
+    domain = intersect(Disk(0.8),Disk(0.4))
     f(x,y) = cos(7*x-2*y^2)
     F = Fun(f, basis, domain)
 

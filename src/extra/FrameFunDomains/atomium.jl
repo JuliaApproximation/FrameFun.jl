@@ -8,7 +8,7 @@ cylinder(::Type{T} = Float64) where {T} = UnitDisk{T}() × UnitInterval{T}()
 cylinder(radius::T, length::T) where {T} = radius .* UnitDisk{T}() × (0 .. length)
 
 function atomium()
-    sphere1 = ball(0.25)
+    sphere1 = Ball(0.25)
     spheres = union(sphere1,sphere1 .+ SVector( 0.6, 0.6, 0.6))
     spheres= union(spheres, sphere1 .+ SVector( 0.6, 0.6,-0.6))
     spheres= union(spheres, sphere1 .+ SVector( 0.6,-0.6, 0.6))

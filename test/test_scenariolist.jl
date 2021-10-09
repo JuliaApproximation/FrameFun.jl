@@ -2,7 +2,7 @@ using BasisFunctions, LinearAlgebra, DomainSets, GridArrays, Test, StaticArrays,
 
 @testset begin
     B = (Fourier(11) → -1..1)^2
-    Dom = disk(0.8)
+    Dom = Disk(0.8)
     @test support(dictionary(∂x(random_expansion(extensionframe(B, Dom)))))≈Dom
 
     # @test SamplingStyle(ExtensionFramePlatform(FrameFun.ProductPlatform(FourierPlatform(),FourierPlatform()),(0.0..0.5)^2)) ==
