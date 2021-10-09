@@ -1,4 +1,4 @@
-module test_suite_applications
+module test_suite_platforms
 
 using BasisFunctions, DomainSets, FrameFun, LinearAlgebra
 using Test

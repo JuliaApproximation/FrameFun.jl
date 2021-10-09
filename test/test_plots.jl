@@ -1,4 +1,4 @@
-module test_suite_applications
+module test_suite_plots
 
 using DomainSets, BasisFunctions, FrameFun, Plots, StaticArrays
 # Plots loads the default backend (PyPlot unless otherwise specified)
