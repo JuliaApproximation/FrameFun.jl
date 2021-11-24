@@ -8,8 +8,8 @@ struct ResidualStyle <: ErrorStyle end
 struct OversampledResidual <: ErrorStyle end
 struct RandomPoints <: ErrorStyle end
 struct FNAStyle{CREL,EREL} <: ErrorStyle
-    FNAStyle() = new{true,true}()
 end
+FNAStyle() = FNAStyle{true,true}()
 
 export AdaptiveStrategy
 abstract type AdaptiveStrategy end
@@ -17,7 +17,7 @@ export GreedyStyle, OptimalStyle, SimpleStyle
 struct GreedyStyle <: AdaptiveStrategy end
 struct OptimalStyle <: AdaptiveStrategy end
 struct SimpleStyle <: AdaptiveStrategy end
-struct OptimalStyleFirstFase <: AdaptiveStrategy end
+struct OptimalStyleFirstPhase <: AdaptiveStrategy end
 
 
 emptylogbook() = Array{Any,1}(undef,0)
@@ -55,13 +55,13 @@ end
 # Measure the error FNA style:
 # - the residual has to meet a threshold
 # - the norm of the coefficients has to be smaller than a value times the estimated norm of the right hand side
-function errormeasure(::FNAStyle{CREL,EREL}, platform, δ, f, F, n, A, B, C, S, L; optimizefase=false,
+function errormeasure(::FNAStyle{CREL,EREL}, platform, δ, f, F, n, A, B, C, S, L; optimizephase=false,
         numrandompts = 3, FNAη = Inf, FNAδ = δ, verbose=false, Sbest=nothing, Bbest=nothing,options...) where {CREL, EREL}
     residual = norm(A*C-B)
 
     # Note: we pass on options, because it may contain a measure
     # Q = discrete_normalization(platform, n, L; S=S, options...)
-    if optimizefase
+    if optimizephase
         w = BasisFunctions.quadweights(grid(dest(Sbest)), measure(platform))
         normF = abs(sqrt(sum(w .* Bbest.^2)))
     else
@@ -80,10 +80,10 @@ function errormeasure(::FNAStyle{CREL,EREL}, platform, δ, f, F, n, A, B, C, S, 
 
     converged = errConverged && coefConverged
     if converged
-        if optimizefase
+        if optimizephase
             converged, residual
         else
-            # If N is too small the norm of `f` might not be good enough. User random points for robustness.
+            # If N is too small the norm of `f` might not be good enough. Use random points for robustness.
             verbose && println( "Errormeasure: Check random points for FNA robustness. ")
             converged, _ = errormeasure(RandomPoints(), platform, normF*FNAδ, f, F; numrandompts = numrandompts, verbose=verbose, options...)
             converged, residual
@@ -176,7 +176,7 @@ end
 
 # "SimpleStyle: the number of degrees of freedom is doubled until the tolerance is achieved."
 # "GreedyStyle: Greedy scheme to get decreasing coefficients."
-for (STYLE,nextparam,ret) in zip((:GreedyStyle,:SimpleStyle,:OptimalStyleFirstFase),(:param_increment,:param_double,:param_double),
+for (STYLE,nextparam,ret) in zip((:GreedyStyle,:SimpleStyle,:OptimalStyleFirstPhase),(:param_increment,:param_double,:param_double),
         (Meta.parse("F, logbook, n, δ, error, iterations, converged"),
         Meta.parse("F, logbook, n, δ, error, iterations, converged"),
         Meta.parse("F, A, B, C, S, L, logbook, n, nprev, δ, error, iterations, converged, (weightedAZ ? (W) : ())...")) )
@@ -238,7 +238,7 @@ function adaptive_approximation(::OptimalStyle, f, platform;
         threshold = 1e-12, δ=100*threshold, verbose=false, weightedAZ=false, stoptolerance=δ, options...)
 
     # First let the size grow until the tolerance is reached
-    R = adaptive_approximation(OptimalStyleFirstFase(), f, platform;
+    R = adaptive_approximation(OptimalStyleFirstPhase(), f, platform;
             weightedAZ = weightedAZ, maxlength = maxlength, maxiterations = maxiterations,
             threshold = threshold, δ=δ, verbose=verbose, options...)
 
@@ -268,12 +268,12 @@ function adaptive_approximation(::OptimalStyle, f, platform;
             F, A, B, C, S, L, converged, error = adaptive_approximate_step!(logbook, f, platform, n, δ;
                 threshold=threshold, verbose=verbose,
                 weightedAZ = true, AZ_Cweight = restrict_weight(platform, W, nbest, n),
-                optimizefase=true,Sbest=Sbest,Bbest=Bbest,
+                optimizephase=true,Sbest=Sbest,Bbest=Bbest,
                 options...)
         else
             F, A, B, C, S, L, converged, error = adaptive_approximate_step!(logbook, f, platform, n, δ;
                 threshold=threshold, verbose=verbose,
-                optimizefase=true,Sbest=Sbest,Bbest=Bbest,
+                optimizephase=true,Sbest=Sbest,Bbest=Bbest,
                 options...)
         end
 
@@ -298,12 +298,12 @@ function adaptive_approximation(::OptimalStyle, f, platform;
             F, A, B, C, S, L, converged, error = adaptive_approximate_step!(logbook, f, platform, n, δ;
                 threshold=threshold, verbose=verbose,
                 weightedAZ = true, AZ_Cweight = restrict_weight(platform, W, nbest, n),
-                optimizefase=true,Sbest=Sbest,Bbest=Bbest,
+                optimizephase=true,Sbest=Sbest,Bbest=Bbest,
                 options...)
         else
             F, A, B, C, S, L, converged, error = adaptive_approximate_step!(logbook, f, platform, n, δ;
                 threshold=threshold, verbose=verbose,
-                optimizefase=true,Sbest=Sbest,Bbest=Bbest,
+                optimizephase=true,Sbest=Sbest,Bbest=Bbest,
                 options...)
         end
 

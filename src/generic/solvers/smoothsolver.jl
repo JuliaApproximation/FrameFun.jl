@@ -1,6 +1,7 @@
-# Remove this part?
-export sobolevAZweight
-sobolevAZweight(A::DictionaryOperator; options...) = inv(WeightedSmoothingOperator(src(A); options...))
+
+
+defaultAZweight(A::DictionaryOperator; options...) = inv(WeightedSmoothingOperator(src(A); options...))
+
 # For Dictionary's that have a DC component
 dc_index(b::ChebyshevT) = 1
 dc_index(b::Fourier) = 1

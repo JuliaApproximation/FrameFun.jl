@@ -57,4 +57,4 @@ end
 
 solver(style::AZSmoothStyle, ap::ApproximationProblem, A::AbstractOperator; options...) = solver(style, ap, A, AZ_Zt(ap; options...); options...)
 solver(::AZSmoothStyle, ap::ApproximationProblem, A::AbstractOperator, Zt; options...) =
-    solver(AZStyle(), ap, A, Zt; options..., weightedAZ=true, AZ_Cweight=sobolevAZweight(A; options...))
+    solver(AZStyle(), ap, A, Zt; options..., weightedAZ=true, AZ_Cweight=defaultAZweight(A; options...))

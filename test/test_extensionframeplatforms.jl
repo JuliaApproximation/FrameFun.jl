@@ -39,7 +39,7 @@ using Test
 
     ddict1 = dualdictionary(plat1...,measure(plat1[1]))
     @test ddict1 isa ExtensionFrame
-    @test operator(basis(ddict1)) ≈ operator(dual(Fourier(10),FourierWeight()))
+    @test operator(basis(ddict1)) ≈ operator(dual(BasisFunctions.OrthogonalDual(), Fourier(10)))
     ddict2 = dualdictionary(plat2...,measure(plat2[1]))
     @test ddict2 isa ExtensionFrameTensor
     ddict3 = dualdictionary(plat3...,measure(plat3[1]))
