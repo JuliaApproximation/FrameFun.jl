@@ -5,7 +5,7 @@ export ExtensionFrame,
 
 
 using BasisFunctions: default_in_support, unsafe_eval_element,
-    default_dict_innerproduct, _default_unsafe_eval_element_in_grid, Measure
+    default_dict_innerproduct, Measure
 
 import BasisFunctions: superdict, support, similardictionary, isbasis,
     isbiorthogonal, isorthogonal, isorthonormal, hasinterpolationgrid, hastransform,
@@ -87,8 +87,8 @@ unsafe_eval_element1(dict::ExtensionFrame, idx::Int, x) =
     in_support(dict, idx, x) ? unsafe_eval_element(basis(dict), idx, x) : zero(codomaintype(dict))
 unsafe_eval_element1(dict::ExtensionFrame, idx, x) =
     in_support(dict, idx, x) ? unsafe_eval_element(basis(dict), idx, x) : zero(codomaintype(dict))
-unsafe_eval_element1(dict::ExtensionFrame, idx, grid::AbstractGrid) =
-    _default_unsafe_eval_element_in_grid(dict, idx, grid)
+# unsafe_eval_element1(dict::ExtensionFrame, idx, grid::AbstractGrid) =
+    # _default_unsafe_eval_element_in_grid(dict, idx, grid)
 in_support(dict::ExtensionFrame, idx::Int, x) =
     default_in_support(dict, idx, x)
 in_support(dict::ExtensionFrame, idx, x) =

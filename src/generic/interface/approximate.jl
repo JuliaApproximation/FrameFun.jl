@@ -64,7 +64,13 @@ end
 ####################
 
 
-guess_coefficienttype(dict, fun) = promote_type(codomaintype(dict), determine_return_type(fun, domaintype(dict)))
+guess_coefficienttype(dict, fun) =
+	_guess_coefficienttype(codomaintype(dict), determine_return_type(fun, domaintype(dict)))
+
+_guess_coefficienttype(::Type{Any}, ::Type{Any}) = Any
+_guess_coefficienttype(::Type{T}, ::Type{Any}) where {T} = T
+_guess_coefficienttype(::Type{Any}, ::Type{T}) where {T} = Any
+_guess_coefficienttype(::Type{S}, ::Type{T}) where {S,T} = promote_type(S,T)
 
 """
 `Fun` is used to approximate functions in the same way as `approximate` with
@@ -114,9 +120,9 @@ end
 
 
 approximate(fun, dict::Dictionary, args...; options...) =
-    approximate(_ap(fun, dict, args...); options...)
+    approximate(approximationproblem(fun, dict, args...; options...); options...)
 approximate(fun, platform::Platform, args...; options...) =
-    approximate(_ap(fun, platform, args...); options...)
+    approximate(approximationproblem(fun, platform, args...; options...); options...)
 
 approximate(ap::ApproximationProblem;
             samplingstyle = SamplingStyle(ap),

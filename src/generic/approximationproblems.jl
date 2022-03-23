@@ -218,10 +218,10 @@ function approximationproblem(args...; options...)
 end
 
 # 5. Allow a function to be specified as first argument
-approximationproblem(fun, dict::Dictionary, args...) =
-    approximationproblem(fun, approximationproblem(dict, args...))
-approximationproblem(fun, platform::Platform, args...) =
-    approximationproblem(fun, approximationproblem(platform, args...))
+approximationproblem(fun, dict::Dictionary, args...; options...) =
+    approximationproblem(fun, approximationproblem(dict, args...; options...))
+approximationproblem(fun, platform::Platform, args...; options...) =
+    approximationproblem(fun, approximationproblem(platform, args...; options...))
 function approximationproblem(fun, ap::ApproximationProblem)
     ap_fun!(ap, fun)
     ap

@@ -61,7 +61,7 @@ using BasisFunctions, LinearAlgebra, DomainSets, GridArrays, Test, StaticArrays,
 
 
     F = approximate(exp, Fourier(100), 0.0..0.5; samplingstyle=OversamplingStyle(),oversamplingfactor=2,normalizedsampling=true)
-    @test abs(F[1](.2)-exp(.2) )< 1e-12
+    @test abs(F[1](.2)-exp(.2) )< 1e-11
 
     F = approximate(exp, Fourier(100), 0.0..0.5; samplingstyle=OversamplingStyle(),oversamplingfactor=2,normalizedsampling=false)
     @test abs(F[1](.2)-exp(.2) )< 1e-12
