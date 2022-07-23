@@ -36,7 +36,7 @@ QuadGK = "2.4"
 RecipesBase = "1.0"
 Reexport = "1.0"
 StaticArrays = "1.4"
-julia = "1.5"
+julia = "1.7"
 
 [extras]
 Calculus = "49dc2e85-a5d0-5ad3-a950-438e2897f1b9"
