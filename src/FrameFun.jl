@@ -11,7 +11,7 @@ import CompositeTypes: components, component, ncomponents
 import DomainSets: factors, nfactors, factor
 
 @reexport using BasisFunctions
-import BasisFunctions: coefficienttype, dual
+import BasisFunctions: coefficienttype, dual, weight
 
 include("extra/FrameFunDomains/FrameFunDomains.jl")
 @reexport using .FrameFunDomains

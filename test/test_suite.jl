@@ -1,6 +1,6 @@
 module test_suite
 
-using DomainSets, BasisFunctions, FrameFun, StaticArrays, FastTransforms
+using DomainSets, BasisFunctions, FrameFun, StaticArrays, GenericFFT
 using Test, Printf, LinearAlgebra, Random
 
 FE = FrameFun
