@@ -27,7 +27,6 @@ end
     M = measure(F)
     A = SynthesisOperator(P, M)
     Z = SynthesisOperator(D, M)
-    @info "Two `Slow computation of Gram matrix entrywise.` warnings follow."
     Zt = Z'
     G1 = Zt*A
     G2 = BasisFunctions.default_mixedgram(D, P, M)

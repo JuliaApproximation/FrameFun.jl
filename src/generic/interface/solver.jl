@@ -48,9 +48,9 @@ function solver(::AZStyle, ap::ApproximationProblem, A::AbstractOperator, Zt::Ab
         end
 
         AZSolver(A, Zt; smallcoefficients=smallcoefficients, smallcoefficients_rtol=smallcoefficients_rtol,
-                smallcoefficients_atol=smallcoefficients_atol, verbose=verbose, options...)
+                smallcoefficients_atol=smallcoefficients_atol, verbose, options...)
     else
-        AZSolver(A, Zt; B=B, verbose=verbose, options...)
+        AZSolver(A, Zt; B, verbose, options...)
     end
 end
 

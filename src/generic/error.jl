@@ -2,7 +2,6 @@
 # Get the mean approximation error in random interior points.
 function abserror(f::Function, F::Expansion; vals = 200)
     rgrid = randomgrid(support(F),vals)
-    @debug "Random evaluation in abserror"
     Fval = F(rgrid)
     fval = sample(rgrid,f,codomaintype(F))
     sum(abs.(Fval-fval))/vals
@@ -11,7 +10,6 @@ end
 # Get the max approximation error in random interior points
 function maxerror(f::Function, F::Expansion; vals = 200, options...)
     rgrid = randomgrid(support(F),vals)
-    @debug "Random evaluation in maxerror"
     Fval = F(rgrid; options...)
     fval = sample(rgrid,f,codomaintype(F))
     maximum(abs.(Fval-fval))

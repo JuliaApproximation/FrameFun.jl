@@ -10,15 +10,15 @@ struct WeightedApproximationStyle <: ProblemStyle
 end
 
 function approximate(pstyle::WeightedApproximationStyle, samplingstyle::SamplingStyle, solverstyle::SolverStyle, fun, ap;
-            verbose = false, options...)
+            verbose=false, options...)
     dict = dictionary(ap)
 
     verbose && println("Approximate: using problem style $pstyle")
     verbose && println("Approximate: using sampling style $samplingstyle")
 	verbose && println("Approximate: using solver style $solverstyle")
     # Trigger computation of sampling parameter L first
-    L = samplingparameter(samplingstyle, ap; verbose=verbose, options...)
-    S = sampling_operator(samplingstyle, ap; verbose=verbose, options...)
+    L = samplingparameter(samplingstyle, ap; verbose, options...)
+    S = sampling_operator(samplingstyle, ap; verbose, options...)
 	if verbose
 		println()
 		println("Approximate: sampling operator with size $(size(S)) is")
@@ -27,9 +27,9 @@ function approximate(pstyle::WeightedApproximationStyle, samplingstyle::Sampling
 	end
     A = apply(S, dict; options...)
     B = apply(S, fun; options...)
-    W = DiagonalOperator(apply(S, pstyle.weight; options...))
+    W = DiagonalOperator(apply(S, pstyle.weight; verbose, options...))
 
-    C = solve(solverstyle, ap, W*A, W*B; problemstyle=pstyle, S=S, verbose=verbose, samplingstyle=samplingstyle, options...)
+    C = solve(solverstyle, ap, W*A, W*B; problemstyle=pstyle, S, verbose, samplingstyle, options...)
     F = Expansion(dictionary(ap), C)
     res = norm(W*(A*C-B))
     verbose && println("Approximate: ended with residual $res\n")

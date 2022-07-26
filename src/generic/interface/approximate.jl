@@ -35,9 +35,9 @@ function directsolver(A; directsolver = :svd, verbose = false, options...)
         QR_solver(A)
 	elseif directsolver == :regsvd
         verbose && println("Using direct solver: regularized SVD")
-        regularized_SVD_solver(A; verbose=verbose, options...)
+        regularized_SVD_solver(A; verbose, options...)
     else
-        DS = directsolver(A; verbose=verbose, options...)
+        DS = directsolver(A; verbose, options...)
         verbose && println("Using direct solver: $DS")
         DS
     end
@@ -46,10 +46,10 @@ end
 function iterativesolver(A; iterativesolver = :lsqr, verbose = false, options...)
     if iterativesolver == :lsqr
         verbose && println("Using iterative solver: LSQR")
-        LSQR_solver(A; verbose=verbose, options...)
+        LSQR_solver(A; verbose, options...)
     elseif iterativesolver == :lsmr
         verbose && println("Using iterative solver: LSMR")
-        LSMR_solver(A; verbose=verbose, options...)
+        LSMR_solver(A; verbose, options...)
     else
         DS = iterativesolver(A)
         verbose && println("Using direct solver: $DS")
@@ -98,13 +98,13 @@ function Fun(ap::ApproximationProblem; verbose = false, options...)
         show(dictionary(ap))
 		println()
     end
-    F, A, B, C, S = approximate(ap; verbose=verbose, options...)
+    F, A, B, C, S = approximate(ap; verbose, options...)
     F
 end
 
 function Fun(ap::AdaptiveApproximation; verbose = false, options...)
     verbose && println("Fun: adaptive approximation using platform $(platform(ap))")
-    approximate(ap; verbose=verbose, options...)
+    approximate(ap; verbose, options...)
 end
 
 
@@ -144,7 +144,7 @@ function approximate(samplingstyle::SamplingStyle, solverstyle::SolverStyle, ap:
     verbose && println("Approximate: using sampling style $samplingstyle")
 	verbose && println("Approximate: using solver style $solverstyle")
 
-    S = sampling_operator(samplingstyle, ap; verbose=verbose, options...)
+    S = sampling_operator(samplingstyle, ap; verbose, options...)
 	if verbose
 		println()
 		println("Approximate: sampling operator with size $(size(S)) is")
@@ -153,7 +153,7 @@ function approximate(samplingstyle::SamplingStyle, solverstyle::SolverStyle, ap:
 	end
 	A = discretization(ap; options...)
 	b = sample_data(ap; options...)
-    coef = solve(solverstyle, ap, A, b; S=S, verbose=verbose, samplingstyle=samplingstyle, options...)
+    coef = solve(solverstyle, ap, A, b; S=S, verbose, samplingstyle, options...)
     F = Expansion(dictionary(ap), coef)
     res = norm(A*coef-b)
     verbose && println("Approximate: ended with residual $res\n")

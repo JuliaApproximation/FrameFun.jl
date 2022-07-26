@@ -10,7 +10,7 @@ function samplingparameter(ss::SamplingStyle, platform::Platform, plt_par;
         smpl_par
     else
         # It wasn't. Try to deduce its value from the options given.
-        smpl_par = deduce_samplingparameter(ss, platform, plt_par; verbose=verbose, options...)
+        smpl_par = deduce_samplingparameter(ss, platform, plt_par; verbose, options...)
     end
     verbose && println("Sampling parameter: using smpl_par = $smpl_par")
     return smpl_par
@@ -91,7 +91,7 @@ function deduce_samplingparameter(ss::ProductSamplingStyle{NTuple{N,Oversampling
     end
     oversamplingfactor = oversamplingfactor_to_tuple(oversamplingfactor, N)
     smpl_par = tuple(map((pl,ppar,of)->deduce_samplingparameter(OversamplingStyle(), pl, ppar;
-        oversamplingfactor=of, verbose=verbose, options...),
+        oversamplingfactor=of, verbose, options...),
             factors(platform), productparameter(platform, plt_par), oversamplingfactor)...)
     verbose && println("Sampling parameter: best match for M = $M is smpl_par = $smpl_par")
     smpl_par

@@ -209,9 +209,9 @@ extensiondual(dict::ExtensionFrameTensor, measure::Measure; options...) =
     TensorProductDict(map((dicti,measurei)->extensionframe(support(dicti), gramdual(superdict(dicti), supermeasure(measurei); options...)),
         components(dict), components(measure))...)
 
-function gramdual(dict::ExtensionFrame, measure::Measure; options...)
-    @debug "Are you sure you want `dualtype=gramdual` and not `extensiondual`"
-    default_gramdual(dict, measure; options...)
+function gramdual(dict::ExtensionFrame, measure::Measure; verbose=false, options...)
+    verbose && println("WARN: Are you sure you want `dualtype=gramdual` and not `extensiondual`?")
+    default_gramdual(dict, measure; verbose, options...)
 end
 
 superdict(dict::ExtensionFrameTensor) = TensorProductDict(map(superdict, components(dict))...)
