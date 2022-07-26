@@ -13,7 +13,7 @@ using Test
     Z = SynthesisOperator(D, M)
     Zt = Z'
     G1 = Zt*A
-    G2 = BasisFunctions.default_mixedgram(D, P, M;warnslow=false)
+    G2 = BasisFunctions.default_mixedgram(D, P, M)
     G3 = BasisFunctions.mixedgram(D, P, M)
     @test Matrix(G1) ≈ Matrix(G2)
     @test Matrix(G2) ≈ Matrix(G3)
@@ -30,7 +30,7 @@ end
     @info "Two `Slow computation of Gram matrix entrywise.` warnings follow."
     Zt = Z'
     G1 = Zt*A
-    G2 = BasisFunctions.default_mixedgram(D, P, M;warnslow=false)
+    G2 = BasisFunctions.default_mixedgram(D, P, M)
     G3 = BasisFunctions.mixedgram(D, P, M)
     @test Matrix(G1) ≈ Matrix(G2)
     @test Matrix(G2) ≈ Matrix(G3)
@@ -38,7 +38,7 @@ end
 
     n = 101
     F = FourierExtensionPlatform(0.0..0.5)
-    opts = (samplingstyle=FrameFun.GramStyle(),warnslow=false)
+    opts = (samplingstyle=FrameFun.GramStyle(),)
     A = AZ_A(F, n; opts...)
     Z = AZ_Z(F, n; opts...)
     MG = Z'*A

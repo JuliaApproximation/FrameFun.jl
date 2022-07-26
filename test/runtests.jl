@@ -1,5 +1,7 @@
 
-using Test
+using BasisFunctions, Test
+
+using BasisFunctions: iscompatible
 
 @testset "FrameFunDomains" begin
     include("test_framefundomains.jl")
