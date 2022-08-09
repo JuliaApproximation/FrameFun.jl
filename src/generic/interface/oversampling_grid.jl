@@ -31,6 +31,7 @@ oversampling_grid(dict::TensorProductDict, smpl_par::Int) = error("Expects a tup
 oversampling_grid(dict::BasisFunctions.CompositeDict, smpl_par) = oversampling_grid(component(dict,1), smpl_par)
 
 oversampling_grid(dict::WeightedDict, smpl_par) = oversampling_grid(superdict(dict), smpl_par)
+oversampling_grid(dict::BasisFunctions.ComplexifiedDict, smpl_par) = oversampling_grid(superdict(dict), smpl_par)
 
 oversampling_grid(dict::MappedDict, smpl_par) = apply_map(oversampling_grid(superdict(dict), smpl_par), forward_map(dict))
 

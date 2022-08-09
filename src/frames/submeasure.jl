@@ -4,7 +4,7 @@ using BasisFunctions: FFreq, DiscreteWeight, DiscreteProductWeight,
 	OuterProductArray
 import BasisFunctions: quadweights, stencilarray, name, weights,
 	grid, subindices, isnormalized, supermeasure,
-    support, unsafe_weightfun, strings, innerproduct_native, restrict, discretemeasure
+    support, unsafe_weightfun, strings, restrict, discretemeasure
 export submeasure, DiscreteTensorSubWeight, SubWeight, DiscreteSubWeight
 
 """
@@ -46,7 +46,7 @@ submeasure(measure::ProductWeight, domain::ProductDomain) = ProductWeight(map(su
 quadweights(grid::SubGrid, measure::SubWeight) =
     quadweights(supergrid(grid), supermeasure(measure))[subindices(grid)]
 
-function innerproduct_native(b1::Fourier, i::FFreq, b2::Fourier, j::FFreq, m::SubWeight{<:FourierWeight}; options...)
+function dict_innerproduct_native(b1::Fourier, i::FFreq, b2::Fourier, j::FFreq, m::SubWeight{<:FourierWeight}; options...)
 	d = support(m)
 	if d isa AbstractInterval
 		innerproduct_fourier_part(b1, i, b2, j, infimum(d), supremum(d))
