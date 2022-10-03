@@ -17,7 +17,7 @@ correctparamformat(platform::WeightedSumPlatform, param::NTuple) =
 unsafe_dictionary(platform::WeightedSumPlatform, i::NTuple) =
     MultiDict([weight(platform, j) * unsafe_dictionary(platform.P, i[j]) for j in 1:length(platform.weights)])
 
-WeightedSumPlatform(platform::Platform, weights::Function...) where N = WeightedSumPlatform(platform, weights)
+WeightedSumPlatform(platform::Platform, weights::Function...) = WeightedSumPlatform(platform, weights)
 
 SolverStyle(platform::WeightedSumPlatform, ::SamplingStyle) = AZStyle()
 
