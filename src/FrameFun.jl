@@ -11,7 +11,7 @@ import CompositeTypes: components, component, ncomponents
 import DomainSets: factors, nfactors, factor
 
 @reexport using BasisFunctions
-import BasisFunctions: coefficienttype, dual, weight
+import BasisFunctions: coefficienttype, dual, weight, expansion
 
 include("extra/FrameFunDomains/FrameFunDomains.jl")
 @reexport using .FrameFunDomains
@@ -43,6 +43,7 @@ include("applications/DiffEquations.jl")
 include("applications/high_dimensional.jl")
 
 include("generic/adaptivity.jl")
+include("generic/funs.jl")
 
 include("recipes.jl")
 

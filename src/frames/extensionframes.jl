@@ -76,9 +76,9 @@ hasantiderivative(f::ExtensionFrame) = false
 
 iscompatible(d1::ExtensionFrame, d2::ExtensionFrame) = iscompatible(basis(d1),basis(d2))
 
-function BasisFunctions.dict_multiply(d1::ExtensionFrame, d2::ExtensionFrame, args...)
+function BasisFunctions.expansion_multiply(d1::ExtensionFrame, d2::ExtensionFrame, args...)
     @assert iscompatible(d1,d2)
-    (mset, mcoef) = BasisFunctions.dict_multiply(basis(d1),basis(d2),args...)
+    (mset, mcoef) = BasisFunctions.expansion_multiply(basis(d1),basis(d2),args...)
     df = ExtensionFrame(support(d1) ∩ support(d2),mset)
     (df, mcoef)
 end

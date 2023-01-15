@@ -10,3 +10,5 @@ end
 postprocess(B::ExtensionFrame, args...) = postprocess(support(B), args...)
 # Plotgrids are determined by the underlying set
 plotgrid(B::ExtensionFrame, n) = plotgrid(basis(B),n)
+
+@recipe f(::Type{<:AbstractFun}, F::AbstractFun) = expansion(F)
