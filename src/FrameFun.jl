@@ -3,6 +3,7 @@ module FrameFun
 using FillArrays, GridArrays, StaticArrays
 using LinearAlgebra, LowRankApprox
 using Printf, RecipesBase, Reexport
+using SpecialFunctions
 using DomainSets
 using QuadGK
 using CompositeTypes, CompositeTypes.Display
@@ -46,5 +47,8 @@ include("generic/adaptivity.jl")
 include("generic/funs.jl")
 
 include("recipes.jl")
+
+export chebvariable, chebvariables,
+    funvariable, funvariables
 
 end # module
