@@ -104,6 +104,7 @@ coefficienttype(platform::ModelPlatform) = coefficienttype(model(platform))
 components(platform::ModelPlatform) = map(ModelPlatform, components(model(platform)))
 component(platform::ModelPlatform, i) = ModelPlatform(component(model(platform), i))
 
+Base.complex(platform::ModelPlatform) = ModelPlatform(complex(platform.model))
 
 #################
 # ProductPlatform
@@ -169,6 +170,9 @@ correctparamformat(p::ProductPlatform{N}, plt_par::NTuple{N,Int}) where N =
 correctparamformat(p::ProductPlatform, plt_par::Int) = true
 
 correctparamformat(::ProductPlatform, plt_par) = false
+
+Base.complex(platform::ProductPlatform) =
+    ProductPlatform(map(complex, components(platform)))
 
 
 ## Default platforms

@@ -32,3 +32,6 @@ dualdictionary(platform::ExtensionFramePlatform, plt_par, measure::Measure; opti
 
 default_param_path(platform::ExtensionFramePlatform) =
    default_param_path(platform.basisplatform)
+
+Base.complex(platform::ExtensionFramePlatform) =
+    ExtensionFramePlatform(complex(platform.basisplatform), platform.domain)
