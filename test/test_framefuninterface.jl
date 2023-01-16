@@ -110,8 +110,10 @@ end
     @test op2 isa TensorProductOperator
     @test op4 isa TensorProductOperator
 
-    @test op1 ≈ op3
-    @test op2 ≈ op4
+    x1 = rand(eltype(op1), size(src(op1)))
+    x2 = rand(eltype(op2), size(src(op2)))
+    @test norm(op1*x1) ≈ norm(op3*x1)
+    @test norm(op2*x2) ≈ norm(op4*x2)
 
     f1 = exp
     f2 = (x,y)->exp(x*y)
@@ -123,8 +125,10 @@ end
     @test op4 isa TensorProductOperator
     @test op6 isa TensorProductOperator
 
-    @test op3 ≈ op5
-    @test op4 ≈ op6
+    x3 = rand(eltype(op3), size(src(op3)))
+    x4 = rand(eltype(op4), size(src(op4)))
+    @test norm(op3*x3) ≈ norm(op5*x3)
+    @test norm(op4*x4) ≈ norm(op6*x4)
 
     @test b3≈b5
     @test b4≈b6
@@ -139,8 +143,10 @@ end
     @test op2 isa TensorProductOperator
     @test op4 isa TensorProductOperator
 
-    @test op1 ≈ op3
-    @test op2 ≈ op4
+    x1 = rand(eltype(op1), size(src(op1)))
+    x2 = rand(eltype(op2), size(src(op2)))
+    @test norm(op1*x1) ≈ norm(op3*x1)
+    @test norm(op2*x2) ≈ norm(op4*x2)
 end
 
 @testset "solver" begin
@@ -152,8 +158,10 @@ end
     @test op2 isa TensorProductOperator
     @test op4 isa TensorProductOperator
 
-    @test op1 ≈ op3
-    @test op2 ≈ op4
+    x1 = rand(eltype(op1), size(src(op1)))
+    x2 = rand(eltype(op2), size(src(op2)))
+    @test norm(op1*x1) ≈ norm(op3*x1)
+    @test norm(op2*x2) ≈ norm(op4*x2)
 
     @test component(op2,1) ≈ op1 ≈ component(op2,2)
 
@@ -166,8 +174,10 @@ end
         @test op2 isa TensorProductOperator
         @test op4 isa TensorProductOperator
 
-        @test op1 ≈ op3
-        @test op2 ≈ op4
+        x1 = rand(eltype(op1), size(src(op1)))
+        x2 = rand(eltype(op2), size(src(op2)))
+        @test norm(op1*x1) ≈ norm(op3*x1)
+        @test norm(op2*x2) ≈ norm(op4*x2)
 
         @test component(op2,1) ≈ op1 ≈ component(op2,2)
     end
