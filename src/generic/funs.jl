@@ -15,6 +15,8 @@ end
 platform(fun::SimpleFun) = fun.platform
 expansion(fun::SimpleFun) = fun.expansion
 
+SimpleFun(e::Expansion) = SimpleFun(platform(dictionary(e)), e)
+
 function simplefun(f, platform, args...; options...)
     F = Fun(f, platform, args...; options...)
     SimpleFun(platform, F)
@@ -25,7 +27,12 @@ similarfun(f::SimpleFun, F::Expansion) = SimpleFun(platform(f), F)
 funvariable(platform::Platform) = simplefun(x->x, platform)
 
 chebvariable(::Type{T} = Float64) where {T} =
-    funvariable(platform(ChebyshevT{T}(2)))
+    SimpleFun(expansion_of_x(ChebyshevT{T}(2)))
+
+function chebvariable(domain::AbstractInterval{T}) where {T}
+    x = BasisFunctions.expansion_of_x(ChebyshevT{float(T)}(2) → domain)
+    SimpleFun(x)
+end
 
 ## Arithmetics
 
@@ -37,6 +44,11 @@ for op in (:+, :-, :*)
     @eval Base.$op(f::AbstractFun, g::AbstractFun) = similarfun(f, $op(expansion(f), expansion(g)))
 end
 Base.:/(fun::AbstractFun, a::Number) = similarfun(fun, expansion(fun)/a)
+
+function Base.:^(fun::AbstractFun, a::Integer)
+    F = Fun(x->fun(x)^a, platform(fun))
+    similarfun(fun, F)
+end
 
 import Base: cos, sin, tan
 for op in [:cos, :sin, :tan]
