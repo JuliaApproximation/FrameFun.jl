@@ -31,7 +31,7 @@ addlogentry!(log, entry) = push!(log, entry)
 function errormeasure(::RandomPoints, platform, tolerance, f, F, args...; numrandompts = 50, verbose=false, options...)
     g = randomgrid(support(F), numrandompts)
     z = sample(g, f)
-    max_error = LinearAlgebra.generic_normInf(z-F(g))
+    max_error = LinearAlgebra.generic_normInf(z-F.(g))
     converged = max_error < tolerance
     verbose && println("Errormeasure: Maximum error in $numrandompts random points did $(converged ? "" : "not ")converge "*@sprintf("%1.3e (%1.3e)",max_error,tolerance))
     converged, max_error
