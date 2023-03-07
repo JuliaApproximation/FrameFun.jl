@@ -168,21 +168,28 @@ export ExtensionFrameTensor, ExtensionFrameSuper
 hasmeasure(::ExtensionFrame) = true
 measure(f::ExtensionFrame) = submeasure(measure(basis(f)), support(f))
 
-dict_innerproduct_native(f1::ExtensionFrame, i, f2::ExtensionFrame, j, measure; options...) =
-    dict_innerproduct(superdict(f1), i, superdict(f2), j, measure; options...)
+function dict_innerproduct_native(f1::ExtensionFrame, i, f2::ExtensionFrame, j, measure; options...)
+    if iscompatible(f1,f2) && issubmeasure(measure) && support(measure)==support(f1)
+        # it is safe to invoke inner product on the super dictionary
+        dict_innerproduct(superdict(f1), i, superdict(f2), j, measure; options...)
+    else
+        # just pass it on
+        BasisFunctions.dict_innerproduct1(f1, i, f2, j, measure; options...)
+    end
+end
 
-# This routine will be called if we have two mapped dictionaries, where the measure is a subset of a
-# mapped measure. We check for this case and undo the mapping.
-dict_innerproduct_native(dict1::MappedDict, i, dict2::MappedDict, j, measure; options...) =
+# This routine will be called if we have two mapped dictionaries, and the measure
+# is a subset of a mapped measure. We check for this case and undo the mapping.
+dict_innerproduct_native(dict1::MappedDict, i, dict2::MappedDict, j, measure::SubWeight; options...) =
     _dict_innerproduct_native(support(measure), supermeasure(measure), dict1, i, dict2, j, measure; options...)
 
 function _dict_innerproduct_native(domain::AbstractInterval, superμ, dict1::MappedDict, i, dict2::MappedDict, j, measure; options...)
     if BasisFunctions.ismappedmeasure(superμ) && iscompatible(dict1, dict2) && iscompatible(forward_map(dict1), forward_map(superμ))
         supermap = forward_map(superμ)
-        newdomain = Interval(applymap(inv(supermap), infimum(domain)), applymap(inv(supermap), supremum(domain)))
+        newdomain = Interval(inverse(supermap, infimum(domain)), inverse(supermap, supremum(domain)))
         dict_innerproduct_native(superdict(dict1), i, superdict(dict2), j, submeasure(supermeasure(superμ), newdomain))
     else
-        default_dict_innerproduct(dict1, i, dict2, j, measure; options...)
+        BasisFunctions.dict_innerproduct1(dict1, i, dict2, j, measure; options...)
     end
 end
 
@@ -195,7 +202,7 @@ function _dict_innerproduct_native(domain::UnionDomain, superμ, dict1::MappedDi
 end
 
 _dict_innerproduct_native(domain, superμ, dict1::MappedDict, i, dict2::MappedDict, j, measure; options...) =
-    BasisFunctions.default_dict_innerproduct(dict1, i, dict2, j, measure; options...)
+    BasisFunctions.dict_innerproduct1(dict1, i, dict2, j, measure; options...)
 
 export extensiondual
 """

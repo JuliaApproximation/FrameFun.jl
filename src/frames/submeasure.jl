@@ -33,6 +33,9 @@ supermeasure(measure::SubWeight) = measure.measure
 support(measure::SubWeight) = measure.domain
 unsafe_weightfun(m::SubWeight, x) = unsafe_weightfun(supermeasure(m), x)
 
+issubmeasure(μ) = false
+issubmeasure(μ::SubWeight) = true
+
 """
     restrict(measure::Weight, domain::Domain)
 
