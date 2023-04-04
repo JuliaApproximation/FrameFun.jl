@@ -2,7 +2,7 @@
 using LowRankApprox: pqrfact, psvdfact, LRAOptions
 
 export pQR_solver, pSVD_solver, rSVD_solver
-LinearAlgebra.ishermitian(::DictionaryOperator) = false
+
 function pQR_solver(A::DictionaryOperator{T}; threshold=default_threshold(A), lraoptions::LRAOptions=LRAOptions(T), verbose=false, options...) where {T}
     lraoptions.rtol = threshold
     lraoptions.verb = verbose
