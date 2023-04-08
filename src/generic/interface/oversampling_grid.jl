@@ -33,7 +33,7 @@ oversampling_grid(dict::BasisFunctions.CompositeDict, smpl_par) = oversampling_g
 oversampling_grid(dict::WeightedDict, smpl_par) = oversampling_grid(superdict(dict), smpl_par)
 oversampling_grid(dict::BasisFunctions.ComplexifiedDict, smpl_par) = oversampling_grid(superdict(dict), smpl_par)
 
-oversampling_grid(dict::MappedDict, smpl_par) = apply_map(oversampling_grid(superdict(dict), smpl_par), forward_map(dict))
+oversampling_grid(dict::MappedDict, smpl_par) = map_grid(forward_map(dict), oversampling_grid(superdict(dict), smpl_par))
 
 oversampling_grid(dict::OperatedDict, smpl_par) = oversampling_grid(superdict(dict), smpl_par)
 

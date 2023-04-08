@@ -65,7 +65,7 @@ end
 end
 
 @testset "oversampling_grid" begin
-    @test oversampling_grid(ap1) isa IndexSubGrid
+    @test oversampling_grid(ap1) isa GridArrays.IndexSubGrid
     @test oversampling_grid(ap2) isa ProductSubGrid
     @test oversampling_grid(ap3) isa GridArrays.MaskedGrid
     @test oversampling_grid(ap4) isa GridArrays.MaskedGrid
@@ -73,7 +73,7 @@ end
     @test oversampling_grid(wap1) == FourierGrid(40)
     @test oversampling_grid(wap2) == FourierGrid(21)^2
 
-    @test oversampling_grid(plat1...) isa IndexSubGrid
+    @test oversampling_grid(plat1...) isa GridArrays.IndexSubGrid
     @test oversampling_grid(plat2...) isa ProductSubGrid
     @test oversampling_grid(plat3...) isa GridArrays.MaskedGrid
     @test oversampling_grid(plat4...) isa GridArrays.MaskedGrid
@@ -159,7 +159,7 @@ end
     @test azdual(dict4) isa ExtensionFrame
 end
 
-eval_on_grid(dict, coef, grid::AbstractGrid) = eval_expansion.(Ref(dict), Ref(coef), grid)
+eval_on_grid(dict, coef, grid::AbstractArray) = eval_expansion.(Ref(dict), Ref(coef), grid)
 
 @testset "discretization" begin
     op = discretization(ap1)

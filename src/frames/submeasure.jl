@@ -2,9 +2,9 @@
 using BasisFunctions: FFreq, DiscreteWeight, DiscreteProductWeight,
     innerproduct_fourier_part, default_dict_innerproduct, Measure, Weight,
 	OuterProductArray
-import BasisFunctions: quadweights, stencilarray, name, weights,
+import BasisFunctions: quadweights, weights,
 	grid, subindices, isnormalized, supermeasure,
-    support, unsafe_weightfun, strings, restrict, discretemeasure
+    support, unsafe_weightfun, restrict, discretemeasure
 export submeasure, DiscreteTensorSubWeight, SubWeight, DiscreteSubWeight
 
 """
@@ -28,7 +28,6 @@ end
 Restrict a measure to a subset of its support
 """
 submeasure(measure::Weight, domain::Domain) = SubWeight(measure, domain)
-name(m::SubWeight) = "Restriction of a measure"
 supermeasure(measure::SubWeight) = measure.measure
 support(measure::SubWeight) = measure.domain
 unsafe_weightfun(m::SubWeight, x) = unsafe_weightfun(supermeasure(m), x)
@@ -42,7 +41,6 @@ issubmeasure(μ::SubWeight) = true
 Restrict a measure to a subset of its support
 """
 restrict(measure::Weight, domain::Domain) = submeasure(measure, domain)
-strings(m::SubWeight) = (name(m), (string(support(m)),), strings(supermeasure(m)))
 submeasure(measure::ProductWeight, domain::ProductDomain) = ProductWeight(map(submeasure, components(measure), components(domain))...)
 
 
@@ -80,7 +78,6 @@ weights(measure::DiscreteSubWeight) = subweights(measure, subindices(measure), w
 subweights(_, subindices, w) = w[subindices]
 points(measure::DiscreteSubWeight) = measure.subgrid
 isnormalized(::DiscreteSubWeight) = false
-name(m::DiscreteSubWeight) = "Restriction of a "*name(supermeasure(m))
 
 function discretemeasure(grid::Union{SubGrid,ProductSubGrid}, weights::Ones)
     @assert size(grid) == size(weights)
@@ -93,18 +90,6 @@ end
 A tensor product of discrete submeasures.
 """
 const DiscreteTensorSubWeight{T,G,W} = DiscreteSubWeight{T,M,G} where {T,M<:DiscreteProductWeight,G<:ProductSubGrid}
-name(m::DiscreteTensorSubWeight) = "Tensor of submeasures (supermeasure:"*name(supermeasure(m))
 components(m::DiscreteTensorSubWeight) = map(_discretesubmeasure,components(points(m)),components(weights(supermeasure(m))))
 component(m::DiscreteTensorSubWeight, i) = _discretesubmeasure(component(points(m),i),component(weights(supermeasure(m)),i))
 weights(m::DiscreteTensorSubWeight) = OuterProductArray(map(weights, components(m))...)
-
-
-function stencilarray(m::DiscreteTensorSubWeight)
-    A = Any[]
-    push!(A, component(m,1))
-    for i = 2:length(components(m))
-        push!(A," ⊗ ")
-        push!(A, component(m,i))
-    end
-    A
-end

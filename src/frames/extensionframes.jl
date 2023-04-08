@@ -9,7 +9,7 @@ using BasisFunctions: default_in_support, unsafe_eval_element,
 
 import BasisFunctions: superdict, support, similardictionary, isbasis,
     isbiorthogonal, isorthogonal, isorthonormal, hasinterpolationgrid, hastransform,
-    hasantiderivative, name, string, strings, dict_in_support, iscompatible, *,
+    hasantiderivative, dict_in_support, iscompatible, *,
     unsafe_eval_element1, interpolation_grid, measure, restrict, dict_innerproduct,
     dict_innerproduct_native, gramdual, modifiersymbol, GridSampling, in_support,
     points, support
