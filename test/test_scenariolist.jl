@@ -33,7 +33,7 @@ using BasisFunctions, LinearAlgebra, DomainSets, GridArrays, Test, StaticArrays,
     # Test differnence sampling_normalization
     ap2 = approximationproblem(Fourier(100),0.0..0.5;
             samplingstyle=OversamplingStyle(), oversamplingfactor=2, normalizedsampling=false)
-    s = svdvals(AZ_A(ap2))
+    s = svdvals(matrix(AZ_A(ap2)))
     N = sampling_weights(FrameFun.NormalizedSampling(OversamplingStyle()),approximationproblem(Fourier(100),0.0..0.5))
     L = samplingparameter(ap2)
     @test L == 399
@@ -41,7 +41,7 @@ using BasisFunctions, LinearAlgebra, DomainSets, GridArrays, Test, StaticArrays,
     @test 47==sum(s.<.1*sqrt(L))
     @test 49==sum(s.>.9*sqrt(L))
 
-    s = svdvals(AZ_A(Fourier(100),0.0..0.5;oversamplingfactor=2,normalizedsampling=true))
+    s = svdvals(matrix(AZ_A(Fourier(100),0.0..0.5;oversamplingfactor=2,normalizedsampling=true)))
     @test 47==sum(s.<.1)
     @test 49==sum(1+1e-10 .> s .>.9)
 
