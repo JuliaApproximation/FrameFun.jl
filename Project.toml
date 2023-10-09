@@ -1,7 +1,7 @@
 name = "FrameFun"
 uuid = "bbafa164-4497-5d18-87cf-33e911f89480"
 authors = ["daanhb,roelmatthysen,marcusdavidwebb,vincentcp"]
-version = "0.5.3"
+version = "0.5.4"
 
 [deps]
 BasisFunctions = "4343a256-5453-507d-8aad-01a9d7189916"
