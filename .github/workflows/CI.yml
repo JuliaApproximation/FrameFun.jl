@@ -15,8 +15,8 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.7'
-          - 'nightly'
+          - '1.6'
+          - '1'
         os:
           - ubuntu-latest
           - macOS-latest
@@ -24,12 +24,12 @@ jobs:
         arch:
           - x64
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
-      - uses: actions/cache@v1
+      - uses: actions/cache@v3
         env:
           cache-name: cache-artifacts
         with:
