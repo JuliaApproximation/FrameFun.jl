@@ -17,7 +17,7 @@ determine_return_type(fun, S::Type{SVector{4,A}}) where {A} = Base.promote_op(fu
 
 
 promote_dictionary(dict, fun) = _promote_dictionary(dict, fun, determine_return_type(fun, domaintype(dict)))
-_promote_dictionary(dict, fun, ::Union{}) = dict
+_promote_dictionary(dict, fun, ::Type{Any}) = dict
 _promote_dictionary(dict, fun, ::Type{T}) where {T} = BasisFunctions.ensure_coefficienttype(promote_type(codomaintype(dict),T), dict)
 
 
