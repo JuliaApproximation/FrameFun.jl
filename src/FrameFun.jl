@@ -2,7 +2,7 @@ module FrameFun
 
 using FillArrays, GridArrays, StaticArrays
 using LinearAlgebra, LowRankApprox
-using Printf, RecipesBase, Reexport
+using Printf, Reexport
 using SpecialFunctions
 using DomainSets
 using QuadGK
@@ -46,7 +46,7 @@ include("applications/high_dimensional.jl")
 include("generic/adaptivity.jl")
 include("generic/funs.jl")
 
-include("recipes.jl")
+include("util/plot.jl")
 
 export chebvariable, chebvariables,
     funvariable, funvariables
