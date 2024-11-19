@@ -1,12 +1,12 @@
+# FrameFun.jl
+
+*Exploring practical possibilities of approximating functions using redundant sets such as frames, rather than with a basis. The package is heavily inspired by the Chebfun project and the Julia package ApproxFun.*
+
 
 | **Build Status** | **Coverage** |
 |------------------|--------------|
-| [![Build Status](https://github.com/JuliaApproximation/FrameFun.jl/workflows/CI/badge.svg?branch=master)](https://github.com/JuliaApproximation/FrameFun.jl/actions/workflows/CI.yml) | [![Coverage](https://codecov.io/gh/JuliaApproximation/FrameFun.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaApproximation/FrameFun.jl)
+| [![Build Status](https://github.com/JuliaApproximation/FrameFun.jl/workflows/CI/badge.svg)](https://github.com/JuliaApproximation/FrameFun.jl/actions/workflows/CI.yml) | [![Coverage](https://codecov.io/gh/JuliaApproximation/FrameFun.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaApproximation/FrameFun.jl)
 
-FrameFun
-========
-
-Exploring practical possibilities of approximating functions with frames rather than with a basis. The package is heavily inspired by the Chebfun project and the Julia package ApproxFun.
 
 
 ```julia
