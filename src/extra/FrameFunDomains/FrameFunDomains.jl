@@ -1,6 +1,7 @@
 module FrameFunDomains
 
 using DomainSets, GridArrays, StaticArrays
+using DomainSets: ×
 
 import Base: show, isapprox, in, <, <=, >, >=
 import DomainSets: indomain, normal

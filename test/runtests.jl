@@ -1,5 +1,7 @@
 
 using BasisFunctions, Test
+using DomainSets, FunctionMaps
+using DomainSets: ×
 
 using BasisFunctions: iscompatible
 

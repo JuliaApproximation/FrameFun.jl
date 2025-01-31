@@ -5,11 +5,14 @@ using LinearAlgebra, LowRankApprox
 using Printf, Reexport
 using SpecialFunctions
 using DomainSets
+using FunctionMaps
 using QuadGK
 using CompositeTypes, CompositeTypes.Display
 
 import CompositeTypes: components, component, ncomponents
 import DomainSets: factors, nfactors, factor
+
+using DomainSets: ×
 
 @reexport using BasisFunctions
 import BasisFunctions: coefficienttype, dual, weight, expansion
