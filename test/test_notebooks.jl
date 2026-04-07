@@ -1,10 +1,12 @@
 module test_nodebooks
 
 using Conda
-using DomainSets
+using DomainSets, FunctionMaps
 using BasisFunctions
 using FrameFun
 using Plots
+
+using DomainSets: ×
 
 function delimit(s::AbstractString)
     println()

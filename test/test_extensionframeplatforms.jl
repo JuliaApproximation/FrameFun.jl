@@ -1,8 +1,3 @@
-
-using DomainSets, StaticArrays, BasisFunctions, FrameFun
-using Test
-
-
 @testset "ExtensionFramePlatforms" begin
     d1 = 0.0..0.5
     d2 = (0.0..0.5)^2

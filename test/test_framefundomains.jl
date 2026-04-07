@@ -1,4 +1,4 @@
-using DomainSets, BasisFunctions, FrameFun.FrameFunDomains, Test
+using FrameFun.FrameFunDomains
 
 function test_extended_domains_3d()
     domains = (atomium(),)

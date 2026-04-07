@@ -1,7 +1,11 @@
 
-using BasisFunctions, Test
-
+using Test
+using BasisFunctions, FrameFun
 using BasisFunctions: iscompatible
+using DomainSets, FunctionMaps
+using LinearAlgebra, StaticArrays
+
+using DomainSets: ×
 
 @testset "FrameFunDomains" begin
     include("test_framefundomains.jl")

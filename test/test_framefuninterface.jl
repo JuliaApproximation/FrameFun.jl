@@ -1,5 +1,3 @@
-using Test, LinearAlgebra, BasisFunctions, FrameFun
-
 dict1 = Fourier(10)
 dict2 = Fourier(10)^2
 plat1 = platform(dict1)

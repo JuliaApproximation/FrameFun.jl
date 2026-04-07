@@ -1,5 +1,3 @@
-using Test, FrameFun, DomainSets, BasisFunctions
-
 @testset "FrameFunPlatforms" begin
     plat1 = FourierPlatform()
     plat2 = FourierExtensionPlatform(0.0..0.5)

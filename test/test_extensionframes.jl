@@ -1,7 +1,4 @@
-using FrameFun
-using BasisFunctions, Test, DomainSets
 using BasisFunctions.Test: test_generic_dict_interface
-
 import BasisFunctions.Test: point_outside_domain
 using BasisFunctions.Test: generic_test_discrete_measure, generic_test_measure
 

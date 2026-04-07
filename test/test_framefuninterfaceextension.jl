@@ -1,6 +1,3 @@
-
-using BasisFunctions, DomainSets, StaticArrays, Test, LinearAlgebra, FrameFun
-
 # TODO add AugmentationPlatforms tests
 d1 = 0.0..0.5
 plat1 = platform(extensionframe(Fourier(10),0.0..0.5)), 10

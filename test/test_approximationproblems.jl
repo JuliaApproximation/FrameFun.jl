@@ -1,7 +1,3 @@
-
-using DomainSets, BasisFunctions, FrameFun
-using Test
-
 @testset "Platform approximation problems" begin
     ap1 = approximationproblem(Fourier(10))
     ap2 = approximationproblem(Fourier(10)^2)

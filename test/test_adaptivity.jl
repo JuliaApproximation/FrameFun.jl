@@ -1,6 +1,7 @@
 module TestAdaptivity
 
-using FrameFun, DomainSets, Test
+using FrameFun, DomainSets, FunctionMaps, Test
+using DomainSets: ×
 
 @testset begin "Optimal adaptivity"
     P = FrameFun.ExtensionFramePlatform(WeightedSumPlatform(platform(ChebyshevT(10)^2), (x,y)->1.,
